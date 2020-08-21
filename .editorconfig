@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CA1820: Test for empty strings using string length
+dotnet_diagnostic.CA1820.severity = suggestion

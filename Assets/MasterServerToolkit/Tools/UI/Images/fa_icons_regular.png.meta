@@ -1,0 +1,3740 @@
+fileFormatVersion: 2
+guid: 2f7272af2744b344e8ae778391812813
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3381989965269249811
+    second: address-book
+  - first:
+      213: 3608912563628543553
+    second: address-card
+  - first:
+      213: 3481594797983888776
+    second: angry
+  - first:
+      213: -628391108455913077
+    second: arrow-alt-circle-down
+  - first:
+      213: 3881335432912231801
+    second: arrow-alt-circle-left
+  - first:
+      213: -8875425097977762992
+    second: arrow-alt-circle-right
+  - first:
+      213: -2771855038743502731
+    second: arrow-alt-circle-up
+  - first:
+      213: 5330148439538494877
+    second: bell-slash
+  - first:
+      213: 1210468120907054213
+    second: bell
+  - first:
+      213: -6531453688181002298
+    second: bookmark
+  - first:
+      213: -907845745824006705
+    second: building
+  - first:
+      213: -8026472147764899432
+    second: calendar-alt
+  - first:
+      213: -8623118861390214152
+    second: calendar-check
+  - first:
+      213: 3243832867904689666
+    second: calendar-minus
+  - first:
+      213: 1619308192638453396
+    second: calendar-plus
+  - first:
+      213: -6162301037355986427
+    second: calendar-times
+  - first:
+      213: -6637194965175804933
+    second: calendar
+  - first:
+      213: 3684030629801446234
+    second: caret-square-down
+  - first:
+      213: -788244349046718393
+    second: caret-square-left
+  - first:
+      213: 3460421471290475010
+    second: caret-square-right
+  - first:
+      213: 108367073169010585
+    second: caret-square-up
+  - first:
+      213: -7701738958709701749
+    second: chart-bar
+  - first:
+      213: 4815987216475664407
+    second: check-circle
+  - first:
+      213: -604863201171346765
+    second: check-square
+  - first:
+      213: 4635883900927747720
+    second: circle
+  - first:
+      213: -3440704145356744868
+    second: clipboard
+  - first:
+      213: 8755254813954124445
+    second: clock
+  - first:
+      213: -3955115628637818971
+    second: clone
+  - first:
+      213: -6841530359628594142
+    second: closed-captioning
+  - first:
+      213: 262706748064169826
+    second: comment-alt
+  - first:
+      213: -9136024241656792809
+    second: comment-dots
+  - first:
+      213: 6554607671855833799
+    second: comment
+  - first:
+      213: 8676946343663186958
+    second: comments
+  - first:
+      213: -5625412844209256805
+    second: compass
+  - first:
+      213: 6510963828285966235
+    second: copy
+  - first:
+      213: 5107106033713644983
+    second: copyright
+  - first:
+      213: -331370407312021779
+    second: credit-card
+  - first:
+      213: -3581166481464837462
+    second: dizzy
+  - first:
+      213: 5810990823924037540
+    second: dot-circle
+  - first:
+      213: 1293222870303939291
+    second: edit
+  - first:
+      213: 3060157924644178739
+    second: envelope-open
+  - first:
+      213: 690084562649704981
+    second: envelope
+  - first:
+      213: -7017114341565763786
+    second: eye-slash
+  - first:
+      213: 9037331016498906902
+    second: eye
+  - first:
+      213: -8926530455663466337
+    second: file-alt
+  - first:
+      213: 5264022029910444716
+    second: file-archive
+  - first:
+      213: -6760017588292357931
+    second: file-audio
+  - first:
+      213: -3810246262498998811
+    second: file-code
+  - first:
+      213: 3740684330990487540
+    second: file-excel
+  - first:
+      213: 2134542639957695554
+    second: file-image
+  - first:
+      213: -733698266119745262
+    second: file-pdf
+  - first:
+      213: -4246595878953145358
+    second: file-powerpoint
+  - first:
+      213: 2238026661688992403
+    second: file-video
+  - first:
+      213: 1180529676752738595
+    second: file-word
+  - first:
+      213: -1474746688885771747
+    second: file
+  - first:
+      213: 4372971727497871311
+    second: flag
+  - first:
+      213: 7091715560320204961
+    second: flushed
+  - first:
+      213: -2516775464268178092
+    second: folder-open
+  - first:
+      213: 3598705322189695406
+    second: folder
+  - first:
+      213: -8452504169420938979
+    second: font-awesome-logo-full
+  - first:
+      213: -7833955304869944202
+    second: frown-open
+  - first:
+      213: 6833858408159681956
+    second: frown
+  - first:
+      213: -396269765006381515
+    second: futbol
+  - first:
+      213: -7618352362377138236
+    second: gem
+  - first:
+      213: -2505130677647444794
+    second: grimace
+  - first:
+      213: -8340988779500619007
+    second: grin-alt
+  - first:
+      213: 882146840425890861
+    second: grin-beam-sweat
+  - first:
+      213: 7658317047015714465
+    second: grin-beam
+  - first:
+      213: 1663895492337006721
+    second: grin-hearts
+  - first:
+      213: 6783165214773503033
+    second: grin-squint-tears
+  - first:
+      213: -3241898726820107057
+    second: grin-squint
+  - first:
+      213: 6511489476998571250
+    second: grin-stars
+  - first:
+      213: -6729058696698038106
+    second: grin-tears
+  - first:
+      213: 5820450075732073990
+    second: grin-tongue-squint
+  - first:
+      213: 7591932458738927428
+    second: grin-tongue-wink
+  - first:
+      213: -205831749013988010
+    second: grin-tongue
+  - first:
+      213: -8843406398088341828
+    second: grin-wink
+  - first:
+      213: 6074922063037849071
+    second: grin
+  - first:
+      213: 2546728423078129771
+    second: hand-lizard
+  - first:
+      213: 4036311820141051175
+    second: hand-paper
+  - first:
+      213: -27980561729843839
+    second: hand-peace
+  - first:
+      213: 72255450585936050
+    second: hand-point-down
+  - first:
+      213: 8161057781408042866
+    second: hand-point-left
+  - first:
+      213: 2588766494709551593
+    second: hand-point-right
+  - first:
+      213: 5595930282161596599
+    second: hand-point-up
+  - first:
+      213: -2975396684074125277
+    second: hand-pointer
+  - first:
+      213: 6577932007625504046
+    second: hand-rock
+  - first:
+      213: -1936180017652661109
+    second: hand-scissors
+  - first:
+      213: -164251541176002752
+    second: hand-spock
+  - first:
+      213: 4060022857750891952
+    second: handshake
+  - first:
+      213: -5930661822690863892
+    second: hdd
+  - first:
+      213: -3574820651616021983
+    second: heart
+  - first:
+      213: 7092786493233693112
+    second: hospital
+  - first:
+      213: -4952036676348144157
+    second: hourglass
+  - first:
+      213: 6823145112025043735
+    second: id-badge
+  - first:
+      213: 3016053747414824229
+    second: id-card
+  - first:
+      213: 5976272461515576160
+    second: image
+  - first:
+      213: -8981207468879790968
+    second: images
+  - first:
+      213: -3364489811545169772
+    second: keyboard
+  - first:
+      213: -9196297050372822134
+    second: kiss-beam
+  - first:
+      213: 8326436313426952354
+    second: kiss-wink-heart
+  - first:
+      213: -7528184767219385768
+    second: kiss
+  - first:
+      213: -7360795227921763270
+    second: laugh-beam
+  - first:
+      213: -8418724222627640810
+    second: laugh-squint
+  - first:
+      213: 1373541178026350047
+    second: laugh-wink
+  - first:
+      213: 3060506648114871056
+    second: laugh
+  - first:
+      213: 6264233599618148188
+    second: lemon
+  - first:
+      213: 4858416393635298351
+    second: life-ring
+  - first:
+      213: 635632224636298040
+    second: lightbulb
+  - first:
+      213: 463706523638243596
+    second: list-alt
+  - first:
+      213: -399840562033327265
+    second: map
+  - first:
+      213: 3907893214999051400
+    second: meh-blank
+  - first:
+      213: -3058718768886861464
+    second: meh-rolling-eyes
+  - first:
+      213: 193743489970642993
+    second: meh
+  - first:
+      213: 5950658723575376176
+    second: minus-square
+  - first:
+      213: 785002969146817452
+    second: money-bill-alt
+  - first:
+      213: 32877268603518796
+    second: moon
+  - first:
+      213: -5390596636173870920
+    second: newspaper
+  - first:
+      213: -1125364198748418539
+    second: object-group
+  - first:
+      213: -6378437361977742683
+    second: object-ungroup
+  - first:
+      213: 3051462424259029007
+    second: paper-plane
+  - first:
+      213: 2835085942757483198
+    second: pause-circle
+  - first:
+      213: -6313161605132035065
+    second: play-circle
+  - first:
+      213: 2916704671110153792
+    second: plus-square
+  - first:
+      213: 1207515019802468462
+    second: question-circle
+  - first:
+      213: 4046591714219435232
+    second: registered
+  - first:
+      213: 4735950149425885804
+    second: sad-cry
+  - first:
+      213: -4886074999288749956
+    second: sad-tear
+  - first:
+      213: -8317778102323377313
+    second: save
+  - first:
+      213: 4480927254637196502
+    second: share-square
+  - first:
+      213: -1934057651646314194
+    second: smile-beam
+  - first:
+      213: 8208166519121252855
+    second: smile-wink
+  - first:
+      213: 1670379394159869417
+    second: smile
+  - first:
+      213: 7611937502267990400
+    second: snowflake
+  - first:
+      213: 2213731607469278391
+    second: square
+  - first:
+      213: 1588985766225488049
+    second: star-half
+  - first:
+      213: 3802091392676919337
+    second: star
+  - first:
+      213: 3096878675058918518
+    second: sticky-note
+  - first:
+      213: 3016961608250166996
+    second: stop-circle
+  - first:
+      213: 1074095854791272569
+    second: sun
+  - first:
+      213: 9165422066092459781
+    second: surprise
+  - first:
+      213: 3897131329830444810
+    second: thumbs-down
+  - first:
+      213: 935164777126842598
+    second: thumbs-up
+  - first:
+      213: 6243131976888181025
+    second: times-circle
+  - first:
+      213: -4769686217707152476
+    second: tired
+  - first:
+      213: 7274657601236455944
+    second: trash-alt
+  - first:
+      213: -4697863032696091823
+    second: user-circle
+  - first:
+      213: -5841255510044930599
+    second: user
+  - first:
+      213: -7454546420514748501
+    second: window-close
+  - first:
+      213: -9205852699366759940
+    second: window-maximize
+  - first:
+      213: 8107872794959981099
+    second: window-minimize
+  - first:
+      213: -9006570826577287115
+    second: window-restore
+  externalObjects: {}
+  serializedVersion: 11
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: -1
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  applyGammaDecoding: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: address-book
+      rect:
+        serializedVersion: 2
+        x: 1729
+        y: 1090
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de0d03e8b02c011d0800000000000000
+      internalID: -3381989965269249811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: address-card
+      rect:
+        serializedVersion: 2
+        x: 1714
+        y: 1960
+        width: 109
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14e06841bde651230800000000000000
+      internalID: 3608912563628543553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: angry
+      rect:
+        serializedVersion: 2
+        x: 1089
+        y: 1588
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8857da1c50c115030800000000000000
+      internalID: 3481594797983888776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: arrow-alt-circle-down
+      rect:
+        serializedVersion: 2
+        x: 1714
+        y: 1772
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b89a870cd918747f0800000000000000
+      internalID: -628391108455913077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: arrow-alt-circle-left
+      rect:
+        serializedVersion: 2
+        x: 1603
+        y: 1765
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97dded413064dd530800000000000000
+      internalID: 3881335432912231801
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: arrow-alt-circle-right
+      rect:
+        serializedVersion: 2
+        x: 1933
+        y: 1707
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05be27cb5e724d480800000000000000
+      internalID: -8875425097977762992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: arrow-alt-circle-up
+      rect:
+        serializedVersion: 2
+        x: 1813
+        y: 1684
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57021d637846889d0800000000000000
+      internalID: -2771855038743502731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bell-slash
+      rect:
+        serializedVersion: 2
+        x: 761
+        y: 1950
+        width: 122
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9d6bc2f3cd78f940800000000000000
+      internalID: 5330148439538494877
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bell
+      rect:
+        serializedVersion: 2
+        x: 1816
+        y: 1014
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58c7996b7527cc010800000000000000
+      internalID: 1210468120907054213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bookmark
+      rect:
+        serializedVersion: 2
+        x: 1974
+        y: 1410
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6cf6e09c97d9b55a0800000000000000
+      internalID: -6531453688181002298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: building
+      rect:
+        serializedVersion: 2
+        x: 1903
+        y: 1014
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcd7f49aa1fa663f0800000000000000
+      internalID: -907845745824006705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: calendar-alt
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1653
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89118e09b1e3c9090800000000000000
+      internalID: -8026472147764899432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: calendar-check
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 1653
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fb8dd23517845880800000000000000
+      internalID: -8623118861390214152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: calendar-minus
+      rect:
+        serializedVersion: 2
+        x: 175
+        y: 1653
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 206123a8ec8640d20800000000000000
+      internalID: 3243832867904689666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: calendar-plus
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 1653
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4964814c830f87610800000000000000
+      internalID: 1619308192638453396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: calendar-times
+      rect:
+        serializedVersion: 2
+        x: 349
+        y: 1653
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50210651bdb1b7aa0800000000000000
+      internalID: -6162301037355986427
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: calendar
+      rect:
+        serializedVersion: 2
+        x: 436
+        y: 1653
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfb5fa33852f3e3a0800000000000000
+      internalID: -6637194965175804933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caret-square-down
+      rect:
+        serializedVersion: 2
+        x: 1537
+        y: 1181
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5b49f6c65e402330800000000000000
+      internalID: 3684030629801446234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caret-square-left
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1564
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7408cdad0f79f05f0800000000000000
+      internalID: -788244349046718393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caret-square-right
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 1564
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 20247697ef2e50030800000000000000
+      internalID: 3460421471290475010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caret-square-up
+      rect:
+        serializedVersion: 2
+        x: 175
+        y: 1564
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99f6695674ff08100800000000000000
+      internalID: 108367073169010585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chart-bar
+      rect:
+        serializedVersion: 2
+        x: 1288
+        y: 1685
+        width: 97
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b83425df83ded1590800000000000000
+      internalID: -7701738958709701749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: check-circle
+      rect:
+        serializedVersion: 2
+        x: 1702
+        y: 1673
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 710bad07bd2d5d240800000000000000
+      internalID: 4815987216475664407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: check-square
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 1564
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bae97c8f181b97f0800000000000000
+      internalID: -604863201171346765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: circle
+      rect:
+        serializedVersion: 2
+        x: 1479
+        y: 1764
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88620ce88d7f55040800000000000000
+      internalID: 4635883900927747720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: clipboard
+      rect:
+        serializedVersion: 2
+        x: 1473
+        y: 1489
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c571cc63fc92040d0800000000000000
+      internalID: -3440704145356744868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: clock
+      rect:
+        serializedVersion: 2
+        x: 1578
+        y: 1666
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9aa3cfadd9e08970800000000000000
+      internalID: 8755254813954124445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: clone
+      rect:
+        serializedVersion: 2
+        x: 1355
+        y: 1762
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5af62757a4b9c19c0800000000000000
+      internalID: -3955115628637818971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: closed-captioning
+      rect:
+        serializedVersion: 2
+        x: 1189
+        y: 1623
+        width: 97
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 224894ac2600e01a0800000000000000
+      internalID: -6841530359628594142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: comment-alt
+      rect:
+        serializedVersion: 2
+        x: 1454
+        y: 1665
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26f767e356255a300800000000000000
+      internalID: 262706748064169826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: comment-dots
+      rect:
+        serializedVersion: 2
+        x: 991
+        y: 1857
+        width: 97
+        height: 91
+      alignment: 9
+      pivot: {x: 0.5, y: 0.47802198}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71970b06b52563180800000000000000
+      internalID: -9136024241656792809
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: comment
+      rect:
+        serializedVersion: 2
+        x: 1090
+        y: 1776
+        width: 97
+        height: 91
+      alignment: 9
+      pivot: {x: 0.5, y: 0.47802198}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c2640323f4a6fa50800000000000000
+      internalID: 6554607671855833799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: comments
+      rect:
+        serializedVersion: 2
+        x: 1492
+        y: 1952
+        width: 109
+        height: 95
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5105263}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e043b252ab4ba6870800000000000000
+      internalID: 8676946343663186958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: compass
+      rect:
+        serializedVersion: 2
+        x: 990
+        y: 1567
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b96ccf9a2d48ee1b0800000000000000
+      internalID: -5625412844209256805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: copy
+      rect:
+        serializedVersion: 2
+        x: 523
+        y: 1653
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b970762fa179b5a50800000000000000
+      internalID: 6510963828285966235
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: copyright
+      rect:
+        serializedVersion: 2
+        x: 1912
+        y: 1608
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b581c901e510e640800000000000000
+      internalID: 5107106033713644983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: credit-card
+      rect:
+        serializedVersion: 2
+        x: 1825
+        y: 1960
+        width: 109
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de62717ce5cb66bf0800000000000000
+      internalID: -331370407312021779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dizzy
+      rect:
+        serializedVersion: 2
+        x: 1185
+        y: 1524
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aaab0c61f042d4ec0800000000000000
+      internalID: -3581166481464837462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dot-circle
+      rect:
+        serializedVersion: 2
+        x: 1801
+        y: 1585
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a7fb0dcd59c4a050800000000000000
+      internalID: 5810990823924037540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: edit
+      rect:
+        serializedVersion: 2
+        x: 1381
+        y: 1950
+        width: 109
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bda90e7495372f110800000000000000
+      internalID: 1293222870303939291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: envelope-open
+      rect:
+        serializedVersion: 2
+        x: 1677
+        y: 1574
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33b43074b6dd77a20800000000000000
+      internalID: 3060157924644178739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: envelope
+      rect:
+        serializedVersion: 2
+        x: 1288
+        y: 1608
+        width: 97
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51a67b5e04ca39900800000000000000
+      internalID: 690084562649704981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: eye-slash
+      rect:
+        serializedVersion: 2
+        x: 885
+        y: 1950
+        width: 122
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63f6ca24fa33e9e90800000000000000
+      internalID: -7017114341565763786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: eye
+      rect:
+        serializedVersion: 2
+        x: 1603
+        y: 1953
+        width: 109
+        height: 94
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5159575}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 617890c7dac0b6d70800000000000000
+      internalID: 9037331016498906902
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-alt
+      rect:
+        serializedVersion: 2
+        x: 1470
+        y: 1390
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f98297968d79e1480800000000000000
+      internalID: -8926530455663466337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-archive
+      rect:
+        serializedVersion: 2
+        x: 1462
+        y: 1192
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: caa84ae65209d0940800000000000000
+      internalID: 5264022029910444716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-audio
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 1352
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d0f07ec1d79f22a0800000000000000
+      internalID: -6760017588292357931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-code
+      rect:
+        serializedVersion: 2
+        x: 928
+        y: 1270
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e5ccf836394f1bc0800000000000000
+      internalID: -3810246262498998811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-excel
+      rect:
+        serializedVersion: 2
+        x: 1003
+        y: 1192
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f7ce8d749499e330800000000000000
+      internalID: 3740684330990487540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-image
+      rect:
+        serializedVersion: 2
+        x: 1078
+        y: 1128
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24c5a94c83b6f9d10800000000000000
+      internalID: 2134542639957695554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-pdf
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 1113
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 211dc93705161d5f0800000000000000
+      internalID: -733698266119745262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-powerpoint
+      rect:
+        serializedVersion: 2
+        x: 1228
+        y: 1093
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fb2c5a2c8f0115c0800000000000000
+      internalID: -4246595878953145358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-video
+      rect:
+        serializedVersion: 2
+        x: 1303
+        y: 1093
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39263d724611f0f10800000000000000
+      internalID: 2238026661688992403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file-word
+      rect:
+        serializedVersion: 2
+        x: 1378
+        y: 1093
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32957ad7c75126010800000000000000
+      internalID: 1180529676752738595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: file
+      rect:
+        serializedVersion: 2
+        x: 1453
+        y: 1093
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d12b74333b5a88be0800000000000000
+      internalID: -1474746688885771747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flag
+      rect:
+        serializedVersion: 2
+        x: 1553
+        y: 1567
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcf365efd9aefac30800000000000000
+      internalID: 4372971727497871311
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: flushed
+      rect:
+        serializedVersion: 2
+        x: 1086
+        y: 1489
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a00ff48ab5da6260800000000000000
+      internalID: 7091715560320204961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: folder-open
+      rect:
+        serializedVersion: 2
+        x: 1244
+        y: 1789
+        width: 109
+        height: 82
+      alignment: 9
+      pivot: {x: 0.5, y: 0.45731708}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45d50e8bc0e921dd0800000000000000
+      internalID: -2516775464268178092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: folder
+      rect:
+        serializedVersion: 2
+        x: 1387
+        y: 1588
+        width: 97
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea9ac6c7c6b21f130800000000000000
+      internalID: 3598705322189695406
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: font-awesome-logo-full
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1950
+        width: 758
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d11282fbd3ca2ba80800000000000000
+      internalID: -8452504169420938979
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: frown-open
+      rect:
+        serializedVersion: 2
+        x: 1281
+        y: 1509
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 674a0f20823384390800000000000000
+      internalID: -7833955304869944202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: frown
+      rect:
+        serializedVersion: 2
+        x: 1182
+        y: 1425
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ad9cafc30eb6de50800000000000000
+      internalID: 6833858408159681956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: futbol
+      rect:
+        serializedVersion: 2
+        x: 1377
+        y: 1489
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53e219d8fba208af0800000000000000
+      internalID: -396269765006381515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: gem
+      rect:
+        serializedVersion: 2
+        x: 1257
+        y: 1873
+        width: 109
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cfa0c2e3ec264690800000000000000
+      internalID: -7618352362377138236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grimace
+      rect:
+        serializedVersion: 2
+        x: 1278
+        y: 1410
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c4f3e2ebecfb3dd0800000000000000
+      internalID: -2505130677647444794
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-alt
+      rect:
+        serializedVersion: 2
+        x: 1548
+        y: 1468
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10bb852c5eade3c80800000000000000
+      internalID: -8340988779500619007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-beam-sweat
+      rect:
+        serializedVersion: 2
+        x: 1644
+        y: 1376
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d248157a0e30e3c00800000000000000
+      internalID: 882146840425890861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-beam
+      rect:
+        serializedVersion: 2
+        x: 1740
+        y: 1288
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1aea0bc57cec74a60800000000000000
+      internalID: 7658317047015714465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-hearts
+      rect:
+        serializedVersion: 2
+        x: 1374
+        y: 1390
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 188fe147228571710800000000000000
+      internalID: 1663895492337006721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-squint-tears
+      rect:
+        serializedVersion: 2
+        x: 1900
+        y: 1509
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9346c57f2d4a22e50800000000000000
+      internalID: 6783165214773503033
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-squint
+      rect:
+        serializedVersion: 2
+        x: 1545
+        y: 1369
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcca816c8467203d0800000000000000
+      internalID: -3241898726820107057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-stars
+      rect:
+        serializedVersion: 2
+        x: 1641
+        y: 1277
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f4a1331e257d5a50800000000000000
+      internalID: 6511489476998571250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-tears
+      rect:
+        serializedVersion: 2
+        x: 1009
+        y: 1950
+        width: 122
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a87f8674c49d92a0800000000000000
+      internalID: -6729058696698038106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-tongue-squint
+      rect:
+        serializedVersion: 2
+        x: 1836
+        y: 1212
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60ed7ec718466c050800000000000000
+      internalID: 5820450075732073990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-tongue-wink
+      rect:
+        serializedVersion: 2
+        x: 1737
+        y: 1189
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44744e1f856fb5960800000000000000
+      internalID: 7591932458738927428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-tongue
+      rect:
+        serializedVersion: 2
+        x: 1932
+        y: 1212
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65d16846d1db42df0800000000000000
+      internalID: -205831749013988010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin-wink
+      rect:
+        serializedVersion: 2
+        x: 1833
+        y: 1113
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb6178d3cb8e54580800000000000000
+      internalID: -8843406398088341828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: grin
+      rect:
+        serializedVersion: 2
+        x: 1929
+        y: 1113
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: feddd851e657e4450800000000000000
+      internalID: 6074922063037849071
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-lizard
+      rect:
+        serializedVersion: 2
+        x: 1936
+        y: 1960
+        width: 109
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6076f4f10cc75320800000000000000
+      internalID: 2546728423078129771
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-paper
+      rect:
+        serializedVersion: 2
+        x: 610
+        y: 1566
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72db732173cd30830800000000000000
+      internalID: 4036311820141051175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-peace
+      rect:
+        serializedVersion: 2
+        x: 766
+        y: 1490
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18d0a7dc3d79c9ff0800000000000000
+      internalID: -27980561729843839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-point-down
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 1451
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b0b24113f3b00100800000000000000
+      internalID: 72255450585936050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-point-left
+      rect:
+        serializedVersion: 2
+        x: 694
+        y: 1853
+        width: 97
+        height: 95
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27f834420d6e14170800000000000000
+      internalID: 8161057781408042866
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-point-right
+      rect:
+        serializedVersion: 2
+        x: 892
+        y: 1856
+        width: 97
+        height: 92
+      alignment: 9
+      pivot: {x: 0.5, y: 0.48369566}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e1989b39652de320800000000000000
+      internalID: 2588766494709551593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-point-up
+      rect:
+        serializedVersion: 2
+        x: 940
+        y: 1369
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b8e71071fcb8ad40800000000000000
+      internalID: 5595930282161596599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-pointer
+      rect:
+        serializedVersion: 2
+        x: 1027
+        y: 1291
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 328f2ebea7445b6d0800000000000000
+      internalID: -2975396684074125277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-rock
+      rect:
+        serializedVersion: 2
+        x: 991
+        y: 1765
+        width: 97
+        height: 90
+      alignment: 9
+      pivot: {x: 0.5, y: 0.48333332}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e25b03f3f42894b50800000000000000
+      internalID: 6577932007625504046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-scissors
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 1854
+        width: 97
+        height: 94
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5159575}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b848a92488e4125e0800000000000000
+      internalID: -1936180017652661109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hand-spock
+      rect:
+        serializedVersion: 2
+        x: 1776
+        y: 1486
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 047d462f71678bdf0800000000000000
+      internalID: -164251541176002752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handshake
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 1968
+        width: 122
+        height: 79
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5253165}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bd45383749185830800000000000000
+      internalID: 4060022857750891952
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hdd
+      rect:
+        serializedVersion: 2
+        x: 1825
+        y: 1882
+        width: 109
+        height: 76
+      alignment: 9
+      pivot: {x: 0.5, y: 0.49342105}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce45a878e7e02bda0800000000000000
+      internalID: -5930661822690863892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: heart
+      rect:
+        serializedVersion: 2
+        x: 892
+        y: 1765
+        width: 97
+        height: 89
+      alignment: 9
+      pivot: {x: 0.5, y: 0.51123595}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12252bcbe8fa36ec0800000000000000
+      internalID: -3574820651616021983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hospital
+      rect:
+        serializedVersion: 2
+        x: 1114
+        y: 1227
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b102e48cb3ae6260800000000000000
+      internalID: 7092786493233693112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: hourglass
+      rect:
+        serializedVersion: 2
+        x: 1528
+        y: 1082
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e5109f31e4d64bb0800000000000000
+      internalID: -4952036676348144157
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: id-badge
+      rect:
+        serializedVersion: 2
+        x: 1603
+        y: 1079
+        width: 73
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 713123d245ea0be50800000000000000
+      internalID: 6823145112025043735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: id-card
+      rect:
+        serializedVersion: 2
+        x: 1714
+        y: 1871
+        width: 109
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 525752e47ec2bd920800000000000000
+      internalID: 3016053747414824229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: image
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 1688
+        width: 97
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 063d59dd32cffe250800000000000000
+      internalID: 5976272461515576160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: images
+      rect:
+        serializedVersion: 2
+        x: 1603
+        y: 1864
+        width: 109
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88cb55b34675c5380800000000000000
+      internalID: -8981207468879790968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: keyboard
+      rect:
+        serializedVersion: 2
+        x: 1936
+        y: 1883
+        width: 109
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 490ed6c975eee41d0800000000000000
+      internalID: -3364489811545169772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: kiss-beam
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1752
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8b2e878e80306080800000000000000
+      internalID: -9196297050372822134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: kiss-wink-heart
+      rect:
+        serializedVersion: 2
+        x: 991
+        y: 1666
+        width: 96
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a00ab236b17d8370800000000000000
+      internalID: 8326436313426952354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: kiss
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 1752
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85ab16a17d3868790800000000000000
+      internalID: -7528184767219385768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: laugh-beam
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 1752
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3435574db339d990800000000000000
+      internalID: -7360795227921763270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: laugh-squint
+      rect:
+        serializedVersion: 2
+        x: 289
+        y: 1752
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61a8d408ceeaa2b80800000000000000
+      internalID: -8418724222627640810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: laugh-wink
+      rect:
+        serializedVersion: 2
+        x: 385
+        y: 1752
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd5d1a09c6ccf0310800000000000000
+      internalID: 1373541178026350047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: laugh
+      rect:
+        serializedVersion: 2
+        x: 481
+        y: 1752
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01bbb99c49a197a20800000000000000
+      internalID: 3060506648114871056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lemon
+      rect:
+        serializedVersion: 2
+        x: 1652
+        y: 1475
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c576e4ff4470fe650800000000000000
+      internalID: 6264233599618148188
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: life-ring
+      rect:
+        serializedVersion: 2
+        x: 1875
+        y: 1410
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2cf09118ff8c6340800000000000000
+      internalID: 4858416393635298351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lightbulb
+      rect:
+        serializedVersion: 2
+        x: 697
+        y: 1566
+        width: 67
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 833ec3df32832d800800000000000000
+      internalID: 635632224636298040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: list-alt
+      rect:
+        serializedVersion: 2
+        x: 793
+        y: 1765
+        width: 97
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c012d7d50aa6f6600800000000000000
+      internalID: 463706523638243596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: map
+      rect:
+        serializedVersion: 2
+        x: 1492
+        y: 1863
+        width: 109
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f530635902b737af0800000000000000
+      internalID: -399840562033327265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: meh-blank
+      rect:
+        serializedVersion: 2
+        x: 577
+        y: 1752
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88c7d249c20ab3630800000000000000
+      internalID: 3907893214999051400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: meh-rolling-eyes
+      rect:
+        serializedVersion: 2
+        x: 673
+        y: 1665
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 861bda84c7f3d85d0800000000000000
+      internalID: -3058718768886861464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: meh
+      rect:
+        serializedVersion: 2
+        x: 769
+        y: 1589
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 130ae397da050b200800000000000000
+      internalID: 193743489970642993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: minus-square
+      rect:
+        serializedVersion: 2
+        x: 349
+        y: 1564
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0392a46c49cf49250800000000000000
+      internalID: 5950658723575376176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: money-bill-alt
+      rect:
+        serializedVersion: 2
+        x: 1257
+        y: 1972
+        width: 122
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cab7f939a04e4ea00800000000000000
+      internalID: 785002969146817452
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: moon
+      rect:
+        serializedVersion: 2
+        x: 865
+        y: 1550
+        width: 94
+        height: 97
+      alignment: 9
+      pivot: {x: 0.49468085, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4f3c4c93bdc47000800000000000000
+      internalID: 32877268603518796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: newspaper
+      rect:
+        serializedVersion: 2
+        x: 1936
+        y: 1806
+        width: 109
+        height: 75
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b8d0758be0c035b0800000000000000
+      internalID: -5390596636173870920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: object-group
+      rect:
+        serializedVersion: 2
+        x: 694
+        y: 1764
+        width: 97
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51e88a24937e160f0800000000000000
+      internalID: -1125364198748418539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: object-ungroup
+      rect:
+        serializedVersion: 2
+        x: 1368
+        y: 1861
+        width: 109
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5aaac31830d3b77a0800000000000000
+      internalID: -6378437361977742683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: paper-plane
+      rect:
+        serializedVersion: 2
+        x: 1751
+        y: 1387
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f08696358e8f85a20800000000000000
+      internalID: 3051462424259029007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pause-circle
+      rect:
+        serializedVersion: 2
+        x: 1850
+        y: 1311
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb263cdd4af385720800000000000000
+      internalID: 2835085942757483198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: play-circle
+      rect:
+        serializedVersion: 2
+        x: 1949
+        y: 1311
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70c587cf7f42368a0800000000000000
+      internalID: -6313161605132035065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: plus-square
+      rect:
+        serializedVersion: 2
+        x: 436
+        y: 1564
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0464e3ce1773a7820800000000000000
+      internalID: 2916704671110153792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: question-circle
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1851
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6066484384f1c010800000000000000
+      internalID: 1207515019802468462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: registered
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 1851
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e4a61d69b1682830800000000000000
+      internalID: 4046591714219435232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sad-cry
+      rect:
+        serializedVersion: 2
+        x: 961
+        y: 1468
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c62fc7a919979b140800000000000000
+      internalID: 4735950149425885804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sad-tear
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 1390
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c702a79fcac213cb0800000000000000
+      internalID: -4886074999288749956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: save
+      rect:
+        serializedVersion: 2
+        x: 523
+        y: 1564
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5b0e7aa2e0519c80800000000000000
+      internalID: -8317778102323377313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: share-square
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 1869
+        width: 109
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d4340dd8937f2e30800000000000000
+      internalID: 4480927254637196502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: smile-beam
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 1326
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e29ce7a10d8d825e0800000000000000
+      internalID: -1934057651646314194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: smile-wink
+      rect:
+        serializedVersion: 2
+        x: 1249
+        y: 1311
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f11a7dd5f349e170800000000000000
+      internalID: 8208166519121252855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: smile
+      rect:
+        serializedVersion: 2
+        x: 1345
+        y: 1291
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9edf70d75316e2710800000000000000
+      internalID: 1670379394159869417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: snowflake
+      rect:
+        serializedVersion: 2
+        x: 1201
+        y: 1212
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 081682b14d803a960800000000000000
+      internalID: 7611937502267990400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: square
+      rect:
+        serializedVersion: 2
+        x: 610
+        y: 1477
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b4c24b0b21c8be10800000000000000
+      internalID: 2213731607469278391
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: star-half
+      rect:
+        serializedVersion: 2
+        x: 697
+        y: 1467
+        width: 67
+        height: 97
+      alignment: 9
+      pivot: {x: 0.79850745, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b8a505b2263d0610800000000000000
+      internalID: 1588985766225488049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: star
+      rect:
+        serializedVersion: 2
+        x: 1825
+        y: 1783
+        width: 106
+        height: 97
+      alignment: 9
+      pivot: {x: 0.504717, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 928f3103afdb3c430800000000000000
+      internalID: 3802091392676919337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sticky-note
+      rect:
+        serializedVersion: 2
+        x: 766
+        y: 1401
+        width: 85
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6748e5b3fb25afa20800000000000000
+      internalID: 3096878675058918518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: stop-circle
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 1851
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4de0eb029966ed920800000000000000
+      internalID: 3016961608250166996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sun
+      rect:
+        serializedVersion: 2
+        x: 298
+        y: 1851
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 978ad873d74f7ee00800000000000000
+      internalID: 1074095854791272569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: surprise
+      rect:
+        serializedVersion: 2
+        x: 1441
+        y: 1291
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 507c7f10fce123f70800000000000000
+      internalID: 9165422066092459781
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: thumbs-down
+      rect:
+        serializedVersion: 2
+        x: 892
+        y: 1649
+        width: 96
+        height: 97
+      alignment: 9
+      pivot: {x: 0.5052083, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0fd69deb44651630800000000000000
+      internalID: 3897131329830444810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: thumbs-up
+      rect:
+        serializedVersion: 2
+        x: 397
+        y: 1851
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e05a1bf86f5afc00800000000000000
+      internalID: 935164777126842598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: times-circle
+      rect:
+        serializedVersion: 2
+        x: 496
+        y: 1851
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1216d48947f04a650800000000000000
+      internalID: 6243131976888181025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tired
+      rect:
+        serializedVersion: 2
+        x: 1537
+        y: 1270
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ab1d77e7abaecdb0800000000000000
+      internalID: -4769686217707152476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: trash-alt
+      rect:
+        serializedVersion: 2
+        x: 1288
+        y: 1192
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8025b48ab86c4f460800000000000000
+      internalID: 7274657601236455944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: user-circle
+      rect:
+        serializedVersion: 2
+        x: 1633
+        y: 1178
+        width: 94
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15bc5bc4676ddceb0800000000000000
+      internalID: -4697863032696091823
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: user
+      rect:
+        serializedVersion: 2
+        x: 1375
+        y: 1192
+        width: 85
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9dd8a79df01bfeea0800000000000000
+      internalID: -5841255510044930599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: window-close
+      rect:
+        serializedVersion: 2
+        x: 1189
+        y: 1700
+        width: 97
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba70f83c6812c8890800000000000000
+      internalID: -7454546420514748501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: window-maximize
+      rect:
+        serializedVersion: 2
+        x: 1090
+        y: 1687
+        width: 97
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf16caf9ebd3e3080800000000000000
+      internalID: -9205852699366759940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: window-minimize
+      rect:
+        serializedVersion: 2
+        x: 892
+        y: 1748
+        width: 97
+        height: 15
+      alignment: 9
+      pivot: {x: 0.5, y: 2.9}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2aa4a38953f48070800000000000000
+      internalID: 8107872794959981099
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: window-restore
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 1851
+        width: 97
+        height: 97
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 538e6755d8b320380800000000000000
+      internalID: -9006570826577287115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

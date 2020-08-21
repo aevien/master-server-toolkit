@@ -1,0 +1,761 @@
+fileFormatVersion: 2
+guid: 416056e89e6001e4f8e71275cf669cce
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7730398009979016775
+    second: bg_01
+  - first:
+      213: -5667121454029602559
+    second: bg_02
+  - first:
+      213: 6211154084914666243
+    second: bg_03
+  - first:
+      213: 8852086037993172051
+    second: bg_04
+  - first:
+      213: -5017801085933234494
+    second: bg_05
+  - first:
+      213: 1042861624189045805
+    second: bg_06
+  - first:
+      213: 1227216424554068601
+    second: msf_logo
+  - first:
+      213: 9156950971560463236
+    second: unity_logo
+  - first:
+      213: 2176595490370957018
+    second: gradient_bg
+  - first:
+      213: 8464627282614862601
+    second: lock
+  - first:
+      213: -5841255510044930599
+    second: user
+  - first:
+      213: 2988090094233564578
+    second: unlock
+  - first:
+      213: -4195352488869587978
+    second: globe
+  - first:
+      213: 4138848172959368440
+    second: frame_01
+  - first:
+      213: 5823024787834327110
+    second: frame_02
+  - first:
+      213: 4139023523627789917
+    second: ip_address
+  - first:
+      213: -2166547787996835203
+    second: port
+  - first:
+      213: 9146976222828657104
+    second: connection
+  - first:
+      213: -2180159719983343420
+    second: msf_logo_metal_01
+  - first:
+      213: -4454298382975246962
+    second: msf_logo_pressed_01
+  - first:
+      213: -4071048183623357559
+    second: msf_logo_stone_01
+  - first:
+      213: 8295727365658426461
+    second: msf_logo_chrome_01
+  - first:
+      213: 7226521049115224482
+    second: msf_logo_grunge_01
+  - first:
+      213: -746675581518417749
+    second: msf_logo_watermark
+  - first:
+      213: 8705369088665539303
+    second: msf_logo_small
+  - first:
+      213: 4640495241477865562
+    second: coins
+  - first:
+      213: -5207509682399473976
+    second: bronze_coins
+  - first:
+      213: 8675995047303388538
+    second: gold_coins
+  - first:
+      213: 9129354605046137251
+    second: silver_coins
+  - first:
+      213: -5343897376169499932
+    second: backpack
+  - first:
+      213: -4149600816155440385
+    second: config
+  - first:
+      213: 6934154925517905568
+    second: menu
+  - first:
+      213: -4697253405287060111
+    second: msf_logo_256
+  - first:
+      213: -2729415941221293220
+    second: msf_logo_512
+  externalObjects: {}
+  serializedVersion: 11
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: -1
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  applyGammaDecoding: 1
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: backpack
+      rect:
+        serializedVersion: 2
+        x: 1804
+        y: 1580
+        width: 128
+        height: 132
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e2664946a9a6d5b0800000000000000
+      internalID: -5343897376169499932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bg_01
+      rect:
+        serializedVersion: 2
+        x: 1979
+        y: 1923
+        width: 50
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b960d2a7fb18b490800000000000000
+      internalID: -7730398009979016775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bg_02
+      rect:
+        serializedVersion: 2
+        x: 1979
+        y: 1861
+        width: 50
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 101029130175a51b0800000000000000
+      internalID: -5667121454029602559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bg_03
+      rect:
+        serializedVersion: 2
+        x: 1711
+        y: 1725
+        width: 50
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30b1e8c6bb3723650800000000000000
+      internalID: 6211154084914666243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bg_04
+      rect:
+        serializedVersion: 2
+        x: 1706
+        y: 1663
+        width: 50
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35c27c7e95de8da70800000000000000
+      internalID: 8852086037993172051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bg_05
+      rect:
+        serializedVersion: 2
+        x: 1947
+        y: 1799
+        width: 50
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c6516f6f703d5ab0800000000000000
+      internalID: -5017801085933234494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bg_06
+      rect:
+        serializedVersion: 2
+        x: 1947
+        y: 1737
+        width: 50
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2ccca33f1df87e00800000000000000
+      internalID: 1042861624189045805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bronze_coins
+      rect:
+        serializedVersion: 2
+        x: 1047
+        y: 1481
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ce0c20d8853bb7b0800000000000000
+      internalID: -5207509682399473976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: config
+      rect:
+        serializedVersion: 2
+        x: 1187
+        y: 1481
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffa42611b08a966c0800000000000000
+      internalID: -4149600816155440385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: connection
+      rect:
+        serializedVersion: 2
+        x: 1327
+        y: 1481
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d975a2796690fe70800000000000000
+      internalID: 9146976222828657104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: frame_01
+      rect:
+        serializedVersion: 2
+        x: 1979
+        y: 1985
+        width: 52
+        height: 52
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 15, y: 15, z: 15, w: 15}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f484881c74207930800000000000000
+      internalID: 4138848172959368440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: frame_02
+      rect:
+        serializedVersion: 2
+        x: 1768
+        y: 1689
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 3, y: 3, z: 3, w: 3}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 640d82d513a8fc050800000000000000
+      internalID: 5823024787834327110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: globe
+      rect:
+        serializedVersion: 2
+        x: 1467
+        y: 1471
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f39069a32d17c5c0800000000000000
+      internalID: -4195352488869587978
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: gold_coins
+      rect:
+        serializedVersion: 2
+        x: 1607
+        y: 1471
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7d11933783576870800000000000000
+      internalID: 8675995047303388538
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: gradient_bg
+      rect:
+        serializedVersion: 2
+        x: 1807
+        y: 1899
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ade274ff012d43e10800000000000000
+      internalID: 2176595490370957018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ip_address
+      rect:
+        serializedVersion: 2
+        x: 1839
+        y: 1882
+        width: 128
+        height: 155
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5ee1da17f3c07930800000000000000
+      internalID: 4139023523627789917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: lock
+      rect:
+        serializedVersion: 2
+        x: 1571
+        y: 1769
+        width: 128
+        height: 146
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 903c6508aa5687570800000000000000
+      internalID: 8464627282614862601
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: menu
+      rect:
+        serializedVersion: 2
+        x: 1887
+        y: 1473
+        width: 128
+        height: 95
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ae15018a211b3060800000000000000
+      internalID: 6934154925517905568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: msf_logo
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 1598
+        width: 1024
+        height: 439
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97af11806d2f70110800000000000000
+      internalID: 1227216424554068601
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: msf_logo_256
+      rect:
+        serializedVersion: 2
+        x: 1571
+        y: 1927
+        width: 256
+        height: 110
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17deedd3ae000deb0800000000000000
+      internalID: -4697253405287060111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: msf_logo_512
+      rect:
+        serializedVersion: 2
+        x: 1047
+        y: 1817
+        width: 512
+        height: 220
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c53673b99aa2f1ad0800000000000000
+      internalID: -2729415941221293220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: msf_logo_watermark
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 1147
+        width: 1024
+        height: 439
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba0f221c38643a5f0800000000000000
+      internalID: -746675581518417749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: port
+      rect:
+        serializedVersion: 2
+        x: 1711
+        y: 1787
+        width: 84
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d725a830440eee1e0800000000000000
+      internalID: -2166547787996835203
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: silver_coins
+      rect:
+        serializedVersion: 2
+        x: 1747
+        y: 1440
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a10a56d4abf1be70800000000000000
+      internalID: 9129354605046137251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: unity_logo
+      rect:
+        serializedVersion: 2
+        x: 1047
+        y: 1621
+        width: 507
+        height: 184
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48b878d9466041f70800000000000000
+      internalID: 9156950971560463236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: unlock
+      rect:
+        serializedVersion: 2
+        x: 1807
+        y: 1724
+        width: 128
+        height: 146
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a5b7afeb14d77920800000000000000
+      internalID: 2988090094233564578
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: user
+      rect:
+        serializedVersion: 2
+        x: 1566
+        y: 1611
+        width: 128
+        height: 146
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9dd8a79df01bfeea0800000000000000
+      internalID: -5841255510044930599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
