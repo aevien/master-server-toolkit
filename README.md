@@ -1,7 +1,7 @@
 ![Master Server Toolkit Logo](https://master-toolkit.com/media/th4iz2gx/msf_logo.jpg)
 
 # What is Master Server Toolkit?
-This is a framework that allows you to create game servers and services for your game inside Unity. This allows you to avoid using third-party services such as Playful, PAN, or Smartfox server. This framework does not claim to be a substitute for all these systems. No way! It offers to use free systems that you will pay for from others. Here are some of the free services that you are most likely to use in your game:
+This is a framework that allows you to create game servers and services for your game inside Unity. It allows you to avoid using third-party services such as Playful, PAN, or Smartfox server. This framework does not claim to be a substitute for all these systems. No way! It offers to use free systems that you will pay for from others. Here are some of the free services that you are most likely to use in your game:
 
 * Authentication module - is responsible for registration and authorization of the players in your game.
 * Profiles module - is responsible for working with the profiles of your players.
