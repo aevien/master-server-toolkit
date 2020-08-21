@@ -1,3 +1,4 @@
+![Master Server Toolkit Logo](https://master-toolkit.com/media/th4iz2gx/msf_logo.jpg)
 
 # What is Master Server Toolkit?
 This is a framework that allows you to create game servers and services for your game inside Unity. This allows you to avoid using third-party services such as Playful, PAN, or Smartfox server. This framework does not claim to be a substitute for all these systems. No way! It offers to use free systems that you will pay for from others. Here are some of the free services that you are most likely to use in your game:
@@ -8,7 +9,7 @@ This is a framework that allows you to create game servers and services for your
 * Game servers spawner module - allows you to remotely launch game servers that may be located in different parts of the world.
 * Chat module - allows you to create game chats and private chat channels.
 
-Servers and modules communicate to each other via Networking API
+> Servers and modules communicate to each other via Networking API
 
 # What is integrated networking API?
 It's a layer of abstraction on top of networking technologies / protocols, that simplifies communication between servers and clients.
@@ -16,8 +17,8 @@ It allows you to easily start any number of socket servers (think "Photon Server
 It's decoupled from master server, so you're free to write any kind of socket-based server you need.
 
 # Is It For You?
-1 As mentioned earlier, the purpose of the framework is to create servers, services, and microservices that will work in different parts of the world and perform the same task. With the built-in network API, you can create your own game server without having to use uNet, Mirror Networking, Forge Remastered, or other systems for creating online multiplayer games.
-1 Servers and services that are created using the current framework can work locally, but you need to use a VPS or dedicated server for production.
-1 We recommend you have your servers on a remote machine, not on a local machine. You can either have some pre-defined game servers running 24/7, or you can have a Spawner server "Spawn" a game server on clients request (this seamlessly imitates client hosting).
-1 The concept of a framework already indicates the readiness of those who will use it to program using the API. The interface components used in the examples are only designed to demonstrate a particular tool. There is no need to use the interface at all to solve your problems. For example: you don't need an interface to get a list of game servers. You just need to make a request to get a list and use the response for your purposes.
-1 There is no need to use everything in the framework. Use just the tools you need.
+1. As mentioned earlier, the purpose of the framework is to create servers, services, and microservices that will work in different parts of the world and perform the same task. With the built-in network API, you can create your own game server without having to use uNet, Mirror Networking, Forge Remastered, or other systems for creating online multiplayer games.
+1. Servers and services that are created using the current framework can work locally, but you need to use a VPS or dedicated server for production.
+1. We recommend you have your servers on a remote machine, not on a local machine. You can either have some pre-defined game servers running 24/7, or you can have a Spawner server "Spawn" a game server on clients request (this seamlessly imitates client hosting).
+1. The concept of a framework already indicates the readiness of those who will use it to program using the API. The interface components used in the examples are only designed to demonstrate a particular tool. There is no need to use the interface at all to solve your problems. For example: you don't need an interface to get a list of game servers. You just need to make a request to get a list and use the response for your purposes.
+1. There is no need to use everything in the framework. Use just the tools you need.
