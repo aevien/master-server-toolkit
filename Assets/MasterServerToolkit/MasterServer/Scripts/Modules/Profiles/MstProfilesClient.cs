@@ -45,6 +45,8 @@ namespace MasterServerToolkit.MasterServer
                 // Listen to profile updates, and apply them
                 connection.SetHandler((short)MstMessageCodes.UpdateClientProfile, message =>
                 {
+                    //UnityEngine.Debug.LogError($"Profile Updated from server");
+
                     profile.ApplyUpdates(message.AsBytes());
                 });
 

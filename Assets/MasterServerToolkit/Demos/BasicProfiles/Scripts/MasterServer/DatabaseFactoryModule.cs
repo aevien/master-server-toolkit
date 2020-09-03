@@ -1,8 +1,4 @@
-﻿using MasterServerToolkit.MasterServer;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System;
+﻿using System;
 using MasterServerToolkit.MasterServer.Examples.BasicAuthorization;
 
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR

@@ -3,7 +3,6 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 
 namespace MasterServerToolkit.MasterServer
@@ -13,14 +12,19 @@ namespace MasterServerToolkit.MasterServer
     /// Client, game server and master servers will create a similar
     /// object.
     /// </summary>
-    public class ObservableProfile : IEnumerable<IObservableProperty>
+    public class ObservableProfile : IEnumerable<IObservableProperty>, IDisposable
     {
+        public delegate void PropertyUpdateHandler(short propertyCode, IObservableProperty property);
+
+        /// <summary>
+        /// Check if object is disposed
+        /// </summary>
+        protected bool isDisposed = false;
+
         /// <summary>
         /// Properties that are changed and waiting for to be sent
         /// </summary>
-        private HashSet<IObservableProperty> _notBroadcastedProperties;
-
-        public delegate void PropertyUpdateHandler(short propertyCode, IObservableProperty property);
+        private HashSet<IObservableProperty> propertiesToBeSent;
 
         /// <summary>
         /// Profile properties list
@@ -28,31 +32,20 @@ namespace MasterServerToolkit.MasterServer
         public Dictionary<short, IObservableProperty> Properties { get; protected set; }
 
         /// <summary>
-        /// 
-        /// </summary>
-        public HashSet<IObservableProperty> UnsavedProperties { get; protected set; }
-
-        /// <summary>
         /// Invoked, when one of the values changes
         /// </summary>
         public event Action<short, IObservableProperty> OnPropertyUpdatedEvent;
 
-        /// <summary>
-        /// Invoked, when something in the profile changes
-        /// </summary>
-        public event Action<ObservableProfile> OnModifiedEvent;
-
         public ObservableProfile()
         {
             Properties = new Dictionary<short, IObservableProperty>();
-            _notBroadcastedProperties = new HashSet<IObservableProperty>();
-            UnsavedProperties = new HashSet<IObservableProperty>();
+            propertiesToBeSent = new HashSet<IObservableProperty>();
         }
 
         /// <summary>
         /// Check if profile has changed properties
         /// </summary>
-        public bool HasDirtyProperties { get { return _notBroadcastedProperties.Count > 0; } }
+        public bool HasDirtyProperties { get { return propertiesToBeSent.Count > 0; } }
 
         /// <summary>
         /// The number of properties the profile has
@@ -67,6 +60,12 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public T GetProperty<T>(short key) where T : class, IObservableProperty
         {
+            if (!Properties.ContainsKey(key))
+            {
+                Logs.Error($"Observable property with key [{key}] does not exist");
+                return null;
+            }
+
             return Properties[key].CastTo<T>();
         }
 
@@ -93,13 +92,15 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Adds a value to profile
+        /// Adds property to current profile
         /// </summary>
         /// <param name="property"></param>
         public void AddProperty(IObservableProperty property)
         {
+            if (Properties.ContainsKey(property.Key)) return;
+
             Properties.Add(property.Key, property);
-            property.OnDirtyEvent += OnDirtyProperty;
+            property.OnDirtyEvent += OnDirtyPropertyEventHandler;
         }
 
         /// <summary>
@@ -109,23 +110,6 @@ namespace MasterServerToolkit.MasterServer
         public void Add(IObservableProperty property)
         {
             AddProperty(property);
-        }
-
-        /// <summary>
-        /// Called, when a value becomes dirty
-        /// </summary>
-        /// <param name="property"></param>
-        protected virtual void OnDirtyProperty(IObservableProperty property)
-        {
-            _notBroadcastedProperties.Add(property);
-            UnsavedProperties.Add(property);
-
-            // TODO Possible optimisation, by not invoking OnChanged event.
-            // Need to do more research, if this event is necessary to be invoked
-            // on every change
-            OnModifiedEvent?.Invoke(this);
-
-            OnPropertyUpdatedEvent?.Invoke(property.Key, property);
         }
 
         /// <summary>
@@ -176,12 +160,10 @@ namespace MasterServerToolkit.MasterServer
                         var length = reader.ReadInt32();
                         var valueData = reader.ReadBytes(length);
 
-                        if (!Properties.ContainsKey(key))
+                        if (Properties.ContainsKey(key))
                         {
-                            continue;
+                            Properties[key].FromBytes(valueData);
                         }
-
-                        Properties[key].FromBytes(valueData);
                     }
                 }
             }
@@ -205,8 +187,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Returns observable properties changes, writen to
-        /// byte array
+        /// Returns observable properties changes, writen to byte array
         /// </summary>
         /// <returns></returns>
         public byte[] GetUpdates()
@@ -215,7 +196,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    GetUpdates(writer);
+                    WriteUpdates(writer);
                 }
 
                 return ms.ToArray();
@@ -226,12 +207,12 @@ namespace MasterServerToolkit.MasterServer
         /// Writes changes into the writer
         /// </summary>
         /// <param name="writer"></param>
-        public void GetUpdates(EndianBinaryWriter writer)
+        public void WriteUpdates(EndianBinaryWriter writer)
         {
             // Write values count
-            writer.Write(_notBroadcastedProperties.Count);
+            writer.Write(propertiesToBeSent.Count);
 
-            foreach (var property in _notBroadcastedProperties)
+            foreach (var property in propertiesToBeSent)
             {
                 // Write key
                 writer.Write(property.Key);
@@ -246,14 +227,17 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
+        /// <summary>
+        /// Clears all updates in properties
+        /// </summary>
         public void ClearUpdates()
         {
-            foreach (var property in _notBroadcastedProperties)
+            foreach (var property in propertiesToBeSent)
             {
                 property.ClearUpdates();
             }
 
-            _notBroadcastedProperties.Clear();
+            propertiesToBeSent.Clear();
         }
 
         /// <summary>
@@ -266,7 +250,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    ApplyUpdates(reader);
+                    ReadUpdates(reader);
                 }
             }
         }
@@ -275,7 +259,7 @@ namespace MasterServerToolkit.MasterServer
         /// Use updates data to update values in the profile
         /// </summary>
         /// <param name="updates"></param>
-        public void ApplyUpdates(EndianBinaryReader reader)
+        public void ReadUpdates(EndianBinaryReader reader)
         {
             // Read count
             var count = reader.ReadInt32();
@@ -298,6 +282,8 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!dataRead.ContainsKey(key))
                 {
+                    //UnityEngine.Debug.LogError($"Property {key} updated");
+
                     dataRead.Add(key, data);
                 }
             }
@@ -328,16 +314,49 @@ namespace MasterServerToolkit.MasterServer
             return dict;
         }
 
+        /// <summary>
+        /// Dispose object
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public IEnumerator<IObservableProperty> GetEnumerator()
         {
             return Properties.Values.GetEnumerator();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
+
+        /// <summary>
+        /// Called, when a value becomes dirty
+        /// </summary>
+        /// <param name="property"></param>
+        protected virtual void OnDirtyPropertyEventHandler(IObservableProperty property)
+        {
+            if (!propertiesToBeSent.Contains(property))
+                propertiesToBeSent.Add(property);
+
+            OnPropertyUpdatedEvent?.Invoke(property.Key, property);
+        }
+
+        /// <summary>
+        /// Dispose object safty
+        /// </summary>
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing) { }
     }
 }

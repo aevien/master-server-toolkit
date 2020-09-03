@@ -35,7 +35,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
                     // 
                     if (!currentDirection.Equals(Vector3.zero))
                     {
-                        playerTargetDirectionAngle = Quaternion.LookRotation(currentDirection) * lookController.GetRotation();
+                        playerTargetDirectionAngle = Quaternion.LookRotation(currentDirection) * lookController.GetCameraRotation();
                     }
                 }
                 // If we are moving and armed mode
@@ -63,7 +63,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
                 var compositeAngle = inputAxisAngle - transform.eulerAngles;
 
                 // 
-                calculatedInputDirection = Quaternion.Euler(compositeAngle) * lookController.GetRotation() * transform.forward * inputController.MovementAxisMagnitude();
+                calculatedInputDirection = Quaternion.Euler(compositeAngle) * lookController.GetCameraRotation() * transform.forward * inputController.MovementAxisMagnitude();
 
                 // 
                 calculatedMovementDirection.y = -stickToGroundPower;

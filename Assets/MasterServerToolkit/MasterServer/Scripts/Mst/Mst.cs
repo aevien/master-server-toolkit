@@ -12,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "v4.0";
+        public static string Version => "v4.0.1";
 
         /// <summary>
         /// Just name of the framework

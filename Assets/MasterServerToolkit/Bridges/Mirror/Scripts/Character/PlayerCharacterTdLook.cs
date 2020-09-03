@@ -207,6 +207,10 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         private bool IsCharacterOutOfBounds()
         {
             Vector3 t_screenPos = Camera.main.WorldToScreenPoint(transform.position);
@@ -218,79 +222,9 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         /// Gets camera root rotation angle in <see cref="Quaternion"/>
         /// </summary>
         /// <returns></returns>
-        public Quaternion GetRotation()
+        public override Quaternion GetCameraRotation()
         {
             return cameraRoot.transform.rotation;
-        }
-
-        /// <summary>
-        /// Gets camera root rotation angle in <see cref="Vector3"/>
-        /// </summary>
-        /// <returns></returns>
-        public Vector3 GetEulerRotation()
-        {
-            return cameraRoot.transform.rotation.eulerAngles;
-        }
-
-        /// <summary>
-        /// Gets camera root yaw angle in <see cref="Quaternion"/>
-        /// </summary>
-        /// <returns></returns>
-        public float GetQuaternionYaw()
-        {
-            return cameraRoot.transform.rotation.y;
-        }
-
-        /// <summary>
-        /// Gets camera root yaw angle in <see cref="Vector3"/>
-        /// </summary>
-        /// <returns></returns>
-        public float GetEulerYaw()
-        {
-            return cameraRoot.transform.rotation.eulerAngles.y;
-        }
-
-        /// <summary>
-        /// Direction to the point at what the character is looking in armed mode
-        /// </summary>
-        /// <returns></returns>
-        public Vector3 AimDirection()
-        {
-            if (inputController.ScreenPointHit(out RaycastHit hit))
-            {
-                return hit.point - (transform.position + new Vector3(0f, 1.4f, 0f));
-            }
-            else
-            {
-                return Vector3.forward;
-            }
-        }
-
-        /// <summary>
-        /// Character aim yaw angle
-        /// </summary>
-        /// <returns></returns>
-        public float AimYawAngle()
-        {
-            return Vector3.Angle(transform.forward, new Vector3(AimDirection().x, 0f, AimDirection().z));
-        }
-
-        /// <summary>
-        /// Character aim yaw signed angle
-        /// </summary>
-        /// <returns></returns>
-        public float AimSignedYawAngle()
-        {
-            return Vector3.SignedAngle(transform.forward, new Vector3(AimDirection().x, 0f, AimDirection().z), Vector3.up);
-        }
-
-        /// <summary>
-        /// Character aim pitch signed angle
-        /// </summary>
-        /// <returns></returns>
-        public float AimSignedPitchAngle()
-        {
-            return Vector3.SignedAngle(transform.forward, new Vector3(AimDirection().x, 0f, AimDirection().z), Vector3.left);
         }
     }
 }

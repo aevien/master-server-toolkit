@@ -263,6 +263,9 @@ namespace MasterServerToolkit.Bridges.Mirror
                     if (RoomController.IsActive)
                         RoomController.NotifyPlayerLeft(player.MasterPeerId);
 
+                    // Dispose profile
+                    player.Profile?.Dispose();
+
                     // Inform subscribers about this bad guy
                     OnPlayerLeftRoomEvent?.Invoke(player);
 
@@ -443,8 +446,7 @@ namespace MasterServerToolkit.Bridges.Mirror
                 // Save our room controller
                 RoomController = controller;
 
-                // Save room id to global options just for test purpose only
-                Mst.Options.Set(MstDictKeys.roomId, controller.RoomId);
+                OnRoomServerRegisteredEvent?.Invoke();
 
                 logger.Info($"Room {controller.RoomId} is successfully registered with options {roomOptions}");
             });

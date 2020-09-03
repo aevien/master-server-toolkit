@@ -64,6 +64,11 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             return Input.GetMouseButton(1);
         }
 
+        public virtual bool IsAttack()
+        {
+            return Input.GetMouseButton(0);
+        }
+
         public virtual bool IsCrouching()
         {
             return Input.GetKeyDown(KeyCode.C);
@@ -84,7 +89,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             return Input.GetMouseButtonDown(0);
         }
 
-        public bool ScreenPointHit(out RaycastHit hit, float maxCheckDistance = Mathf.Infinity)
+        public bool MouseToWorldHitPoint(out RaycastHit hit, float maxCheckDistance = Mathf.Infinity)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             return Physics.Raycast(ray, out hit, maxCheckDistance);

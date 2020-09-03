@@ -14,9 +14,9 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class JoinedLobby
     {
-        public LobbyDataPacket Data { get; private set; }
         private readonly IClientSocket _connection;
 
+        public LobbyDataPacket Data { get; private set; }
         public Dictionary<string, string> Properties { get; private set; }
         public Dictionary<string, LobbyMemberData> Members { get; private set; }
         public Dictionary<string, LobbyTeamData> Teams { get; private set; }
@@ -33,8 +33,8 @@ namespace MasterServerToolkit.MasterServer
 
         public JoinedLobby(LobbyDataPacket data, IClientSocket connection)
         {
-            Data = data;
             _connection = connection;
+            Data = data;
             connection.SetHandler((short)MstMessageCodes.LobbyMemberPropertyChanged, HandleMemberPropertyChanged);
             connection.SetHandler((short)MstMessageCodes.LeftLobby, HandleLeftLobbyMsg);
             connection.SetHandler((short)MstMessageCodes.LobbyChatMessage, HandleLobbyChatMessageMsg);
@@ -84,10 +84,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SetLobbyProperty(string key, string value, SuccessCallback callback)
         {
-            var data = new Dictionary<string, string>()
-            {
-                {key, value }
-            };
+            var data = new MstProperties();
+            data.Set(key, value);
 
             Mst.Client.Lobbies.SetLobbyProperties(Id, data, callback, _connection);
         }
@@ -95,7 +93,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sets a lobby properties to values, provided within a dictionary
         /// </summary>
-        public void SetLobbyProperties(Dictionary<string, string> properties, SuccessCallback callback)
+        public void SetLobbyProperties(MstProperties properties, SuccessCallback callback)
         {
             Mst.Client.Lobbies.SetLobbyProperties(Id, properties, callback, _connection);
         }
@@ -119,10 +117,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         public void SetMyProperty(string key, string value, SuccessCallback callback)
         {
-            var data = new Dictionary<string, string>()
-            {
-                {key, value }
-            };
+            var data = new MstProperties();
+            data.Set(key, value);
 
             Mst.Client.Lobbies.SetMyProperties(data, callback, _connection);
         }
@@ -130,7 +126,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Set's current player's properties
         /// </summary>
-        public void SetMyProperties(Dictionary<string, string> properties, SuccessCallback callback)
+        public void SetMyProperties(MstProperties properties, SuccessCallback callback)
         {
             Mst.Client.Lobbies.SetMyProperties(properties, callback, _connection);
         }

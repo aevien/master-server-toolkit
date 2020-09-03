@@ -217,7 +217,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="lobbyId"></param>
         /// <param name="properties"></param>
         /// <param name="callback"></param>
-        public void SetLobbyProperties(int lobbyId, Dictionary<string, string> properties, SuccessCallback callback)
+        public void SetLobbyProperties(int lobbyId, MstProperties properties, SuccessCallback callback)
         {
             SetLobbyProperties(lobbyId, properties, callback, Connection);
         }
@@ -225,7 +225,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sets lobby properties of a specified lobby id
         /// </summary>
-        public void SetLobbyProperties(int lobbyId, Dictionary<string, string> properties, SuccessCallback callback, IClientSocket connection)
+        public void SetLobbyProperties(int lobbyId, MstProperties properties, SuccessCallback callback, IClientSocket connection)
         {
             var packet = new LobbyPropertiesSetPacket()
             {
@@ -251,7 +251,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="properties"></param>
         /// <param name="callback"></param>
-        public void SetMyProperties(Dictionary<string, string> properties, SuccessCallback callback)
+        public void SetMyProperties(MstProperties properties, SuccessCallback callback)
         {
             SetMyProperties(properties, callback, Connection);
         }
@@ -260,7 +260,7 @@ namespace MasterServerToolkit.MasterServer
         /// Set's lobby user properties (current player sets his own properties,
         ///  which can be accessed by game server and etc.)
         /// </summary>
-        public void SetMyProperties(Dictionary<string, string> properties, SuccessCallback callback, IClientSocket connection)
+        public void SetMyProperties(MstProperties properties, SuccessCallback callback, IClientSocket connection)
         {
             connection.SendMessage((short)MstMessageCodes.SetMyLobbyProperties, properties.ToBytes(), Mst.Create.SuccessCallback(callback));
         }

@@ -236,9 +236,9 @@ MonoBehaviour:
   logLevel: 0
   serverIp: 127.0.0.1
   serverPort: 5000
+  useSsl: 0
   minTimeToConnect: 0.5
   maxTimeToConnect: 4
-  timeToConnect: 0.5
   maxAttemptsToConnect: 5
   waitAndConnect: 0.2
   connectOnStart: 1
@@ -416,6 +416,7 @@ GameObject:
   m_Component:
   - component: {fileID: 839013359}
   - component: {fileID: 839013360}
+  - component: {fileID: 839013361}
   m_Layer: 0
   m_Name: SpawnersModule
   m_TagString: Untagged
@@ -453,6 +454,22 @@ MonoBehaviour:
   createSpawnerPermissionLevel: 0
   queueUpdateFrequency: 0.1
   enableClientSpawnRequests: 1
+--- !u!114 &839013361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 839013358}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e401e71d0a64ca74e9df70f81052b6e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  createLobbiesPermissionLevel: 0
+  dontAllowCreatingIfJoined: 1
+  joinedLobbiesLimit: 1
 --- !u!1 &1005001215
 GameObject:
   m_ObjectHideFlags: 0
@@ -490,6 +507,10 @@ MonoBehaviour:
   usePublicIp: 0
   serverIP: localhost
   serverPort: 5000
+  maxConnections: 0
+  useSsl: 0
+  certificatePath: C:/path to your certificate
+  certificatePassword: PasswordHere
   autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:

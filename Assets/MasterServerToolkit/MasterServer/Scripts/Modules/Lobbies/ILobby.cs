@@ -10,8 +10,8 @@ namespace MasterServerToolkit.MasterServer
         string GameIp { get; }
         int GamePort { get; }
         int MaxPlayers { get; }
-        string Name { get; set; }
         int PlayerCount { get; }
+        string Name { get; set; }
 
         event Action<ILobby> OnDestroyedEvent;
 

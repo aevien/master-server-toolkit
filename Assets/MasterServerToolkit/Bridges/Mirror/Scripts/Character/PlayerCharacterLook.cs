@@ -78,10 +78,29 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             DetachCamera();
         }
 
-        [Server]
-        public void AllowLook(bool value)
+        /// <summary>
+        /// Direction to the point at what the character is looking in armed mode
+        /// </summary>
+        /// <returns></returns>
+        public virtual Vector3 AimDirection()
         {
-            lookIsAllowed = value;
+            if (inputController.MouseToWorldHitPoint(out RaycastHit hit))
+            {
+                return hit.point - (transform.position + new Vector3(0f, 1.4f, 0f));
+            }
+            else
+            {
+                return Vector3.forward;
+            }
+        }
+
+        /// <summary>
+        /// Gets camera rotation angle in <see cref="Quaternion"/>
+        /// </summary>
+        /// <returns></returns>
+        public virtual Quaternion GetCameraRotation()
+        {
+            return lookCamera.transform.rotation;
         }
     }
 }

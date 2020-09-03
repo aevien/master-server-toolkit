@@ -8,9 +8,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class LobbiesModule : BaseServerModule, IGamesProvider
     {
-        private int nextLobbyId;
-        protected Dictionary<string, ILobbyFactory> factories;
-        protected Dictionary<int, ILobby> lobbies;
+        #region INSPECTOR
 
         [Header("Configuration")]
         public int createLobbiesPermissionLevel = 0;
@@ -18,6 +16,12 @@ namespace MasterServerToolkit.MasterServer
         public bool dontAllowCreatingIfJoined = true;
         [Tooltip("How many lobbies can a user join concurrently")]
         public int joinedLobbiesLimit = 1;
+
+        #endregion
+
+        private int nextLobbyId;
+        protected Dictionary<string, ILobbyFactory> factories;
+        protected Dictionary<int, ILobby> lobbies;
 
         public SpawnersModule SpawnersModule { get; protected set; }
         public RoomsModule RoomsModule { get; protected set; }
@@ -41,7 +45,7 @@ namespace MasterServerToolkit.MasterServer
 
             server.SetHandler((short)MstMessageCodes.CreateLobby, CreateLobbyRequestHandle);
             server.SetHandler((short)MstMessageCodes.JoinLobby, JoinLobbyRequestHandler);
-            server.SetHandler((short)MstMessageCodes.LeaveLobby, HandleLeaveLobby);
+            server.SetHandler((short)MstMessageCodes.LeaveLobby, LeaveLobbyRequestHandler);
             server.SetHandler((short)MstMessageCodes.SetLobbyProperties, HandleSetLobbyProperties);
             server.SetHandler((short)MstMessageCodes.SetMyLobbyProperties, HandleSetMyProperties);
             server.SetHandler((short)MstMessageCodes.JoinLobbyTeam, HandleJoinTeam);
@@ -57,10 +61,13 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool CheckIfHasPermissionToCreate(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-
             return extension.PermissionLevel >= createLobbiesPermissionLevel;
         }
 
+        /// <summary>
+        /// Add new lobby factory to list
+        /// </summary>
+        /// <param name="factory"></param>
         public void AddFactory(ILobbyFactory factory)
         {
             // In case the module has not been initialized yet
@@ -139,17 +146,19 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void CreateLobbyRequestHandle(IIncommingMessage message)
         {
+            // We may need to check permission of requester
             if (!CheckIfHasPermissionToCreate(message.Peer))
             {
                 message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
                 return;
             }
 
+            // Let's get or create new lobby user peer extension
             var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
 
+            // If peer is already in a lobby and system does not allow to create if user is joined
             if (dontAllowCreatingIfJoined && lobbyUser.CurrentLobby != null)
             {
-                // If peer is already in a lobby
                 message.Respond("You are already in a lobby", ResponseStatus.Failed);
                 return;
             }
@@ -157,6 +166,7 @@ namespace MasterServerToolkit.MasterServer
             // Deserialize properties of the lobby
             var options = MstProperties.FromBytes(message.AsBytes());
 
+            // Try get factory ID
             if (!options.Has(MstDictKeys.lobbyFactoryId))
             {
                 message.Respond("Invalid request (undefined factory)", ResponseStatus.Failed);
@@ -225,7 +235,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a request from user to leave a lobby
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void HandleLeaveLobby(IIncommingMessage message)
+        protected virtual void LeaveLobbyRequestHandler(IIncommingMessage message)
         {
             var lobbyId = message.AsInt();
 
@@ -255,7 +265,7 @@ namespace MasterServerToolkit.MasterServer
 
             var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
 
-            foreach (var dataProperty in data.Properties)
+            foreach (var dataProperty in data.Properties.ToDictionary())
             {
                 if (!lobby.SetProperty(lobbiesExt, dataProperty.Key, dataProperty.Value))
                 {

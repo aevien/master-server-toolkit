@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using UnityEngine;
 using WebSocketSharp.Net;
 
 namespace MasterServerToolkit.MasterServer
@@ -9,7 +8,6 @@ namespace MasterServerToolkit.MasterServer
         public override void Initialize(HttpServerModule server)
         {
             base.Initialize(server);
-
             server.RegisterHttpRequestHandler("home", OnHomeHttpRequestHandler);
         }
 

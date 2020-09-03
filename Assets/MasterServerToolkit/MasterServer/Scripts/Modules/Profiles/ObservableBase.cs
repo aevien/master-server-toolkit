@@ -5,7 +5,7 @@ namespace MasterServerToolkit.MasterServer
     /// <summary>
     /// Base observable value class, which should help out with some things
     /// </summary>
-    public abstract class ObservableBase<T> : IObservableProperty<T>
+    public abstract class ObservableBase<T> : IObservableProperty<T>, IEquatable<IObservableProperty<T>>
     {
         protected T _value;
 
@@ -17,6 +17,11 @@ namespace MasterServerToolkit.MasterServer
         public short Key { get; private set; }
 
         public event Action<IObservableProperty> OnDirtyEvent;
+
+        public override string ToString()
+        {
+            return _value.ToString();
+        }
 
         public T GetValue()
         {
@@ -45,6 +50,11 @@ namespace MasterServerToolkit.MasterServer
         public TCast CastTo<TCast>() where TCast : class, IObservableProperty
         {
             return this as TCast;
+        }
+
+        public bool Equals(IObservableProperty<T> other)
+        {
+            return Key == other.Key;
         }
     }
 }

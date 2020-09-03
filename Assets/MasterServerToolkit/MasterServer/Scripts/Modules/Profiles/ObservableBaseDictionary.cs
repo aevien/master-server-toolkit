@@ -19,6 +19,11 @@ namespace MasterServerToolkit.MasterServer
             _value = defaultValues == null ? new Dictionary<TKey, TValue>() :  defaultValues.ToDictionary(k => k.Key, k => k.Value);
         }
 
+        public override string ToString()
+        {
+            return MstProperties.FromDictionary(_value).ToReadableString();
+        }
+
         /// <summary>
         /// Returns an immutable list of values
         /// </summary>

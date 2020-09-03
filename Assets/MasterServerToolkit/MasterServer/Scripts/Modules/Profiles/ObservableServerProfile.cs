@@ -26,40 +26,62 @@ namespace MasterServerToolkit.MasterServer
         public bool ShouldBeSavedToDatabase { get; set; } = true;
 
         /// <summary>
-        /// When profile modified in server
+        /// Fires when profile modified in server
         /// </summary>
         public event Action<ObservableServerProfile> OnModifiedInServerEvent;
+
+        /// <summary>
+        /// Fires when profile is destroyed
+        /// </summary>
         public event Action<ObservableServerProfile> OnDisposedEvent;
 
+        /// <summary>
+        /// Creates new instance of obsrvable profile
+        /// </summary>
+        /// <param name="username"></param>
         public ObservableServerProfile(string username)
         {
             Username = username;
         }
 
+        /// <summary>
+        /// Creates new instance of obsrvable profile
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="peer"></param>
         public ObservableServerProfile(string username, IPeer peer)
         {
             Username = username;
             ClientPeer = peer;
         }
 
-        protected override void OnDirtyProperty(IObservableProperty property)
+        /// <summary>
+        /// Destroys this instance of profile
+        /// </summary>
+        protected override void Dispose(bool disposing)
         {
-            base.OnDirtyProperty(property);
-            OnModifiedInServerEvent?.Invoke(this);
-        }
-
-        protected void Dispose()
-        {
-            if (OnDisposedEvent != null)
+            if (!isDisposed)
             {
-                Dispose();
+                if (disposing)
+                {
+                    OnDisposedEvent?.Invoke(this);
+                    OnModifiedInServerEvent = null;
+                    OnDisposedEvent = null;
+                    ClearUpdates();
+                }
             }
 
-            OnModifiedInServerEvent = null;
-            OnDisposedEvent = null;
+            isDisposed = true;
+        }
 
-            UnsavedProperties.Clear();
-            ClearUpdates();
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="property"></param>
+        protected override void OnDirtyPropertyEventHandler(IObservableProperty property)
+        {
+            base.OnDirtyPropertyEventHandler(property);
+            OnModifiedInServerEvent?.Invoke(this);
         }
     }
 }

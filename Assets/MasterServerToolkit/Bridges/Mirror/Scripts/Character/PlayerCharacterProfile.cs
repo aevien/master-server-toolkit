@@ -26,6 +26,8 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
                 return;
             }
         }
+
+        protected virtual void OnDestroy() { }
     }
 }
 #endif

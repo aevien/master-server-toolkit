@@ -19,41 +19,61 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ProfilesModule : BaseServerModule
     {
-        private AuthModule authModule;
-        private HashSet<string> debouncedSaves;
-        private HashSet<string> debouncedClientUpdates;
+        #region INSPECTOR
 
         /// <summary>
         /// Time to pass after logging out, until profile
         /// will be removed from the lookup. Should be enough for game
         /// server to submit last changes
         /// </summary>
+        [Tooltip("Time to pass after logging out, until profile will be removed from the lookup. Should be enough for game server to submit last changes")]
         public float unloadProfileAfter = 20f;
 
         /// <summary>
         /// Interval, in which updated profiles will be saved to database
         /// </summary>
+        [Tooltip("Interval, in which updated profiles will be saved to database")]
         public float saveProfileInterval = 1f;
 
         /// <summary>
         /// Interval, in which profile updates will be sent to clients
         /// </summary>
+        [Tooltip("Interval, in which profile updates will be sent to clients")]
         public float clientUpdateInterval = 0f;
 
         /// <summary>
         /// Permission user need to have to edit profile
         /// </summary>
+        [Tooltip("Permission user need to have to edit profile")]
         public int editProfilePermissionLevel = 0;
-
-        /// <summary>
-        /// DB to work with profile data
-        /// </summary>
-        public IProfilesDatabaseAccessor profileDatabaseAccessor;
 
         /// <summary>
         /// Ignore errors occurred when profile data mismatch
         /// </summary>
+        [Tooltip("Ignore errors occurred when profile data mismatch")]
         public bool ignoreProfileMissmatchError = false;
+
+        #endregion
+
+        /// <summary>
+        /// Auth module for listening to auth events
+        /// </summary>
+        protected AuthModule authModule;
+
+        /// <summary>
+        /// List of profiles that will be saved to to DB with updates
+        /// </summary>
+        protected HashSet<string> profilesToBeSaved;
+
+        /// <summary>
+        /// List of profiles that will be sent to clients with updates
+        /// </summary>
+        protected HashSet<string> profilesToBeSentToClients;
+
+        /// <summary>
+        /// DB to work with profile data
+        /// </summary>
+        protected IProfilesDatabaseAccessor profileDatabaseAccessor;
 
         /// <summary>
         /// By default, profiles module will use this factory to create a profile for users.
@@ -67,6 +87,15 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public Dictionary<string, ObservableServerProfile> ProfilesList { get; protected set; }
 
+        /// <summary>
+        /// Ignore errors occurred when profile data mismatch. False by default
+        /// </summary>
+        public bool IgnoreProfileMissmatchError
+        {
+            get { return ignoreProfileMissmatchError; }
+            set { ignoreProfileMissmatchError = value; }
+        }
+
         protected override void Awake()
         {
             base.Awake();
@@ -76,11 +105,17 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
+            // Add auth module as a dependency of this module
             AddOptionalDependency<AuthModule>();
 
+            // List of oaded profiles
             ProfilesList = new Dictionary<string, ObservableServerProfile>();
-            debouncedSaves = new HashSet<string>();
-            debouncedClientUpdates = new HashSet<string>();
+
+            // List of profiles that are waiting to be saved to DB
+            profilesToBeSaved = new HashSet<string>();
+
+            // List of profiles that are waiting to be sent to clients
+            profilesToBeSentToClients = new HashSet<string>();
         }
 
         public override void Initialize(IServer server)
@@ -170,17 +205,17 @@ namespace MasterServerToolkit.MasterServer
             // Debouncing is used to reduce a number of updates per interval to one
             // TODO make debounce lookup more efficient than using string hashet
 
-            if (!debouncedSaves.Contains(profile.Username) && profile.ShouldBeSavedToDatabase)
+            if (!profilesToBeSaved.Contains(profile.Username) && profile.ShouldBeSavedToDatabase)
             {
                 // If profile is not already waiting to be saved
-                debouncedSaves.Add(profile.Username);
+                profilesToBeSaved.Add(profile.Username);
                 SaveProfile(profile, saveProfileInterval);
             }
 
-            if (!debouncedClientUpdates.Contains(profile.Username))
+            if (!profilesToBeSentToClients.Contains(profile.Username))
             {
                 // If it's a master server
-                debouncedClientUpdates.Add(profile.Username);
+                profilesToBeSentToClients.Add(profile.Username);
                 SendUpdatesToClient(profile, clientUpdateInterval);
             }
         }
@@ -216,11 +251,9 @@ namespace MasterServerToolkit.MasterServer
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f : delay * 1000));
 
             // Remove value from debounced updates
-            debouncedSaves.Remove(profile.Username);
+            profilesToBeSaved.Remove(profile.Username);
 
             await profileDatabaseAccessor.UpdateProfileAsync(profile);
-
-            profile.UnsavedProperties.Clear();
         }
 
         /// <summary>
@@ -234,9 +267,6 @@ namespace MasterServerToolkit.MasterServer
             // Wait for the delay
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f : delay * 1000));
 
-            // Remove value from debounced updates
-            debouncedClientUpdates.Remove(profile.Username);
-
             if (profile.ClientPeer == null || !profile.ClientPeer.IsConnected)
             {
                 // If client is not connected, and we don't need to send him profile updates
@@ -244,16 +274,19 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            using (var ms = new MemoryStream())
-            {
-                using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
-                {
-                    profile.GetUpdates(writer);
-                    profile.ClearUpdates();
-                }
+            // Get profile updated data in bytes
+            var updates = profile.GetUpdates();
 
-                profile.ClientPeer.SendMessage(MessageHelper.Create((short)MstMessageCodes.UpdateClientProfile, ms.ToArray()), DeliveryMethod.ReliableSequenced);
-            }
+            // Clear updated data in profile
+            profile.ClearUpdates();
+
+            // Send these data to client
+            profile.ClientPeer.SendMessage(MessageHelper.Create((short)MstMessageCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
+
+            await Task.Delay(10);
+
+            // Remove value from debounced updates
+            profilesToBeSentToClients.Remove(profile.Username);
         }
 
         /// <summary>

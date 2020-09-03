@@ -15,15 +15,7 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class AuthModule : BaseServerModule
     {
-        /// <summary>
-        /// Censor module for bad words checking :)
-        /// </summary>
-        protected CensorModule censorModule;
-
-        /// <summary>
-        /// Unique ID for guest name postfix
-        /// </summary>
-        protected int nextGuestId;
+        #region INSPECTOR
 
         /// <summary>
         /// Min number of username characters
@@ -58,6 +50,19 @@ namespace MasterServerToolkit.MasterServer
 
         [SerializeField, TextArea(3, 10)]
         public string emailAddressValidationTemplate = @"^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$";
+
+        #endregion
+
+        /// <summary>
+        /// Censor module for bad words checking :)
+        /// </summary>
+        protected CensorModule censorModule;
+
+        /// <summary>
+        /// Unique ID for guest name postfix
+        /// </summary>
+        protected int nextGuestId;
+
 
         /// <summary>
         /// Collection of users who are currently logged in

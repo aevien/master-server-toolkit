@@ -68,7 +68,6 @@ namespace MasterServerToolkit.MasterServer
         public override void ApplyUpdates(byte[] data)
         {
             FromBytes(data);
-            MarkDirty();
         }
 
         public override void ClearUpdates() { }

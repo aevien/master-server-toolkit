@@ -254,6 +254,18 @@ namespace MasterServerToolkit.MasterServer
             return properties;
         }
 
+        public static MstProperties FromDictionary(IDictionary dictionary)
+        {
+            var properties = new MstProperties();
+
+            foreach(var key in dictionary.Keys)
+            {
+                properties.Set(key.ToString(), dictionary[key].ToString());
+            }
+
+            return properties;
+        }
+
         public byte[] ToBytes()
         {
             return properties.ToBytes();

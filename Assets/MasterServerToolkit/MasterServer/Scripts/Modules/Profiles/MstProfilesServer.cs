@@ -9,21 +9,30 @@ namespace MasterServerToolkit.MasterServer
     public class MstProfilesServer : MstBaseClient
     {
         /// <summary>
+        /// List of loaded profiles
+        /// </summary>
+        private Dictionary<string, ObservableServerProfile> profilesList;
+
+        /// <summary>
+        /// List of modified profiles
+        /// </summary>
+        private HashSet<ObservableServerProfile> modifiedProfilesList;
+
+        /// <summary>
+        /// Update profile task
+        /// </summary>
+        private Coroutine sendUpdatesCoroutine;
+
+        /// <summary>
         /// Time, after which game server will try sending profile 
         /// updates to master server
         /// </summary>
-        public float ProfileUpdatesInterval = 0.1f;
-
-        private Dictionary<string, ObservableServerProfile> _profiles;
-
-        private HashSet<ObservableServerProfile> _modifiedProfiles;
-
-        private Coroutine _sendUpdatesCoroutine;
+        public float ProfileUpdatesInterval { get; set; } = 0.1f;
 
         public MstProfilesServer(IClientSocket connection) : base(connection)
         {
-            _profiles = new Dictionary<string, ObservableServerProfile>();
-            _modifiedProfiles = new HashSet<ObservableServerProfile>();
+            profilesList = new Dictionary<string, ObservableServerProfile>();
+            modifiedProfilesList = new HashSet<ObservableServerProfile>();
         }
 
         /// <summary>
@@ -58,15 +67,19 @@ namespace MasterServerToolkit.MasterServer
                 // Use the bytes received, to replicate the profile
                 profile.FromBytes(response.AsBytes());
 
+                // Clear all updates if exist
                 profile.ClearUpdates();
 
-                _profiles[profile.Username] = profile;
+                // Add profile to list
+                profilesList[profile.Username] = profile;
 
+                // Register listener for modified 
                 profile.OnModifiedInServerEvent += serverProfile =>
                 {
                     OnProfileModified(profile, connection);
                 };
 
+                // Register to dispose event
                 profile.OnDisposedEvent += OnProfileDisposed;
 
                 callback.Invoke(true, null);
@@ -75,21 +88,21 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnProfileModified(ObservableServerProfile profile, IClientSocket connection)
         {
-            _modifiedProfiles.Add(profile);
+            if (!modifiedProfilesList.Contains(profile))
+                modifiedProfilesList.Add(profile);
 
-            if (_sendUpdatesCoroutine != null)
+            if (sendUpdatesCoroutine != null)
             {
                 return;
             }
 
-            _sendUpdatesCoroutine = MstTimer.Instance.StartCoroutine(KeepSendingUpdates(connection));
+            sendUpdatesCoroutine = MstTimer.Instance.StartCoroutine(KeepSendingUpdates(connection));
         }
 
         private void OnProfileDisposed(ObservableServerProfile profile)
         {
             profile.OnDisposedEvent -= OnProfileDisposed;
-
-            _profiles.Remove(profile.Username);
+            profilesList.Remove(profile.Username);
         }
 
         private IEnumerator KeepSendingUpdates(IClientSocket connection)
@@ -98,37 +111,39 @@ namespace MasterServerToolkit.MasterServer
             {
                 yield return new WaitForSeconds(ProfileUpdatesInterval);
 
-                if (_modifiedProfiles.Count == 0)
+                if (modifiedProfilesList.Count == 0)
                 {
                     continue;
                 }
 
                 using (var ms = new MemoryStream())
-                using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    // Write profiles count
-                    writer.Write(_modifiedProfiles.Count);
-
-                    foreach (var profile in _modifiedProfiles)
+                    using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                     {
-                        // Write username
-                        writer.Write(profile.Username);
+                        // Write profiles count
+                        writer.Write(modifiedProfilesList.Count);
 
-                        var updates = profile.GetUpdates();
+                        foreach (var profile in modifiedProfilesList)
+                        {
+                            // Write username
+                            writer.Write(profile.Username);
 
-                        // Write updates length
-                        writer.Write(updates.Length);
+                            var updates = profile.GetUpdates();
 
-                        // Write updates
-                        writer.Write(updates);
+                            // Write updates length
+                            writer.Write(updates.Length);
 
-                        profile.ClearUpdates();
+                            // Write updates
+                            writer.Write(updates);
+
+                            profile.ClearUpdates();
+                        }
+
+                        connection.SendMessage((short)MstMessageCodes.UpdateServerProfile, ms.ToArray());
                     }
-
-                    connection.SendMessage((short)MstMessageCodes.UpdateServerProfile, ms.ToArray());
                 }
 
-                _modifiedProfiles.Clear();
+                modifiedProfilesList.Clear();
             }
         }
     }

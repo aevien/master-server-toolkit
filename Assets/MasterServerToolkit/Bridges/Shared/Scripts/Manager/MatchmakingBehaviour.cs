@@ -2,7 +2,6 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -126,12 +125,15 @@ namespace MasterServerToolkit.Games
             CreateNewRoom(string.Empty, spawnOptions);
         }
 
-
+        /// <summary>
+        /// Starts given match
+        /// </summary>
+        /// <param name="gameInfo"></param>
         public virtual void StartMatch(GameInfoPacket gameInfo)
         {
-            // Save room Id in buffer
+            // Save room Id in buffer, may be very helpful
             Mst.Options.Set(MstDictKeys.roomId, gameInfo.Id);
-            // Save max players to buffer
+            // Save max players to buffer, may be very helpful
             Mst.Options.Set(MstDictKeys.roomMaxPlayers, gameInfo.MaxPlayers);
 
             if (gameInfo.IsPasswordProtected)

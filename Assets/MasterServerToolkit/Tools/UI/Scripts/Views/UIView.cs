@@ -179,15 +179,15 @@ namespace Aevien.UI
             }
             else
             {
-                SetCanvasActive(true);
-
-                if (allwaysOnTop) transform.SetAsLastSibling();
-
                 IsVisible = true;
 
                 OnShowEvent?.Invoke();
 
                 NotifyComponentsOnShow(true);
+
+                if (allwaysOnTop) transform.SetAsLastSibling();
+
+                SetCanvasActive(true);
 
                 OnShowFinishedEvent?.Invoke();
             }
@@ -213,13 +213,13 @@ namespace Aevien.UI
             }
             else
             {
-                SetCanvasActive(false);
-
                 IsVisible = false;
 
                 OnHideEvent?.Invoke();
 
                 NotifyComponentsOnShow(false);
+
+                SetCanvasActive(false);
 
                 OnHideFinishedEvent?.Invoke();
             }

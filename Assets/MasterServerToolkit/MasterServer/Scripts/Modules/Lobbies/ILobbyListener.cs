@@ -14,7 +14,7 @@
         /// <param name="member"></param>
         /// <param name="property"></param>
         /// <param name="value"></param>
-        void OnMemberPropertyChanged(LobbyMemberData member, string property, string value); //
+        void OnMemberPropertyChanged(LobbyMemberData member, string property, string value);
 
         /// <summary>
         /// Called, when a new member joins the lobby

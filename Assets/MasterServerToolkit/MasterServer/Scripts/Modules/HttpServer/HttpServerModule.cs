@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         private HttpServer httpServer;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private string pageNotFoundHtml = "404:Page Not Found";
 
         /// <summary>
@@ -112,6 +115,9 @@ namespace MasterServerToolkit.MasterServer
             // Split our url to parts
             string[] pathParts = request.RawUrl.Trim().Split('/');
 
+            Debug.Log(JsonConvert.SerializeObject(pathParts));
+            Debug.Log(request.QueryString.HasKeys());
+
             if (pathParts.Length > 1 && string.IsNullOrEmpty(pathParts[1]))
             {
                 if (!httpRequestHandlers.ContainsKey("home"))
@@ -143,7 +149,7 @@ namespace MasterServerToolkit.MasterServer
                 // Find question mark
                 int indexOfQuestionMark = cleanedPath.IndexOf('?');
 
-                // If question markis found
+                // If question mark is found
                 if (indexOfQuestionMark >= 0)
                 {
                     // Get path without question mark
