@@ -4,6 +4,7 @@ using CommandTerminal;
 using System;
 using System.Text;
 using UnityEngine;
+using System.Linq;
 
 namespace MasterServerToolkit.Client.Utilities
 {
@@ -11,17 +12,21 @@ namespace MasterServerToolkit.Client.Utilities
     {
         static string tempMessage = string.Empty;
 
-        [RegisterCommand(Name = "client.chat.msg", Help = "Send the chat message to all clients. 1 Message", MinArgCount = 1)]
+        [RegisterCommand(Name = "cl.chat.msg", Help = "Send the chat message to all clients. 1 Message", MinArgCount = 1)]
         private static void SendMessage(CommandArg[] args)
         {
-            tempMessage = Mst.Helper.JoinCommandArgs(args, 1);
+            string[] argsArray = args.Select(i => i.String).ToArray();
+
+            tempMessage = Mst.Helper.JoinCommandArgs(argsArray, 1);
             Mst.Client.Chat.SendPrivateMessage(args[0].String, tempMessage, OnSuccess);
         }
 
-        [RegisterCommand(Name = "client.chat.msgto", Help = "Send the chat message to client. 1 Username, 2 Message", MinArgCount = 2)]
+        [RegisterCommand(Name = "cl.chat.msgto", Help = "Send the chat message to client. 1 Username, 2 Message", MinArgCount = 2)]
         private static void SendPrivateMessage(CommandArg[] args)
         {
-            tempMessage = Mst.Helper.JoinCommandArgs(args, 1);
+            string[] argsArray = args.Select(i => i.String).ToArray();
+
+            tempMessage = Mst.Helper.JoinCommandArgs(argsArray, 1);
             Mst.Client.Chat.SendPrivateMessage(args[0].String, tempMessage, OnSuccess);
         }
 

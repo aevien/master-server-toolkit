@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace MasterServerToolkit.Networking
+﻿namespace MasterServerToolkit.Networking
 {
     public interface IUpdatable
     {

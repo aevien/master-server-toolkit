@@ -43,7 +43,7 @@ namespace MasterServerToolkit.Games
 
         public void Submit()
         {
-            Mst.Options.Set(MstDictKeys.roomPassword, passwordInputField.text);
+            Mst.Options.Set(MstDictKeys.ROOM_PASSWORD, passwordInputField.text);
             submitCallback?.Invoke();
             Owner.Hide();
         }

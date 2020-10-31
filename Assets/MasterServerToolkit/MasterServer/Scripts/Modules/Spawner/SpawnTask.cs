@@ -104,7 +104,7 @@ namespace MasterServerToolkit.MasterServer
             Options = options;
             CustomOptions = customOptions;
 
-            UniqueCode = Mst.Helper.CreateRandomString(6);
+            UniqueCode = Mst.Helper.CreateRandomAlphanumericString(6);
             whenDoneCallbacks = new List<Action<SpawnTask>>();
         }
 

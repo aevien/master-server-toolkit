@@ -20,7 +20,7 @@ namespace MasterServerToolkit.Networking
         private readonly Dictionary<int, object> data;
         private int _id = -1;
         private int nextAckId = 1;
-        private readonly IIncommingMessage timeoutMessage;
+        private readonly IIncomingMessage timeoutMessage;
         private readonly Dictionary<Type, IPeerExtension> extensionsList;
         private static readonly object idGenerationLock = new object();
         private static int peerIdGenerator;
@@ -30,9 +30,6 @@ namespace MasterServerToolkit.Networking
         /// timeout status.
         /// </summary>
         public static int DefaultTimeoutSecs { get; set; } = 60;
-
-
-        public static bool DontCatchExceptionsInEditor { get; set; } = true;
 
         /// <summary>
         /// True, if connection is stil valid
@@ -48,7 +45,7 @@ namespace MasterServerToolkit.Networking
 
             MstTimer.Instance.OnTickEvent += HandleAckDisposalTick;
 
-            timeoutMessage = new IncommingMessage(-1, 0, "Time out".ToBytes(), DeliveryMethod.Reliable, this)
+            timeoutMessage = new IncomingMessage(-1, 0, "Time out".ToBytes(), DeliveryMethod.Reliable, this)
             {
                 Status = ResponseStatus.Timeout
             };
@@ -57,7 +54,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Fires when peer received message
         /// </summary>
-        public event Action<IIncommingMessage> OnMessageReceivedEvent;
+        public event Action<IIncomingMessage> OnMessageReceivedEvent;
 
         /// <summary>
         /// Fires when peer disconnects
@@ -243,7 +240,7 @@ namespace MasterServerToolkit.Networking
         /// Sends a message to peer
         /// </summary>
         /// <param name="message"></param>
-        public void SendMessage(IMessage message)
+        public void SendMessage(IOutgoingMessage message)
         {
             SendMessage(message, DeliveryMethod.Reliable);
         }
@@ -254,7 +251,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="message">Message to send</param>
         /// <param name="responseCallback">Callback method, which will be invoked when peer responds</param>
         /// <returns></returns>
-        public int SendMessage(IMessage message, ResponseCallback responseCallback)
+        public int SendMessage(IOutgoingMessage message, ResponseCallback responseCallback)
         {
             return SendMessage(message, responseCallback, DefaultTimeoutSecs);
         }
@@ -266,7 +263,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="responseCallback">Callback method, which will be invoked when peer responds</param>
         /// <param name="timeoutSecs">If peer fails to respons within this time frame, callback will be invoked with timeout status</param>
         /// <returns></returns>
-        public int SendMessage(IMessage message, ResponseCallback responseCallback, int timeoutSecs)
+        public int SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
         {
             return SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.Reliable);
         }
@@ -279,7 +276,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="timeoutSecs">If peer fails to respons within this time frame, callback will be invoked with timeout status</param>
         /// <param name="deliveryMethod">Delivery method</param>
         /// <returns></returns>
-        public int SendMessage(IMessage message, ResponseCallback responseCallback, int timeoutSecs, DeliveryMethod deliveryMethod)
+        public int SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs, DeliveryMethod deliveryMethod)
         {
             if (!IsConnected)
             {
@@ -298,14 +295,14 @@ namespace MasterServerToolkit.Networking
         /// <param name="message">Message to send</param>
         /// <param name="deliveryMethod">Delivery method</param>
         /// <returns></returns>
-        public abstract void SendMessage(IMessage message, DeliveryMethod deliveryMethod);
+        public abstract void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod);
 
         /// <summary>
         /// Sends a message to peer
         /// </summary>
         /// <param name="message"></param>
         /// <param name="responseCallback"></param>
-        void IMsgDispatcher<IPeer>.SendMessage(IMessage message, ResponseCallback responseCallback)
+        void IMsgDispatcher.SendMessage(IOutgoingMessage message, ResponseCallback responseCallback)
         {
             SendMessage(message, responseCallback);
         }
@@ -316,7 +313,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="message"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        void IMsgDispatcher<IPeer>.SendMessage(IMessage message, ResponseCallback responseCallback, int timeoutSecs)
+        void IMsgDispatcher.SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
         {
             SendMessage(message, responseCallback, timeoutSecs);
         }
@@ -390,24 +387,47 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        /// <summary>
+        /// Check if this peer has extension
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public bool HasExtension<T>()
         {
             return extensionsList.ContainsKey(typeof(T));
         }
 
+        /// <summary>
+        /// Force disconnection
+        /// </summary>
+        /// <param name="reason"></param>
         public abstract void Disconnect(string reason);
 
+        /// <summary>
+        /// Notify OnPeerDisconnectedEvent
+        /// </summary>
         public void NotifyDisconnectEvent()
         {
             OnPeerDisconnectedEvent?.Invoke(this);
         }
 
-        protected void NotifyMessageEvent(IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        protected void NotifyMessageEvent(IIncomingMessage message)
         {
             OnMessageReceivedEvent?.Invoke(message);
         }
 
-        protected int RegisterAck(IMessage message, ResponseCallback responseCallback, int timeoutSecs)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="responseCallback"></param>
+        /// <param name="timeoutSecs"></param>
+        /// <returns></returns>
+        protected int RegisterAck(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
         {
             int id;
 
@@ -423,7 +443,13 @@ namespace MasterServerToolkit.Networking
             return id;
         }
 
-        protected void TriggerAck(int ackId, ResponseStatus statusCode, IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ackId"></param>
+        /// <param name="statusCode"></param>
+        /// <param name="message"></param>
+        protected void TriggerAck(int ackId, ResponseStatus statusCode, IIncomingMessage message)
         {
             ResponseCallback ackCallback;
             lock (acknowledgements)
@@ -440,23 +466,47 @@ namespace MasterServerToolkit.Networking
             ackCallback(statusCode, message);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ackId"></param>
+        /// <param name="timeoutSecs"></param>
         private void StartAckTimeout(int ackId, int timeoutSecs)
         {
             // +1, because it might be about to tick in a few miliseconds
             ackTimeoutQueue.Add(new[] { ackId, MstTimer.Instance.CurrentTick + timeoutSecs + 1 });
         }
 
-        public virtual void HandleMessage(IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        public virtual void HandleMessage(IIncomingMessage message)
         {
-            OnMessageReceivedEvent?.Invoke(message);
+            NotifyMessageEvent(message);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        public void HandleDataReceived(byte[] buffer)
+        {
+            HandleDataReceived(buffer, 0);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="start"></param>
         public void HandleDataReceived(byte[] buffer, int start)
         {
-            IIncommingMessage message = null;
+            IIncomingMessage message;
 
             try
             {
+                // Deserialize message from bytes
                 message = MessageHelper.FromBytes(buffer, start, this);
 
                 if (message.AckRequestId.HasValue)
@@ -468,12 +518,7 @@ namespace MasterServerToolkit.Networking
             }
             catch (Exception e)
             {
-#if UNITY_EDITOR
-                if (DontCatchExceptionsInEditor)
-                    throw e;
-#endif
                 Debug.LogError("Failed parsing an incomming message: " + e);
-
                 return;
             }
 

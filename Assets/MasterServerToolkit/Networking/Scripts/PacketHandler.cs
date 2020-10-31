@@ -1,28 +1,23 @@
 ﻿namespace MasterServerToolkit.Networking
 {
     /// <summary>
-    ///     Generic packet handler
+    /// Generic packet handler
     /// </summary>
     public class PacketHandler : IPacketHandler
     {
-        private readonly IncommingMessageHandler _handler;
-        private readonly short _opCode;
+        private event IncommingMessageHandler Handler;
 
         public PacketHandler(short opCode, IncommingMessageHandler handler)
         {
-            _opCode = opCode;
-            _handler = handler;
+            OpCode = opCode;
+            Handler += handler;
         }
 
-        public short OpCode
-        {
-            get { return _opCode; }
-        }
+        public short OpCode { get; }
 
-        public void Handle(IIncommingMessage message)
+        public void Handle(IIncomingMessage message)
         {
-
-            _handler.Invoke(message);
+            Handler?.Invoke(message);
         }
     }
 }

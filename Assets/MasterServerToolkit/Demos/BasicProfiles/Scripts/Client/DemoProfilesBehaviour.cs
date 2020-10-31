@@ -45,8 +45,6 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
         private void OnPropertyUpdatedEventHandler(short key, IObservableProperty property)
         {
             OnPropertyUpdatedEvent?.Invoke(key, property);
-
-            //logger.Debug($"Property with code: {key} were updated: {property.Serialize()}");
         }
 
         public void UpdateProfile()
@@ -65,7 +63,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
             });
         }
 
-        private void OnSaveProfileResponseCallback(ResponseStatus status, IIncommingMessage response)
+        private void OnSaveProfileResponseCallback(ResponseStatus status, IIncomingMessage response)
         {
             Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 

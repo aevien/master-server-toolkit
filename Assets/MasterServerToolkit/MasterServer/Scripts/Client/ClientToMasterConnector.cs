@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using LiteDB;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -13,16 +14,9 @@ namespace MasterServerToolkit.MasterServer
             base.Awake();
 
             // If master IP is provided via cmd arguments
-            if (Mst.Args.IsProvided(Mst.Args.Names.MasterIp))
-            {
-                serverIp = Mst.Args.MasterIp;
-            }
-
+            serverIP = Mst.Args.AsString(Mst.Args.Names.MasterIp, serverIP);
             // If master port is provided via cmd arguments
-            if (Mst.Args.IsProvided(Mst.Args.Names.MasterPort))
-            {
-                serverPort = Mst.Args.MasterPort;
-            }
+            serverPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, serverPort);
         }
     }
 }

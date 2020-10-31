@@ -18,12 +18,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Salt string
         /// </summary>
-        private byte[] _salt = Encoding.ASCII.GetBytes("o6806642kbM7c5");
+        private readonly byte[] _salt = Encoding.ASCII.GetBytes("o6806642kbM7c5");
 
         /// <summary>
         /// List of encripted data
         /// </summary>
-        private Dictionary<IClientSocket, EncryptionData> _encryptionData;
+        private readonly Dictionary<IClientSocket, EncryptionData> _encryptionData;
 
         /// <summary>
         /// Size of RSA key
@@ -58,11 +58,22 @@ namespace MasterServerToolkit.MasterServer
             _encryptionData = new Dictionary<IClientSocket, EncryptionData>();
         }
 
+        /// <summary>
+        /// Requests client permission level
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="callback"></param>
         public void RequestPermissionLevel(string key, PermissionLevelCallback callback)
         {
             RequestPermissionLevel(key, callback, Connection);
         }
 
+        /// <summary>
+        /// Requests client permission level
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
         public void RequestPermissionLevel(string key, PermissionLevelCallback callback, IClientSocket connection)
         {
             connection.SendMessage((short)MstMessageCodes.PermissionLevelRequest, key, (status, response) =>
@@ -137,6 +148,9 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void OnEncryptableConnectionDisconnected()
         {
             var disconnected = _encryptionData.Keys.Where(c => !c.IsConnected).ToList();
@@ -151,6 +165,12 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="rawData"></param>
+        /// <param name="sharedSecret"></param>
+        /// <returns></returns>
         public byte[] EncryptAES(byte[] rawData, string sharedSecret)
         {
             using (var aesAlg = new RijndaelManaged())
@@ -184,6 +204,12 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="encryptedData"></param>
+        /// <param name="sharedSecret"></param>
+        /// <returns></returns>
         public byte[] DecryptAES(byte[] encryptedData, string sharedSecret)
         {
             using (var aesAlg = new RijndaelManaged())
@@ -321,6 +347,11 @@ namespace MasterServerToolkit.MasterServer
             return plaintext;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
         private static byte[] ReadByteArray(Stream s)
         {
             byte[] rawLength = new byte[sizeof(int)];

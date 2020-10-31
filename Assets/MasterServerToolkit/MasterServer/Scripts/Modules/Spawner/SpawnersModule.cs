@@ -37,15 +37,15 @@ namespace MasterServerToolkit.MasterServer
             spawnTasksList = new Dictionary<int, SpawnTask>();
 
             // Add handlers
-            server.SetHandler((short)MstMessageCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
-            server.SetHandler((short)MstMessageCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
-            server.SetHandler((short)MstMessageCodes.RegisterSpawnedProcess, RegisterSpawnedProcessRequestHandler);
-            server.SetHandler((short)MstMessageCodes.CompleteSpawnProcess, CompleteSpawnProcessRequestHandler);
-            server.SetHandler((short)MstMessageCodes.ProcessStarted, SetProcessStartedRequestHandler);
-            server.SetHandler((short)MstMessageCodes.ProcessKilled, SetProcessKilledRequestHandler);
-            server.SetHandler((short)MstMessageCodes.AbortSpawnRequest, AbortSpawnRequestHandler);
-            server.SetHandler((short)MstMessageCodes.GetSpawnFinalizationData, GetCompletionDataRequestHandler);
-            server.SetHandler((short)MstMessageCodes.UpdateSpawnerProcessesCount, SetSpawnedProcessesCountRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.RegisterSpawnedProcess, RegisterSpawnedProcessRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.CompleteSpawnProcess, CompleteSpawnProcessRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.ProcessStarted, SetProcessStartedRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.ProcessKilled, SetProcessKilledRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.AbortSpawnRequest, AbortSpawnRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.GetSpawnFinalizationData, GetCompletionDataRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.UpdateSpawnerProcessesCount, SetSpawnedProcessesCountRequestHandler);
 
             // Coroutines
             StartCoroutine(StartQueueUpdater());
@@ -170,7 +170,7 @@ namespace MasterServerToolkit.MasterServer
 
             if (spawners.Count == 0)
             {
-                logger.Warn($"No spawner was returned after filtering. Region: {options.AsString(MstDictKeys.roomRegion, "International")}");
+                logger.Warn($"No spawner was returned after filtering. Region: {options.AsString(MstDictKeys.ROOM_REGION, "International")}");
                 return null;
             }
 
@@ -287,7 +287,7 @@ namespace MasterServerToolkit.MasterServer
         /// Fired whe connected client has made request to spawn process
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void ClientsSpawnRequestHandler(IIncommingMessage message)
+        protected virtual void ClientsSpawnRequestHandler(IIncomingMessage message)
         {
             // Parse data from message
             var spawnRequestData = message.Deserialize(new ClientsSpawnRequestPacket());
@@ -323,7 +323,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Create a new spawn task
-            var task = Spawn(spawnRequestData.Options, spawnRequestData.Options.AsString(MstDictKeys.roomRegion), spawnRequestData.CustomOptions);
+            var task = Spawn(spawnRequestData.Options, spawnRequestData.Options.AsString(MstDictKeys.ROOM_REGION), spawnRequestData.CustomOptions);
 
             // If spawn task is not created
             if (task == null)
@@ -358,7 +358,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(task.Id, ResponseStatus.Success);
         }
 
-        private void AbortSpawnRequestHandler(IIncommingMessage message)
+        private void AbortSpawnRequestHandler(IIncomingMessage message)
         {
             var prevRequest = message.Peer.GetProperty((int)MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
 
@@ -387,7 +387,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void GetCompletionDataRequestHandler(IIncommingMessage message)
+        protected virtual void GetCompletionDataRequestHandler(IIncomingMessage message)
         {
             var spawnId = message.AsInt();
 
@@ -413,7 +413,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(task.FinalizationPacket.FinalizationData.ToBytes(), ResponseStatus.Success);
         }
 
-        protected virtual void RegisterSpawnerRequestHandler(IIncommingMessage message)
+        protected virtual void RegisterSpawnerRequestHandler(IIncomingMessage message)
         {
             logger.Debug($"Client [{message.Peer.Id}] requested to be registered as spawner");
 
@@ -437,7 +437,7 @@ namespace MasterServerToolkit.MasterServer
         /// to notify server that it was started
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void RegisterSpawnedProcessRequestHandler(IIncommingMessage message)
+        protected virtual void RegisterSpawnedProcessRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new RegisterSpawnedProcessPacket());
 
@@ -467,7 +467,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(task.Options.ToDictionary().ToBytes(), ResponseStatus.Success);
         }
 
-        protected virtual void CompleteSpawnProcessRequestHandler(IIncommingMessage message)
+        protected virtual void CompleteSpawnProcessRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new SpawnFinalizationPacket());
 
@@ -491,7 +491,7 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        protected virtual void SetProcessKilledRequestHandler(IIncommingMessage message)
+        protected virtual void SetProcessKilledRequestHandler(IIncomingMessage message)
         {
             var spawnId = message.AsInt();
 
@@ -502,7 +502,7 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        protected virtual void SetProcessStartedRequestHandler(IIncommingMessage message)
+        protected virtual void SetProcessStartedRequestHandler(IIncomingMessage message)
         {
             var spawnId = message.AsInt();
 
@@ -513,7 +513,7 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        private void SetSpawnedProcessesCountRequestHandler(IIncommingMessage message)
+        private void SetSpawnedProcessesCountRequestHandler(IIncomingMessage message)
         {
             var packet = message.Deserialize(new IntPairPacket());
 

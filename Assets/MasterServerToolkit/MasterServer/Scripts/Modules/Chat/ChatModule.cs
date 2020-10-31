@@ -88,13 +88,13 @@ namespace MasterServerToolkit.MasterServer
         public override void Initialize(IServer server)
         {
             // Set handlers
-            server.SetHandler((short)MstMessageCodes.PickUsername, OnPickUsernameRequestHandler);
-            server.SetHandler((short)MstMessageCodes.JoinChannel, OnJoinChannelRequestHandler);
-            server.SetHandler((short)MstMessageCodes.LeaveChannel, OnLeaveChannelRequestHandler);
-            server.SetHandler((short)MstMessageCodes.GetCurrentChannels, OnGetCurrentChannelsRequestHandler);
-            server.SetHandler((short)MstMessageCodes.ChatMessage, OnChatMessageHandler);
-            server.SetHandler((short)MstMessageCodes.GetUsersInChannel, OnGetUsersInChannelRequestHandler);
-            server.SetHandler((short)MstMessageCodes.SetDefaultChannel, OnSetDefaultChannelRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.PickUsername, OnPickUsernameRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.JoinChannel, OnJoinChannelRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.LeaveChannel, OnLeaveChannelRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.GetCurrentChannels, OnGetCurrentChannelsRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.ChatMessage, OnChatMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.GetUsersInChannel, OnGetUsersInChannelRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.SetDefaultChannel, OnSetDefaultChannelRequestHandler);
 
             // Setup authModule dependencies
             authModule = server.GetModule<AuthModule>();
@@ -291,7 +291,7 @@ namespace MasterServerToolkit.MasterServer
         /// Returns true, if message was handled
         /// If it returns false, message sender will receive a "Not Handled" response.
         /// </summary>
-        protected virtual bool TryHandleChatMessage(ChatMessagePacket message, ChatUserPeerExtension sender, IIncommingMessage rawMessage)
+        protected virtual bool TryHandleChatMessage(ChatMessagePacket message, ChatUserPeerExtension sender, IIncomingMessage rawMessage)
         {
             // Set a true sender
             message.Sender = sender.Username;
@@ -412,7 +412,7 @@ namespace MasterServerToolkit.MasterServer
 
         #region Message Handlers
 
-        protected virtual void OnPickUsernameRequestHandler(IIncommingMessage message)
+        protected virtual void OnPickUsernameRequestHandler(IIncomingMessage message)
         {
             string responseMsg = string.Empty;
 
@@ -478,7 +478,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void OnJoinChannelRequestHandler(IIncommingMessage message)
+        protected virtual void OnJoinChannelRequestHandler(IIncomingMessage message)
         {
             string responseMsg = string.Empty;
 
@@ -527,7 +527,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void OnLeaveChannelRequestHandler(IIncommingMessage message)
+        protected virtual void OnLeaveChannelRequestHandler(IIncomingMessage message)
         {
             string responseMsg = string.Empty;
 
@@ -565,7 +565,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void OnSetDefaultChannelRequestHandler(IIncommingMessage message)
+        protected virtual void OnSetDefaultChannelRequestHandler(IIncomingMessage message)
         {
             string responseMsg = string.Empty;
 
@@ -606,7 +606,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void OnGetUsersInChannelRequestHandler(IIncommingMessage message)
+        protected virtual void OnGetUsersInChannelRequestHandler(IIncomingMessage message)
         {
             string responseMsg = string.Empty;
 
@@ -641,7 +641,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(users.ToBytes(), ResponseStatus.Success);
         }
 
-        protected virtual void OnChatMessageHandler(IIncommingMessage message)
+        protected virtual void OnChatMessageHandler(IIncomingMessage message)
         {
             string responseMsg = string.Empty;
 
@@ -671,7 +671,7 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        protected virtual void OnGetCurrentChannelsRequestHandler(IIncommingMessage message)
+        protected virtual void OnGetCurrentChannelsRequestHandler(IIncomingMessage message)
         {
             string responseMsg = string.Empty;
 

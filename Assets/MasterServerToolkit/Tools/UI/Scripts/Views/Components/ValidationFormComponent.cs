@@ -16,6 +16,11 @@ namespace Aevien.UI
 
         public void OnOwnerAwake()
         {
+            UpdateValidatables();
+        }
+
+        public void UpdateValidatables()
+        {
             if (validatableList == null || validatableList.Length == 0)
                 validatableList = GetComponentsInChildren<IValidatableComponent>();
         }
@@ -28,6 +33,8 @@ namespace Aevien.UI
 
         public void Validate()
         {
+            UpdateValidatables();
+
             int totalValid = 0;
 
             for (int i = 0; i < validatableList.Length; i++)

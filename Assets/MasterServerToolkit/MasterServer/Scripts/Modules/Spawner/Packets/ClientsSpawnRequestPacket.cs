@@ -32,9 +32,9 @@ namespace MasterServerToolkit.MasterServer
         {
             var options = new MstProperties(Options);
 
-            if (options.IsValueEmpty(MstDictKeys.roomRegion))
+            if (options.IsValueEmpty(MstDictKeys.ROOM_REGION))
             {
-                options.Set(MstDictKeys.roomRegion, "International");
+                options.Set(MstDictKeys.ROOM_REGION, "International");
             }
 
             return options.ToReadableString() + " " + CustomOptions.ToReadableString();

@@ -79,7 +79,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles spawn request for all controllers filtered by ID
         /// </summary>
         /// <param name="message"></param>
-        private static void SpawnProcessRequestHandler(IIncommingMessage message)
+        private static void SpawnProcessRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new SpawnRequestPacket());
             var controller = Mst.Server.Spawners.GetController(data.SpawnerId) as SpawnerController;
@@ -102,7 +102,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles kill request for all controllers filtered by ID
         /// </summary>
         /// <param name="message"></param>
-        private static void KillProcessRequestHandler(IIncommingMessage message)
+        private static void KillProcessRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new KillSpawnedProcessRequestPacket());
             var controller = Mst.Server.Spawners.GetController(data.SpawnerId) as SpawnerController;
@@ -158,7 +158,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="data"></param>
         /// <param name="message"></param>
-        public virtual void SpawnRequestHandler(SpawnRequestPacket data, IIncommingMessage message)
+        public virtual void SpawnRequestHandler(SpawnRequestPacket data, IIncomingMessage message)
         {
             Logger.Debug($"Default spawn handler started handling a request to spawn process for spawn controller [{SpawnerId}]");
 
@@ -243,9 +243,9 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // In case a path is provided with the request
-            if (data.Options.Has(MstDictKeys.executablePath))
+            if (data.Options.Has(MstDictKeys.ROOM_EXE_PATH))
             {
-                executablePath = data.Options.AsString(MstDictKeys.executablePath);
+                executablePath = data.Options.AsString(MstDictKeys.ROOM_EXE_PATH);
             }
 
             if (!string.IsNullOrEmpty(data.OverrideExePath))

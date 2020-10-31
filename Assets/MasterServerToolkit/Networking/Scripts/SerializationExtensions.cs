@@ -7,10 +7,15 @@ using System.Text;
 namespace MasterServerToolkit.Networking
 {
     /// <summary>
-    ///     Contains functions to help easily serialize / deserialize some common types
+    /// Contains functions to help easily serialize / deserialize some common types
     /// </summary>
     public static class SerializationExtensions
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="list"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(this IEnumerable<string> list)
         {
             byte[] b;
@@ -31,6 +36,12 @@ namespace MasterServerToolkit.Networking
             return b;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static List<string> FromBytes(this List<string> list, byte[] data)
         {
             using (var ms = new MemoryStream(data))
@@ -49,6 +60,11 @@ namespace MasterServerToolkit.Networking
             return list;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="list"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(this IEnumerable<ISerializablePacket> list)
         {
             byte[] b;
@@ -69,6 +85,13 @@ namespace MasterServerToolkit.Networking
             return b;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="data"></param>
+        /// <param name="factory"></param>
+        /// <returns></returns>
         public static List<ISerializablePacket> FromBytes(this List<ISerializablePacket> list, byte[] data, Func<ISerializablePacket> factory)
         {
             using (var ms = new MemoryStream(data))
@@ -88,6 +111,11 @@ namespace MasterServerToolkit.Networking
             return list;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(this Dictionary<int, int> dictionary)
         {
             byte[] b;
@@ -109,6 +137,12 @@ namespace MasterServerToolkit.Networking
             return b;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static Dictionary<int, int> FromBytes(this Dictionary<int, int> dictionary, byte[] data)
         {
             using (var ms = new MemoryStream(data))
@@ -136,6 +170,11 @@ namespace MasterServerToolkit.Networking
             return dictionary;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(this Dictionary<string, int> dictionary)
         {
             byte[] b;
@@ -157,6 +196,12 @@ namespace MasterServerToolkit.Networking
             return b;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static Dictionary<string, int> FromBytes(this Dictionary<string, int> dictionary, byte[] data)
         {
             using (var ms = new MemoryStream(data))
@@ -184,6 +229,11 @@ namespace MasterServerToolkit.Networking
             return dictionary;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(this Dictionary<string, float> dictionary)
         {
             byte[] b;
@@ -205,6 +255,12 @@ namespace MasterServerToolkit.Networking
             return b;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static Dictionary<string, float> FromBytes(this Dictionary<string, float> dictionary, byte[] data)
         {
             using (var ms = new MemoryStream(data))
@@ -232,6 +288,11 @@ namespace MasterServerToolkit.Networking
             return dictionary;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(this Dictionary<string, string> dictionary)
         {
             byte[] b;
@@ -247,6 +308,11 @@ namespace MasterServerToolkit.Networking
             return b;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="writer"></param>
         public static void ToWriter(this Dictionary<string, string> dictionary, EndianBinaryWriter writer)
         {
             if (dictionary == null)
@@ -264,6 +330,12 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="reader"></param>
+        /// <returns></returns>
         public static Dictionary<string, string> FromReader(this Dictionary<string, string> dictionary,
             EndianBinaryReader reader)
         {
@@ -286,6 +358,12 @@ namespace MasterServerToolkit.Networking
             return dictionary;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static Dictionary<string, string> FromBytes(this Dictionary<string, string> dictionary, byte[] data)
         {
             using (var ms = new MemoryStream(data))
@@ -298,27 +376,54 @@ namespace MasterServerToolkit.Networking
             return dictionary;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(this string text)
         {
             return Encoding.UTF8.GetBytes(text);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="packet"></param>
         public static void Write(this EndianBinaryWriter writer, ISerializablePacket packet)
         {
             packet.ToBinaryWriter(writer);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="reader"></param>
+        /// <param name="packet"></param>
+        /// <returns></returns>
         public static T ReadPacket<T>(this EndianBinaryReader reader, T packet) where T : ISerializablePacket, new()
         {
             packet.FromBinaryReader(reader);
             return packet;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="dictionary"></param>
         public static void Write(this EndianBinaryWriter writer, Dictionary<string, string> dictionary)
         {
             WriteDictionary(writer, dictionary);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="dictionary"></param>
         public static void WriteDictionary(this EndianBinaryWriter writer, Dictionary<string, string> dictionary)
         {
             var bytes = dictionary != null ? dictionary.ToBytes() : new byte[0];
@@ -327,6 +432,11 @@ namespace MasterServerToolkit.Networking
             writer.Write(bytes);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns></returns>
         public static Dictionary<string, string> ReadDictionary(this EndianBinaryReader reader)
         {
             var length = reader.ReadInt32();
@@ -339,6 +449,13 @@ namespace MasterServerToolkit.Networking
             return new Dictionary<string, string>();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="itemsSeparator"></param>
+        /// <param name="kvpSeparator"></param>
+        /// <returns></returns>
         public static string ToReadableString(this Dictionary<string, string> dictionary, string itemsSeparator = "; ", string kvpSeparator = " : ")
         {
             var readableString = string.Empty;

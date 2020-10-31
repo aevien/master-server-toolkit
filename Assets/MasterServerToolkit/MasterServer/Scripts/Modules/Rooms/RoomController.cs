@@ -228,7 +228,7 @@ namespace MasterServerToolkit.MasterServer
 
         #region MESSAGE HANDLERS
 
-        private void ProvideRoomAccessCheckHandler(IIncommingMessage message)
+        private void ProvideRoomAccessCheckHandler(IIncomingMessage message)
         {
             var provideRoomAccessCheckPacket = message.Deserialize(new ProvideRoomAccessCheckPacket());
             var roomController = Mst.Server.Rooms.GetRoomController(provideRoomAccessCheckPacket.RoomId);

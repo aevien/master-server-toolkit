@@ -3,6 +3,7 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
@@ -32,7 +33,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
             // Set the new factory in ProfilesModule
             ProfileFactory = CreateProfileInServer;
 
-            server.SetHandler((short)MstMessageCodes.UpdateDisplayNameRequest, UpdateDisplayNameRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.UpdateDisplayNameRequest, UpdateDisplayNameRequestHandler);
 
             //Update profile resources each 5 sec
             InvokeRepeating(nameof(IncreaseResources), 1f, 1f);
@@ -58,7 +59,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
 
         private void IncreaseResources()
         {
-            foreach (var profile in ProfilesList.Values)
+            foreach (var profile in Profiles)
             {
                 var bronzeProperty = profile.GetProperty<ObservableFloat>((short)ObservablePropertiyCodes.Bronze);
                 var silverProperty = profile.GetProperty<ObservableFloat>((short)ObservablePropertiyCodes.Silver);
@@ -70,7 +71,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
             }
         }
 
-        private void UpdateDisplayNameRequestHandler(IIncommingMessage message)
+        private void UpdateDisplayNameRequestHandler(IIncomingMessage message)
         {
             var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
@@ -84,7 +85,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
 
             try
             {
-                if (ProfilesList.TryGetValue(userExtension.Username, out ObservableServerProfile profile))
+                if (profilesList.TryGetValue(userExtension.Username, out ObservableServerProfile profile))
                 {
                     profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.DisplayName).Set(newProfileData["displayName"]);
                     profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.Avatar).Set(newProfileData["avatarUrl"]);

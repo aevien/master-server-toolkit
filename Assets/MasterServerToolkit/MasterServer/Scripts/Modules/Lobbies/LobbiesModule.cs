@@ -19,8 +19,19 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
+        /// <summary>
+        /// Next lobby Id
+        /// </summary>
         private int nextLobbyId;
+
+        /// <summary>
+        /// Lobby factories list
+        /// </summary>
         protected Dictionary<string, ILobbyFactory> factories;
+
+        /// <summary>
+        /// Lobbies list
+        /// </summary>
         protected Dictionary<int, ILobby> lobbies;
 
         public SpawnersModule SpawnersModule { get; protected set; }
@@ -43,25 +54,33 @@ namespace MasterServerToolkit.MasterServer
             factories = factories ?? new Dictionary<string, ILobbyFactory>();
             lobbies = lobbies ?? new Dictionary<int, ILobby>();
 
-            server.SetHandler((short)MstMessageCodes.CreateLobby, CreateLobbyRequestHandle);
-            server.SetHandler((short)MstMessageCodes.JoinLobby, JoinLobbyRequestHandler);
-            server.SetHandler((short)MstMessageCodes.LeaveLobby, LeaveLobbyRequestHandler);
-            server.SetHandler((short)MstMessageCodes.SetLobbyProperties, HandleSetLobbyProperties);
-            server.SetHandler((short)MstMessageCodes.SetMyLobbyProperties, HandleSetMyProperties);
-            server.SetHandler((short)MstMessageCodes.JoinLobbyTeam, HandleJoinTeam);
-            server.SetHandler((short)MstMessageCodes.LobbySendChatMessage, HandleSendChatMessage);
-            server.SetHandler((short)MstMessageCodes.LobbySetReady, HandleSetReadyStatus);
-            server.SetHandler((short)MstMessageCodes.LobbyStartGame, HandleStartGame);
-            server.SetHandler((short)MstMessageCodes.GetLobbyRoomAccess, HandleGetLobbyRoomAccess);
-
-            server.SetHandler((short)MstMessageCodes.GetLobbyMemberData, HandleGetLobbyMemberData);
-            server.SetHandler((short)MstMessageCodes.GetLobbyInfo, HandleGetLobbyInfo);
+            server.RegisterMessageHandler((short)MstMessageCodes.CreateLobby, CreateLobbyHandle);
+            server.RegisterMessageHandler((short)MstMessageCodes.JoinLobby, JoinLobbyHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.LeaveLobby, LeaveLobbyHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.SetLobbyProperties, SetLobbyPropertiesMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.SetMyProperties, SetMyPropertiesMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.JoinLobbyTeam, JoinLobbyTeamMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.SendMessageToLobbyChat, SendMessageToLobbyChatMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.SetLobbyAsReady, SetLobbyAsReadyMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.StartLobbyGame, StartLobbyGameMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.GetLobbyRoomAccess, GetLobbyRoomAccessMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.GetLobbyMemberData, GetLobbyMemberDataMessageHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.GetLobbyInfo, GetLobbyInfoMessageHandler);
         }
 
         protected virtual bool CheckIfHasPermissionToCreate(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
             return extension.PermissionLevel >= createLobbiesPermissionLevel;
+        }
+
+        /// <summary>
+        /// Create new unique lobby Id
+        /// </summary>
+        /// <returns></returns>
+        public int NextLobbyId()
+        {
+            return nextLobbyId++;
         }
 
         /// <summary>
@@ -91,6 +110,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool AddLobby(ILobby lobby)
         {
+            if (lobby == null) return false;
+
             if (lobbies.ContainsKey(lobby.Id))
             {
                 logger.Error("Failed to add a lobby - lobby with same id already exists");
@@ -133,18 +154,9 @@ namespace MasterServerToolkit.MasterServer
             return extension;
         }
 
-        /// <summary>
-        /// Create new unique lobby Id
-        /// </summary>
-        /// <returns></returns>
-        public int GenerateLobbyId()
-        {
-            return nextLobbyId++;
-        }
-
         #region INCOMING MESSAGES HANDLERS
 
-        protected virtual void CreateLobbyRequestHandle(IIncommingMessage message)
+        protected virtual void CreateLobbyHandle(IIncomingMessage message)
         {
             // We may need to check permission of requester
             if (!CheckIfHasPermissionToCreate(message.Peer))
@@ -166,15 +178,17 @@ namespace MasterServerToolkit.MasterServer
             // Deserialize properties of the lobby
             var options = MstProperties.FromBytes(message.AsBytes());
 
-            // Try get factory ID
-            if (!options.Has(MstDictKeys.lobbyFactoryId))
+            // Get lobby factory Id or empty string
+            string lobbyFactoryId = options.AsString(MstDictKeys.LOBBY_FACTORY_ID);
+
+            if (string.IsNullOrEmpty(lobbyFactoryId))
             {
                 message.Respond("Invalid request (undefined factory)", ResponseStatus.Failed);
                 return;
             }
 
             // Get the lobby factory
-            factories.TryGetValue(options.AsString(MstDictKeys.lobbyFactoryId), out ILobbyFactory factory);
+            factories.TryGetValue(lobbyFactoryId, out ILobbyFactory factory);
 
             if (factory == null)
             {
@@ -200,7 +214,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a request from user to join a lobby
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void JoinLobbyRequestHandler(IIncommingMessage message)
+        protected virtual void JoinLobbyHandler(IIncomingMessage message)
         {
             var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
 
@@ -235,7 +249,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a request from user to leave a lobby
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void LeaveLobbyRequestHandler(IIncommingMessage message)
+        protected virtual void LeaveLobbyHandler(IIncomingMessage message)
         {
             var lobbyId = message.AsInt();
 
@@ -251,7 +265,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void HandleSetLobbyProperties(IIncommingMessage message)
+        protected virtual void SetLobbyPropertiesMessageHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new LobbyPropertiesSetPacket());
 
@@ -278,11 +292,13 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        private void HandleSetMyProperties(IIncommingMessage message)
+        private void SetMyPropertiesMessageHandler(IIncomingMessage message)
         {
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
+            // Get lobby user peer extension
+            var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
 
-            var lobby = lobbiesExt.CurrentLobby;
+            // Get current lobby this user joined in
+            var lobby = lobbyUser.CurrentLobby;
 
             if (lobby == null)
             {
@@ -290,16 +306,18 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
+            // Properties to be changed
             var properties = new Dictionary<string, string>().FromBytes(message.AsBytes());
 
-            var player = lobby.GetMemberByExtension(lobbiesExt);
+            // Get member of lobby by its lobby user extension
+            var member = lobby.GetMemberByExtension(lobbyUser);
 
             foreach (var dataProperty in properties)
             {
                 // We don't change properties directly,
                 // because we want to allow an implementation of lobby
                 // to do "sanity" checking
-                if (!lobby.SetPlayerProperty(player, dataProperty.Key, dataProperty.Value))
+                if (!lobby.SetPlayerProperty(member, dataProperty.Key, dataProperty.Value))
                 {
                     message.Respond("Failed to set property: " + dataProperty.Key, ResponseStatus.Failed);
                     return;
@@ -309,7 +327,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void HandleSetReadyStatus(IIncommingMessage message)
+        protected virtual void SetLobbyAsReadyMessageHandler(IIncomingMessage message)
         {
             var isReady = message.AsInt() > 0;
 
@@ -334,7 +352,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void HandleJoinTeam(IIncommingMessage message)
+        protected virtual void JoinLobbyTeamMessageHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new LobbyJoinTeamPacket());
 
@@ -364,7 +382,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void HandleSendChatMessage(IIncommingMessage message)
+        protected virtual void SendMessageToLobbyChatMessageHandler(IIncomingMessage message)
         {
             var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
             var lobby = lobbiesExt.CurrentLobby;
@@ -380,7 +398,7 @@ namespace MasterServerToolkit.MasterServer
             lobby.ChatMessageHandler(member, message);
         }
 
-        protected virtual void HandleStartGame(IIncommingMessage message)
+        protected virtual void StartLobbyGameMessageHandler(IIncomingMessage message)
         {
             var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
             var lobby = lobbiesExt.CurrentLobby;
@@ -394,7 +412,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void HandleGetLobbyRoomAccess(IIncommingMessage message)
+        protected virtual void GetLobbyRoomAccessMessageHandler(IIncomingMessage message)
         {
             var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
             var lobby = lobbiesExt.CurrentLobby;
@@ -402,7 +420,7 @@ namespace MasterServerToolkit.MasterServer
             lobby.GameAccessRequestHandler(message);
         }
 
-        protected virtual void HandleGetLobbyMemberData(IIncommingMessage message)
+        protected virtual void GetLobbyMemberDataMessageHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new IntPairPacket());
             var lobbyId = data.A;
@@ -427,7 +445,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(member.GenerateDataPacket(), ResponseStatus.Success);
         }
 
-        protected virtual void HandleGetLobbyInfo(IIncommingMessage message)
+        protected virtual void GetLobbyInfoMessageHandler(IIncomingMessage message)
         {
             var lobbyId = message.AsInt();
 
@@ -444,7 +462,7 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
-        public IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
+        public virtual IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
         {
             return lobbies.Values.Select(lobby => new GameInfoPacket()
             {
@@ -454,7 +472,7 @@ namespace MasterServerToolkit.MasterServer
                 MaxPlayers = lobby.MaxPlayers,
                 Name = lobby.Name,
                 OnlinePlayers = lobby.PlayerCount,
-                CustomOptions = GetPublicLobbyProperties(peer, lobby, filters),
+                Properties = GetPublicLobbyProperties(peer, lobby, filters),
                 Type = GameInfoType.Lobby
             });
         }

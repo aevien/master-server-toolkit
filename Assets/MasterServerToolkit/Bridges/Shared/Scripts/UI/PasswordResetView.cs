@@ -67,9 +67,9 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void ResetPassword()
         {
-            if (!Mst.Options.Has(MstDictKeys.resetPasswordEmail)) throw new Exception("You have no reset email");
+            if (!Mst.Options.Has(MstDictKeys.RESET_PASSWORD_EMAIL)) throw new Exception("You have no reset email");
 
-            AuthBehaviour.Instance.ResetPassword(Mst.Options.AsString(MstDictKeys.resetPasswordEmail), ResetCode, NewPassword);
+            AuthBehaviour.Instance.ResetPassword(Mst.Options.AsString(MstDictKeys.RESET_PASSWORD_EMAIL), ResetCode, NewPassword);
         }
 
         /// <summary>

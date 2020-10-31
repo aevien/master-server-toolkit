@@ -103,9 +103,9 @@ namespace MasterServerToolkit.Games
 
             // Spawn options for spawner controller
             var spawnOptions = new MstProperties();
-            spawnOptions.Add(MstDictKeys.roomMaxPlayers, MaxConnections);
-            spawnOptions.Add(MstDictKeys.roomName, RoomName);
-            spawnOptions.Add(MstDictKeys.roomPassword, Password);
+            spawnOptions.Add(MstDictKeys.ROOM_MAX_PLAYERS, MaxConnections);
+            spawnOptions.Add(MstDictKeys.ROOM_NAME, RoomName);
+            spawnOptions.Add(MstDictKeys.ROOM_PASSWORD, Password);
 
             MatchmakingBehaviour.Instance.CreateNewRoom(RegionName, spawnOptions);
         }

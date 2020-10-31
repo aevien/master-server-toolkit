@@ -14,7 +14,7 @@ namespace MasterServerToolkit.Bridges.Mirror
 
         protected override void OnInitialize()
         {
-            if (Mst.Options.Has(MstDictKeys.autoStartRoomClient))
+            if (Mst.Options.Has(MstDictKeys.AUTOSTART_ROOM_CLIENT))
             {
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Connecting to room... Please wait!");
                 Connection.AddConnectionListener(OnConnectedToMasterServerEventHandler);

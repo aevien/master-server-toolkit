@@ -19,9 +19,9 @@ namespace MasterServerToolkit.MasterServer
         #endregion
 
         /// <summary>
-        /// Next room id
+        /// ID of the last created room
         /// </summary>
-        private int nextRoomId = 0;
+        private int lastRoomId = 0;
 
         /// <summary>
         /// Registered rooms list
@@ -38,6 +38,12 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event Action<RegisteredRoom> OnRoomDestroyedEvent;
 
+        /// <summary>
+        /// Get next room id
+        /// </summary>
+        /// <returns></returns>
+        public int NextRoomId => lastRoomId++;
+
         protected override void Awake()
         {
             base.Awake();
@@ -48,12 +54,12 @@ namespace MasterServerToolkit.MasterServer
         public override void Initialize(IServer server)
         {
             // Add handlers
-            server.SetHandler((short)MstMessageCodes.RegisterRoomRequest, RegisterRoomRequestHandler);
-            server.SetHandler((short)MstMessageCodes.DestroyRoomRequest, DestroyRoomRequestHandler);
-            server.SetHandler((short)MstMessageCodes.SaveRoomOptionsRequest, SaveRoomOptionsRequestHandler);
-            server.SetHandler((short)MstMessageCodes.GetRoomAccessRequest, GetRoomAccessRequestHandler);
-            server.SetHandler((short)MstMessageCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
-            server.SetHandler((short)MstMessageCodes.PlayerLeftRoomRequest, PlayerLeftRoomRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.RegisterRoomRequest, RegisterRoomRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.DestroyRoomRequest, DestroyRoomRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.SaveRoomOptionsRequest, SaveRoomOptionsRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.GetRoomAccessRequest, GetRoomAccessRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.PlayerLeftRoomRequest, PlayerLeftRoomRequestHandler);
 
             // Maintain unconfirmed accesses
             InvokeRepeating(nameof(CleanUnconfirmedAccesses), 1f, 1f);
@@ -106,15 +112,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Get next room id
-        /// </summary>
-        /// <returns></returns>
-        public int GenerateRoomId()
-        {
-            return nextRoomId++;
-        }
-
-        /// <summary>
         /// Registers a room to the server
         /// </summary>
         /// <param name="peer"></param>
@@ -122,8 +119,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual RegisteredRoom RegisterRoom(IPeer peer, RoomOptions options)
         {
-            // Create the object
-            var room = new RegisteredRoom(GenerateRoomId(), peer, options);
+            var room = new RegisteredRoom(NextRoomId, peer, options);
             var peerRooms = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
 
             if (peerRooms == null)
@@ -195,7 +191,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         /// <param name="filters"></param>
         /// <returns></returns>
-        public IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
+        public virtual IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
         {
             return roomsList.Values.Where(r => r.Options.IsPublic).Select(r => new GameInfoPacket()
             {
@@ -204,7 +200,7 @@ namespace MasterServerToolkit.MasterServer
                 MaxPlayers = r.Options.MaxConnections,
                 Name = r.Options.Name,
                 OnlinePlayers = r.OnlineCount,
-                CustomOptions = GetPublicRoomOptions(peer, r, filters),
+                Properties = GetPublicRoomOptions(peer, r, filters),
                 IsPasswordProtected = !string.IsNullOrEmpty(r.Options.Password),
                 Type = GameInfoType.Room,
                 Region = r.Options.Region
@@ -242,9 +238,18 @@ namespace MasterServerToolkit.MasterServer
             return roomsList.Values;
         }
 
+        /// <summary>
+        /// Get room players list
+        /// </summary>
+        /// <param name="roomId"></param>
+        public IEnumerable<IPeer> GetPlayersOfRoom(int roomId)
+        {
+            return roomsList[roomId].Players.Values;
+        }
+
         #region Message Handlers
 
-        private void RegisterRoomRequestHandler(IIncommingMessage message)
+        protected virtual void RegisterRoomRequestHandler(IIncomingMessage message)
         {
             logger.Debug($"Client {message.Peer.Id} requested to register new room server");
 
@@ -264,7 +269,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(room.RoomId, ResponseStatus.Success);
         }
 
-        protected virtual void DestroyRoomRequestHandler(IIncommingMessage message)
+        protected virtual void DestroyRoomRequestHandler(IIncomingMessage message)
         {
             var roomId = message.AsInt();
 
@@ -291,7 +296,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        private void ValidateRoomAccessRequestHandler(IIncommingMessage message)
+        protected virtual void ValidateRoomAccessRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new RoomAccessValidatePacket());
 
@@ -330,7 +335,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(packet, ResponseStatus.Success);
         }
 
-        protected virtual void SaveRoomOptionsRequestHandler(IIncommingMessage message)
+        protected virtual void SaveRoomOptionsRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new SaveRoomOptionsPacket());
 
@@ -351,7 +356,7 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void GetRoomAccessRequestHandler(IIncommingMessage message)
+        protected virtual void GetRoomAccessRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new RoomAccessRequestPacket());
 
@@ -382,7 +387,7 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
-        private void PlayerLeftRoomRequestHandler(IIncommingMessage message)
+        protected virtual void PlayerLeftRoomRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new PlayerLeftRoomPacket());
 
@@ -399,7 +404,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            room.OnPlayerLeft(data.PeerId);
+            room.RemovePlayer(data.PeerId);
 
             message.Respond(ResponseStatus.Success);
         }

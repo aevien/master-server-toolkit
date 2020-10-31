@@ -8,56 +8,67 @@ namespace Aevien.Utilities
     public class DynamicSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         /// <summary>
-        /// Singleton state
+        /// Current instance of this singleton
         /// </summary>
-        private static bool _initialized;
-
-        /// <summary>
-        /// Id of the main thread Unity's API runs in
-        /// </summary>
-        static int _mainThreadId = -1;
-
         private static T _instance { get; set; }
 
+        protected virtual void Start()
+        {
+            StartCoroutine(WaitAndDestroy());
+        }
+
+        private IEnumerator WaitAndDestroy()
+        {
+            yield return new WaitForEndOfFrame();
+
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+            }
+        }
+
+        /// <summary>
+        /// Current instance of this singleton
+        /// </summary>
         public static T Instance
         {
             get
             {
-                if (!_initialized)
+                if (!_instance)
                     Create();
 
                 return _instance;
             }
         }
 
+        /// <summary>
+        /// Tries to create new instance of this singleton
+        /// </summary>
         public static void Create()
         {
             Create(string.Empty);
         }
 
+        /// <summary>
+        /// Tries to create new instance of this singleton with new given name
+        /// </summary>
+        /// <param name="name"></param>
         public static void Create(string name)
         {
-            if (Mst.Runtime.SupportsThreads && _initialized && _mainThreadId != -1 && _mainThreadId == Mst.Concurrency.CurrentThreadId)
+            if (_instance)
                 return;
 
-            if (!_initialized)
+            _instance = FindObjectOfType<T>();
+
+            if (_instance)
             {
-                string newName = !string.IsNullOrEmpty(name) ? name : $"--{typeof(T).Name}".ToUpper();
-                var go = new GameObject(newName);
-                _instance = go.AddComponent<T>();
-                DontDestroyOnLoad(_instance);
-                _initialized = true;
-
-                if (Mst.Runtime.SupportsThreads)
-                {
-                    _mainThreadId = Mst.Concurrency.CurrentThreadId;
-                }
+                return;
             }
-        }
 
-        private void OnDestroy()
-        {
-            _initialized = false;
+            string newName = !string.IsNullOrEmpty(name) ? name : $"--{typeof(T).Name}".ToUpper();
+            var go = new GameObject(newName);
+            _instance = go.AddComponent<T>();
+            DontDestroyOnLoad(_instance);
         }
     }
 }

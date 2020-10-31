@@ -85,6 +85,11 @@ namespace Aevien.UI
 
         protected virtual void OnValidate()
         {
+            if (string.IsNullOrEmpty(Id))
+            {
+                id = name;
+            }
+
             if (!GetComponent<CanvasGroup>())
             {
                 gameObject.AddComponent<CanvasGroup>();

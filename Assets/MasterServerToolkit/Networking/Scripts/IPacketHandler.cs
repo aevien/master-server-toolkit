@@ -14,6 +14,6 @@
         /// Handling of the message
         /// </summary>
         /// <param name="message"></param>
-        void Handle(IIncommingMessage message);
+        void Handle(IIncomingMessage message);
     }
 }

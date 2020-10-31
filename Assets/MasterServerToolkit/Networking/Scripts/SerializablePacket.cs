@@ -7,6 +7,22 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public abstract class SerializablePacket : ISerializablePacket
     {
+        /// <summary>
+        /// Writes data of this packet to binary writer
+        /// </summary>
+        /// <param name="writer"></param>
+        public abstract void ToBinaryWriter(EndianBinaryWriter writer);
+
+        /// <summary>
+        /// Reads all data from binary reader
+        /// </summary>
+        /// <param name="reader"></param>
+        public abstract void FromBinaryReader(EndianBinaryReader reader);
+
+        /// <summary>
+        /// Convert packet to byte array
+        /// </summary>
+        /// <returns></returns>
         public byte[] ToBytes()
         {
             byte[] b;
@@ -22,9 +38,13 @@ namespace MasterServerToolkit.Networking
             return b;
         }
 
-        public abstract void ToBinaryWriter(EndianBinaryWriter writer);
-        public abstract void FromBinaryReader(EndianBinaryReader reader);
-
+        /// <summary>
+        /// Parses packet from bytes
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        /// <param name="packet"></param>
+        /// <returns></returns>
         public static T FromBytes<T>(byte[] data, T packet) where T : ISerializablePacket
         {
             using (var ms = new MemoryStream(data))
@@ -38,7 +58,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Write an array whichs length is lower than byte value
+        /// Write an array which length is lower than byte value
         /// </summary>
         /// <param name="data"></param>
         /// <param name="writer"></param>
@@ -56,7 +76,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Read an array whichs length is lower than byte value
+        /// Read an array whichs length is lower than byte value
         /// </summary>
         /// <param name="reader"></param>
         public float[] ReadSmallArray(EndianBinaryReader reader)

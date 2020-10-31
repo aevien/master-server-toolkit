@@ -1,9 +1,36 @@
-﻿namespace MasterServerToolkit.Networking
+﻿using System;
+
+namespace MasterServerToolkit.Networking
 {
     public delegate void PeerActionHandler(IPeer peer);
 
     public interface IServerSocket
     {
+        /// <summary>
+        /// Invokes before server starts
+        /// </summary>
+        event Action<IServerSocket> OnBeforeServerStart;
+
+        /// <summary>
+        /// Whether or not to use secure connection
+        /// </summary>
+        bool UseSecure { get; set; }
+
+        /// <summary>
+        /// Path to SSL certificate
+        /// </summary>
+        string CertificatePath { get; set; }
+
+        /// <summary>
+        /// Password for SSL certificate
+        /// </summary>
+        string CertificatePassword { get; set; }
+
+        /// <summary>
+        /// Applications key
+        /// </summary>
+        string ApplicationKey { get; set; }
+
         /// <summary>
         /// Invoked, when a client connects to this socket
         /// </summary>
@@ -13,21 +40,6 @@
         /// Invoked, when client disconnects from this socket
         /// </summary>
         event PeerActionHandler OnPeerDisconnectedEvent;
-
-        /// <summary>
-        /// Whether  or not to use secure connection
-        /// </summary>
-        bool UseSsl { get; set; }
-
-        /// <summary>
-        /// Path to certificate
-        /// </summary>
-        string CertificatePath { get; set; }
-
-        /// <summary>
-        /// Your certificate password
-        /// </summary>
-        string CertificatePassword { get; set; }
 
         /// <summary>
         /// Opens the socket and starts listening to a given port. IP is 127.0.0.1

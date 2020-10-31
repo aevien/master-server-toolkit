@@ -1,8 +1,8 @@
 ﻿namespace MasterServerToolkit.Networking
 {
-    public class BaseClientSocket<TPeer> : IMsgDispatcher<TPeer> where TPeer : IPeer
+    public class BaseClientSocket : IMsgDispatcher
     {
-        public TPeer Peer { get; set; }
+        public IPeer Peer { get; set; }
 
         public void SendMessage(short opCode)
         {
@@ -108,22 +108,22 @@
             Peer.SendMessage(msg, responseCallback, timeoutSecs);
         }
 
-        public void SendMessage(IMessage message)
+        public void SendMessage(IOutgoingMessage message)
         {
             SendMessage(message, DeliveryMethod.Reliable);
         }
 
-        public void SendMessage(IMessage message, DeliveryMethod method)
+        public void SendMessage(IOutgoingMessage message, DeliveryMethod method)
         {
             Peer.SendMessage(message, method);
         }
 
-        public void SendMessage(IMessage message, ResponseCallback responseCallback)
+        public void SendMessage(IOutgoingMessage message, ResponseCallback responseCallback)
         {
             Peer.SendMessage(message, responseCallback);
         }
 
-        public void SendMessage(IMessage message, ResponseCallback responseCallback, int timeoutSecs)
+        public void SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
         {
             Peer.SendMessage(message, responseCallback, timeoutSecs);
         }

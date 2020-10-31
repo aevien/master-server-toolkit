@@ -12,12 +12,17 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "v4.0.1";
+        public static string Version => "4.1";
 
         /// <summary>
         /// Just name of the framework
         /// </summary>
         public static string Name => "MASTER SERVER TOOLKIT";
+
+        /// <summary>
+        /// Check if MST in dev mode
+        /// </summary>
+        public static bool UseDevMode { get; set; }
 
         /// <summary>
         /// Main connection to master server
@@ -77,7 +82,15 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static MstArgs Args { get; private set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static MstProperties Options { get; private set; }
+
+        /// <summary>
+        /// Config info from startup.cfg
+        /// </summary>
+        public static MstConfig Config { get; private set; }
 
         static Mst()
         {
@@ -86,6 +99,7 @@ namespace MasterServerToolkit.MasterServer
 
             // Initialize advanced settings
             Advanced = new MstAdvancedSettings();
+            Config = new MstConfig();
 
             // Initialize runtime data
             Runtime = new MstRuntime();
@@ -108,6 +122,8 @@ namespace MasterServerToolkit.MasterServer
             Create = new MstCreate();
             Concurrency = new MstConcurrency();
             Events = new MstEventsChannel("default", true);
+
+            UseDevMode = Args.UseDevMode;
         }
     }
 }

@@ -5,7 +5,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class LobbyTeamData : SerializablePacket
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
         public MstProperties Properties { get; set; }

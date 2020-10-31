@@ -22,7 +22,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Key of the exact property
         /// </summary>
-        public string PropertyKey { get; set; }
+        public string PropertyKey { get; set; } = string.Empty;
 
         /// <summary>
         /// List of property options (useful for dropdowns)

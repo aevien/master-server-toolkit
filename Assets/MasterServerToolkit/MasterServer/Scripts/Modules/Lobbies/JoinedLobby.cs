@@ -23,7 +23,7 @@ namespace MasterServerToolkit.MasterServer
 
         public ILobbyListener Listener { get; private set; }
 
-        public string LobbyName { get { return Data.LobbyName; } }
+        public string Name { get { return Data.LobbyName; } }
 
         public int Id { get { return Data.LobbyId; } }
 
@@ -48,8 +48,18 @@ namespace MasterServerToolkit.MasterServer
             connection.SetHandler((short)MstMessageCodes.LobbyPropertyChanged, HandleLobbyPropertyChanged);
 
             Properties = data.LobbyProperties;
-            Members = data.Players;
+            Members = data.Members;
             Teams = data.Teams;
+        }
+
+        /// <summary>
+        /// Check if given user is master
+        /// </summary>
+        /// <param name="username"></param>
+        /// <returns></returns>
+        public bool IsMasterUser(string username)
+        {
+            return Data.GameMaster == username;
         }
 
         /// <summary>
@@ -205,7 +215,7 @@ namespace MasterServerToolkit.MasterServer
 
         #region Handlers
 
-        private void HandleMemberPropertyChanged(IIncommingMessage message)
+        private void HandleMemberPropertyChanged(IIncomingMessage message)
         {
             var data = message.Deserialize(new LobbyMemberPropChangePacket());
 
@@ -226,7 +236,7 @@ namespace MasterServerToolkit.MasterServer
             Listener?.OnMemberPropertyChanged(member, data.Property, data.Value);
         }
 
-        private void HandleLeftLobbyMsg(IIncommingMessage message)
+        private void HandleLeftLobbyMsg(IIncomingMessage message)
         {
             var id = message.AsInt();
 
@@ -241,36 +251,37 @@ namespace MasterServerToolkit.MasterServer
             Listener?.OnLobbyLeft();
         }
 
-        private void HandleLobbyChatMessageMsg(IIncommingMessage message)
+        private void HandleLobbyChatMessageMsg(IIncomingMessage message)
         {
             var msg = message.Deserialize(new LobbyChatPacket());
 
             Listener?.OnChatMessageReceived(msg);
         }
 
-        private void HandleLobbyMemberLeftMsg(IIncommingMessage message)
+        private void HandleLobbyMemberLeftMsg(IIncomingMessage message)
         {
             var username = message.AsString();
 
-            LobbyMemberData member;
-            Members.TryGetValue(username, out member);
+            Members.TryGetValue(username, out LobbyMemberData member);
 
             if (member == null)
             {
                 return;
             }
 
+            Members.Remove(username);
+
             Listener?.OnMemberLeft(member);
         }
 
-        private void HandleLobbyMemberJoinedMsg(IIncommingMessage message)
+        private void HandleLobbyMemberJoinedMsg(IIncomingMessage message)
         {
             var data = message.Deserialize(new LobbyMemberData());
             Members[data.Username] = data;
             Listener?.OnMemberJoined(data);
         }
 
-        private void HandleLobbyMasterChangeMsg(IIncommingMessage message)
+        private void HandleLobbyMasterChangeMsg(IIncomingMessage message)
         {
             var masterUsername = message.AsString();
 
@@ -278,12 +289,11 @@ namespace MasterServerToolkit.MasterServer
             Listener?.OnMasterChanged(masterUsername);
         }
 
-        private void HandleLobbyMemberReadyStatusChangeMsg(IIncommingMessage message)
+        private void HandleLobbyMemberReadyStatusChangeMsg(IIncomingMessage message)
         {
             var data = message.Deserialize(new StringPairPacket());
 
-            LobbyMemberData member;
-            Members.TryGetValue(data.A, out member);
+            Members.TryGetValue(data.A, out LobbyMemberData member);
 
             if (member == null)
             {
@@ -295,7 +305,7 @@ namespace MasterServerToolkit.MasterServer
             Listener?.OnMemberReadyStatusChanged(member, member.IsReady);
         }
 
-        private void HandlePlayerTeamChangeMsg(IIncommingMessage message)
+        private void HandlePlayerTeamChangeMsg(IIncomingMessage message)
         {
             var data = message.Deserialize(new StringPairPacket());
 
@@ -318,7 +328,7 @@ namespace MasterServerToolkit.MasterServer
             Listener?.OnMemberTeamChanged(member, newTeam);
         }
 
-        private void HandleLobbyStatusTextChangeMsg(IIncommingMessage message)
+        private void HandleLobbyStatusTextChangeMsg(IIncomingMessage message)
         {
             var text = message.AsString();
 
@@ -327,7 +337,7 @@ namespace MasterServerToolkit.MasterServer
             Listener?.OnLobbyStatusTextChanged(text);
         }
 
-        private void HandleLobbyStateChangeMsg(IIncommingMessage message)
+        private void HandleLobbyStateChangeMsg(IIncomingMessage message)
         {
             var newState = (LobbyState)message.AsInt();
 
@@ -336,7 +346,7 @@ namespace MasterServerToolkit.MasterServer
             Listener?.OnLobbyStateChange(newState);
         }
 
-        private void HandleLobbyPropertyChanged(IIncommingMessage message)
+        private void HandleLobbyPropertyChanged(IIncomingMessage message)
         {
             var data = message.Deserialize(new StringPairPacket());
             Properties[data.A] = data.B;

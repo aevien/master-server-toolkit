@@ -12,6 +12,14 @@ namespace MasterServerToolkit.MasterServer
         public string Property { get; set; }
         public string Value { get; set; }
 
+        public LobbyMemberPropChangePacket()
+        {
+            Username = string.Empty;
+            Property = string.Empty;
+            Value = string.Empty;
+        }
+
+
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
             writer.Write(LobbyId);

@@ -81,7 +81,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Set region to room by filter. If region is empty the room will be international
-            options.Set(MstDictKeys.roomRegion, string.IsNullOrEmpty(region) ? string.Empty : region);
+            options.Set(MstDictKeys.ROOM_REGION, string.IsNullOrEmpty(region) ? string.Empty : region);
 
             // Create spawn request message packet
             var data = new ClientsSpawnRequestPacket()

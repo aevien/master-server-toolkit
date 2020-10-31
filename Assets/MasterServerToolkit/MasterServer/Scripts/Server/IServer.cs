@@ -65,14 +65,14 @@ namespace MasterServerToolkit.MasterServer
         /// It will be invoked when server receives a message with
         /// OpCode <see cref="IPacketHandler.OpCode"/>
         /// </summary>
-        void SetHandler(IPacketHandler handler);
+        void RegisterMessageHandler(IPacketHandler handler);
 
         /// <summary>
         /// Adds a message handler to the collection of handlers.
         /// It will be invoked when server receives a message with
         /// OpCode <see cref="opCode"/>
         /// </summary>
-        void SetHandler(short opCode, IncommingMessageHandler handler);
+        void RegisterMessageHandler(short opCode, IncommingMessageHandler handler);
 
         /// <summary>
         /// Returns a connected peer with a given ID

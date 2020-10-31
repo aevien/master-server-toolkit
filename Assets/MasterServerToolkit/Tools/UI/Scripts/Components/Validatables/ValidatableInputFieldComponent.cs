@@ -53,6 +53,11 @@ namespace Aevien.UI
 
         public bool IsValid()
         {
+            if (!currentInputField.interactable)
+            {
+                return true;
+            }
+
             if (isRequired && string.IsNullOrEmpty(currentInputField.text))
             {
                 Logs.Error(string.IsNullOrEmpty(requiredErrorMessage) ? $"Field {name} is required" : requiredErrorMessage);

@@ -1,13 +1,13 @@
 namespace MasterServerToolkit.Networking
 {
     /// <summary>
-    ///     Implementation of EndianBitConverter which converts to/from little-endian
-    ///     byte arrays.
+    /// Implementation of EndianBitConverter which converts to/from little-endian
+    /// byte arrays.
     /// </summary>
     public sealed class LittleEndianBitConverter : EndianBitConverter
     {
         /// <summary>
-        ///     Indicates the byte order ("endianess") in which data is converted using this class.
+        /// Indicates the byte order ("endianess") in which data is converted using this class.
         /// </summary>
         public override Endianness Endianness
         {
@@ -15,12 +15,12 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Indicates the byte order ("endianess") in which data is converted using this class.
+        /// Indicates the byte order ("endianess") in which data is converted using this class.
         /// </summary>
         /// <remarks>
-        ///     Different computer architectures store data using different byte orders. "Big-endian"
-        ///     means the most significant byte is on the left end of a word. "Little-endian" means the
-        ///     most significant byte is on the right end of a word.
+        /// Different computer architectures store data using different byte orders. "Big-endian"
+        /// means the most significant byte is on the left end of a word. "Little-endian" means the
+        /// most significant byte is on the right end of a word.
         /// </remarks>
         /// <returns>true if this converter is little-endian, false otherwise.</returns>
         public override bool IsLittleEndian()
@@ -29,7 +29,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Copies the specified number of bytes from value to buffer, starting at index.
+        /// Copies the specified number of bytes from value to buffer, starting at index.
         /// </summary>
         /// <param name="value">The value to copy</param>
         /// <param name="bytes">The number of bytes to copy</param>
@@ -45,8 +45,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Returns a value built from the specified number of bytes from the given buffer,
-        ///     starting at index.
+        /// Returns a value built from the specified number of bytes from the given buffer,
+        /// starting at index.
         /// </summary>
         /// <param name="buffer">The data in byte array format</param>
         /// <param name="startIndex">The first index to use</param>

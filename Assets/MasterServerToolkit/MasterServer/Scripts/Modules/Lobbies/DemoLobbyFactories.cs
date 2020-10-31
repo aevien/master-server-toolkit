@@ -38,7 +38,7 @@ namespace MasterServerToolkit.MasterServer
             var config = new LobbyConfig();
 
             // Create the lobby
-            var lobby = new BaseLobby(module.GenerateLobbyId(), new[] { teamA, teamB }, module, config)
+            var lobby = new BaseLobby(module.NextLobbyId(), new[] { teamA, teamB }, module, config)
             {
                 Name = ExtractLobbyName(properties)
             };
@@ -83,7 +83,7 @@ namespace MasterServerToolkit.MasterServer
             var config = new LobbyConfig();
 
             // Create the lobby
-            var lobby = new BaseLobby(module.GenerateLobbyId(),
+            var lobby = new BaseLobby(module.NextLobbyId(),
                 new[] { team }, module, config)
             {
                 Name = ExtractLobbyName(properties)
@@ -138,7 +138,7 @@ namespace MasterServerToolkit.MasterServer
             var config = new LobbyConfig();
 
             // Create the lobby
-            var lobby = new BaseLobby(module.GenerateLobbyId(),
+            var lobby = new BaseLobby(module.NextLobbyId(),
                 new[] { teamA, teamB, teamC }, module, config)
             {
                 Name = ExtractLobbyName(properties)
@@ -199,7 +199,7 @@ namespace MasterServerToolkit.MasterServer
             };
 
             // Create the lobby
-            var lobby = new BaseLobbyAuto(module.GenerateLobbyId(),
+            var lobby = new BaseLobbyAuto(module.NextLobbyId(),
                 new[] { teamA, teamB }, module, config)
             {
                 Name = ExtractLobbyName(properties)
@@ -231,7 +231,7 @@ namespace MasterServerToolkit.MasterServer
 
         public static string ExtractLobbyName(Dictionary<string, string> properties)
         {
-            return properties.ContainsKey(MstDictKeys.lobbyName) ? properties[MstDictKeys.lobbyName] : DefaultName;
+            return properties.ContainsKey(MstDictKeys.LOBBY_NAME) ? properties[MstDictKeys.LOBBY_NAME] : DefaultName;
         }
     }
 }

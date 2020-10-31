@@ -47,7 +47,7 @@ namespace MasterServerToolkit.MasterServer
             Server.OnPeerDisconnectedEvent += Server_OnPeerDisconnectedEvent;
 
             // Register handler to handle validate access request
-            server.SetHandler((short)MstMessageCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace MasterServerToolkit.MasterServer
         /// Fired when player requested access to this room
         /// </summary>
         /// <param name="message"></param>
-        private void ValidateRoomAccessRequestHandler(IIncommingMessage message)
+        private void ValidateRoomAccessRequestHandler(IIncomingMessage message)
         {
             var token = message.AsString();
             var roomServer = Server as RoomServerBehaviour;

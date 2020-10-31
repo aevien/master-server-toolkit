@@ -7,9 +7,9 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class LobbyChatPacket : SerializablePacket
     {
-        public string Sender = "";
-        public string Message = "";
-        public bool IsError;
+        public string Sender { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public bool IsError { get; set; }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {

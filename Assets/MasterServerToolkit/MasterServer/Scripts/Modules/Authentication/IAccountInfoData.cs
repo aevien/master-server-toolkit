@@ -1,5 +1,4 @@
-﻿using Aevien.Utilities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
@@ -9,9 +8,12 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public interface IAccountInfoData
     {
+        string Id { get; set; }
         string Username { get; set; }
         string Password { get; set; }
         string Email { get; set; }
+        string PhoneNumber { get; set; }
+        string Facebook { get; set; }
         string Token { get; set; }
         bool IsAdmin { get; set; }
         bool IsGuest { get; set; }
@@ -22,5 +24,6 @@ namespace MasterServerToolkit.MasterServer
         void MarkAsDirty();
         bool HasToken();
         bool IsTokenExpired();
+        void SetToken(int days);
     }
 }

@@ -358,6 +358,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: PasswordResetCodeView
       objectReference: {fileID: 0}
+    - target: {fileID: 6427534093337236095, guid: fc34438760a620d4bbdf64dcbadb31b4,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 6427534093883792595, guid: fc34438760a620d4bbdf64dcbadb31b4,
         type: 3}
       propertyPath: m_SizeDelta.y
@@ -1203,13 +1208,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 643b72b2583b2ad4f83aae31a07036cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  smtpHost: smtp.gmail.com
-  smtpUsername: username@gmail.com
+  smtpHost: smtp.mail.com
+  smtpUsername: username@mail.com
   smtpPassword: password
   smtpPort: 587
   enableSsl: 1
   timeoutInSeconds: 60
-  mailFrom: yourgame@gmail.com
+  mailFrom: yourgame@mail.com
   senderDisplayName: Awesome Game
   emailBodyTemplate: {fileID: 0}
 --- !u!1 &236267904
@@ -3199,7 +3204,8 @@ MonoBehaviour:
   logLevel: 0
   usePublicIp: 0
   serverIP: 127.0.0.1
-  serverPort: 5000
+  serverPort: 5055
+  maxConnections: 0
   autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:
@@ -3592,6 +3598,7 @@ MonoBehaviour:
   logLevel: 0
   initModulesAtStart: 1
   clientToMasterConnector: {fileID: 0}
+  rememberUser: 1
   defaultUsername: qwerty
   defaultEmail: qwerty@mail.com
   defaultPassword: qwerty123!@#
@@ -4080,7 +4087,8 @@ MonoBehaviour:
   useEmailConfirmation: 1
   enableGuestLogin: 1
   guestPrefix: Guest
-  useGuestFriendlyName: 1
+  saveGuestInfo: 1
+  tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
@@ -4479,6 +4487,11 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4209270820902025749, guid: c1bea280baeb57349a80fbb4a8bcff72,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 4209270820908199241, guid: c1bea280baeb57349a80fbb4a8bcff72,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -4588,6 +4601,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: PasswordResetView
+      objectReference: {fileID: 0}
+    - target: {fileID: 4209270821028321602, guid: c1bea280baeb57349a80fbb4a8bcff72,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
+    - target: {fileID: 4209270822282547359, guid: c1bea280baeb57349a80fbb4a8bcff72,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
       objectReference: {fileID: 0}
     - target: {fileID: 4209270822354429548, guid: c1bea280baeb57349a80fbb4a8bcff72,
         type: 3}
@@ -5347,10 +5370,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1428928143}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d558598284e1b3e4a96e99f7bd3a97f2, type: 3}
+  m_Script: {fileID: 11500000, guid: 148bfe057370f264eaf655c830b76dac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logLevel: 0
+  useAccountDb: 1
+  accountDbName: accounts
+  useProfilesDb: 1
+  profilesDbName: profiles
 --- !u!1 &1458111702
 GameObject:
   m_ObjectHideFlags: 0
@@ -5997,6 +6023,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5716149025918224772, guid: 6a76d43d95c8c2147827366a823735d7,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
       objectReference: {fileID: 0}
     - target: {fileID: 7193697712563675966, guid: 6a76d43d95c8c2147827366a823735d7,
         type: 3}
@@ -7496,6 +7527,16 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3108565909346732940, guid: 70002e75ac2afee428e96b28e726db63,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
+    - target: {fileID: 3108565909498945415, guid: 70002e75ac2afee428e96b28e726db63,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 3108565909744531138, guid: 70002e75ac2afee428e96b28e726db63,
         type: 3}
       propertyPath: m_SizeDelta.y
@@ -7859,11 +7900,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  serverIp: 127.0.0.1
-  serverPort: 5000
-  minTimeToConnect: 0.5
-  maxTimeToConnect: 4
-  timeToConnect: 0.5
+  serverIP: 127.0.0.1
+  serverPort: 5055
+  minTimeToConnect: 5
+  maxTimeToConnect: 5
   maxAttemptsToConnect: 5
   waitAndConnect: 0.2
   connectOnStart: 0

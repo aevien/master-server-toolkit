@@ -47,17 +47,20 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Start()
         {
-            if (terminatableRoom == null) {
+            if(!Mst.Client.Rooms.ForceClientMode && !Mst.Runtime.IsEditor)
+            {
+                if (terminatableRoom == null)
+                {
+                    logger.Error("No ITerminatableRoom component found!");
+                    return;
+                }
 
-                logger.Error("No ITerminatableRoom component found!");
-                return;
+                terminatableRoom.OnCheckTerminationConditionEvent += CheckTerminationConditions;
+
+                // Start waiting empty room termination
+                if (!terminateRoomWhenLastPlayerQuits && terminateEmptyRoomInSeconds > 0)
+                    StartCoroutine(StartEmptyIntervalsCheck(terminateEmptyRoomInSeconds));
             }
-
-            terminatableRoom.OnCheckTerminationConditionEvent += CheckTerminationConditions;
-
-            // Start waiting empty room termination
-            if (!terminateRoomWhenLastPlayerQuits && terminateEmptyRoomInSeconds > 0)
-                StartCoroutine(StartEmptyIntervalsCheck(terminateEmptyRoomInSeconds));
         }
 
         protected virtual void OnDestroy()
@@ -88,7 +91,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if ((terminateRoomWhenLastPlayerQuits && terminatableRoom.IsAllowedToBeTerminated()) || terminatableRoom.IsAllowedToBeTerminated())
             {
-                logger.Info("Terminating game server according to conditions");
+                logger.Debug("Terminating game server according to conditions");
                 Mst.Runtime.Quit();
             }
         }

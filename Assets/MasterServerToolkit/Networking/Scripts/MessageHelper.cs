@@ -48,8 +48,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="packetCreator">Factory function</param>
         /// <returns></returns>
-        public static IEnumerable<T> DeserializeList<T>(byte[] data, Func<T> packetCreator)
-            where T : ISerializablePacket
+        public static IEnumerable<T> DeserializeList<T>(byte[] data, Func<T> packetCreator)  where T : ISerializablePacket
         {
             using (var ms = new MemoryStream(data))
             {
@@ -75,7 +74,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <returns></returns>
-        public static IMessage Create(short opCode)
+        public static IOutgoingMessage Create(short opCode)
         {
             return _factory.Create(opCode);
         }
@@ -86,7 +85,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static IMessage Create(short opCode, byte[] data)
+        public static IOutgoingMessage Create(short opCode, byte[] data)
         {
             return _factory.Create(opCode, data);
         }
@@ -97,7 +96,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public static IMessage Create(short opCode, string message)
+        public static IOutgoingMessage Create(short opCode, string message)
         {
             return _factory.Create(opCode, Encoding.UTF8.GetBytes(message));
         }
@@ -108,25 +107,31 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static IMessage Create(short opCode, int value)
+        public static IOutgoingMessage Create(short opCode, int value)
         {
             var bytes = new byte[4];
             _converter.CopyBytes(value, bytes, 0);
             return _factory.Create(opCode, bytes);
         }
 
-        public static IMessage Create(short opCode, ISerializablePacket packet)
+        /// <summary>
+        /// Create message from packet
+        /// </summary>
+        /// <param name="opCode"></param>
+        /// <param name="packet"></param>
+        /// <returns></returns>
+        public static IOutgoingMessage Create(short opCode, ISerializablePacket packet)
         {
             return Create(opCode, packet.ToBytes());
         }
 
         /// <summary>
-        /// Reconstructs message data into <see cref="IIncommingMessage" />
+        /// Reconstructs message data into <see cref="IIncomingMessage" />
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="peer"></param>
         /// <returns></returns>
-        public static IIncommingMessage FromBytes(byte[] buffer, int start, IPeer peer)
+        public static IIncomingMessage FromBytes(byte[] buffer, int start, IPeer peer)
         {
             return _factory.FromBytes(buffer, start, peer);
         }

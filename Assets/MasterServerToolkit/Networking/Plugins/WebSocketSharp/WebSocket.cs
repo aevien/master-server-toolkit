@@ -35,6 +35,9 @@ namespace MasterServerToolkit.Networking
             {
                 throw new ArgumentException($"Unsupported protocol: {protocol}");
             }
+
+            // Create WebSocket instance with timeout info
+            socket = new WebSocketSharp.WebSocket(url.ToString());
         }
 
         /// <summary>
@@ -155,9 +158,6 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public IEnumerator Connect()
         {
-            // Create WebSocket instance with timeout info
-            socket = new WebSocketSharp.WebSocket(url.ToString());
-
             // Listen to messages
             socket.OnMessage += (sender, e) =>
             {
@@ -167,7 +167,7 @@ namespace MasterServerToolkit.Networking
             // Listen to connection open
             socket.OnOpen += (sender, e) =>
             {
-                //logger.Debug("WebSocket opened connection");
+                logger.Debug("WebSocket opened connection");
                 IsConnected = true;
             };
 
@@ -181,44 +181,11 @@ namespace MasterServerToolkit.Networking
             // Listen to connection close
             socket.OnClose += (sender, args) =>
             {
-                //logger.Debug("WebSocket closed connection");
+                logger.Debug("WebSocket closed connection");
                 IsConnected = false;
             };
 
-            // If you wish to support threads
-            if (Mst.Runtime.SupportsThreads)
-            {
-                // HACK: When restarting in the Unity Editor, send a ping to the destination first to avoid having Connect() hang for 90 seconds.
-                // https://github.com/alvyxaz/barebones-masterserver/pull/142
-
-                // Note: On Windows Store Apps, a stream socket is used to mimic ping functionality. It will try to open connection to specified ip address with port 80. Also you need to enable InternetClient capability in Package.appxmanifest.
-                // https://docs.unity3d.com/ScriptReference/Ping.html
-                Ping ping = new Ping(url.Host);
-
-                // The ping send/receive takes about a second, so we wait for it to complete.
-                while (!ping.isDone)
-                {
-                    yield return null;
-                }
-
-                // If the ping succeeded, the time will be 0 or higher, otherwise -1. 
-                if (ping.time >= 0)
-                {
-                    Mst.Concurrency.RunInThreadPool(() =>
-                    {
-                        socket.Connect();
-                    });
-                }
-                else
-                {
-                    Error = "Websocket: Could not contact \"" + url.Host + "\" with Ping.";
-                }
-            }
-            // Just make simple connection
-            else
-            {
-                socket.Connect();
-            }
+            socket.Connect();
 
             IsConnecting = true;
 
@@ -258,20 +225,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public void Close()
         {
-            if (IsConnected)
-            {
-                if (Mst.Runtime.SupportsThreads)
-                {
-                    Mst.Concurrency.RunInThreadPool(() =>
-                    {
-                        socket.Close();
-                    });
-                }
-                else
-                {
-                    socket.Close();
-                }
-            }
+            socket.Close();
         }
 #endif
     }

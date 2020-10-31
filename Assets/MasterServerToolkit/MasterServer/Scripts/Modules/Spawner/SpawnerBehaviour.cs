@@ -195,11 +195,11 @@ namespace MasterServerToolkit.MasterServer
             if (!usePublicIp)
             {
                 // If machine IP is defined in cmd
-                machineIp = Mst.Args.ExtractValue(Mst.Args.Names.RoomIp, machineIp);
+                machineIp = Mst.Args.AsString(Mst.Args.Names.RoomIp, machineIp);
             }
 
             // If room region is defined in cmd
-            region = Mst.Args.ExtractValue(Mst.Args.Names.RoomRegion, region);
+            region = Mst.Args.AsString(Mst.Args.Names.RoomRegion, region);
 
             IsSpawnerStarted = true;
 
@@ -207,7 +207,7 @@ namespace MasterServerToolkit.MasterServer
             var spawnerOptions = new SpawnerOptions
             {
                 // If MaxProcesses count defined in cmd args
-                MaxProcesses = Mst.Args.ExtractValueInt(Mst.Args.Names.MaxProcesses, maxProcesses),
+                MaxProcesses = Mst.Args.AsInt(Mst.Args.Names.MaxProcesses, maxProcesses),
                 MachineIp = machineIp,
                 Region = region
             };
@@ -232,12 +232,10 @@ namespace MasterServerToolkit.MasterServer
                 spawnerController = controller;
                 spawnerController.Logger.LogLevel = spawnerLogLevel;
 
-                spawnerController.SpawnSettings.UseWebSockets = Mst.Args.IsProvided(Mst.Args.Names.UseWebSockets)
-                    ? Mst.Args.WebGl
-                    : spawnWebSocketServers;
+                spawnerController.SpawnSettings.UseWebSockets = Mst.Args.AsBool(Mst.Args.Names.UseWebSockets, spawnWebSocketServers);
 
                 // 2. Set the default executable path
-                spawnerController.SpawnSettings.ExecutablePath = Mst.Args.ExtractValue(Mst.Args.Names.RoomExecutablePath, executableFilePath);
+                spawnerController.SpawnSettings.ExecutablePath = Mst.Args.AsString(Mst.Args.Names.RoomExecutablePath, executableFilePath);
 
                 // 3. Set the machine IP
                 spawnerController.SpawnSettings.MachineIp = machineIp;

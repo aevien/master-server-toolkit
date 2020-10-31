@@ -59,8 +59,19 @@ namespace MasterServerToolkit.Games
             Mst.Client.Rooms.ForceClientMode = true;
 
             // Set MSF global options
-            Mst.Options.Set(MstDictKeys.autoStartRoomClient, true);
-            Mst.Options.Set(MstDictKeys.roomOfflineSceneName, SceneManager.GetActiveScene().name);
+            Mst.Options.Set(MstDictKeys.AUTOSTART_ROOM_CLIENT, true);
+            Mst.Options.Set(MstDictKeys.ROOM_OFFLINE_SCENE_NAME, SceneManager.GetActiveScene().name);
+        }
+
+        /// <summary>
+        /// Starte match scene
+        /// </summary>
+        protected virtual void StartLoadingGameScene()
+        {
+            ScenesLoader.LoadSceneByName(startRoomScene, (progressValue) =>
+            {
+                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
+            }, null);
         }
 
         /// <summary>
@@ -132,9 +143,9 @@ namespace MasterServerToolkit.Games
         public virtual void StartMatch(GameInfoPacket gameInfo)
         {
             // Save room Id in buffer, may be very helpful
-            Mst.Options.Set(MstDictKeys.roomId, gameInfo.Id);
+            Mst.Options.Set(MstDictKeys.ROOM_ID, gameInfo.Id);
             // Save max players to buffer, may be very helpful
-            Mst.Options.Set(MstDictKeys.roomMaxPlayers, gameInfo.MaxPlayers);
+            Mst.Options.Set(MstDictKeys.ROOM_MAX_PLAYERS, gameInfo.MaxPlayers);
 
             if (gameInfo.IsPasswordProtected)
             {
@@ -149,17 +160,6 @@ namespace MasterServerToolkit.Games
             {
                 StartLoadingGameScene();
             }
-        }
-
-        /// <summary>
-        /// Starte match scene
-        /// </summary>
-        protected virtual void StartLoadingGameScene()
-        {
-            ScenesLoader.LoadSceneByName(startRoomScene, (progressValue) =>
-            {
-                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
-            }, null);
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using UnityEngine;
 
 namespace Aevien.Utilities
@@ -45,7 +47,7 @@ namespace Aevien.Utilities
         /// <returns></returns>
         public static string Generate(Gender gender)
         {
-            return $"{GenerateFirstName(gender)} {GenerateLastName()}";
+            return ToCapitals($"{GenerateFirstName(gender)} {GenerateLastName()}");
         }
 
         /// <summary>
@@ -93,6 +95,22 @@ namespace Aevien.Utilities
         public static void SaveName(string name)
         {
             PlayerPrefs.SetString("player_display_name", name);
+        }
+
+        /// <summary>
+        /// Capitalize string
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string ToCapitals(string value)
+        {
+            char[] chars = new char[] { ' ' };
+            string[] array = value.Split(chars, StringSplitOptions.RemoveEmptyEntries);
+
+            return string.Join(" ", array.Select((i) =>
+            {
+                return i.First().ToString().ToUpper() + i.Substring(1).ToLower();
+            }));
         }
     }
 

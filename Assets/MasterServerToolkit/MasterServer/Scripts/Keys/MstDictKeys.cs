@@ -2,23 +2,27 @@
 {
     public struct MstDictKeys
     {
-        public static string roomName = "mst.roomName";
-        public static string roomId = "mst.roomId";
-        public static string roomPassword = "mst.roomPassword";
-        public static string roomIsPublic = "mst.roomIsPublic";
-        public static string roomRegion = "mst.roomRegion";
-        public static string roomOnlineSceneName = "mst.roomOnlineSceneName";
-        public static string roomOfflineSceneName = "mst.roomOfflineSceneName";
-        public static string roomMaxPlayers = "mst.roomMaxPlayers";
-        public static string executablePath = "mst.exePath";
-        public static string lobbyFactoryId = "mst.lobbyFactory";
-        public static string lobbyName = "mst.lobbyName";
-        public static string lobbyTeam = "mst.lobbyTeam";
-        public static string autoStartRoomClient = "mst.autoStartRoomClient";
-        public static string userName = "mst.userName";
-        public static string userPassword = "mst.userPassword";
-        public static string userEmail = "mst.userEmail";
-        public static string userIsGuest = "mst.userIsGuest";
-        public static string resetPasswordEmail = "mst.resetPasswordEmail";
+        public const string ROOM_NAME = "mst.roomName";
+        public const string ROOM_ID = "mst.roomId";
+        public const string ROOM_PASSWORD = "mst.roomPassword";
+        public const string ROOM_IS_PUBLIC = "mst.roomIsPublic";
+        public const string ROOM_REGION = "mst.roomRegion";
+        public const string ROOM_ONLINE_SCENE_NAME = "mst.roomOnlineSceneName";
+        public const string ROOM_OFFLINE_SCENE_NAME = "mst.roomOfflineSceneName";
+        public const string ROOM_MAX_PLAYERS = "mst.roomMaxPlayers";
+        public const string ROOM_EXE_PATH = "mst.roomExePath";
+        public const string LOBBY_FACTORY_ID = "mst.lobbyFactory";
+        public const string LOBBY_NAME = "mst.lobbyName";
+        public const string LOBBY_PASSWORD = "mst.lobbyPassword";
+        public const string LOBBY_TEAM = "mst.lobbyTeam";
+        public const string AUTOSTART_ROOM_CLIENT = "mst.autoStartRoomClient";
+        public const string USER_ID = "mst.userId";
+        public const string USER_NAME = "mst.userName";
+        public const string USER_PASSWORD = "mst.userPassword";
+        public const string USER_EMAIL = "mst.userEmail";
+        public const string USER_IS_GUEST = "mst.userIsGuest";
+        public const string USER_AUTH_TOKEN = "token";
+        public const string USER_AUTH_TOKEN_EXPIRES = "expires";
+        public const string RESET_PASSWORD_EMAIL = "mst.resetPasswordEmail";
     }
 }

@@ -10,19 +10,10 @@ namespace MasterServerToolkit.MasterServer
 {
     public abstract class HttpController : MonoBehaviour, IHttpController
     {
-        /// <summary>
-        /// Html composed with this controller from css, js, template and views files
-        /// </summary>
-        private string composedHtml;
-
-        /// <summary>
-        /// Logger connected to this module
-        /// </summary>
-        protected MasterServerToolkit.Logging.Logger logger;
+        #region INSPECTOR
 
         [Header("Controller Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
-
         [SerializeField]
         private TextAsset templateHtml;
         [SerializeField]
@@ -30,57 +21,87 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField]
         private TextAsset[] javascriptFiles;
 
+        #endregion
+
+        /// <summary>
+        /// Html composed with this controller from css, js, template and views files
+        /// </summary>
+        private string composedHtml;
+
+        protected const string MST_NAME = "#MST_NAME#";
+        protected const string MST_VERSION = "#MST_VERSION#";
+        protected const string CSS_HERE = "#CSS_HERE#";
+        protected const string JS_HERE = "#JS_HERE#";
+
+        /// <summary>
+        /// Logger connected to this module
+        /// </summary>
+        protected Logging.Logger logger;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public HttpServerModule Server { get; set; }
+
         public virtual void Initialize(HttpServerModule server)
         {
+            Server = server;
+
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
             ComposeHtml();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void ComposeHtml()
         {
             if (!templateHtml)
             {
-                logger.Error("Html template is not defined");
-                return;
+                logger.Debug("Html template is not defined");
+                composedHtml = $"Controller name: {GetType().Name}";
             }
-
-            composedHtml = templateHtml.text;
-
-            if (cssFiles != null)
+            else
             {
-                StringBuilder cssBuilder = new StringBuilder();
+                composedHtml = templateHtml.text;
 
-                foreach (TextAsset cssFile in cssFiles)
+                if (cssFiles != null)
                 {
-                    cssBuilder.Append($"<!-- Start - {cssFile.name} -->");
-                    cssBuilder.Append("<style>");
-                    cssBuilder.Append(cssFile.text);
-                    cssBuilder.Append("</style>");
-                    cssBuilder.Append($"<!-- End - {cssFile.name} -->");
+                    StringBuilder cssBuilder = new StringBuilder();
+
+                    foreach (TextAsset cssFile in cssFiles)
+                    {
+                        cssBuilder.Append($"<!-- Start - {cssFile.name} -->");
+                        cssBuilder.Append("<style>");
+                        cssBuilder.Append(cssFile.text);
+                        cssBuilder.Append("</style>");
+                        cssBuilder.Append($"<!-- End - {cssFile.name} -->");
+                    }
+
+                    ReplaceTokenWith(CSS_HERE, cssBuilder.ToString());
                 }
 
-                ReplaceTokenWith("#CSS_HERE#", cssBuilder.ToString());
-            }
-
-            if (javascriptFiles != null)
-            {
-                StringBuilder javascriptBuilder = new StringBuilder();
-
-                foreach (TextAsset javascriptFile in javascriptFiles)
+                if (javascriptFiles != null)
                 {
-                    javascriptBuilder.Append($"<!-- Start - {javascriptFile.name} -->");
-                    javascriptBuilder.Append("<script type=\"text/javascript\">");
-                    javascriptBuilder.Append(javascriptFile.text);
-                    javascriptBuilder.Append("</script>");
-                    javascriptBuilder.Append($"<!-- End - {javascriptFile.name} -->");
+                    StringBuilder javascriptBuilder = new StringBuilder();
+
+                    foreach (TextAsset javascriptFile in javascriptFiles)
+                    {
+                        javascriptBuilder.Append($"<!-- Start - {javascriptFile.name} -->");
+                        javascriptBuilder.Append("<script type=\"text/javascript\">");
+                        javascriptBuilder.Append(javascriptFile.text);
+                        javascriptBuilder.Append("</script>");
+                        javascriptBuilder.Append($"<!-- End - {javascriptFile.name} -->");
+                    }
+
+                    ReplaceTokenWith(JS_HERE, javascriptBuilder.ToString());
                 }
 
-                ReplaceTokenWith("#JS_HERE#", javascriptBuilder.ToString());
+                ReplaceTokenWith(MST_VERSION, Mst.Version);
+                ReplaceTokenWith(MST_NAME, Mst.Name);
             }
-
-            ReplaceTokenWith("#MSF_VERSION#", Mst.Version);
         }
 
         /// <summary>
@@ -95,7 +116,11 @@ namespace MasterServerToolkit.MasterServer
             return composedHtml;
         }
 
-        public byte[] GetHtmlBytes()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public byte[] GetResponseBytes()
         {
             return Encoding.UTF8.GetBytes(composedHtml);
         }

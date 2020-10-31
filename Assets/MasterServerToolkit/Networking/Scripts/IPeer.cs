@@ -3,14 +3,13 @@ using System;
 
 namespace MasterServerToolkit.Networking
 {
-    public delegate void IncommingMessageHandler(IIncommingMessage message);
-
-    public delegate void ResponseCallback(ResponseStatus status, IIncommingMessage response);
+    public delegate void IncommingMessageHandler(IIncomingMessage message);
+    public delegate void ResponseCallback(ResponseStatus status, IIncomingMessage response);
 
     /// <summary>
     /// Represents connection peer
     /// </summary>
-    public interface IPeer : IDisposable, IMsgDispatcher<IPeer>
+    public interface IPeer : IDisposable, IMsgDispatcher
     {
         /// <summary>
         /// Unique peer id
@@ -30,7 +29,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Invoked when peer receives a message
         /// </summary>
-        event Action<IIncommingMessage> OnMessageReceivedEvent;
+        event Action<IIncomingMessage> OnMessageReceivedEvent;
 
         /// <summary>
         /// Force disconnect
@@ -46,7 +45,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="timeoutSecs">If peer fails to respons within this time frame, callback will be invoked with timeout status</param>
         /// <param name="deliveryMethod">Delivery method</param>
         /// <returns></returns>
-        int SendMessage(IMessage message, ResponseCallback responseCallback, int timeoutSecs, DeliveryMethod deliveryMethod);
+        int SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs, DeliveryMethod deliveryMethod);
 
         /// <summary>
         /// Sends a message to peer
@@ -54,7 +53,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="message">Message to send</param>
         /// <param name="deliveryMethod">Delivery method</param>
         /// <returns></returns>
-        void SendMessage(IMessage message, DeliveryMethod deliveryMethod);
+        void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod);
 
         /// <summary>
         /// Stores a property into peer

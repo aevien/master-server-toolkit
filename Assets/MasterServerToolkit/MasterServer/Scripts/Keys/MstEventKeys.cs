@@ -23,6 +23,15 @@
         public static string showGamesListView = "msf.showGamesListView";
         public static string hideGamesListView = "msf.hideGamesListView";
 
+        public static string showCreateLobbyView = "msf.showCreateLobbyView";
+        public static string hideCreateLobbyView = "msf.hideCreateLobbyView";
+
+        public static string showJoinLobbyView = "msf.showJoinLobbyView";
+        public static string hideJoinLobbyView = "msf.hideJoinLobbyView";
+
+        public static string showLobbyListView = "msf.showLobbyListView";
+        public static string hideLobbyListView = "msf.hideLobbyListView";
+
         public static string showEmailConfirmationView = "msf.showEmailConfirmationView";
         public static string hideEmailConfirmationView = "msf.hideEmailConfirmationView";
 

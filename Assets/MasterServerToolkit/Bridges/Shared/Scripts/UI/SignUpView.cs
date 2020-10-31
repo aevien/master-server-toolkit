@@ -84,8 +84,8 @@ namespace MasterServerToolkit.Games
 
             var credentials = message.GetData<MstProperties>();
 
-            if (credentials.Has(MstDictKeys.userName) && credentials.Has(MstDictKeys.userPassword))
-                SetInputFieldsValues(credentials.AsString(MstDictKeys.userName), credentials.AsString(MstDictKeys.userEmail), credentials.AsString(MstDictKeys.userPassword));
+            if (credentials.Has(MstDictKeys.USER_NAME) && credentials.Has(MstDictKeys.USER_PASSWORD))
+                SetInputFieldsValues(credentials.AsString(MstDictKeys.USER_NAME), credentials.AsString(MstDictKeys.USER_EMAIL), credentials.AsString(MstDictKeys.USER_PASSWORD));
         }
 
         /// <summary>

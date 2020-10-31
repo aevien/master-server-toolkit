@@ -1,46 +1,57 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
+using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
     public class MessageFactory : IMessageFactory
     {
-        public IMessage Create(short opCode)
+        public IOutgoingMessage Create(short opCode)
         {
-            return new Message(opCode);
+            return new OutgoingMessage(opCode);
         }
 
-        public IMessage Create(short opCode, byte[] data)
+        public IOutgoingMessage Create(short opCode, byte[] data)
         {
-            return new Message(opCode, data);
+            return new OutgoingMessage(opCode, data);
         }
 
         /// <summary>
-        ///     Used raw byte data to create an <see cref="IIncommingMessage" />
+        /// Used raw byte data to create an <see cref="IIncomingMessage" />
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="start"></param>
         /// <param name="peer"></param>
         /// <returns></returns>
-        public IIncommingMessage FromBytes(byte[] buffer, int start, IPeer peer)
+        public IIncomingMessage FromBytes(byte[] buffer, int start, IPeer peer)
         {
             try
             {
                 var converter = EndianBitConverter.Big;
                 var flags = buffer[start];
+
+                //Debug.Log($"Flag is: {flags}");
+
                 var opCode = converter.ToInt16(buffer, start + 1);
                 var pointer = start + 3;
 
+                //Debug.Log($"OpCode is: {opCode}");
+
                 var dataLength = converter.ToInt32(buffer, pointer);
                 pointer += 4;
+
+                //Debug.Log($"Length is: {dataLength}");
+
                 var data = new byte[dataLength];
                 Array.Copy(buffer, pointer, data, 0, dataLength);
                 pointer += dataLength;
 
-                var message = new IncommingMessage(opCode, flags, data, DeliveryMethod.Reliable, peer)
+                var message = new IncomingMessage(opCode, flags, data, DeliveryMethod.Reliable, peer)
                 {
                     SequenceChannel = 0
                 };
+
+                //Debug.Log($"Data is: {message.AsString()}");
 
                 if ((flags & (byte)MessageFlag.AckRequest) > 0)
                 {

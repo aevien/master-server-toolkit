@@ -21,9 +21,11 @@ namespace MasterServerToolkit.MasterServer
         {
             censoredWords = new List<string>();
 
-            foreach (TextAsset t_words in wordsLists)
+            char[] splitter = new char[] { ',', ' ' };
+
+            foreach (TextAsset words in wordsLists)
             {
-                censoredWords.AddRange(t_words.text.Split(',').Select(word => word.Trim()));
+                censoredWords.AddRange(words.text.Split(splitter, System.StringSplitOptions.RemoveEmptyEntries).Select(word => word.Trim()));
             }
         }
 
@@ -39,11 +41,9 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
-            string lowerText = text.ToLower();
-
             foreach (var pattern in censoredWords)
             {
-                if (Regex.IsMatch(lowerText, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                if (Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                 {
                     return true;
                 }

@@ -306,7 +306,7 @@ namespace MasterServerToolkit.MasterServer
 
         #region Message handlers
 
-        private void OnChatMessageHandler(IIncommingMessage message)
+        private void OnChatMessageHandler(IIncomingMessage message)
         {
             var packet = message.Deserialize(new ChatMessagePacket());
 
@@ -316,7 +316,7 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        private void OnUserLeftChannelHandler(IIncommingMessage message)
+        private void OnUserLeftChannelHandler(IIncomingMessage message)
         {
             var data = new List<string>().FromBytes(message.AsBytes());
             if (OnUserLeftChannelEvent != null)
@@ -325,7 +325,7 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        private void OnUserJoinedChannelHandler(IIncommingMessage message)
+        private void OnUserJoinedChannelHandler(IIncomingMessage message)
         {
             var data = new List<string>().FromBytes(message.AsBytes());
             if (OnUserJoinedChannelEvent != null)

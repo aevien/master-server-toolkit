@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MstArgs
     {
-        private readonly string[] _args;
+        private string[] _args;
 
         /// <summary>
         /// If true, master server should be started
@@ -31,6 +34,11 @@ namespace MasterServerToolkit.MasterServer
         /// Port, which will be open on the master server
         /// </summary>
         public int MasterPort { get; private set; }
+
+        /// <summary>
+        /// Port, which will be open on the web server
+        /// </summary>
+        public int WebPort { get; private set; }
 
         /// <summary>
         /// Room name
@@ -118,12 +126,12 @@ namespace MasterServerToolkit.MasterServer
         /// If true, it will be considered that we want to start server to
         /// support webgl clients
         /// </summary>
-        public bool WebGl { get; private set; }
+        public bool UseWebSockets { get; private set; }
 
         /// <summary>
         /// Whether or not to use secure connection
         /// </summary>
-        public bool UseSsl { get; private set; }
+        public bool UseSecure { get; private set; }
 
         /// <summary>
         /// Defines path to certificate
@@ -135,9 +143,63 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public string CertificatePassword { get; private set; }
 
+        /// <summary>
+        /// Enable dev mode
+        /// </summary>
+        public bool UseDevMode { get; private set; }
+
+        /// <summary>
+        /// Use this to set guest user id to signin as guest. User with this id must exist in database. This only works in dev mode. 
+        /// </summary>
+        public string GuestId { get; private set; }
+
         public MstArgNames Names { get; set; }
 
         public MstArgs()
+        {
+            ParseArguments();
+
+            Names = new MstArgNames();
+
+            StartMaster = AsBool(Names.StartMaster, false);
+            StartSpawner = AsBool(Names.StartSpawner, false);
+            StartClientConnection = AsBool(Names.StartClientConnection, false);
+
+            MasterPort = AsInt(Names.MasterPort, 5000);
+            MasterIp = AsString(Names.MasterIp, "127.0.0.1");
+
+            WebPort = AsInt(Names.WebPort, 8080);
+
+            RoomName = AsString(Names.RoomName, "Room_" + Mst.Helper.CreateID_16());
+            RoomIp = AsString(Names.RoomIp, "127.0.0.1");
+            RoomPort = AsInt(Names.RoomPort, 7777);
+            RoomDefaultPort = AsInt(Names.RoomDefaultPort, 1500);
+            RoomExecutablePath = AsString(Names.RoomExecutablePath);
+            RoomRegion = AsString(Names.RoomRegion);
+            RoomMaxConnections = AsInt(Names.RoomMaxConnections, 10);
+            RoomIsPrivate = AsBool(Names.RoomIsPrivate, false);
+            RoomPassword = AsString(Names.RoomPassword);
+
+            SpawnTaskId = AsInt(Names.SpawnTaskId, -1);
+            SpawnTaskUniqueCode = AsString(Names.SpawnTaskUniqueCode);
+            MaxProcesses = AsInt(Names.MaxProcesses, 0);
+
+            LoadScene = AsString(Names.LoadScene);
+
+            DbConnectionString = AsString(Names.DbConnectionString);
+
+            LobbyId = AsInt(Names.LobbyId);
+            UseWebSockets = AsBool(Names.UseWebSockets, false);
+
+            UseSecure = AsBool(Names.UseSecure, false);
+            CertificatePath = AsString(Names.CertificatePath);
+            CertificatePassword = AsString(Names.CertificatePassword);
+
+            UseDevMode = AsBool(Names.UseDevMode, false);
+            GuestId = AsString(Names.GuestId);
+        }
+
+        private void ParseArguments()
         {
             _args = Environment.GetCommandLineArgs();
 
@@ -147,39 +209,40 @@ namespace MasterServerToolkit.MasterServer
                 _args = Array.Empty<string>();
             }
 
-            Names = new MstArgNames();
+            if (Application.isMobilePlatform)
+            {
+                return;
+            }
 
-            StartMaster = IsProvided(Names.StartMaster);
-            StartSpawner = IsProvided(Names.StartSpawner);
-            StartClientConnection = IsProvided(Names.StartClientConnection);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "application.cfg");
 
-            MasterPort = ExtractValueInt(Names.MasterPort, 5000);
-            MasterIp = ExtractValue(Names.MasterIp, "127.0.0.1");
+            if (!File.Exists(path))
+            {
+                File.Create(path);
+            }
+            else
+            {
+                string[] lines = File.ReadAllLines(path);
+                char[] spletters = new char[] { '=' };
+                List<string> newArgs = new List<string>();
+                newArgs.AddRange(_args);
 
-            RoomName = ExtractValue(Names.RoomName, "Room_" + Mst.Helper.CreateRandomString(5));
-            RoomIp = ExtractValue(Names.RoomIp, "127.0.0.1");
-            RoomPort = ExtractValueInt(Names.RoomPort, 7777);
-            RoomDefaultPort = ExtractValueInt(Names.RoomDefaultPort, 1500);
-            RoomExecutablePath = ExtractValue(Names.RoomExecutablePath);
-            RoomRegion = ExtractValue(Names.RoomRegion, string.Empty);
-            RoomMaxConnections = ExtractValueInt(Names.RoomMaxConnections, 10);
-            RoomIsPrivate = !IsProvided(Names.RoomIsPrivate);
-            RoomPassword = ExtractValue(Names.RoomPassword, string.Empty);
+                if (lines != null && lines.Length > 0)
+                {
+                    foreach (string line in lines)
+                    {
+                        string[] kvp = line.Split(spletters, StringSplitOptions.RemoveEmptyEntries);
 
-            SpawnTaskId = ExtractValueInt(Names.SpawnTaskId, -1);
-            SpawnTaskUniqueCode = ExtractValue(Names.SpawnTaskUniqueCode);
-            MaxProcesses = ExtractValueInt(Names.MaxProcesses, 0);
+                        if(kvp != null && kvp.Length > 1 && !newArgs.Contains(kvp[0]))
+                        {
+                            newArgs.Add(kvp[0]);
+                            newArgs.Add(kvp[1]);
+                        }
+                    }
+                }
 
-            LoadScene = ExtractValue(Names.LoadScene);
-
-            DbConnectionString = ExtractValue(Names.DbConnectionString);
-
-            LobbyId = ExtractValueInt(Names.LobbyId);
-            WebGl = IsProvided(Names.UseWebSockets);
-
-            UseSsl = IsProvided(Names.UseSsl);
-            CertificatePath = ExtractValue(Names.CertificatePath);
-            CertificatePassword = ExtractValue(Names.CertificatePassword);
+                _args = newArgs.ToArray();
+            }
         }
 
         public override string ToString()
@@ -193,9 +256,9 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="argName"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public string ExtractValue(string argName, string defaultValue = null)
+        public string AsString(string argName, string defaultValue = "")
         {
-            if (!_args.Contains(argName))
+            if (!IsProvided(argName))
             {
                 return defaultValue;
             }
@@ -205,15 +268,60 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Extracts an int string value for command line arguments provided
+        /// Extracts an int value for command line arguments provided
         /// </summary>
         /// <param name="argName"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public int ExtractValueInt(string argName, int defaultValue = -1)
+        public int AsInt(string argName, int defaultValue = -1)
         {
-            var number = ExtractValue(argName, defaultValue.ToString());
-            return Convert.ToInt32(number);
+            try
+            {
+                var value = AsString(argName, defaultValue.ToString());
+                return Convert.ToInt32(value);
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        /// <summary>
+        /// Extracts an int value for command line arguments provided
+        /// </summary>
+        /// <param name="argName"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
+        public float AsFloat(string argName, float defaultValue = -1)
+        {
+            try
+            {
+                var value = AsString(argName, defaultValue.ToString());
+                return Convert.ToSingle(value);
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        /// <summary>
+        /// Extracts a bool value for command line arguments provided
+        /// </summary>
+        /// <param name="argName"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
+        public bool AsBool(string argName, bool defaultValue = false)
+        {
+            try
+            {
+                var value = AsString(argName, defaultValue.ToString());
+                return Convert.ToBoolean(value);
+            }
+            catch
+            {
+                return defaultValue;
+            }
         }
 
         /// <summary>

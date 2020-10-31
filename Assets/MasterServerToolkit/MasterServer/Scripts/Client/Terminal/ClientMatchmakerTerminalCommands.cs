@@ -11,7 +11,7 @@ namespace MasterServerToolkit.Client.Utilities
 {
     public class ClientMatchmakerTerminalCommands
     {
-        [RegisterCommand(Name = "client.match.games", Help = "Get list of game from matchmaking module")]
+        [RegisterCommand(Name = "cl.match.games", Help = "Get list of game from matchmaking module")]
         private void GetMatchGamesListCmd(CommandArg[] args)
         {
             Mst.Client.Matchmaker.FindGames((games) =>
@@ -30,15 +30,15 @@ namespace MasterServerToolkit.Client.Utilities
             });
         }
 
-        [RegisterCommand(Name = "client.spawner.start", Help = "Send request to start room. 1 Room Name, 2 Max Connections", MinArgCount = 1)]
+        [RegisterCommand(Name = "cl.spawner.start", Help = "Send request to start room. 1 Room Name, 2 Max Connections", MinArgCount = 1)]
         private static void SendRequestSpawn(CommandArg[] args)
         {
             var options = new MstProperties();
-            options.Add(MstDictKeys.roomName, args[0].String.Replace('+', ' '));
+            options.Add(MstDictKeys.ROOM_NAME, args[0].String.Replace('+', ' '));
 
             if (args.Length > 1)
             {
-                options.Add(MstDictKeys.roomMaxPlayers, args[1].String);
+                options.Add(MstDictKeys.ROOM_MAX_PLAYERS, args[1].String);
             }
 
             var customOptions = new MstProperties();
@@ -67,7 +67,7 @@ namespace MasterServerToolkit.Client.Utilities
             });
         }
 
-        [RegisterCommand(Name = "client.spawner.abort", Help = "Send request to start room. 1 Process Id", MinArgCount = 1)]
+        [RegisterCommand(Name = "cl.spawner.abort", Help = "Send request to start room. 1 Process Id", MinArgCount = 1)]
         private static void SendAbortSpawn(CommandArg[] args)
         {
             Mst.Client.Spawners.AbortSpawn(args[0].Int);

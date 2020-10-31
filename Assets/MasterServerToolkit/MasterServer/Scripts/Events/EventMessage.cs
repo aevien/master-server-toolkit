@@ -23,7 +23,7 @@
 
         public T GetData<T>() where T : class
         {
-            return (T)_data as T;
+            return (T)_data;
         }
     }
 }

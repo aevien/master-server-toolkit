@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using KskGroup;
 using MasterServerToolkit.Networking;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -13,12 +16,17 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
-            server.SetHandler((short)MstMessageCodes.Ping, OnPingRequestListener);
+            server.RegisterMessageHandler((short)MstMessageCodes.Ping, OnPingRequestListener);
         }
 
-        private void OnPingRequestListener(IIncommingMessage message)
+        private void OnPingRequestListener(IIncomingMessage message)
         {
-            message.Respond(pongMessage.ToBytes(), ResponseStatus.Success);
+            JObject json = new JObject()
+            {
+                { "name","Vladimir" }
+            };
+
+            message.Respond(JsonConvert.SerializeObject(new AccountInfo()).ToBytes(), ResponseStatus.Success);
         }
     }
 }

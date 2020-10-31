@@ -4,8 +4,14 @@ namespace MasterServerToolkit.MasterServer
 {
     public class LobbyJoinTeamPacket : SerializablePacket
     {
-        public int LobbyId;
-        public string TeamName;
+        public int LobbyId { get; set; }
+        public string TeamName { get; set; }
+
+        public LobbyJoinTeamPacket()
+        {
+            LobbyId = 0;
+            TeamName = string.Empty;
+        }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {

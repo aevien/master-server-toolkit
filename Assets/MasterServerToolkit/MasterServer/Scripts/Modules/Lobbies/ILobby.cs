@@ -36,7 +36,7 @@ namespace MasterServerToolkit.MasterServer
         LobbyDataPacket GenerateLobbyData();
         bool StartGameManually(LobbyUserPeerExtension user);
 
-        void ChatMessageHandler(LobbyMember member, IIncommingMessage message);
-        void GameAccessRequestHandler(IIncommingMessage message);
+        void ChatMessageHandler(LobbyMember member, IIncomingMessage message);
+        void GameAccessRequestHandler(IIncomingMessage message);
     }
 }

@@ -358,6 +358,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: PasswordResetCodeView
       objectReference: {fileID: 0}
+    - target: {fileID: 6427534093337236095, guid: fc34438760a620d4bbdf64dcbadb31b4,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 6427534093883792595, guid: fc34438760a620d4bbdf64dcbadb31b4,
         type: 3}
       propertyPath: m_SizeDelta.y
@@ -1001,6 +1006,53 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 42964303}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &112288130
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 112288132}
+  - component: {fileID: 112288131}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &112288131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112288130}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ed3f5664dbcc6489fb8c60e4e9df6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  applicationKey: g365Rgf7Jehj0qIP891rPdxBcz1qNO99
+  useSecure: 1
+  certificatePath: C:\UnityProjects\MST\Certificates\MasterServer.pfx
+  certificatePassword: qazwsxedc
+--- !u!4 &112288132
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112288130}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -395.19012, y: 0.95329887, z: 80.55078}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 8
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &178791788
 GameObject:
   m_ObjectHideFlags: 0
@@ -1031,11 +1083,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  serverIp: 127.0.0.1
-  serverPort: 5000
-  minTimeToConnect: 0.5
-  maxTimeToConnect: 4
-  timeToConnect: 0.5
+  serverIp: 178.154.247.125
+  serverPort: 5055
+  minTimeToConnect: 5
+  maxTimeToConnect: 5
   maxAttemptsToConnect: 5
   waitAndConnect: 0.2
   connectOnStart: 0
@@ -1783,6 +1834,7 @@ MonoBehaviour:
   logLevel: 0
   initModulesAtStart: 1
   clientToMasterConnector: {fileID: 0}
+  rememberUser: 1
   defaultUsername: qwerty
   defaultEmail: qwerty@mail.com
   defaultPassword: qwerty123!@#
@@ -2540,6 +2592,11 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4209270820902025749, guid: c1bea280baeb57349a80fbb4a8bcff72,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 4209270820908199241, guid: c1bea280baeb57349a80fbb4a8bcff72,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -2664,6 +2721,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: PasswordResetView
+      objectReference: {fileID: 0}
+    - target: {fileID: 4209270821028321602, guid: c1bea280baeb57349a80fbb4a8bcff72,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
+    - target: {fileID: 4209270822282547359, guid: c1bea280baeb57349a80fbb4a8bcff72,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
       objectReference: {fileID: 0}
     - target: {fileID: 4209270822354429548, guid: c1bea280baeb57349a80fbb4a8bcff72,
         type: 3}
@@ -3309,6 +3376,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_textInfo.pageCount
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7997604470406714645, guid: 411090175ccf56e4b9227e85fe6002de,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
       objectReference: {fileID: 0}
     - target: {fileID: 7997604470406714651, guid: 411090175ccf56e4b9227e85fe6002de,
         type: 3}
@@ -4089,6 +4161,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5716149025918224772, guid: 6a76d43d95c8c2147827366a823735d7,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
       objectReference: {fileID: 0}
     - target: {fileID: 7193697712563675966, guid: 6a76d43d95c8c2147827366a823735d7,
         type: 3}
@@ -5290,6 +5367,16 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3108565909346732940, guid: 70002e75ac2afee428e96b28e726db63,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
+    - target: {fileID: 3108565909498945415, guid: 70002e75ac2afee428e96b28e726db63,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 3108565909744531138, guid: 70002e75ac2afee428e96b28e726db63,
         type: 3}
       propertyPath: m_SizeDelta.y
@@ -5728,6 +5815,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1919906331}
     m_Modifications:
+    - target: {fileID: 1989114291, guid: 8886df246d8aae64791d7eb251c802da, type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 963319707628518927, guid: 8886df246d8aae64791d7eb251c802da,
         type: 3}
       propertyPath: m_AnchorMin.y
@@ -5757,6 +5848,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1147234432922112794, guid: 8886df246d8aae64791d7eb251c802da,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
       objectReference: {fileID: 0}
     - target: {fileID: 1170435927708305955, guid: 8886df246d8aae64791d7eb251c802da,
         type: 3}
@@ -6083,6 +6179,11 @@ PrefabInstance:
       propertyPath: m_Pivot.y
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 6450525035804702720, guid: 8886df246d8aae64791d7eb251c802da,
+        type: 3}
+      propertyPath: m_Name
+      value: TMP SubMeshUI [OpenSansRegular SDF Material + LiberationSans SDF Atlas]
+      objectReference: {fileID: 0}
     - target: {fileID: 6597340257891336607, guid: 8886df246d8aae64791d7eb251c802da,
         type: 3}
       propertyPath: m_AnchorMin.y
@@ -6262,7 +6363,7 @@ PrefabInstance:
     - target: {fileID: 801973862098218387, guid: 90d980f89194758419eb2a3aba567aac,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -25.000244
+      value: -25.000214
       objectReference: {fileID: 0}
     - target: {fileID: 801973863724863208, guid: 90d980f89194758419eb2a3aba567aac,
         type: 3}

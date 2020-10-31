@@ -124,10 +124,10 @@ namespace MasterServerToolkit.MasterServer
             roomPlayersByUsername = new Dictionary<string, IRoomPlayerPeerExtension>();
 
             // If master IP is provided via cmd arguments
-            masterIp = Mst.Args.ExtractValue(Mst.Args.Names.MasterIp, masterIp);
+            masterIp = Mst.Args.AsString(Mst.Args.Names.MasterIp, masterIp);
 
             // If master port is provided via cmd arguments
-            masterPort = Mst.Args.ExtractValueInt(Mst.Args.Names.MasterPort, masterPort);
+            masterPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, masterPort);
         }
 
         protected override void Start()
@@ -147,6 +147,7 @@ namespace MasterServerToolkit.MasterServer
             // If connection to master server is not established
             if (!Connection.IsConnected && !Connection.IsConnecting)
             {
+                Connection.UseSsl = MstApplicationConfig.Instance.UseSecure || Mst.Args.UseSecure;
                 Connection.Connect(masterIp, masterPort);
             }
         }
@@ -194,22 +195,22 @@ namespace MasterServerToolkit.MasterServer
                 IsPublic = false,
 
                 // This is for controlling max number of players that may be connected
-                MaxConnections = Mst.Args.ExtractValueInt(Mst.Args.Names.RoomMaxConnections, maxConnections),
+                MaxConnections = Mst.Args.AsInt(Mst.Args.Names.RoomMaxConnections, maxConnections),
 
                 // Just the name of the room
-                Name = Mst.Args.ExtractValue(Mst.Args.Names.RoomName, "Room_" + Mst.Helper.CreateRandomString(5)),
+                Name = Mst.Args.AsString(Mst.Args.Names.RoomName, "Room_" + Mst.Helper.CreateRandomAlphanumericString(5)),
 
                 // If room uses the password
-                Password = Mst.Args.ExtractValue(Mst.Args.Names.RoomPassword, string.Empty),
+                Password = Mst.Args.AsString(Mst.Args.Names.RoomPassword, string.Empty),
 
                 // Room IP that will be used by players to connect to this room
-                RoomIp = Mst.Args.ExtractValue(Mst.Args.Names.RoomIp, serverIP),
+                RoomIp = Mst.Args.AsString(Mst.Args.Names.RoomIp, serverIP),
 
                 // Room port that will be used by players to connect to this room
-                RoomPort = Mst.Args.ExtractValueInt(Mst.Args.Names.RoomPort, serverPort),
+                RoomPort = Mst.Args.AsInt(Mst.Args.Names.RoomPort, serverPort),
 
                 // Region that this room may use to filter it in games list
-                Region = Mst.Args.ExtractValue(Mst.Args.Names.RoomRegion, string.Empty)
+                Region = Mst.Args.AsString(Mst.Args.Names.RoomRegion, string.Empty)
             };
         }
 
@@ -237,21 +238,21 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // If max players param was given from spawner task
-                if (taskController.Options.Has(MstDictKeys.roomMaxPlayers))
+                if (taskController.Options.Has(MstDictKeys.ROOM_MAX_PLAYERS))
                 {
-                    roomOptions.MaxConnections = taskController.Options.AsInt(MstDictKeys.roomMaxPlayers);
+                    roomOptions.MaxConnections = taskController.Options.AsInt(MstDictKeys.ROOM_MAX_PLAYERS);
                 }
 
                 // If password was given from spawner task
-                if (taskController.Options.Has(MstDictKeys.roomPassword))
+                if (taskController.Options.Has(MstDictKeys.ROOM_PASSWORD))
                 {
-                    roomOptions.Password = taskController.Options.AsString(MstDictKeys.roomPassword);
+                    roomOptions.Password = taskController.Options.AsString(MstDictKeys.ROOM_PASSWORD);
                 }
 
                 // If max players was given from spawner task
-                if (taskController.Options.Has(MstDictKeys.roomName))
+                if (taskController.Options.Has(MstDictKeys.ROOM_NAME))
                 {
-                    roomOptions.Name = taskController.Options.AsString(MstDictKeys.roomName);
+                    roomOptions.Name = taskController.Options.AsString(MstDictKeys.ROOM_NAME);
                 }
 
                 // Set port of the server
@@ -282,7 +283,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // When registration process is successfully finished we can change options of the registered room
-                roomOptions.IsPublic = !Mst.Args.IsProvided(Mst.Args.Names.RoomIsPrivate);
+                roomOptions.IsPublic = !Mst.Args.RoomIsPrivate;
 
                 // And save them
                 controller.SaveOptions();

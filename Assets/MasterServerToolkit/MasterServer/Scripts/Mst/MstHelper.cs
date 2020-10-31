@@ -11,26 +11,108 @@ namespace MasterServerToolkit.MasterServer
 {
     public class MstHelper
     {
-        private const string dictionaryString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        private const string alphanumericString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         private const int maxGeneratedStringLength = 512;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public System.Random Random { get; private set; }
+
+        public MstHelper()
+        {
+            Random = new System.Random();
+        }
+
 
         /// <summary>
         /// Creates a random string of a given length. Min length is 1, max length <see cref="maxGeneratedStringLength"/>
         /// </summary>
         /// <param name="length"></param>
         /// <returns></returns>
-        public string CreateRandomString(int length)
+        public string CreateRandomAlphanumericString(int length)
         {
             int clampedLength = Mathf.Clamp(length, 1, maxGeneratedStringLength);
-
             StringBuilder resultStringBuilder = new StringBuilder();
 
             for (int i = 0; i < clampedLength; i++)
             {
-                resultStringBuilder.Append(dictionaryString[UnityEngine.Random.Range(0, dictionaryString.Length)]);
+                int nextChar = Random.Next(0, alphanumericString.Length);
+                resultStringBuilder.Append(alphanumericString[nextChar]);
             }
 
             return resultStringBuilder.ToString();
+        }
+
+
+        /// <summary>
+        /// Creates a random string of a given length. Min length is 1, max length <see cref="maxGeneratedStringLength"/>
+        /// </summary>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public string CreateRandomDigitsString(int length)
+        {
+            int clampedLength = Mathf.Clamp(length, 1, maxGeneratedStringLength);
+            StringBuilder resultStringBuilder = new StringBuilder();
+
+            for (int i = 0; i < clampedLength; i++)
+            {
+                int nextChar = Random.Next(0, 10);
+                resultStringBuilder.Append(nextChar.ToString());
+            }
+
+            return resultStringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Create 128 bit unique string
+        /// </summary>
+        /// <returns></returns>
+        public string CreateGuidString()
+        {
+            return Guid.NewGuid().ToString("N");
+        }
+
+        /// <summary>
+        /// Creates unique ID
+        /// </summary>
+        /// <returns></returns>
+        public string CreateID_16()
+        {
+            var startTime = new DateTime(1970, 1, 1);
+            TimeSpan timeSpan = (DateTime.Now.ToUniversalTime() - startTime);
+            long val = (long)(timeSpan.TotalSeconds);
+
+            string result = val.ToString("X");
+            int totalRemained = 24 - result.Length;
+
+            for (int i = 0; i < totalRemained; i++)
+            {
+                result += Random.Next(0, 16).ToString("X");
+            }
+
+            return result.ToLower();
+        }
+
+        /// <summary>
+        /// Creates unique ID
+        /// </summary>
+        /// <returns></returns>
+        public string CreateID_10()
+        {
+            var startTime = new DateTime(1970, 1, 1);
+            TimeSpan timeSpan = (DateTime.Now.ToUniversalTime() - startTime);
+            long val = (long)(timeSpan.TotalSeconds);
+
+            string result = val.ToString();
+            int totalRemained = 24 - result.Length;
+
+            for (int i = 0; i < totalRemained; i++)
+            {
+                result += Random.Next(0, 9).ToString();
+            }
+
+            return result.ToLower();
         }
 
         /// <summary>
@@ -58,15 +140,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Create 128 bit unique string
-        /// </summary>
-        /// <returns></returns>
-        public string CreateGuidString()
-        {
-            return Guid.NewGuid().ToString("N");
-        }
-
-        /// <summary>
         /// Retrieves current public IP
         /// </summary>
         /// <param name="callback"></param>
@@ -81,13 +154,13 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="args"></param>
         /// <param name="from"></param>
         /// <returns></returns>
-        public string JoinCommandArgs(CommandArg[] args, int from)
+        public string JoinCommandArgs(string[] args, int from)
         {
             StringBuilder sb = new StringBuilder();
 
             for (int i = from; i < args.Length; i++)
             {
-                sb.Append($"{args[i].String.Trim()} ");
+                sb.Append($"{args[i].Trim()} ");
             }
 
             return sb.ToString();

@@ -3,6 +3,7 @@ using CommandTerminal;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 namespace MasterServerToolkit.Client.Utilities
 {
@@ -16,8 +17,10 @@ namespace MasterServerToolkit.Client.Utilities
         [RegisterCommand(Name = "master.smtp.send", Help = "Sends E-Mail message to given address. 1 Email, 2 Message", MinArgCount = 2)]
         private static async void ClientAuthSignInAsGuest(CommandArg[] args)
         {
+            string[] argsArray = args.Select(i => i.String).ToArray();
+
             var mailer = Object.FindObjectOfType<Mailer>();
-            var message = Mst.Helper.JoinCommandArgs(args, 1);
+            var message = Mst.Helper.JoinCommandArgs(argsArray, 1);
             bool sentResult = await mailer.SendMailAsync(args[0].String, "Test Message", message);
         }
     }

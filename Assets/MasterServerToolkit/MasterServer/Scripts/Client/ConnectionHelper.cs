@@ -2,6 +2,7 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -23,18 +24,15 @@ namespace MasterServerToolkit.MasterServer
         protected LogLevel logLevel = LogLevel.Info;
 
         [Header("Connection Settings"), Tooltip("Address to the server"), SerializeField]
-        protected string serverIp = "127.0.0.1";
+        protected string serverIP = "127.0.0.1";
 
         [Tooltip("Port of the server"), SerializeField]
         protected int serverPort = 5000;
 
-        [Header("Security Settings"), Tooltip("Whether to not to use secure connection"), SerializeField]
-        protected bool useSsl = false;
-
         [Header("Advanced"), SerializeField]
-        protected float minTimeToConnect = 0.5f;
+        protected float minTimeToConnect = 2f;
         [SerializeField]
-        protected float maxTimeToConnect = 4f;
+        protected float maxTimeToConnect = 20f;
         [SerializeField]
         protected int maxAttemptsToConnect = 5;
         [SerializeField]
@@ -110,8 +108,10 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnValidate()
         {
-            if (maxAttemptsToConnect < 1) maxAttemptsToConnect = 1;
-            if (waitAndConnect < 0.2f) waitAndConnect = 0.2f;
+            maxAttemptsToConnect = Mathf.Clamp(maxAttemptsToConnect, 1, int.MaxValue);
+            waitAndConnect = Mathf.Clamp(waitAndConnect, 0.2f, 60f);
+            minTimeToConnect = Mathf.Clamp(minTimeToConnect, 5f, 60f);
+            maxTimeToConnect = Mathf.Clamp(maxTimeToConnect, 5f, 60f);
         }
 
         /// <summary>
@@ -120,7 +120,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual IClientSocket ConnectionFactory()
         {
-            return Mst.Client.Connection;
+            return Mst.Connection;
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="serverIp"></param>
         public void SetIpAddress(string serverIp)
         {
-            this.serverIp = serverIp;
+            this.serverIP = serverIp;
         }
 
         /// <summary>
@@ -146,12 +146,12 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void StartConnection()
         {
-            StartCoroutine(StartConnectionProcess(serverIp, serverPort, maxAttemptsToConnect));
+            StartCoroutine(StartConnectionProcess(serverIP, serverPort, maxAttemptsToConnect));
         }
 
         public void StartConnection(int numberOfAttempts)
         {
-            StartCoroutine(StartConnectionProcess(serverIp, serverPort, numberOfAttempts));
+            StartCoroutine(StartConnectionProcess(serverIP, serverPort, numberOfAttempts));
         }
 
         public void StartConnection(string serverIp, int serverPort, int numberOfAttempts = 5)
@@ -162,13 +162,13 @@ namespace MasterServerToolkit.MasterServer
         protected virtual IEnumerator StartConnectionProcess(string serverIp, int serverPort, int numberOfAttempts)
         {
             currentAttemptToConnect = 0;
-            maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : 1;
+            maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
 
             // Wait a fraction of a second, in case we're also starting a master server at the same time
             yield return new WaitForSeconds(waitAndConnect);
 
             if (!Connection.IsConnected)
-                logger.Info($"Starting MSF Connection Helper... {Mst.Version}. Multithreading is: {(Mst.Runtime.SupportsThreads ? "On" : "Off")}");
+                logger.Info($"Starting MSF Connection Helper... {Mst.Version}");
 
             Connection.RemoveConnectionListener(OnConnectedEventHandler);
             Connection.RemoveDisconnectionListener(OnDisconnectedEventHandler);
@@ -204,7 +204,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!Connection.IsConnected)
                 {
-                    Connection.UseSsl = useSsl;
+                    Connection.UseSsl = MstApplicationConfig.Instance.UseSecure;
                     Connection.Connect(serverIp, serverPort);
                 }
 
@@ -228,7 +228,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnConnectedEventHandler()
         {
-            logger.Info($"Connected to MSF server at: {serverIp}:{serverPort}");
+            logger.Info($"Connected to MSF server at: {serverIP}:{serverPort}");
             timeToConnect = minTimeToConnect;
             OnConnectedEvent?.Invoke();
         }

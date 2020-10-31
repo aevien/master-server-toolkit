@@ -1,14 +1,13 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MstAuthClient : MstBaseClient
     {
-        public delegate void SignInCallback(AccountInfoPacket accountInfo, string error);
+        public delegate void SignInCallback(ClientAccountInfo accountInfo, string error);
 
         /// <summary>
         /// Check if user is signed in
@@ -28,7 +27,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Current useraccount info
         /// </summary>
-        public AccountInfoPacket AccountInfo { get; protected set; }
+        public ClientAccountInfo AccountInfo { get; protected set; }
 
         /// <summary>
         /// Invokes when successfully signed in
@@ -55,30 +54,97 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event Action OnPasswordChangedEvent;
 
+        /// <summary>
+        /// Invokes when properties successfully changed
+        /// </summary>
+        public event Action OnPropertiesChangedEvent;
+
+        /// <summary>
+        /// Invokes when account is successfully linked
+        /// </summary>
+        public event Action OnLinkedEvent;
+
         public MstAuthClient(IClientSocket connection) : base(connection) { }
 
         /// <summary>
-        /// The key of the auth token
+        /// Save user id
         /// </summary>
-        /// <returns></returns>
-        public string AuthTokenKey()
+        private void SaveUserId(string userId)
         {
-            return Mst.Runtime.ProductKey("token");
+            PlayerPrefs.SetString(MstDictKeys.USER_ID, userId);
+            PlayerPrefs.Save();
         }
 
         /// <summary>
-        /// Check if we have auth token after last login
+        /// Save authentication token
+        /// </summary>
+        private void SaveAuthToken(string token)
+        {
+            PlayerPrefs.SetString(MstDictKeys.USER_AUTH_TOKEN, token);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>
+        /// Clear authentication token
+        /// </summary>
+        private void ClearAuthToken()
+        {
+            if (HasAuthToken())
+            {
+                PlayerPrefs.DeleteKey(MstDictKeys.USER_AUTH_TOKEN);
+                PlayerPrefs.Save();
+            }
+        }
+
+        /// <summary>
+        /// Check if we have auth token after last login in player prefs
         /// </summary>
         /// <returns></returns>
         public bool HasAuthToken()
         {
-            if (PlayerPrefs.HasKey(AuthTokenKey()))
+            if (PlayerPrefs.HasKey(MstDictKeys.USER_AUTH_TOKEN))
             {
-                string key = PlayerPrefs.GetString(AuthTokenKey());
+                string key = PlayerPrefs.GetString(MstDictKeys.USER_AUTH_TOKEN);
                 return !string.IsNullOrEmpty(key);
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Check if we have user id after last login in player prefs
+        /// </summary>
+        /// <returns></returns>
+        public bool HasUserId()
+        {
+            if (PlayerPrefs.HasKey(MstDictKeys.USER_ID))
+            {
+                string key = PlayerPrefs.GetString(MstDictKeys.USER_ID);
+                return !string.IsNullOrEmpty(key);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Get user Id from player prefs
+        /// </summary>
+        /// <returns></returns>
+        public string UserId()
+        {
+            // Get user Id if it is saved
+            string userId;
+
+            if (HasUserId())
+            {
+                userId = PlayerPrefs.GetString(MstDictKeys.USER_ID);
+            }
+            else
+            {
+                userId = string.Empty;
+            }
+
+            return userId;
         }
 
         /// <summary>
@@ -126,7 +192,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                connection.SendMessage((short)MstMessageCodes.SignUpRequest, encryptedData, (status, response) =>
+                connection.SendMessage((short)MstMessageCodes.SignUp, encryptedData, (status, response) =>
                 {
                     if (status != ResponseStatus.Success)
                     {
@@ -168,7 +234,7 @@ namespace MasterServerToolkit.MasterServer
             if (permanent)
                 ClearAuthToken();
 
-            if ((connection != null) && connection.IsConnected)
+            if (connection != null && connection.IsConnected)
             {
                 connection.Reconnect();
             }
@@ -191,7 +257,8 @@ namespace MasterServerToolkit.MasterServer
         public void SignInAsGuest(SignInCallback callback, IClientSocket connection)
         {
             var credentials = new MstProperties();
-            credentials.Add("guest", string.Empty);
+            credentials.Add(MstDictKeys.USER_IS_GUEST);
+            credentials.Add(MstDictKeys.USER_ID, UserId());
 
             SignIn(credentials, callback, connection);
         }
@@ -207,17 +274,24 @@ namespace MasterServerToolkit.MasterServer
                 throw new Exception("You have no auth token!");
             }
 
-            SignIn(PlayerPrefs.GetString(AuthTokenKey()), callback);
+            SignInWithToken(PlayerPrefs.GetString(MstDictKeys.USER_AUTH_TOKEN), callback);
         }
 
         /// <summary>
-        /// Sends a login request, using given credentials
+        /// Sends a login request, using given token
         /// </summary>
-        public void SignIn(string username, string password, SignInCallback callback, IClientSocket connection)
+        public void SignInWithToken(string token, SignInCallback callback)
+        {
+            SignInWithToken(token, callback, Connection);
+        }
+
+        /// <summary>
+        /// Sends a login request, using given token
+        /// </summary>
+        public void SignInWithToken(string token, SignInCallback callback, IClientSocket connection)
         {
             var credentials = new MstProperties();
-            credentials.Add(MstDictKeys.userName, username);
-            credentials.Add(MstDictKeys.userPassword, password);
+            credentials.Add(MstDictKeys.USER_AUTH_TOKEN, token);
 
             SignIn(credentials, callback, connection);
         }
@@ -225,28 +299,41 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a login request, using given credentials
         /// </summary>
-        public void SignIn(string username, string password, SignInCallback callback)
+        public void SignInWithLoginAndPassword(string username, string password, SignInCallback callback)
         {
-            SignIn(username, password, callback, Connection);
+            SignInWithLoginAndPassword(username, password, callback, Connection);
         }
 
         /// <summary>
-        /// Sends a login request, using given token
+        /// Sends a login request, using given credentials
         /// </summary>
-        public void SignIn(string token, SignInCallback callback, IClientSocket connection)
+        public void SignInWithLoginAndPassword(string username, string password, SignInCallback callback, IClientSocket connection)
         {
             var credentials = new MstProperties();
-            credentials.Add("token", token);
+            credentials.Add(MstDictKeys.USER_NAME, username);
+            credentials.Add(MstDictKeys.USER_PASSWORD, password);
 
             SignIn(credentials, callback, connection);
         }
 
         /// <summary>
-        /// Sends a login request, using given token
+        /// Sends a login request, using given credentials
         /// </summary>
-        public void SignIn(string token, SignInCallback callback)
+        public void SignInWithEmailAndPassword(string email, string password, SignInCallback callback)
         {
-            SignIn(token, callback, Connection);
+            SignInWithEmailAndPassword(email, password, callback, Connection);
+        }
+
+        /// <summary>
+        /// Sends a login request, using given credentials
+        /// </summary>
+        public void SignInWithEmailAndPassword(string email, string password, SignInCallback callback, IClientSocket connection)
+        {
+            var credentials = new MstProperties();
+            credentials.Add(MstDictKeys.USER_EMAIL, email);
+            credentials.Add(MstDictKeys.USER_PASSWORD, password);
+
+            SignIn(credentials, callback, connection);
         }
 
         /// <summary>
@@ -287,7 +374,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                connection.SendMessage((short)MstMessageCodes.SignInRequest, encryptedData, (status, response) =>
+                connection.SendMessage((short)MstMessageCodes.SignIn, encryptedData, (status, response) =>
                 {
                     IsNowSigningIn = false;
 
@@ -299,11 +386,29 @@ namespace MasterServerToolkit.MasterServer
                         return;
                     }
 
-                    AccountInfo = response.Deserialize(new AccountInfoPacket());
+                    // Parse account info
+                    var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
 
-                    IsSignedIn = true;
+                    AccountInfo = new ClientAccountInfo()
+                    {
+                        Id = accountInfoPacket.Id,
+                        Username = accountInfoPacket.Username,
+                        Email = accountInfoPacket.Email,
+                        PhoneNumber = accountInfoPacket.PhoneNumber,
+                        Facebook = accountInfoPacket.Facebook,
+                        Token = accountInfoPacket.Token,
+                        IsAdmin = accountInfoPacket.IsAdmin,
+                        IsGuest = accountInfoPacket.IsGuest,
+                        IsEmailConfirmed = accountInfoPacket.IsEmailConfirmed,
+                        Properties = accountInfoPacket.Properties,
+                    };
 
-                    if (RememberMe)
+                    // Save user id if he is guest
+                    if (AccountInfo.IsGuest)
+                        SaveUserId(AccountInfo.Id);
+
+                    // If RememberMe is checked on and we are not guset, then save auth token
+                    if (RememberMe && !AccountInfo.IsGuest)
                     {
                         SaveAuthToken(AccountInfo.Token);
                     }
@@ -312,32 +417,13 @@ namespace MasterServerToolkit.MasterServer
                         ClearAuthToken();
                     }
 
+                    IsSignedIn = true;
+
                     callback.Invoke(AccountInfo, null);
 
                     OnSignedInEvent?.Invoke();
                 });
             }, connection);
-        }
-
-        /// <summary>
-        /// Save authentication token
-        /// </summary>
-        private void SaveAuthToken(string token)
-        {
-            PlayerPrefs.SetString(AuthTokenKey(), token);
-            PlayerPrefs.Save();
-        }
-
-        /// <summary>
-        /// Clear authentication token
-        /// </summary>
-        private void ClearAuthToken()
-        {
-            if (PlayerPrefs.HasKey(AuthTokenKey()))
-            {
-                PlayerPrefs.DeleteKey(AuthTokenKey());
-                PlayerPrefs.Save();
-            }
         }
 
         /// <summary>
@@ -367,7 +453,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.EmailConfirmationRequest, code, (status, response) =>
+            connection.SendMessage((short)MstMessageCodes.ConfirmEmail, code, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -407,7 +493,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.EmailConfirmationCodeRequest, (status, response) =>
+            connection.SendMessage((short)MstMessageCodes.GetEmailConfirmationCode, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -438,7 +524,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.PasswordResetCodeRequest, email, (status, response) =>
+            connection.SendMessage((short)MstMessageCodes.GetPasswordResetCode, email, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -478,7 +564,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ChangePasswordRequest, data.ToBytes(), (status, response) =>
+            connection.SendMessage((short)MstMessageCodes.ChangePassword, data.ToBytes(), (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -486,10 +572,64 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                callback.Invoke(true, null); 
-                
+                callback.Invoke(true, null);
+
                 OnPasswordChangedEvent?.Invoke();
             });
+        }
+
+        /// <summary>
+        /// Send request to update account properties
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="callback"></param>
+        public void UpdateAccountInfo(SuccessCallback callback)
+        {
+            UpdateAccountInfo(callback, Connection);
+        }
+
+        /// <summary>
+        /// Send request to update account properties
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void UpdateAccountInfo(SuccessCallback callback, IClientSocket connection)
+        {
+            if (!connection.IsConnected)
+            {
+                callback.Invoke(false, "Not connected to server");
+                return;
+            }
+
+            // We first need to get an aes key 
+            // so that we can encrypt our login data
+            Mst.Security.GetAesKey(aesKey =>
+            {
+                if (aesKey == null)
+                {
+                    callback.Invoke(false, "Failed to update properties due to security issues");
+                    return;
+                }
+
+                var updateAccountPropertiesPacket = new UpdateAccountInfoPacket();
+
+                var encryptedData = Mst.Security.EncryptAES(updateAccountPropertiesPacket.ToBytes(), aesKey);
+
+                connection.SendMessage((short)MstMessageCodes.UpdateAccountInfo, encryptedData, (status, response) =>
+                {
+                    IsNowSigningIn = false;
+
+                    if (status != ResponseStatus.Success)
+                    {
+                        callback.Invoke(false, response.AsString("Unknown error"));
+                        return;
+                    }
+
+                    callback.Invoke(true, null);
+
+                    OnPropertiesChangedEvent?.Invoke();
+                });
+            }, connection);
         }
     }
 }

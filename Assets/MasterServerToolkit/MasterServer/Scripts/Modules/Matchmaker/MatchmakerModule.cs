@@ -38,7 +38,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Add handlers
-            server.SetHandler((short)MstMessageCodes.FindGamesRequest, FindGamesRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.FindGamesRequest, FindGamesRequestHandler);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace MasterServerToolkit.MasterServer
 
         #region INCOMING MESSAGES HANDLERS
 
-        protected virtual void FindGamesRequestHandler(IIncommingMessage message)
+        protected virtual void FindGamesRequestHandler(IIncomingMessage message)
         {
             var list = new List<GameInfoPacket>();
 

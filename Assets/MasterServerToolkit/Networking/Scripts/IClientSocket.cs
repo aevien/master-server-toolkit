@@ -2,7 +2,7 @@
 
 namespace MasterServerToolkit.Networking
 {
-    public interface IClientSocket : IMsgDispatcher<IPeer>
+    public interface IClientSocket : IMsgDispatcher
     {
         /// <summary>
         /// Connection status
@@ -139,6 +139,6 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Closes socket connection
         /// </summary>
-        void Disconnect();
+        void Disconnect(bool fireEvent = true);
     }
 }

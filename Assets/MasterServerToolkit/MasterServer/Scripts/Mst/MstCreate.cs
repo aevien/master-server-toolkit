@@ -67,7 +67,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="opCode"></param>
         /// <returns></returns>
-        public IMessage Message(short opCode)
+        public IOutgoingMessage Message(short opCode)
         {
             return MessageHelper.Create(opCode);
         }
@@ -78,7 +78,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="opCode"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public IMessage Message(short opCode, string message)
+        public IOutgoingMessage Message(short opCode, string message)
         {
             return MessageHelper.Create(opCode, message);
         }
@@ -89,7 +89,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public IMessage Message(short opCode, int data)
+        public IOutgoingMessage Message(short opCode, int data)
         {
             return MessageHelper.Create(opCode, data);
         }
@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public IMessage Message(short opCode, byte[] data)
+        public IOutgoingMessage Message(short opCode, byte[] data)
         {
             return MessageHelper.Create(opCode, data);
         }
@@ -111,7 +111,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="opCode"></param>
         /// <param name="packet"></param>
         /// <returns></returns>
-        public IMessage Message(short opCode, ISerializablePacket packet)
+        public IOutgoingMessage Message(short opCode, ISerializablePacket packet)
         {
             return MessageHelper.Create(opCode, packet.ToBytes());
         }

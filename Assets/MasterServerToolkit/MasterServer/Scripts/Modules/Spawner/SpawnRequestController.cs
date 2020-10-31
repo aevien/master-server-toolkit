@@ -53,7 +53,7 @@ namespace MasterServerToolkit.MasterServer
         /// Fires when new status received
         /// </summary>
         /// <param name="message"></param>
-        private static void StatusUpdateHandler(IIncommingMessage message)
+        private static void StatusUpdateHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new SpawnStatusUpdatePacket());
 

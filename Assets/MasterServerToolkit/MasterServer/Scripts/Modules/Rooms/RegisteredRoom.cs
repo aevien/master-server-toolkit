@@ -30,11 +30,6 @@ namespace MasterServerToolkit.MasterServer
         private readonly Dictionary<string, RoomAccessData> unconfirmedAccesses;
 
         /// <summary>
-        /// Connected players list
-        /// </summary>
-        private Dictionary<int, IPeer> connectedPlayers;
-
-        /// <summary>
         /// The number of requests that are waiting for access token from room the player wants to be connected
         /// </summary>
         private HashSet<int> requestsInProgress;
@@ -60,6 +55,11 @@ namespace MasterServerToolkit.MasterServer
         public int OnlineCount { get { return accessesInUse.Count; } }
 
         /// <summary>
+        /// Connected players list
+        /// </summary>
+        public Dictionary<int, IPeer> Players { get; protected set; }
+
+        /// <summary>
         /// Fires when player joined room 
         /// </summary>
         public event Action<IPeer> OnPlayerJoinedEvent;
@@ -81,7 +81,7 @@ namespace MasterServerToolkit.MasterServer
             Options = options;
 
             unconfirmedAccesses = new Dictionary<string, RoomAccessData>();
-            connectedPlayers = new Dictionary<int, IPeer>();
+            Players = new Dictionary<int, IPeer>();
             accessesInUse = new Dictionary<int, RoomAccessPacket>();
             requestsInProgress = new HashSet<int>();
         }
@@ -122,7 +122,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // If player is already in the game
-            if (connectedPlayers.ContainsKey(peer.Id))
+            if (Players.ContainsKey(peer.Id))
             {
                 callback.Invoke(null, "You are already in this room");
                 return;
@@ -255,11 +255,15 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        public void OnPlayerLeft(int peerId)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="peerId"></param>
+        public void RemovePlayer(int peerId)
         {
             accessesInUse.Remove(peerId);
 
-            if (!connectedPlayers.TryGetValue(peerId, out IPeer playerPeer))
+            if (!Players.TryGetValue(peerId, out IPeer playerPeer))
             {
                 return;
             }
@@ -267,6 +271,9 @@ namespace MasterServerToolkit.MasterServer
             OnPlayerLeftEvent?.Invoke(playerPeer);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Destroy()
         {
             if (OnDestroyedEvent != null)

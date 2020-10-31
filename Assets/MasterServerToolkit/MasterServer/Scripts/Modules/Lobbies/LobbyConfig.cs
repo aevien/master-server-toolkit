@@ -47,6 +47,9 @@
         /// </summary>
         public bool KeepAliveWithZeroPlayers { get; set; } = false;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public bool AllowPlayersChangeLobbyProperties { get; set; } = true;
     }
 }

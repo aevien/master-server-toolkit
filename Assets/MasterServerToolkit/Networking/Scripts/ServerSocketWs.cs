@@ -1,11 +1,11 @@
-﻿using arebones.Networking;
-using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using UnityEngine;
+using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.Networking
@@ -16,12 +16,13 @@ namespace MasterServerToolkit.Networking
     public partial class ServerSocketWs : IServerSocket, IUpdatable
     {
         private WebSocketServer server;
-        private Queue<Action> executeOnUpdate;
-        private float initialSendMessageDelayTime = 0.2f;
+        private readonly Queue<Action> executeOnUpdate;
+        private readonly float initialSendMessageDelayTime = 0.2f;
 
-        public bool UseSsl { get; set; }
+        public bool UseSecure { get; set; }
         public string CertificatePath { get; set; }
         public string CertificatePassword { get; set; }
+        public string ApplicationKey { get; set; }
 
         /// <summary>
         /// Invokes before server frame is updated
@@ -37,6 +38,11 @@ namespace MasterServerToolkit.Networking
         /// Invoked, when client disconnects from this socket
         /// </summary>
         public event PeerActionHandler OnPeerDisconnectedEvent;
+
+        /// <summary>
+        /// Invokes before server starts
+        /// </summary>
+        public event Action<IServerSocket> OnBeforeServerStart;
 
         public ServerSocketWs()
         {
@@ -61,30 +67,49 @@ namespace MasterServerToolkit.Networking
             // Stop listening when application closes
             MstTimer.Instance.OnApplicationQuitEvent += Stop;
 
-            if(ip == "127.0.0.1" | ip == "localhost")
+            if (server != null)
             {
-                server = new WebSocketServer(port, UseSsl);
+                server.Stop();
+            }
+
+            if (ip == "127.0.0.1" | ip == "localhost")
+            {
+                server = new WebSocketServer(port, UseSecure);
             }
             else
             {
-                server = new WebSocketServer(IPAddress.Parse(ip), port, UseSsl);
+                server = new WebSocketServer(IPAddress.Parse(ip), port, UseSecure);
             }
 
-            if (UseSsl)
+            if (UseSecure)
             {
-                if (string.IsNullOrEmpty(CertificatePath.Trim())) {
+                if (string.IsNullOrEmpty(CertificatePath.Trim()))
+                {
                     Logs.Error("You are using secure connection, but no path to certificate defined. Stop connection process.");
                     return;
                 }
 
-                server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath, CertificatePassword);
+                if (string.IsNullOrEmpty(CertificatePassword.Trim()))
+                    server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath);
+                else
+                    server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath, CertificatePassword);
+
+                server.SslConfiguration.EnabledSslProtocols =
+                    System.Security.Authentication.SslProtocols.Tls12
+                    | System.Security.Authentication.SslProtocols.Ssl3
+                    | System.Security.Authentication.SslProtocols.Default;
             }
 
+            // Setup all services used by server
             SetupService(server);
 
-            server.Stop();
+            // Setup something else if needed
+            OnBeforeServerStart?.Invoke(this);
+
+            // Start server
             server.Start();
 
+            // Add this server to updater
             MstUpdateRunner.Instance.Add(this);
         }
 
@@ -94,9 +119,13 @@ namespace MasterServerToolkit.Networking
         public void Stop()
         {
             MstUpdateRunner.Instance.Remove(this);
-            server.Stop();
+            server?.Stop();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="action"></param>
         public void ExecuteOnUpdate(Action action)
         {
             lock (executeOnUpdate)
@@ -105,17 +134,22 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        /// <summary>
+        /// Setup all services used by server
+        /// </summary>
+        /// <param name="server"></param>
         private void SetupService(WebSocketServer server)
         {
-            server.AddWebSocketService<WsService>("/msf", (service) =>
+            // Master server service
+            server.AddWebSocketService<WsService>($"/app/{ApplicationKey}", (service) =>
             {
                 service.IgnoreExtensions = true;
                 service.SetServerSocket(this);
-                var peer = new PeerWsServer(service);
+                var peer = new WsServerPeer(service);
 
                 service.OnMessageEvent += (data) =>
                 {
-                    peer.HandleDataReceived(data, 0);
+                    peer.HandleDataReceived(data);
                 };
 
                 ExecuteOnUpdate(() =>
@@ -138,6 +172,7 @@ namespace MasterServerToolkit.Networking
                 };
             });
 
+            // Echo test service
             server.AddWebSocketService<EchoService>("/echo");
         }
 

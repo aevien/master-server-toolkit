@@ -1,9 +1,5 @@
-﻿using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
-using Mirror;
+﻿using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -16,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
 
         [Header("Master Connection Settings")]
         [SerializeField]
-        private string masterIp = "127.0.0.1";
+        private string masterIP = "127.0.0.1";
         [SerializeField]
         private int masterPort = 5000;
 
@@ -82,21 +78,14 @@ namespace MasterServerToolkit.MasterServer
             roomServerConnection.AddDisconnectionListener(OnClientDisconnectedFromRoomServer, false);
 
             // If master IP is provided via cmd arguments
-            if (Mst.Args.IsProvided(Mst.Args.Names.MasterIp))
-            {
-                masterIp = Mst.Args.MasterIp;
-            }
-
+            masterIP = Mst.Args.AsString(Mst.Args.Names.MasterIp, masterIP);
             // If master port is provided via cmd arguments
-            if (Mst.Args.IsProvided(Mst.Args.Names.MasterPort))
-            {
-                masterPort = Mst.Args.MasterPort;
-            }
+            masterPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, masterPort);
 
             // Set the scene that player will be sent to is disconnected from server
-            if (Mst.Options.Has(MstDictKeys.roomOfflineSceneName))
+            if (Mst.Options.Has(MstDictKeys.ROOM_OFFLINE_SCENE_NAME))
             {
-                offlineScene = Mst.Options.AsString(MstDictKeys.roomOfflineSceneName);
+                offlineScene = Mst.Options.AsString(MstDictKeys.ROOM_OFFLINE_SCENE_NAME);
             }
         }
 
@@ -116,7 +105,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual bool IsInTestMode()
         {
-            return Mst.Runtime.IsEditor && autoStartInEditor && !Mst.Options.Has(MstDictKeys.autoStartRoomClient);
+            return Mst.Runtime.IsEditor && autoStartInEditor && !Mst.Options.Has(MstDictKeys.AUTOSTART_ROOM_CLIENT);
         }
 
         /// <summary>
@@ -145,7 +134,7 @@ namespace MasterServerToolkit.MasterServer
                     StartRoomClient(true);
                 }
 
-                if (Mst.Options.Has(MstDictKeys.autoStartRoomClient) || Mst.Args.StartClientConnection)
+                if (Mst.Options.Has(MstDictKeys.AUTOSTART_ROOM_CLIENT) || Mst.Args.StartClientConnection)
                 {
                     StartRoomClient();
                 }
@@ -160,7 +149,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!Mst.Client.Rooms.ForceClientMode && !ignoreForceClientMode) return;
 
-            logger.Info($"Starting Room Client... {Mst.Version}. Multithreading is: {(Mst.Runtime.SupportsThreads ? "On" : "Off")}");
+            logger.Info($"Starting Room Client... {Mst.Version}");
             logger.Info($"Start parameters are: {Mst.Args}");
 
             // Start connecting room server to master server
@@ -175,7 +164,8 @@ namespace MasterServerToolkit.MasterServer
             // Start client connection
             if (!Connection.IsConnected)
             {
-                Connection.Connect(masterIp, masterPort);
+                Connection.UseSsl = MstApplicationConfig.Instance.UseSecure || Mst.Args.UseSecure;
+                Connection.Connect(masterIP, masterPort);
             }
 
             // Wait a result of client connection
@@ -200,7 +190,7 @@ namespace MasterServerToolkit.MasterServer
                         else
                         {
                             // Sign in client using credentials
-                            Mst.Client.Auth.SignIn(username, password, SignInCallback);
+                            Mst.Client.Auth.SignInWithLoginAndPassword(username, password, SignInCallback);
                         }
                     }
                     else
@@ -208,10 +198,10 @@ namespace MasterServerToolkit.MasterServer
                         // If we have option with room id
                         // this approach can be used when you have come to this scene from another one.
                         // Set this option before this room client controller is connected to master server
-                        if (Mst.Options.Has(MstDictKeys.roomId))
+                        if (Mst.Options.Has(MstDictKeys.ROOM_ID))
                         {
                             // Let's try to get access data for room we want to connect to
-                            GetRoomAccess(Mst.Options.AsInt(MstDictKeys.roomId));
+                            GetRoomAccess(Mst.Options.AsInt(MstDictKeys.ROOM_ID));
                         }
                         else
                         {
@@ -227,7 +217,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="accountInfo"></param>
         /// <param name="error"></param>
-        private void SignInCallback(AccountInfoPacket accountInfo, string error)
+        private void SignInCallback(ClientAccountInfo accountInfo, string error)
         {
             if (accountInfo == null)
             {
@@ -287,6 +277,7 @@ namespace MasterServerToolkit.MasterServer
                 logger.Debug("Connecting to room server...");
 
                 // Start client connection
+                roomServerConnection.UseSsl = MstApplicationConfig.Instance.UseSecure || Mst.Args.UseSecure;
                 roomServerConnection.Connect(roomServerIp, roomServerPort);
 
                 // Wait a result of client connection

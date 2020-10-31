@@ -35,7 +35,7 @@ namespace MasterServerToolkit.Games
 
         #endregion
 
-        private static AuthBehaviour _instance;
+        protected static AuthBehaviour _instance;
         protected string outputMessage = string.Empty;
 
         public static AuthBehaviour Instance
@@ -93,9 +93,9 @@ namespace MasterServerToolkit.Games
             if (useDefaultCredentials && Mst.Runtime.IsEditor)
             {
                 var credentials = new MstProperties();
-                credentials.Set(MstDictKeys.userName, defaultUsername);
-                credentials.Set(MstDictKeys.userPassword, defaultPassword);
-                credentials.Set(MstDictKeys.userEmail, defaultEmail);
+                credentials.Set(MstDictKeys.USER_NAME, defaultUsername);
+                credentials.Set(MstDictKeys.USER_PASSWORD, defaultPassword);
+                credentials.Set(MstDictKeys.USER_EMAIL, defaultEmail);
 
                 Mst.Events.Invoke(MstEventKeys.setSignInDefaultCredentials, credentials);
                 Mst.Events.Invoke(MstEventKeys.setSignUpDefaultCredentials, credentials);
@@ -148,6 +148,9 @@ namespace MasterServerToolkit.Games
         /// </summary>
         protected virtual void OnClientDisconnectedFromServer()
         {
+            Connection.RemoveConnectionListener(OnClientConnectedToServer);
+            Connection.RemoveDisconnectionListener(OnClientDisconnectedFromServer);
+
             Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
             Mst.Events.Invoke(MstEventKeys.showOkDialogBox,
                 new OkDialogBoxEventMessage("The connection to the server has been lost. "
@@ -220,7 +223,7 @@ namespace MasterServerToolkit.Games
         /// </summary>
         /// <param name="username"></param>
         /// <param name="password"></param>
-        public void SignIn(string username, string password)
+        public virtual void SignIn(string username, string password)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in... Please wait!");
 
@@ -228,7 +231,7 @@ namespace MasterServerToolkit.Games
 
             MstTimer.WaitForSeconds(1f, () =>
             {
-                Mst.Client.Auth.SignIn(username, password, (accountInfo, error) =>
+                Mst.Client.Auth.SignInWithLoginAndPassword(username, password, (accountInfo, error) =>
                 {
                     Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
@@ -258,7 +261,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Sends sign in as guest request to master server
         /// </summary>
-        public void SignInAsGuest()
+        public virtual void SignInAsGuest()
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in as guest... Please wait!");
 
@@ -289,7 +292,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Sends request to master server to signed in with token
         /// </summary>
-        public void SignInWithToken()
+        public virtual void SignInWithToken()
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in... Please wait!");
 
@@ -303,7 +306,7 @@ namespace MasterServerToolkit.Games
 
                     if (accountInfo != null)
                     {
-                        if (accountInfo.IsEmailConfirmed)
+                        if (accountInfo.IsGuest || accountInfo.IsEmailConfirmed)
                         {
                             logger.Debug($"You are successfully logged in. {Mst.Client.Auth.AccountInfo}");
                         }
@@ -325,7 +328,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Sends sign up request to master server
         /// </summary>
-        public void SignUp(string username, string useremail, string userpassword)
+        public virtual void SignUp(string username, string useremail, string userpassword)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing up... Please wait!");
 
@@ -334,9 +337,9 @@ namespace MasterServerToolkit.Games
             MstTimer.WaitForSeconds(1f, () =>
             {
                 var credentials = new MstProperties();
-                credentials.Set(MstDictKeys.userName, username);
-                credentials.Set(MstDictKeys.userEmail, useremail);
-                credentials.Set(MstDictKeys.userPassword, userpassword);
+                credentials.Set(MstDictKeys.USER_NAME, username);
+                credentials.Set(MstDictKeys.USER_EMAIL, useremail);
+                credentials.Set(MstDictKeys.USER_PASSWORD, userpassword);
 
                 Mst.Client.Auth.SignUp(credentials, (isSuccessful, error) =>
                 {
@@ -366,7 +369,7 @@ namespace MasterServerToolkit.Games
         /// <param name="userEmail"></param>
         /// <param name="resetCode"></param>
         /// <param name="newPassword"></param>
-        public void ResetPassword(string userEmail, string resetCode, string newPassword)
+        public virtual void ResetPassword(string userEmail, string resetCode, string newPassword)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Changing password... Please wait!");
 
@@ -398,7 +401,7 @@ namespace MasterServerToolkit.Games
         /// Sends request to master to generate rest password code and send it to user email
         /// </summary>
         /// <param name="userEmail"></param>
-        public void RequestResetPasswordCode(string userEmail)
+        public virtual void RequestResetPasswordCode(string userEmail)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Sending reset password code... Please wait!");
 
@@ -412,7 +415,7 @@ namespace MasterServerToolkit.Games
 
                     if (isSuccessful)
                     {
-                        Mst.Options.Set(MstDictKeys.resetPasswordEmail, userEmail);
+                        Mst.Options.Set(MstDictKeys.RESET_PASSWORD_EMAIL, userEmail);
 
                         Mst.Events.Invoke(MstEventKeys.hidePasswordResetCodeView);
                         Mst.Events.Invoke(MstEventKeys.showPasswordResetView);
@@ -431,17 +434,18 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Sign out user
         /// </summary>
-        public void SignOut()
+        public virtual void SignOut()
         {
             logger.Debug("Sign out");
             Mst.Client.Auth.SignOut(true);
             ViewsManager.HideAllViews();
+            Mst.Events.Invoke(MstEventKeys.showSignInView);
         }
 
         /// <summary>
         /// Sends request to get confirmation code
         /// </summary>
-        public void RequestConfirmationCode()
+        public virtual void RequestConfirmationCode()
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Sending confirmation code... Please wait!");
 
@@ -470,7 +474,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Sends request to confirm account with confirmation code
         /// </summary>
-        public void ConfirmAccount(string confirmationCode)
+        public virtual void ConfirmAccount(string confirmationCode)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Confirming your account... Please wait!");
 
@@ -499,7 +503,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Quits the application
         /// </summary>
-        public void Quit()
+        public virtual void Quit()
         {
             Mst.Runtime.Quit();
         }

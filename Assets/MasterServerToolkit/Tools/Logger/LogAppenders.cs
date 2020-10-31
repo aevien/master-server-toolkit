@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace MasterServerToolkit.Logging
 {
@@ -10,15 +11,15 @@ namespace MasterServerToolkit.Logging
         {
             if (logLevel <= LogLevel.Info)
             {
-                Debug.Log(string.Format("[{0}] {1}", logLevel, message));
+                Debug.Log($"[{DateTime.Now:hh:mm:ss} | {logLevel}] {message}");
             }
             else if (logLevel <= LogLevel.Warn)
             {
-                Debug.LogWarning(string.Format("[{0}] {1}", logLevel, message));
+                Debug.LogWarning($"[{DateTime.Now:hh:mm:ss} | {logLevel}] {message}");
             }
             else if (logLevel <= LogLevel.Fatal)
             {
-                Debug.LogError(string.Format("[{0}] {1}", logLevel, message));
+                Debug.LogError($"[{DateTime.Now:hh:mm:ss} | {logLevel}] {message}");
             }
         }
 
@@ -26,15 +27,15 @@ namespace MasterServerToolkit.Logging
         {
             if (logLevel <= LogLevel.Info)
             {
-                Debug.Log(string.Format("[{0} | {1}] {2}", logLevel, logger.Name, message));
+                Debug.Log($"[{DateTime.Now:hh:mm:ss} | {logLevel} | {logger.Name}] {message}");
             }
             else if (logLevel <= LogLevel.Warn)
             {
-                Debug.LogWarning(string.Format("[{0} | {1}] {2}", logLevel, logger.Name, message));
+                Debug.LogWarning($"[{DateTime.Now:hh:mm:ss} | {logLevel} | {logger.Name}] {message}");
             }
             else if (logLevel <= LogLevel.Fatal)
             {
-                Debug.LogError(string.Format("[{0} | {1}] {2}", logLevel, logger.Name, message));
+                Debug.LogError($"[{DateTime.Now:hh:mm:ss} | {logLevel} | {logger.Name}] {message}");
             }
         }
     }

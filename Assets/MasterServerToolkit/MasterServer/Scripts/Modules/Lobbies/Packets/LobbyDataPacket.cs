@@ -17,7 +17,7 @@ namespace MasterServerToolkit.MasterServer
         public string LobbyName { get; set; } = string.Empty;
         public int MaxPlayers { get; set; }
         public Dictionary<string, string> LobbyProperties { get; set; }
-        public Dictionary<string, LobbyMemberData> Players { get; set; }
+        public Dictionary<string, LobbyMemberData> Members { get; set; }
         public Dictionary<string, LobbyTeamData> Teams { get; set; }
         public List<LobbyPropertyData> Controls { get; set; }
         public byte[] AdditionalData { get; set; }
@@ -31,7 +31,7 @@ namespace MasterServerToolkit.MasterServer
         public LobbyDataPacket()
         {
             // Just to avoid handling "null" cases
-            Players = new Dictionary<string, LobbyMemberData>();
+            Members = new Dictionary<string, LobbyMemberData>();
             Teams = new Dictionary<string, LobbyTeamData>();
         }
 
@@ -56,8 +56,8 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Write player properties
-            writer.Write(Players.Count);
-            foreach (var playerProperty in Players)
+            writer.Write(Members.Count);
+            foreach (var playerProperty in Members)
             {
                 writer.Write(playerProperty.Key);
 
@@ -110,7 +110,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Clear, in case we're reusing the object
-            Players.Clear();
+            Members.Clear();
 
             // Read player properties
             var playerCount = reader.ReadInt32();
@@ -121,7 +121,7 @@ namespace MasterServerToolkit.MasterServer
                 var username = reader.ReadString();
                 data.FromBinaryReader(reader);
 
-                Players.Add(username, data);
+                Members.Add(username, data);
             }
 
             // Read teams

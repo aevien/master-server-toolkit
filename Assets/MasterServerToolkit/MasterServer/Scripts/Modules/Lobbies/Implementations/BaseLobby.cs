@@ -142,6 +142,8 @@ namespace MasterServerToolkit.MasterServer
         {
             Logger = Mst.Create.Logger(typeof(BaseLobby).Name);
 
+            Name = "lobby_" + Mst.Helper.CreateRandomDigitsString(5);
+
             Id = lobbyId;
             Module = module;
             GameIp = "";
@@ -219,22 +221,22 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Add player to lobby
         /// </summary>
-        /// <param name="playerExt"></param>
+        /// <param name="lobbyUser"></param>
         /// <param name="error"></param>
         /// <returns></returns>
-        public bool AddPlayer(LobbyUserPeerExtension playerExt, out string error)
+        public bool AddPlayer(LobbyUserPeerExtension lobbyUser, out string error)
         {
             error = null;
 
-            if (playerExt.CurrentLobby != null)
+            if (lobbyUser.CurrentLobby != null)
             {
                 error = "You're already in a lobby";
                 return false;
             }
 
-            var username = TryGetUsername(playerExt.Peer);
+            var username = TryGetUsername(lobbyUser.Peer);
 
-            if (username == null)
+            if (string.IsNullOrEmpty(username))
             {
                 error = "Invalid username";
                 return false;
@@ -252,7 +254,7 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
-            if (!IsPlayerAllowed(username, playerExt))
+            if (!IsPlayerAllowed(username, lobbyUser))
             {
                 error = "You're not allowed";
                 return false;
@@ -271,7 +273,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Create an "instance" of the member
-            var member = CreateMember(username, playerExt);
+            var member = CreateMember(username, lobbyUser);
 
             // Add it to a team
             var team = PickTeamForPlayer(member);
@@ -289,26 +291,23 @@ namespace MasterServerToolkit.MasterServer
             }
 
             membersByUsernameList[member.Username] = member;
-            membersByPeerIdList[playerExt.Peer.Id] = member;
+            membersByPeerIdList[lobbyUser.Peer.Id] = member;
 
             // Set this lobby as player's current lobby
-            playerExt.CurrentLobby = this;
+            lobbyUser.CurrentLobby = this;
 
             if (GameMaster == null)
             {
                 PickNewGameMaster(false);
             }
 
-            Subscribe(playerExt.Peer);
+            Subscribe(lobbyUser.Peer);
 
-            playerExt.Peer.OnPeerDisconnectedEvent += OnPeerDisconnected;
+            lobbyUser.Peer.OnPeerDisconnectedEvent += OnPeerDisconnected;
 
             OnPlayerAdded(member);
 
-            if (OnPlayerAddedEvent != null)
-            {
-                OnPlayerAddedEvent.Invoke(member);
-            }
+            OnPlayerAddedEvent?.Invoke(member);
 
             return true;
         }
@@ -316,10 +315,10 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Remove player from lobby
         /// </summary>
-        /// <param name="playerExt"></param>
-        public void RemovePlayer(LobbyUserPeerExtension playerExt)
+        /// <param name="lobbyUser"></param>
+        public void RemovePlayer(LobbyUserPeerExtension lobbyUser)
         {
-            var username = TryGetUsername(playerExt.Peer);
+            var username = TryGetUsername(lobbyUser.Peer);
 
             membersByUsernameList.TryGetValue(username, out LobbyMember member);
 
@@ -330,11 +329,11 @@ namespace MasterServerToolkit.MasterServer
             }
 
             membersByUsernameList.Remove(username);
-            membersByPeerIdList.Remove(playerExt.Peer.Id);
+            membersByPeerIdList.Remove(lobbyUser.Peer.Id);
 
-            if (playerExt.CurrentLobby == this)
+            if (lobbyUser.CurrentLobby == this)
             {
-                playerExt.CurrentLobby = null;
+                lobbyUser.CurrentLobby = null;
             }
 
             // Remove member from it's current team
@@ -351,11 +350,11 @@ namespace MasterServerToolkit.MasterServer
 
 
             // Unsubscribe
-            playerExt.Peer.OnPeerDisconnectedEvent -= OnPeerDisconnected;
-            Unsubscribe(playerExt.Peer);
+            lobbyUser.Peer.OnPeerDisconnectedEvent -= OnPeerDisconnected;
+            Unsubscribe(lobbyUser.Peer);
 
             // Notify player himself that he's removed
-            playerExt.Peer.SendMessage((short)MstMessageCodes.LeftLobby, Id);
+            lobbyUser.Peer.SendMessage((short)MstMessageCodes.LeftLobby, Id);
 
             OnPlayerRemoved(member);
 
@@ -411,7 +410,6 @@ namespace MasterServerToolkit.MasterServer
         public LobbyMember GetMemberByExtension(LobbyUserPeerExtension playerExt)
         {
             membersByPeerIdList.TryGetValue(playerExt.Peer.Id, out LobbyMember member);
-
             return member;
         }
 
@@ -443,11 +441,11 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Set a lobby player property
         /// </summary>
-        /// <param name="player"></param>
+        /// <param name="member"></param>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool SetPlayerProperty(LobbyMember player, string key, string value)
+        public bool SetPlayerProperty(LobbyMember member, string key, string value)
         {
             // Invalid property
             if (key == null)
@@ -456,14 +454,14 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Check if player is allowed to change this property
-            if (!IsPlayerPropertyChangeable(player, key, value))
+            if (!IsPlayerPropertyChangeable(member, key, value))
             {
                 return false;
             }
 
-            player.SetProperty(key, value);
+            member.SetProperty(key, value);
 
-            OnPlayerPropertyChange(player, key);
+            OnPlayerPropertyChange(member, key);
 
             return true;
         }
@@ -642,12 +640,12 @@ namespace MasterServerToolkit.MasterServer
 
             string region = "";
 
-            propertiesList.Set(MstDictKeys.roomIsPublic, false);
+            propertiesList.Set(MstDictKeys.ROOM_IS_PUBLIC, false);
 
             // Extract the region if available
-            if (propertiesList.Has(MstDictKeys.roomRegion))
+            if (propertiesList.Has(MstDictKeys.ROOM_REGION))
             {
-                region = propertiesList.AsString(MstDictKeys.roomRegion);
+                region = propertiesList.AsString(MstDictKeys.ROOM_REGION);
             }
 
             var task = Module.SpawnersModule.Spawn(propertiesList, region, GenerateOptions());
@@ -764,14 +762,14 @@ namespace MasterServerToolkit.MasterServer
 
             var data = gameSpawnTask.FinalizationPacket.FinalizationData;
 
-            if (!data.Has(MstDictKeys.roomId))
+            if (!data.Has(MstDictKeys.ROOM_ID))
             {
                 BroadcastChatMessage("Game server finalized, but room ID cannot be found", true);
                 return;
             }
 
             // Get room id from finalization data
-            var roomId = data.AsInt(MstDictKeys.roomId);
+            var roomId = data.AsInt(MstDictKeys.ROOM_ID);
             var room = Module.RoomsModule.GetRoom(roomId);
 
             if (room == null)
@@ -816,7 +814,7 @@ namespace MasterServerToolkit.MasterServer
                 LobbyName = Name,
                 LobbyId = Id,
                 LobbyProperties = propertiesList.ToDictionary(),
-                Players = membersByUsernameList.Values.ToDictionary(m => m.Username, GenerateMemberData),
+                Members = membersByUsernameList.Values.ToDictionary(m => m.Username, GenerateMemberData),
                 Teams = teamsList.Values.ToDictionary(t => t.Name, t => t.GenerateData()),
                 Controls = controls,
                 LobbyState = State,
@@ -839,7 +837,7 @@ namespace MasterServerToolkit.MasterServer
                 LobbyName = Name,
                 LobbyId = Id,
                 LobbyProperties = propertiesList.ToDictionary(),
-                Players = membersByUsernameList.Values.ToDictionary(m => m.Username, GenerateMemberData),
+                Members = membersByUsernameList.Values.ToDictionary(m => m.Username, GenerateMemberData),
                 Teams = teamsList.Values.ToDictionary(t => t.Name, t => t.GenerateData()),
                 Controls = controls,
                 LobbyState = State,
@@ -853,7 +851,12 @@ namespace MasterServerToolkit.MasterServer
             return info;
         }
 
-        public void ChatMessageHandler(LobbyMember member, IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
+        /// <param name="message"></param>
+        public void ChatMessageHandler(LobbyMember member, IIncomingMessage message)
         {
             var text = message.AsString();
 
@@ -868,7 +871,11 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(msg);
         }
 
-        public void GameAccessRequestHandler(IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        public void GameAccessRequestHandler(IIncomingMessage message)
         {
             if (lobbyRoom == null)
             {
@@ -891,6 +898,11 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         public virtual bool StartGameManually(LobbyUserPeerExtension user)
         {
             var member = GetMemberByExtension(user);
@@ -947,6 +959,11 @@ namespace MasterServerToolkit.MasterServer
             return StartGame();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
         public virtual LobbyMemberData GenerateMemberData(LobbyMember member)
         {
             return member.GenerateDataPacket();
@@ -956,7 +973,11 @@ namespace MasterServerToolkit.MasterServer
 
         #region Broadcasting
 
-        public void Broadcast(IMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        public void Broadcast(IOutgoingMessage message)
         {
             foreach (var peer in subscribersList)
             {
@@ -964,7 +985,12 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        public void Broadcast(IMessage message, Func<IPeer, bool> condition)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="condition"></param>
+        public void Broadcast(IOutgoingMessage message, Func<IPeer, bool> condition)
         {
             foreach (var peer in subscribersList)
             {
@@ -977,8 +1003,13 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        public void BroadcastChatMessage(string message, bool isError = false,
-            string sender = "System")
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="isError"></param>
+        /// <param name="sender"></param>
+        public void BroadcastChatMessage(string message, bool isError = false, string sender = "System")
         {
             var msg = new LobbyChatPacket()
             {
@@ -990,8 +1021,14 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyChatMessage, msg.ToBytes()));
         }
 
-        public void SendChatMessage(LobbyMember member, string message, bool isError = false,
-            string sender = "System")
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
+        /// <param name="message"></param>
+        /// <param name="isError"></param>
+        /// <param name="sender"></param>
+        public void SendChatMessage(LobbyMember member, string message, bool isError = false, string sender = "System")
         {
             var packet = new LobbyChatPacket()
             {
@@ -1009,6 +1046,10 @@ namespace MasterServerToolkit.MasterServer
 
         #region On... Stuff
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
         protected virtual void OnPlayerAdded(LobbyMember member)
         {
             // Notify others about the new user
@@ -1018,6 +1059,10 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(msg, p => p != member.Extension.Peer);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
         protected virtual void OnPlayerRemoved(LobbyMember member)
         {
             // Destroy lobby if last member left
@@ -1031,6 +1076,10 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyMemberLeft, member.Username));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="state"></param>
         protected virtual void OnLobbyStateChange(LobbyState state)
         {
             switch (state)
@@ -1065,12 +1114,20 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(msg);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="text"></param>
         private void OnStatusTextChange(string text)
         {
             var msg = MessageHelper.Create((short)MstMessageCodes.LobbyStatusTextChange, text);
             Broadcast(msg);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="propertyKey"></param>
         protected virtual void OnLobbyPropertyChange(string propertyKey)
         {
             var packet = new StringPairPacket()
@@ -1083,6 +1140,11 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyPropertyChanged, packet.ToBytes()));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
+        /// <param name="propertyKey"></param>
         protected virtual void OnPlayerPropertyChange(LobbyMember member, string propertyKey)
         {
             // Broadcast the changes
@@ -1097,6 +1159,11 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyMemberPropertyChanged, changesPacket.ToBytes()));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
+        /// <param name="newTeam"></param>
         protected virtual void OnPlayerTeamChanged(LobbyMember member, LobbyTeam newTeam)
         {
             var packet = new StringPairPacket()
@@ -1119,6 +1186,10 @@ namespace MasterServerToolkit.MasterServer
             RemovePlayer(peer.GetExtension<LobbyUserPeerExtension>());
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="member"></param>
         protected virtual void OnPlayerReadyStatusChange(LobbyMember member)
         {
             // Broadcast the new status
@@ -1131,6 +1202,9 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyMemberReadyStatusChange, packet.ToBytes()));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void OnGameMasterChange()
         {
             var masterUsername = GameMaster != null ? GameMaster.Username : "";
@@ -1138,6 +1212,9 @@ namespace MasterServerToolkit.MasterServer
             Broadcast(msg);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void OnAllPlayersReady()
         {
             if (!Config.StartGameWhenAllReady)

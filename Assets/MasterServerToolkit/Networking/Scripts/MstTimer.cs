@@ -96,6 +96,14 @@ namespace MasterServerToolkit.Networking
                 Instance.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="condition"></param>
+        /// <param name="completeCallback"></param>
+        /// <param name="timeoutSeconds"></param>
+        /// <param name="reverseCondition"></param>
+        /// <returns></returns>
         private static IEnumerator WaitWhileTrueCoroutine(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds, bool reverseCondition = false)
         {
             while ((timeoutSeconds > 0) && (condition.Invoke() == !reverseCondition))
@@ -107,36 +115,64 @@ namespace MasterServerToolkit.Networking
             completeCallback.Invoke(timeoutSeconds > 0);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="callback"></param>
         public static void WaitForSeconds(float time, Action callback)
         {
             if (Instance)
                 Instance.StartCoroutine(Instance.StartWaitingForSeconds(time, callback));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         private IEnumerator StartWaitingForSeconds(float time, Action callback)
         {
             yield return new WaitForSeconds(time);
             callback.Invoke();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="callback"></param>
         public static void WaitForEndOfFrame(Action callback)
         {
             if (Instance)
                 Instance.StartCoroutine(Instance.StartWaitingForEndOfFrame(callback));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         private IEnumerator StartWaitingForEndOfFrame(Action callback)
         {
             yield return new WaitForEndOfFrame();
             callback.Invoke();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="action"></param>
         public static void RunInMainThread(Action action)
         {
             if (Instance)
                 Instance.AddToMainThread(action);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="action"></param>
         private void AddToMainThread(Action action)
         {
             lock (_mainThreadLock)
@@ -145,6 +181,10 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         private IEnumerator StartTicker()
         {
             CurrentTick = 0;
@@ -166,6 +206,9 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void OnApplicationQuit()
         {
             OnApplicationQuitEvent?.Invoke();

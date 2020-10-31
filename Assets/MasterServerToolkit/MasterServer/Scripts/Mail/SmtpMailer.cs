@@ -19,13 +19,13 @@ namespace MasterServerToolkit.MasterServer
 #endif
 
         [Header("E-mail settings")]
-        public string smtpHost = "smtp.gmail.com";
-        public string smtpUsername = "username@gmail.com";
+        public string smtpHost = "smtp.mail.com";
+        public string smtpUsername = "username@mail.com";
         public string smtpPassword = "password";
         public int smtpPort = 587;
         public bool enableSsl = true;
         public int timeoutInSeconds = 60;
-        public string mailFrom = "yourgame@gmail.com";
+        public string mailFrom = "yourgame@mail.com";
         public string senderDisplayName = "Awesome Game";
 
         [Header("E-mail template"), SerializeField]
@@ -153,5 +153,7 @@ namespace MasterServerToolkit.MasterServer
             return true;
 #endif
         }
+
+        //public virtual async Task<bool> SendEmailConfirmation
     }
 }

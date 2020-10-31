@@ -28,6 +28,7 @@ namespace MasterServerToolkit.MasterServer
         /// A lobby team, to which this member belongs
         /// </summary>
         public virtual LobbyTeam Team { get; set; }
+
         public LobbyMember(string username, LobbyUserPeerExtension ext)
         {
             Username = username;
@@ -65,7 +66,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 IsReady = IsReady,
                 Username = Username,
-                Properties = Properties, // Consider cloning properties
+                Properties = Properties,
                 Team = Team != null ? Team.Name : ""
             };
         }

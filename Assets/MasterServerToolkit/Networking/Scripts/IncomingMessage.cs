@@ -5,48 +5,49 @@ using System.Text;
 namespace MasterServerToolkit.Networking
 {
     /// <summary>
-    ///     Default implementation of incomming message
+    /// Default implementation of Incoming message
     /// </summary>
-    public class IncommingMessage : IIncommingMessage
+    public class IncomingMessage : IIncomingMessage
     {
         private readonly byte[] _data;
 
-        public IncommingMessage(short opCode, byte flags, byte[] data, DeliveryMethod deliveryMethod, IPeer peer)
+        public IncomingMessage(short opCode, byte flags, byte[] data, DeliveryMethod deliveryMethod, IPeer peer)
         {
-            OpCode = opCode;
-            Peer = peer;
             _data = data;
 
+            OpCode = opCode;
+            Peer = peer;
+            Flags = flags;
         }
 
         /// <summary>
-        ///     Message flags
+        /// Message flags
         /// </summary>
         public byte Flags { get; private set; }
 
         /// <summary>
-        ///     Operation code (message type)
+        /// Operation code (message type)
         /// </summary>
         public short OpCode { get; private set; }
 
         /// <summary>
-        ///     Sender
+        /// Sender
         /// </summary>
         public IPeer Peer { get; private set; }
 
         /// <summary>
-        ///     Ack id the message is responding to
+        /// Ack id the message is responding to
         /// </summary>
         public int? AckResponseId { get; set; }
 
         /// <summary>
-        ///     We add this to a packet to so that receiver knows
-        ///     what he responds to
+        /// We add this to a packet to so that receiver knows
+        /// what he responds to
         /// </summary>
         public int? AckRequestId { get; set; }
 
         /// <summary>
-        ///     Returns true, if sender expects a response to this message
+        /// Returns true, if sender expects a response to this message
         /// </summary>
         public bool IsExpectingResponse
         {
@@ -54,21 +55,21 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     For ordering
+        /// For ordering
         /// </summary>
         public int SequenceChannel { get; set; }
 
         /// <summary>
-        ///     Message status code
+        /// Message status code
         /// </summary>
         public ResponseStatus Status { get; set; }
 
         /// <summary>
-        ///     Respond with a message
+        /// Respond with a message
         /// </summary>
         /// <param name="message"></param>
         /// <param name="statusCode"></param>
-        public void Respond(IMessage message, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(IOutgoingMessage message, ResponseStatus statusCode = ResponseStatus.Default)
         {
             message.Status = statusCode;
 
@@ -81,7 +82,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Respond with data (message is created internally)
+        /// Respond with data (message is created internally)
         /// </summary>
         /// <param name="data"></param>
         /// <param name="statusCode"></param>
@@ -91,7 +92,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Respond with data (message is created internally)
+        /// Respond with data (message is created internally)
         /// </summary>
         /// <param name="data"></param>
         /// <param name="statusCode"></param>
@@ -101,7 +102,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Respond with empty message and status code
+        /// Respond with empty message and status code
         /// </summary>
         /// <param name="statusCode"></param>
         public void Respond(ResponseStatus statusCode = ResponseStatus.Default)
@@ -109,18 +110,28 @@ namespace MasterServerToolkit.Networking
             Respond(MessageHelper.Create(OpCode), statusCode);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="statusCode"></param>
         public void Respond(string message, ResponseStatus statusCode = ResponseStatus.Default)
         {
             Respond(message.ToBytes(), statusCode);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="response"></param>
+        /// <param name="statusCode"></param>
         public void Respond(int response, ResponseStatus statusCode = ResponseStatus.Default)
         {
             Respond(MessageHelper.Create(OpCode, response), statusCode);
         }
 
         /// <summary>
-        ///     Returns true if message contains any data
+        /// Returns true if message contains any data
         /// </summary>
         public bool HasData
         {
@@ -128,7 +139,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Returns contents of this message. Mutable
+        /// Returns contents of this message. Mutable
         /// </summary>
         /// <returns></returns>
         public byte[] AsBytes()
@@ -137,7 +148,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Decodes content into a string
+        /// Decodes content into a string
         /// </summary>
         /// <returns></returns>
         public string AsString()
@@ -146,8 +157,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Decodes content into a string. If there's no content,
-        ///     returns the <see cref="defaultValue"/>
+        /// Decodes content into a string. If there's no content,
+        /// returns the <see cref="defaultValue"/>
         /// </summary>
         /// <returns></returns>
         public string AsString(string defaultValue)
@@ -156,7 +167,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Decodes content into an integer
+        /// Decodes content into an integer
         /// </summary>
         /// <returns></returns>
         public int AsInt()
@@ -165,7 +176,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Writes content of the message into a packet
+        /// Writes content of the message into a packet
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="packetToBeFilled"></param>
@@ -176,7 +187,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Uses content of the message to regenerate list of packets
+        /// Uses content of the message to regenerate list of packets
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="packetCreator"></param>
@@ -186,6 +197,10 @@ namespace MasterServerToolkit.Networking
             return MessageHelper.DeserializeList(_data, packetCreator);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return AsString(base.ToString());

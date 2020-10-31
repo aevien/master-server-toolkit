@@ -48,15 +48,6 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, Tooltip("The max number of allowed connections. If 0 - means unlimeted")]
         protected int maxConnections = 0;
 
-        [Header("Security Settings"), Tooltip("Whether to not to use secure connection"), SerializeField]
-        protected bool useSsl = false;
-
-        [Tooltip("Path to the certificate"), SerializeField]
-        protected string certificatePath = "C:/path to your certificate";
-
-        [Tooltip("Password of the certificate"), SerializeField]
-        protected string certificatePassword = "PasswordHere";
-
         [Header("Editor Settings"), SerializeField]
         private HelpBox hpEditor = new HelpBox()
         {
@@ -136,6 +127,8 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Awake()
         {
+            if (string.IsNullOrEmpty(MstApplicationConfig.Instance.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
+
             Application.targetFrameRate = targetFrameRate;
 
             logger = Mst.Create.Logger(GetType().Name);
@@ -149,17 +142,20 @@ namespace MasterServerToolkit.MasterServer
 
             // Create the server 
             socket = Mst.Create.ServerSocket();
-            socket.UseSsl = useSsl || Mst.Args.UseSsl;
-            socket.CertificatePath = Mst.Args.ExtractValue(Mst.Args.Names.CertificatePath, certificatePath);
-            socket.CertificatePassword = Mst.Args.ExtractValue(Mst.Args.Names.CertificatePassword, certificatePassword);
+
+            // Setup secure connection
+            socket.UseSecure = MstApplicationConfig.Instance.UseSecure;
+            socket.CertificatePath = MstApplicationConfig.Instance.CertificatePath;
+            socket.CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
+            socket.ApplicationKey = MstApplicationConfig.Instance.ApplicationKey;
 
             socket.OnPeerConnectedEvent += OnConnectedEventHandle;
             socket.OnPeerDisconnectedEvent += OnDisconnectedEventHandler;
 
             // AesKey handler
-            SetHandler((short)MstMessageCodes.AesKeyRequest, GetAesKeyRequestHandler);
-            SetHandler((short)MstMessageCodes.PermissionLevelRequest, PermissionLevelRequestHandler);
-            SetHandler((short)MstMessageCodes.PeerGuidRequest, GetPeerGuidRequestHandler);
+            RegisterMessageHandler((short)MstMessageCodes.AesKeyRequest, GetAesKeyRequestHandler);
+            RegisterMessageHandler((short)MstMessageCodes.PermissionLevelRequest, PermissionLevelRequestHandler);
+            RegisterMessageHandler((short)MstMessageCodes.PeerGuidRequest, GetPeerGuidRequestHandler);
         }
 
         protected virtual void Start()
@@ -265,6 +261,18 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="listenToPort"></param>
         public virtual void StartServer(string listenToIp, int listenToPort)
         {
+            if (IsRunning)
+            {
+                return;
+            }
+
+            logger.Info("Starting Server...\n"+
+                $"\tFPS is: {Application.targetFrameRate}\n" +
+                $"\tApp key: {socket.ApplicationKey}\n" +
+                $"\tSecure: {socket.UseSecure}\n" +
+                $"\tCertificate Path: {(!socket.UseSecure ? "Empty" : socket.CertificatePath)}\n" +
+                $"\tCertificate Pass: {(string.IsNullOrEmpty(socket.CertificatePath) || !socket.UseSecure ? "Empty" : "********")}");
+
             socket.Listen(listenToIp, listenToPort);
             LookForModules();
             IsRunning = true;
@@ -312,7 +320,7 @@ namespace MasterServerToolkit.MasterServer
         private void OnConnectedEventHandle(IPeer peer)
         {
             // Check if max number of connections has been reached
-            if(maxConnections > 0 && connectedPeers.Count >= maxConnections)
+            if (maxConnections > 0 && connectedPeers.Count >= maxConnections)
             {
                 peer.Disconnect("The max number of connections has been reached");
                 return;
@@ -374,13 +382,21 @@ namespace MasterServerToolkit.MasterServer
 
         #region MESSAGE HANDLERS
 
-        protected virtual void GetPeerGuidRequestHandler(IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void GetPeerGuidRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
             message.Respond(extension.UniqueGuid.ToByteArray(), ResponseStatus.Success);
         }
 
-        protected virtual void PermissionLevelRequestHandler(IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void PermissionLevelRequestHandler(IIncomingMessage message)
         {
             var key = message.AsString();
 
@@ -412,7 +428,11 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(newLevel, ResponseStatus.Success);
         }
 
-        protected virtual void GetAesKeyRequestHandler(IIncommingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void GetAesKeyRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
             var encryptedKey = extension.AesKeyEncrypted;
@@ -427,7 +447,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Generate a random key
-            var aesKey = Mst.Helper.CreateRandomString(8);
+            var aesKey = Mst.Helper.CreateRandomAlphanumericString(8);
 
             var clientsPublicKeyXml = message.AsString();
 
@@ -469,7 +489,7 @@ namespace MasterServerToolkit.MasterServer
         /// Invokes when message received
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void OnMessageReceived(IIncommingMessage message)
+        protected virtual void OnMessageReceived(IIncomingMessage message)
         {
             try
             {
@@ -477,7 +497,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (handler == null)
                 {
-                    logger.Warn(string.Format("Handler for OpCode {0} does not exist", message.OpCode));
+                    logger.Warn(string.Format($"Handler for OpCode {message.OpCode} does not exist"));
 
                     if (message.IsExpectingResponse)
                     {
@@ -683,7 +703,7 @@ namespace MasterServerToolkit.MasterServer
         /// Set message handler
         /// </summary>
         /// <param name="handler"></param>
-        public void SetHandler(IPacketHandler handler)
+        public void RegisterMessageHandler(IPacketHandler handler)
         {
             handlers[handler.OpCode] = handler;
         }
@@ -693,9 +713,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="handler"></param>
-        public void SetHandler(short opCode, IncommingMessageHandler handler)
+        public void RegisterMessageHandler(short opCode, IncommingMessageHandler handler)
         {
-            handlers[opCode] = new PacketHandler(opCode, handler);
+            RegisterMessageHandler(new PacketHandler(opCode, handler));
         }
 
         /// <summary>

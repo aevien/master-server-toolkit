@@ -7,11 +7,8 @@ namespace MasterServerToolkit.Logging
     public static class LogManager
     {
         private static LogHandler _appenders;
-
-        private static Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
-
-        private static Queue<PooledLog> _pooledLogs;
-
+        private static readonly Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
+        private static readonly Queue<PooledLog> _pooledLogs;
         public static bool EnableCurrentClassLogger = true;
 
         /// <summary>
@@ -100,8 +97,7 @@ namespace MasterServerToolkit.Logging
 
         public static Logger GetLogger(string name, bool poolUntilInitialized)
         {
-            Logger logger;
-            if (!_loggers.TryGetValue(name, out logger))
+            if (!_loggers.TryGetValue(name, out Logger logger))
             {
                 logger = CreateLogger(name);
                 _loggers.Add(name, logger);

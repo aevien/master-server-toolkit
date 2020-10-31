@@ -1,11 +1,11 @@
 ﻿namespace MasterServerToolkit.Networking
 {
-    public interface IMsgDispatcher<TPeer> where TPeer : IPeer
+    public interface IMsgDispatcher
     {
         /// <summary>
         /// Peer, to which we have connected
         /// </summary>
-        TPeer Peer { get; }
+        IPeer Peer { get; }
 
         void SendMessage(short opCode);
         void SendMessage(short opCode, ISerializablePacket packet);
@@ -27,8 +27,8 @@
         void SendMessage(short opCode, int data, ResponseCallback responseCallback);
         void SendMessage(short opCode, int data, ResponseCallback responseCallback, int timeoutSecs);
 
-        void SendMessage(IMessage message);
-        void SendMessage(IMessage message, ResponseCallback responseCallback);
-        void SendMessage(IMessage message, ResponseCallback responseCallback, int timeoutSecs);
+        void SendMessage(IOutgoingMessage message);
+        void SendMessage(IOutgoingMessage message, ResponseCallback responseCallback);
+        void SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs);
     }
 }

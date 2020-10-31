@@ -142,10 +142,10 @@ namespace MasterServerToolkit.Bridges.Mirror
             roomPlayersByUsername = new Dictionary<string, MirrorRoomPlayer>();
 
             // If master IP is provided via cmd arguments
-            masterIp = Mst.Args.ExtractValue(Mst.Args.Names.MasterIp, masterIp);
+            masterIp = Mst.Args.AsString(Mst.Args.Names.MasterIp, masterIp);
 
             // If master port is provided via cmd arguments
-            masterPort = Mst.Args.ExtractValueInt(Mst.Args.Names.MasterPort, masterPort);
+            masterPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, masterPort);
         }
 
         /// <summary>
@@ -212,6 +212,7 @@ namespace MasterServerToolkit.Bridges.Mirror
             // If connection to master server is not established
             if (!Connection.IsConnected && !Connection.IsConnecting)
             {
+                Connection.UseSsl = MstApplicationConfig.Instance.UseSecure;
                 Connection.Connect(masterIp, masterPort);
             }
         }
@@ -356,10 +357,10 @@ namespace MasterServerToolkit.Bridges.Mirror
                 IsPublic = true,
 
                 // This is for controlling max number of players that may be connected
-                MaxConnections = Mst.Args.ExtractValueInt(Mst.Args.Names.RoomMaxConnections, MirrorNetworkManager.maxConnections),
+                MaxConnections = Mst.Args.AsInt(Mst.Args.Names.RoomMaxConnections, MirrorNetworkManager.maxConnections),
 
                 // Just the name of the room
-                Name = Mst.Args.ExtractValue(Mst.Args.Names.RoomName, $"Room[{Mst.Helper.CreateRandomString(5)}]"),
+                Name = Mst.Args.AsString(Mst.Args.Names.RoomName, $"Room[{Mst.Helper.CreateRandomAlphanumericString(5)}]"),
 
                 // If room uses the password
                 Password = Mst.Args.RoomPassword,
@@ -368,10 +369,10 @@ namespace MasterServerToolkit.Bridges.Mirror
                 RoomIp = Mst.Args.RoomIp,
 
                 // Room port that will be used by players to connect to this room
-                RoomPort = Mst.Args.ExtractValueInt(Mst.Args.Names.RoomPort, GetPort()),
+                RoomPort = Mst.Args.AsInt(Mst.Args.Names.RoomPort, GetPort()),
 
                 // Region that this room may use to filter it in the games list
-                Region = Mst.Args.ExtractValue(Mst.Args.Names.RoomRegion, string.Empty)
+                Region = Mst.Args.AsString(Mst.Args.Names.RoomRegion, string.Empty)
             };
         }
 
@@ -390,27 +391,27 @@ namespace MasterServerToolkit.Bridges.Mirror
                 }
 
                 // If max players was given from spawner task
-                if (taskController.Options.Has(MstDictKeys.roomName))
+                if (taskController.Options.Has(MstDictKeys.ROOM_NAME))
                 {
-                    roomOptions.Name = taskController.Options.AsString(MstDictKeys.roomName);
+                    roomOptions.Name = taskController.Options.AsString(MstDictKeys.ROOM_NAME);
                 }
 
                 // If room is public or not
-                if (taskController.Options.Has(MstDictKeys.roomIsPublic))
+                if (taskController.Options.Has(MstDictKeys.ROOM_IS_PUBLIC))
                 {
-                    roomOptions.IsPublic = taskController.Options.AsBool(MstDictKeys.roomIsPublic);
+                    roomOptions.IsPublic = taskController.Options.AsBool(MstDictKeys.ROOM_IS_PUBLIC);
                 }
 
                 // If max players param was given from spawner task
-                if (taskController.Options.Has(MstDictKeys.roomMaxPlayers))
+                if (taskController.Options.Has(MstDictKeys.ROOM_MAX_PLAYERS))
                 {
-                    roomOptions.MaxConnections = taskController.Options.AsInt(MstDictKeys.roomMaxPlayers);
+                    roomOptions.MaxConnections = taskController.Options.AsInt(MstDictKeys.ROOM_MAX_PLAYERS);
                 }
 
                 // If password was given from spawner task
-                if (taskController.Options.Has(MstDictKeys.roomPassword))
+                if (taskController.Options.Has(MstDictKeys.ROOM_PASSWORD))
                 {
-                    roomOptions.Password = taskController.Options.AsString(MstDictKeys.roomPassword);
+                    roomOptions.Password = taskController.Options.AsString(MstDictKeys.ROOM_PASSWORD);
                 }
 
                 // Set port of the Mirror server
@@ -501,7 +502,7 @@ namespace MasterServerToolkit.Bridges.Mirror
                     }
 
                     // If we do not want guest users to play in our room
-                    if (!allowGuestUsers && accountInfo.CustomOptions.Has(MstDictKeys.userIsGuest) && accountInfo.CustomOptions.AsBool(MstDictKeys.userIsGuest))
+                    if (!allowGuestUsers && accountInfo.Properties.Has(MstDictKeys.USER_IS_GUEST) && accountInfo.Properties.AsBool(MstDictKeys.USER_IS_GUEST))
                     {
                         logger.Error("Guest users cannot play this room. Hands off...");
 
@@ -517,7 +518,7 @@ namespace MasterServerToolkit.Bridges.Mirror
                     }
 
                     // Create new room player
-                    var player = new MirrorRoomPlayer(usernameAndPeerId.PeerId, conn, accountInfo.Username, accountInfo.CustomOptions)
+                    var player = new MirrorRoomPlayer(usernameAndPeerId.PeerId, conn, accountInfo.Username, accountInfo.Properties)
                     {
                         Profile = ProfileFactory(accountInfo.Username)
                     };

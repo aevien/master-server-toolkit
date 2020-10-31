@@ -1,7 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.MasterServer.Examples.BasicProfile;
 using MasterServerToolkit.Networking;
-using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -42,7 +40,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Get profile data from master
         /// </summary>
-        public void LoadProfile()
+        public virtual void LoadProfile()
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Loading profile... Please wait!");
 

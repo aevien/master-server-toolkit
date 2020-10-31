@@ -1,6 +1,8 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
+using System.Linq;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -9,6 +11,7 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class MstAdvancedSettings
     {
+
         /// <summary>
         /// Factory, used to create client sockets
         /// </summary>

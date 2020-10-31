@@ -48,17 +48,10 @@ namespace MasterServerToolkit.MasterServer
             // Set server behaviour to be able to use in all levels
             DontDestroyOnLoad(gameObject);
 
-            // Check is command line argument '-msfMasterPort' is defined
-            if (Mst.Args.IsProvided(Mst.Args.Names.MasterIp))
-            {
-                serverIP = Mst.Args.MasterIp;
-            }
-
-            // Check is command line argument '-msfMasterPort' is defined
-            if (Mst.Args.IsProvided(Mst.Args.Names.MasterPort))
-            {
-                serverPort = Mst.Args.MasterPort;
-            }
+            // If master IP is provided via cmd arguments
+            serverIP = Mst.Args.AsString(Mst.Args.Names.MasterIp, serverIP);
+            // If master port is provided via cmd arguments
+            serverPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, serverPort);
 
             base.Awake();
         }
@@ -76,24 +69,6 @@ namespace MasterServerToolkit.MasterServer
                     StartServer();
                 });
             }
-        }
-
-        /// <summary>
-        /// Start master server with given port
-        /// </summary>
-        public override void StartServer()
-        {
-            // If master is allready running then return function
-            if (IsRunning)
-            {
-                return;
-            }
-
-            logger.Info("Starting Master Server...");
-            logger.Info($"Multithreading is: {(Mst.Runtime.SupportsThreads ? "On" : "Off")}");
-            logger.Info($"FPS is: {Application.targetFrameRate}");
-
-            base.StartServer();
         }
 
         protected override void OnStartedServer()

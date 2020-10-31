@@ -195,13 +195,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 643b72b2583b2ad4f83aae31a07036cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  smtpHost: smtp.gmail.com
-  smtpUsername: username@gmail.com
+  smtpHost: smtp.mail.com
+  smtpUsername: username@mail.com
   smtpPassword: password
   smtpPort: 587
   enableSsl: 1
   timeoutInSeconds: 60
-  mailFrom: yourgame@gmail.com
+  mailFrom: yourgame@mail.com
   senderDisplayName: Awesome Game
   emailBodyTemplate: {fileID: 0}
 --- !u!1 &260078181
@@ -234,11 +234,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  serverIp: 127.0.0.1
+  serverIP: 127.0.0.1
   serverPort: 5000
-  useSsl: 0
-  minTimeToConnect: 0.5
-  maxTimeToConnect: 4
+  minTimeToConnect: 5
+  maxTimeToConnect: 5
   maxAttemptsToConnect: 5
   waitAndConnect: 0.2
   connectOnStart: 1
@@ -508,9 +507,6 @@ MonoBehaviour:
   serverIP: localhost
   serverPort: 5000
   maxConnections: 0
-  useSsl: 0
-  certificatePath: C:/path to your certificate
-  certificatePassword: PasswordHere
   autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:
@@ -582,6 +578,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   httpPort: 8080
+  defaultIndexPage:
+  - index
+  - home
+  authenticationSchemes: 1
+  realm: adminusers@masterservertoolkit.com
+  username: admin
+  password: admin
 --- !u!1 &1152754123
 GameObject:
   m_ObjectHideFlags: 0
@@ -631,7 +634,8 @@ MonoBehaviour:
   useEmailConfirmation: 1
   enableGuestLogin: 1
   guestPrefix: Guest
-  useGuestFriendlyName: 1
+  saveGuestInfo: 1
+  tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
@@ -728,10 +732,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1428928143}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d558598284e1b3e4a96e99f7bd3a97f2, type: 3}
+  m_Script: {fileID: 11500000, guid: 148bfe057370f264eaf655c830b76dac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logLevel: 0
+  useAccountDb: 1
+  accountDbName: mini_surv_accounts
+  useProfilesDb: 1
+  profilesDbName: mini_surv_profiles
 --- !u!1 &1509869343
 GameObject:
   m_ObjectHideFlags: 0
@@ -964,8 +971,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f306ed80b28de241a60d207e3477f01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logLevel: 0
-  templateHtml: {fileID: 4900000, guid: 9eacdcaddb4b0ce47a9a99251545a798, type: 3}
-  cssFiles:
-  - {fileID: 4900000, guid: 5bc6d7d5c373231438563d9178f9c958, type: 3}
-  javascriptFiles: []

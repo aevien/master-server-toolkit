@@ -109,10 +109,10 @@ namespace MasterServerToolkit.Bridges.Mirror
             base.Awake();
 
             // If master IP is provided via cmd arguments
-            masterIp = Mst.Args.ExtractValue(Mst.Args.Names.MasterIp, masterIp);
+            masterIp = Mst.Args.AsString(Mst.Args.Names.MasterIp, masterIp);
 
             // If master port is provided via cmd arguments
-            masterPort = Mst.Args.ExtractValueInt(Mst.Args.Names.MasterPort, masterPort);
+            masterPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, masterPort);
         }
 
         protected virtual void OnValidate()
@@ -142,10 +142,10 @@ namespace MasterServerToolkit.Bridges.Mirror
             MirrorNetworkManager = NetworkManager.singleton;
 
             // If we hav offline scene in global options
-            if (Mst.Options.Has(MstDictKeys.roomOfflineSceneName))
+            if (Mst.Options.Has(MstDictKeys.ROOM_OFFLINE_SCENE_NAME))
             {
                 logger.Debug("Assigning offline scene to mirror network manager");
-                MirrorNetworkManager.offlineScene = Mst.Options.AsString(MstDictKeys.roomOfflineSceneName);
+                MirrorNetworkManager.offlineScene = Mst.Options.AsString(MstDictKeys.ROOM_OFFLINE_SCENE_NAME);
             }
 
             // Start listening to OnServerStartedEvent of our MirrorNetworkManager
@@ -167,6 +167,7 @@ namespace MasterServerToolkit.Bridges.Mirror
                 // If connection to master server is not established
                 if (!Connection.IsConnected && !Connection.IsConnecting)
                 {
+                    Connection.UseSsl = MstApplicationConfig.Instance.UseSecure;
                     Connection.Connect(masterIp, masterPort);
                 }
             });
@@ -215,7 +216,7 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// </summary>
         protected virtual void OnMirrorClientStoppedEventHandler()
         {
-            Mst.Options.Remove(MstDictKeys.roomId);
+            Mst.Options.Remove(MstDictKeys.ROOM_ID);
         }
 
         /// <summary>
@@ -223,7 +224,7 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// </summary>
         /// <param name="accountInfo"></param>
         /// <param name="error"></param>
-        protected virtual void OnSignInCallbackHandler(AccountInfoPacket accountInfo, string error)
+        protected virtual void OnSignInCallbackHandler(ClientAccountInfo accountInfo, string error)
         {
             if (accountInfo == null)
             {
@@ -263,7 +264,7 @@ namespace MasterServerToolkit.Bridges.Mirror
             logger.Debug($"Getting access to room {roomId}");
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Getting access to room {roomId}... Please wait!");
 
-            Mst.Client.Rooms.GetAccess(roomId, Mst.Options.AsString(MstDictKeys.roomPassword, string.Empty), (access, error) =>
+            Mst.Client.Rooms.GetAccess(roomId, Mst.Options.AsString(MstDictKeys.ROOM_PASSWORD, string.Empty), (access, error) =>
             {
                 if (access == null)
                 {
@@ -385,19 +386,19 @@ namespace MasterServerToolkit.Bridges.Mirror
                 }
                 else
                 {
-                    Mst.Client.Auth.SignIn(username, password, OnSignInCallbackHandler);
+                    Mst.Client.Auth.SignInWithLoginAndPassword(username, password, OnSignInCallbackHandler);
                 }
             }
             else
             {
-                if (!Mst.Options.Has(MstDictKeys.roomId))
+                if (!Mst.Options.Has(MstDictKeys.ROOM_ID))
                 {
                     Mst.Client.Matchmaker.FindGames((games) =>
                     {
                         if (games != null && games.Count > 0)
                         {
                             // Save room id to global options just for test purpose only
-                            Mst.Options.Set(MstDictKeys.roomId, games.First().Id);
+                            Mst.Options.Set(MstDictKeys.ROOM_ID, games.First().Id);
                             StartClient();
                         }
                         else
@@ -409,7 +410,7 @@ namespace MasterServerToolkit.Bridges.Mirror
                 else
                 {
                     // Let's get access to room
-                    GetRoomAccess(Mst.Options.AsInt(MstDictKeys.roomId));
+                    GetRoomAccess(Mst.Options.AsInt(MstDictKeys.ROOM_ID));
                 }
             }
         }

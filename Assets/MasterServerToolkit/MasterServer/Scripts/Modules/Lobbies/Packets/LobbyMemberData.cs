@@ -13,6 +13,13 @@ namespace MasterServerToolkit.MasterServer
         public bool IsReady { get; set; }
         public string Team { get; set; }
 
+        public LobbyMemberData()
+        {
+            Username = string.Empty;
+            Properties = new MstProperties();
+            Team = string.Empty;
+        }
+
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
             writer.WriteDictionary(Properties.ToDictionary());

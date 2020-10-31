@@ -14,7 +14,7 @@ namespace MasterServerToolkit.MasterServer
         public bool IsPasswordProtected { get; set; }
         public int MaxPlayers { get; set; }
         public int OnlinePlayers { get; set; }
-        public MstProperties CustomOptions { get; set; }
+        public MstProperties Properties { get; set; }
 
         public GameInfoPacket()
         {
@@ -26,7 +26,7 @@ namespace MasterServerToolkit.MasterServer
             IsPasswordProtected = false;
             MaxPlayers = 0;
             OnlinePlayers = 0;
-            CustomOptions = new MstProperties();
+            Properties = new MstProperties();
         }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
@@ -40,7 +40,7 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(IsPasswordProtected);
             writer.Write(MaxPlayers);
             writer.Write(OnlinePlayers);
-            writer.Write(CustomOptions.ToDictionary());
+            writer.Write(Properties.ToDictionary());
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
@@ -54,7 +54,7 @@ namespace MasterServerToolkit.MasterServer
             IsPasswordProtected = reader.ReadBoolean();
             MaxPlayers = reader.ReadInt32();
             OnlinePlayers = reader.ReadInt32();
-            CustomOptions = new MstProperties(reader.ReadDictionary());
+            Properties = new MstProperties(reader.ReadDictionary());
         }
 
         public override string ToString()
@@ -70,7 +70,7 @@ namespace MasterServerToolkit.MasterServer
             options.Add("IsPasswordProtected", IsPasswordProtected);
             options.Add("MaxPlayers", maxPleyers);
             options.Add("OnlinePlayers", $"{OnlinePlayers}/{maxPleyers}");
-            options.Append(CustomOptions);
+            options.Append(Properties);
 
             return $"[GameInfo: {options.ToReadableString()}]";
         }

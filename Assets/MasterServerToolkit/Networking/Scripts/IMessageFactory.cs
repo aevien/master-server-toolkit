@@ -6,11 +6,11 @@
     public interface IMessageFactory
     {
         /// <summary>
-        ///     Creates an empty message
+        /// Creates an empty message
         /// </summary>
         /// <param name="opCode"></param>
         /// <returns></returns>
-        IMessage Create(short opCode);
+        IOutgoingMessage Create(short opCode);
 
         /// <summary>
         ///     Creates a message filled with data
@@ -18,7 +18,7 @@
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        IMessage Create(short opCode, byte[] data);
+        IOutgoingMessage Create(short opCode, byte[] data);
 
         /// <summary>
         ///     Reconstructs message bytes into an incomming message
@@ -26,6 +26,6 @@
         /// <param name="buffer"></param>
         /// <param name="peer"></param>
         /// <returns></returns>
-        IIncommingMessage FromBytes(byte[] buffer, int start, IPeer peer);
+        IIncomingMessage FromBytes(byte[] buffer, int start, IPeer peer);
     }
 }

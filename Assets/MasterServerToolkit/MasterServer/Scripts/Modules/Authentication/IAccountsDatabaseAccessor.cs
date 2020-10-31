@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -10,11 +12,23 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         IAccountInfoData CreateAccountInstance();
         /// <summary>
+        /// Gets user account from database by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task<IAccountInfoData> GetAccountByIdAsync(string id);
+        /// <summary>
         /// Gets user account from database
         /// </summary>
         /// <param name="username"></param>
         /// <returns></returns>
         Task<IAccountInfoData> GetAccountByUsernameAsync(string username);
+        /// <summary>
+        /// Gets user account from database by email
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
+        Task<IAccountInfoData> GetAccountByEmailAsync(string email);
         /// <summary>
         /// Gets user account from database by token
         /// </summary>
@@ -22,11 +36,18 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         Task<IAccountInfoData> GetAccountByTokenAsync(string token);
         /// <summary>
-        /// Gets user account from database by email
+        /// Gets user accounts from database by ids
         /// </summary>
-        /// <param name="email"></param>
+        /// <param name="ids"></param>
         /// <returns></returns>
-        Task<IAccountInfoData> GetAccountByEmailAsync(string email);
+        Task<IEnumerable<IAccountInfoData>> GetAccountsByIdAsync(IEnumerable<string> ids);
+        /// <summary>
+        /// Get accounts list
+        /// </summary>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        Task<IEnumerable<IAccountInfoData>> GetPagedAccounts(int pageIndex = 0, int pageSize = 100);
         /// <summary>
         /// Saves code that user gets when reset pasword request
         /// </summary>
@@ -55,17 +76,17 @@ namespace MasterServerToolkit.MasterServer
         /// Update all account information in database
         /// </summary>
         /// <param name="account"></param>
-        Task UpdateAccountAsync(IAccountInfoData account);
+        Task<bool> UpdateAccountAsync(IAccountInfoData account);
         /// <summary>
         /// Create new account in database
         /// </summary>
         /// <param name="account"></param>
-        Task InsertNewAccountAsync(IAccountInfoData account);
+        Task<string> InsertNewAccountAsync(IAccountInfoData account);
         /// <summary>
         /// Insert account token to database
         /// </summary>
         /// <param name="account"></param>
         /// <param name="token"></param>
-        Task InsertTokenAsync(IAccountInfoData account, string token);
+        Task<bool> InsertTokenAsync(IAccountInfoData account, string token);
     }
 }
