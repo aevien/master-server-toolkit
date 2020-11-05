@@ -8,50 +8,29 @@ using UnityEngine.UI;
 
 namespace Aevien.UI
 {
-    public class ValidatableInputFieldComponent : MonoBehaviour, IValidatableComponent
+    public class ValidatableInputFieldComponent : ValidatableBaseComponent
     {
-        private Color[] validationColorAtStart;
-
-        [Header("Base Settings"), SerializeField]
-        protected Color invalidColor = Color.red;
-        [SerializeField]
-        protected bool changeValidationColor = true;
-
-        [Header("Graphics"), SerializeField]
-        protected Graphic[] validationTargetGraphic;
-
-        [Header("Components"), SerializeField]
+        [Header("Text Field Components"), SerializeField]
         private TMP_InputField currentInputField;
-
-        [Header("Required Validation"), SerializeField]
-        protected bool isRequired = false;
-        [SerializeField, TextArea(2, 10)]
-        protected string requiredErrorMessage;
-
-        [Header("RegExp Validation"), SerializeField, TextArea(2, 10)]
-        protected string regExpPattern;
-        [SerializeField, TextArea(2, 10)]
-        protected string regExpErrorMessage;
-
-        [Header("Comparison Validation"), SerializeField]
+        [SerializeField]
         private TMP_InputField compareToInputField;
         [SerializeField, TextArea(2, 10)]
         protected string compareErrorMessage;
 
-        protected virtual void Awake()
+        [Header("Text Field RegExp Validation"), SerializeField, TextArea(2, 10)]
+        protected string regExpPattern;
+        [SerializeField, TextArea(2, 10)]
+        protected string regExpErrorMessage;
+
+        protected override void Awake()
         {
+            base.Awake();
+
             if (!currentInputField)
                 currentInputField = GetComponent<TMP_InputField>();
-
-            RememberStartValidationGraphicColor();
         }
 
-        protected virtual void Update()
-        {
-            TransitionToStartColor();
-        }
-
-        public bool IsValid()
+        public override bool IsValid()
         {
             if (!currentInputField.interactable)
             {
@@ -85,38 +64,6 @@ namespace Aevien.UI
             }
 
             return true;
-        }
-
-        private void SetInvalidColor()
-        {
-            if (validationTargetGraphic == null || validationTargetGraphic.Length == 0 || !changeValidationColor) return;
-
-            for (int i = 0; i < validationTargetGraphic.Length; i++)
-            {
-                validationTargetGraphic[i].color = invalidColor;
-            }
-        }
-
-        private void TransitionToStartColor()
-        {
-            if (validationTargetGraphic == null || validationTargetGraphic.Length == 0 || !changeValidationColor) return;
-
-            for (int i = 0; i < validationColorAtStart.Length; i++)
-            {
-                validationTargetGraphic[i].color = Color.Lerp(validationTargetGraphic[i].color, validationColorAtStart[i], Time.deltaTime);
-            }
-        }
-
-        private void RememberStartValidationGraphicColor()
-        {
-            if (validationTargetGraphic == null || validationTargetGraphic.Length == 0 || !changeValidationColor) return;
-
-            validationColorAtStart = new Color[validationTargetGraphic.Length];
-
-            for (int i = 0; i < validationTargetGraphic.Length; i++)
-            {
-                validationColorAtStart[i] = validationTargetGraphic[i].color;
-            }
         }
     }
 }

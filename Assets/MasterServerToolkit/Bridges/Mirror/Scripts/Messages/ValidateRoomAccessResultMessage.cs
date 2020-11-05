@@ -4,21 +4,29 @@ using Mirror;
 
 namespace MasterServerToolkit.Bridges.Mirror
 {
-    public class ValidateRoomAccessResultMessage : IMessageBase
+    public class ValidateRoomAccessResultMessage : NetworkMessage
     {
         public string Error { get; set; }
         public ResponseStatus Status { get; set; }
+    }
 
-        public void Deserialize(NetworkReader reader)
+    public static class ValidateRoomAccessResultMessageExtension
+    {
+        public static void Serialize(this NetworkWriter writer, ValidateRoomAccessResultMessage value)
         {
-            Error = reader.ReadString();
-            Status = (ResponseStatus)reader.ReadUInt16();
+            writer.WriteString(value.Error);
+            writer.WriteUInt16((ushort)value.Status);
         }
 
-        public void Serialize(NetworkWriter writer)
+        public static ValidateRoomAccessResultMessage Deserialize(this NetworkReader reader)
         {
-            writer.WriteString(Error);
-            writer.WriteUInt16((ushort)Status);
+            ValidateRoomAccessResultMessage value = new ValidateRoomAccessResultMessage()
+            {
+                Error = reader.ReadString(),
+                Status = (ResponseStatus)reader.ReadUInt16()
+            };
+
+            return value;
         }
     }
 }

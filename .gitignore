@@ -17,6 +17,7 @@
 !/[Aa]ssets/MasterServerToolkit/
 /[Aa]ssets/MasterServerToolkit/Templates/
 /[Aa]ssets/MasterServerToolkit/Demos/BasicSpawnerMst/
+/[Aa]ssets/MasterServerToolkit/Addons/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
@@ -77,3 +78,4 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+Assets/MasterServerToolkit/Addons.meta

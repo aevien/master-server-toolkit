@@ -18,7 +18,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected Logging.Logger logger;
 
-        public IBaseClientBehaviour ClientBehaviour { get; set; }
+        public IMstBaseClient ClientBehaviour { get; set; }
 
         protected virtual void Awake()
         {
@@ -26,7 +26,7 @@ namespace MasterServerToolkit.MasterServer
             logger.LogLevel = logLevel;
         }
 
-        public virtual void OnInitialize(IBaseClientBehaviour clientBehaviour) { }
+        public virtual void OnInitialize(IMstBaseClient clientBehaviour) { }
 
         protected virtual void OnDestroy() { }
     }

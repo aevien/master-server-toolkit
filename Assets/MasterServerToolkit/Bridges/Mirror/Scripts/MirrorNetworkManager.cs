@@ -85,7 +85,7 @@ namespace MasterServerToolkit.Bridges.Mirror
             autoCreatePlayer = false;
 
             // Prevent start network manager in headless mode automatically
-            startOnHeadless = false;
+            autoStartServerBuild = false;
 
             base.Awake();
         }

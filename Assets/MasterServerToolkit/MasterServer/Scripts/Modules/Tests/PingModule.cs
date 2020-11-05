@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using KskGroup;
-using MasterServerToolkit.Networking;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using MasterServerToolkit.Networking;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -21,12 +15,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnPingRequestListener(IIncomingMessage message)
         {
-            JObject json = new JObject()
-            {
-                { "name","Vladimir" }
-            };
-
-            message.Respond(JsonConvert.SerializeObject(new AccountInfo()).ToBytes(), ResponseStatus.Success);
+            message.Respond(pongMessage, ResponseStatus.Success);
         }
     }
 }

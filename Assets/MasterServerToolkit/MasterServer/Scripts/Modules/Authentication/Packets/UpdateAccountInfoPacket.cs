@@ -1,8 +1,4 @@
 ﻿using MasterServerToolkit.Networking;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -14,7 +10,7 @@ namespace MasterServerToolkit.MasterServer
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string Facebook { get; set; }
-        public MstProperties Properties { get; private set; }
+        public MstProperties Properties { get; set; }
 
         public UpdateAccountInfoPacket()
         {

@@ -3,10 +3,9 @@ using Mirror;
 
 namespace MasterServerToolkit.Bridges.Mirror
 {
-    public class CreatePlayerMessage : IMessageBase
+    public class CreatePlayerMessage : NetworkMessage
     {
-        public void Deserialize(NetworkReader reader) { }
-        public void Serialize(NetworkWriter writer) { }
+        
     }
 }
 

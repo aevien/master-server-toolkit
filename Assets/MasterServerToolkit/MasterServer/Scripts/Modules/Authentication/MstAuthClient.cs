@@ -135,6 +135,18 @@ namespace MasterServerToolkit.MasterServer
             // Get user Id if it is saved
             string userId;
 
+            if (Mst.UseDevMode)
+            {
+                userId = Mst.Args.GuestId;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    Logs.Error("You are trying to use user id from command-line arguments, but it is empty");
+                }
+
+                return Mst.Args.GuestId;
+            }
+
             if (HasUserId())
             {
                 userId = PlayerPrefs.GetString(MstDictKeys.USER_ID);
@@ -389,6 +401,8 @@ namespace MasterServerToolkit.MasterServer
                     // Parse account info
                     var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
 
+                    Logs.Info(accountInfoPacket);
+
                     AccountInfo = new ClientAccountInfo()
                     {
                         Id = accountInfoPacket.Id,
@@ -611,7 +625,16 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var updateAccountPropertiesPacket = new UpdateAccountInfoPacket();
+                var updateAccountPropertiesPacket = new UpdateAccountInfoPacket
+                {
+                    Id = AccountInfo.Id,
+                    Username = AccountInfo.Username,
+                    Password = AccountInfo.Password,
+                    Email = AccountInfo.Email,
+                    PhoneNumber = AccountInfo.PhoneNumber,
+                    Facebook = AccountInfo.Facebook,
+                    Properties = AccountInfo.Properties
+                };
 
                 var encryptedData = Mst.Security.EncryptAES(updateAccountPropertiesPacket.ToBytes(), aesKey);
 
@@ -624,6 +647,8 @@ namespace MasterServerToolkit.MasterServer
                         callback.Invoke(false, response.AsString("Unknown error"));
                         return;
                     }
+
+                    AccountInfo.MarkAsDirty(false);
 
                     callback.Invoke(true, null);
 

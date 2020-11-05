@@ -18,12 +18,45 @@ namespace MasterServerToolkit.MasterServer
         public bool IsGuest { get; set; }
         public bool IsEmailConfirmed { get; set; }
         public MstProperties Properties { get; set; }
+        public bool IsDirty { get; private set; }
 
         event Action<ClientAccountInfo> OnChangedEvent;
-
-        public void MarkAsDirty()
+        public ClientAccountInfo()
         {
+            Id = string.Empty;
+            Username = string.Empty;
+            Password = string.Empty;
+            Email = string.Empty;
+            PhoneNumber = string.Empty;
+            Facebook = string.Empty;
+            Token = string.Empty;
+            IsAdmin = false;
+            IsGuest = true;
+            IsEmailConfirmed = false;
+            Properties = new MstProperties();
+        }
+
+        public void MarkAsDirty(bool value = true)
+        {
+            IsDirty = value;
             OnChangedEvent?.Invoke(this);
+        }
+
+        public override string ToString()
+        {
+            var options = new MstProperties();
+            options.Add("Id", Id);
+            options.Add("Username", Username);
+            options.Add("Email", Email);
+            options.Add("PhoneNumber", PhoneNumber);
+            options.Add("Facebook", Facebook);
+            options.Add("Token", Token);
+            options.Add("IsAdmin", IsAdmin);
+            options.Add("IsGuest", IsGuest);
+            options.Add("IsEmailConfirmed", IsEmailConfirmed);
+            options.Append(Properties);
+
+            return options.ToReadableString(";\n");
         }
     }
 }

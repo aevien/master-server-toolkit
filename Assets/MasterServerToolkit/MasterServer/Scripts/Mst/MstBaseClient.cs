@@ -4,19 +4,48 @@ using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class MstBaseClient
+    public class MstBaseClient : IMstBaseClient
     {
-        public IClientSocket Connection { get; private set; }
-
         /// <summary>
         /// Client handlers list. Requires for connection changing process. <seealso cref="ChangeConnection(IClientSocket)"/>
         /// </summary>
-        private Dictionary<short, IPacketHandler> _handlers;
+        protected Dictionary<short, IPacketHandler> handlers;
+
+        /// <summary>
+        /// Current module connection
+        /// </summary>
+        public IClientSocket Connection { get; protected set; }
+
+        /// <summary>
+        /// Check if current module is connected to server
+        /// </summary>
+        public bool IsConnected => Connection != null && Connection.IsConnected;
 
         public MstBaseClient(IClientSocket connection)
         {
             Connection = connection;
-            _handlers = new Dictionary<short, IPacketHandler>();
+            handlers = new Dictionary<short, IPacketHandler>();
+        }
+
+        /// <summary>
+        /// Clears connection and all its handlers if <paramref name="clearHandlers"/> is true
+        /// </summary>
+        public virtual void ClearConnection(bool clearHandlers = true)
+        {
+            if (Connection != null)
+            {
+                if (handlers != null && clearHandlers)
+                {
+                    foreach (var handler in handlers.Values)
+                    {
+                        Connection.RemoveHandler(handler);
+                    }
+
+                    handlers.Clear();
+                }
+
+                Connection.OnStatusChangedEvent -= OnConnectionStatusChanged;
+            }
         }
 
         /// <summary>
@@ -26,12 +55,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void SetHandler(IPacketHandler handler)
         {
-            _handlers[handler.OpCode] = handler;
-
-            if (Connection != null)
-            {
-                Connection.SetHandler(handler);
-            }
+            handlers[handler.OpCode] = handler;
+            Connection?.SetHandler(handler);
         }
 
         /// <summary>
@@ -46,19 +71,58 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// Removes the packet handler, but only if this exact handler
+        /// was used
+        /// </summary>
+        /// <param name="handler"></param>
+        public void RemoveHandler(IPacketHandler handler)
+        {
+            Connection?.RemoveHandler(handler);
+        }
+
+        /// <summary>
         /// Changes the connection object, and sets all of the message handlers of this object
         /// to new connection.
         /// </summary>
         /// <param name="socket"></param>
         public void ChangeConnection(IClientSocket socket)
         {
+            // Clear just connection but not handlers
+            ClearConnection(false);
+
+            // Change connections
             Connection = socket;
 
             // Override packet handlers
-            foreach (var packetHandler in _handlers.Values)
+            foreach (var packetHandler in handlers.Values)
             {
                 socket.SetHandler(packetHandler);
             }
+
+            Connection.OnStatusChangedEvent += OnConnectionStatusChanged;
+            OnConnectionSocketChanged(Connection);
         }
+
+        /// <summary>
+        /// Cast this client behaviour to derived class <typeparamref name="T"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T CastTo<T>() where T : class
+        {
+            return this as T;
+        }
+
+        /// <summary>
+        /// Fires when connection of this module is changing
+        /// </summary>
+        /// <param name="socket"></param>
+        protected virtual void OnConnectionSocketChanged(IClientSocket socket) { }
+
+        /// <summary>
+        /// Fires each time the connection status is changing
+        /// </summary>
+        /// <param name="status"></param>
+        protected virtual void OnConnectionStatusChanged(ConnectionStatus status) { }
     }
 }

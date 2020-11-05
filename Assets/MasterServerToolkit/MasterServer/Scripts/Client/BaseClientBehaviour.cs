@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public abstract class BaseClientBehaviour : MonoBehaviour, IBaseClientBehaviour
+    public abstract class BaseClientBehaviour : MonoBehaviour, IMstBaseClient
     {
         /// <summary>
         /// Client handlers list. Requires for connection changing process. <seealso cref="ChangeConnection(IClientSocket)"/>
@@ -158,7 +158,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public T CastTo<T>() where T: BaseClientBehaviour
+        public T CastTo<T>() where T: class
         {
             return this as T;
         }

@@ -209,10 +209,12 @@ namespace MasterServerToolkit.MasterServer
                 _args = Array.Empty<string>();
             }
 
+#if !UNITY_EDITOR
             if (Application.isMobilePlatform)
             {
                 return;
             }
+#endif
 
             string path = Path.Combine(Directory.GetCurrentDirectory(), "application.cfg");
 

@@ -6,7 +6,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public interface IBaseClientModule
     {
-        IBaseClientBehaviour ClientBehaviour { get; set; }
-        void OnInitialize(IBaseClientBehaviour clientBehaviour);
+        IMstBaseClient ClientBehaviour { get; set; }
+        void OnInitialize(IMstBaseClient clientBehaviour);
     }
 }

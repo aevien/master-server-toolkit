@@ -7,10 +7,11 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.Mirror
 {
-    public class ValidateRoomAccessRequestMessage : IMessageBase
+    public class ValidateRoomAccessRequestMessage : NetworkMessage
     {
         public ValidateRoomAccessRequestMessage()
         {
+            Token = string.Empty;
         }
 
         public ValidateRoomAccessRequestMessage(string token)
@@ -19,15 +20,23 @@ namespace MasterServerToolkit.Bridges.Mirror
         }
 
         public string Token { get; set; }
+    }
 
-        public void Deserialize(NetworkReader reader)
+    public static class ValidateRoomAccessRequestMessageExtension
+    {
+        public static void Serialize(this NetworkWriter writer, ValidateRoomAccessRequestMessage value)
         {
-            Token = reader.ReadString();
+            writer.WriteString(value.Token);
         }
 
-        public void Serialize(NetworkWriter writer)
+        public static ValidateRoomAccessRequestMessage Deserialize(this NetworkReader reader)
         {
-            writer.WriteString(Token);
+            ValidateRoomAccessRequestMessage value = new ValidateRoomAccessRequestMessage()
+            {
+                Token = reader.ReadString()
+            };
+
+            return value;
         }
     }
 }

@@ -2,9 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -20,13 +18,21 @@ namespace MasterServerToolkit.MasterServer
         public MstProperties(Dictionary<string, string> options)
         {
             properties = new Dictionary<string, string>();
-            Append(options);
+
+            if (options != null)
+            {
+                Append(options);
+            }
         }
 
         public MstProperties(MstProperties options)
         {
             properties = new Dictionary<string, string>();
-            Append(options);
+
+            if (options != null)
+            {
+                Append(options);
+            }
         }
 
         /// <summary>
@@ -87,7 +93,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="options"></param>
         public MstProperties Append(IDictionary options)
         {
-            if(options == null)
+            if (options == null)
             {
                 return new MstProperties();
             }
@@ -105,7 +111,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        public MstProperties AddOrUpdate(MstProperties options)
+        public bool AddOrUpdate(MstProperties options)
         {
             return AddOrUpdate(options.ToDictionary());
         }
@@ -115,16 +121,22 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="dictionary"></param>
         /// <returns></returns>
-        public MstProperties AddOrUpdate(IDictionary<string, string> options)
+        public bool AddOrUpdate(IDictionary<string, string> options)
         {
+            bool differs = false;
             string[] keys = options.Keys.ToArray();
 
             for (int i = 0; i < keys.Length; i++)
             {
-                Set(keys[i].ToString(), options[keys[i]].ToString());
+                if (!differs)
+                {
+                    differs = Differs(keys[i], options[keys[i]]);
+                }
+
+                Set(keys[i], options[keys[i]]);
             }
 
-            return this;
+            return differs;
         }
 
         /// <summary>
@@ -135,6 +147,17 @@ namespace MasterServerToolkit.MasterServer
         public bool Has(string key)
         {
             return properties.ContainsKey(key);
+        }
+
+        /// <summary>
+        /// Check if option value differs from given one
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool Differs(string key, string value)
+        {
+            return !Has(key) || AsString(key) != value;
         }
 
         /// <summary>
