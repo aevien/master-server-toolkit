@@ -1,9 +1,4 @@
 ﻿#if MIRROR
-using MasterServerToolkit.Bridges.Mirror.Character;
-using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.Mirror.Character

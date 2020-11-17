@@ -331,19 +331,37 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a login request, using given credentials
         /// </summary>
-        public void SignInWithEmailAndPassword(string email, string password, SignInCallback callback)
+        public void SignInWithEmail(string email, SignInCallback callback)
         {
-            SignInWithEmailAndPassword(email, password, callback, Connection);
+            SignInWithEmail(email, callback, Connection);
         }
 
         /// <summary>
         /// Sends a login request, using given credentials
         /// </summary>
-        public void SignInWithEmailAndPassword(string email, string password, SignInCallback callback, IClientSocket connection)
+        public void SignInWithEmail(string email, SignInCallback callback, IClientSocket connection)
         {
             var credentials = new MstProperties();
             credentials.Add(MstDictKeys.USER_EMAIL, email);
-            credentials.Add(MstDictKeys.USER_PASSWORD, password);
+
+            SignIn(credentials, callback, connection);
+        }
+
+        /// <summary>
+        /// Sends a login request, using given credentials
+        /// </summary>
+        public void SignInWithPhoneNumber(string phoneNumber, SignInCallback callback)
+        {
+            SignInWithPhoneNumber(phoneNumber, callback, Connection);
+        }
+
+        /// <summary>
+        /// Sends a login request, using given credentials
+        /// </summary>
+        public void SignInWithPhoneNumber(string phoneNumber, SignInCallback callback, IClientSocket connection)
+        {
+            var credentials = new MstProperties();
+            credentials.Add(MstDictKeys.USER_PHONE_NUMBER, phoneNumber);
 
             SignIn(credentials, callback, connection);
         }
@@ -401,8 +419,6 @@ namespace MasterServerToolkit.MasterServer
                     // Parse account info
                     var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
 
-                    Logs.Info(accountInfoPacket);
-
                     AccountInfo = new ClientAccountInfo()
                     {
                         Id = accountInfoPacket.Id,
@@ -424,7 +440,8 @@ namespace MasterServerToolkit.MasterServer
                     // If RememberMe is checked on and we are not guset, then save auth token
                     if (RememberMe && !AccountInfo.IsGuest)
                     {
-                        SaveAuthToken(AccountInfo.Token);
+                        if (!string.IsNullOrEmpty(AccountInfo.Token))
+                            SaveAuthToken(AccountInfo.Token);
                     }
                     else
                     {

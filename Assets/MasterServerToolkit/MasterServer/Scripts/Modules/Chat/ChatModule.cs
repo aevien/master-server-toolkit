@@ -244,21 +244,21 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="joinSameChannels"></param>
         public void ChangeUsername(IPeer peer, string newUsername, bool joinSameChannels = true)
         {
-            var chatExt = peer.GetExtension<ChatUserPeerExtension>();
+            var chatUser = peer.GetExtension<ChatUserPeerExtension>();
 
-            if (chatExt == null)
+            if (chatUser == null)
             {
                 return;
             }
 
             // Get previous chat user channels that one is connected to
-            var prevChannels = chatExt.CurrentChannels.ToList();
+            var prevChannels = chatUser.CurrentChannels.ToList();
 
             // Get his default chat channel
-            var defaultChannel = chatExt.DefaultChannel;
+            var defaultChannel = chatUser.DefaultChannel;
 
             // Remove the user from chat
-            RemoveChatUser(chatExt);
+            RemoveChatUser(chatUser);
 
             // Create a new chat user
             var newExtension = CreateChatUser(peer, newUsername);
@@ -383,12 +383,12 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void OnUserLoggedOutEventHandler(IUserPeerExtension account)
         {
             // Get chat user from extensions list
-            var chatExt = account.Peer.GetExtension<ChatUserPeerExtension>();
+            var chatUser = account.Peer.GetExtension<ChatUserPeerExtension>();
 
             // Remove it from chat users list if is not null
-            if (chatExt != null)
+            if (chatUser != null)
             {
-                RemoveChatUser(chatExt);
+                RemoveChatUser(chatUser);
             }
         }
 
@@ -400,11 +400,11 @@ namespace MasterServerToolkit.MasterServer
         {
             peer.OnPeerDisconnectedEvent -= OnClientDisconnected;
 
-            var chatExt = peer.GetExtension<ChatUserPeerExtension>();
+            var chatUser = peer.GetExtension<ChatUserPeerExtension>();
 
-            if (chatExt != null)
+            if (chatUser != null)
             {
-                RemoveChatUser(chatExt);
+                RemoveChatUser(chatUser);
             }
         }
 
@@ -414,8 +414,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnPickUsernameRequestHandler(IIncomingMessage message)
         {
-            string responseMsg = string.Empty;
-
+            string responseMsg;
             if (!allowUsernamePicking)
             {
                 responseMsg = "Username picking is disabled";
@@ -480,9 +479,9 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnJoinChannelRequestHandler(IIncomingMessage message)
         {
-            string responseMsg = string.Empty;
-
             var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
+
+            string responseMsg;
 
             if (chatUser == null)
             {
@@ -529,9 +528,9 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnLeaveChannelRequestHandler(IIncomingMessage message)
         {
-            string responseMsg = string.Empty;
-
             var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
+
+            string responseMsg;
 
             if (chatUser == null)
             {
@@ -567,9 +566,9 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnSetDefaultChannelRequestHandler(IIncomingMessage message)
         {
-            string responseMsg = string.Empty;
-
             var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
+
+            string responseMsg;
 
             if (chatUser == null)
             {
@@ -643,9 +642,9 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnChatMessageHandler(IIncomingMessage message)
         {
-            string responseMsg = string.Empty;
-
             var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
+
+            string responseMsg;
 
             if (chatUser == null)
             {
@@ -673,13 +672,11 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnGetCurrentChannelsRequestHandler(IIncomingMessage message)
         {
-            string responseMsg = string.Empty;
-
             var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
 
             if (chatUser == null)
             {
-                responseMsg = "Chat cannot identify you";
+                string responseMsg = "Chat cannot identify you";
 
                 logger.Error(responseMsg);
 

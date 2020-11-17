@@ -7,7 +7,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Username
         /// </summary>
-        public string Username { get; private set; }
+        public string UserId { get; private set; }
 
         /// <summary>
         /// Profile data
@@ -21,7 +21,7 @@ namespace MasterServerToolkit.MasterServer
 
         public ProfilePeerExtension(ObservableServerProfile profile, IPeer peer)
         {
-            Username = profile.Username;
+            UserId = profile.UserId;
             Profile = profile;
             Peer = peer;
         }

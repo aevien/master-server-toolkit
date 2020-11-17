@@ -1,6 +1,4 @@
 ﻿using MasterServerToolkit.Networking;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -8,12 +6,14 @@ namespace MasterServerToolkit.MasterServer
     {
         public int PeerId { get; set; }
         public string Username { get; set; }
+        public string UserId { get; set; }
         public MstProperties Properties { get; set; }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
             writer.Write(PeerId);
             writer.Write(Username);
+            writer.Write(UserId);
             writer.Write(Properties.ToDictionary());
         }
 
@@ -21,12 +21,13 @@ namespace MasterServerToolkit.MasterServer
         {
             PeerId = reader.ReadInt32();
             Username = reader.ReadString();
+            UserId = reader.ReadString();
             Properties = new MstProperties(reader.ReadDictionary());
         }
 
         public override string ToString()
         {
-            return string.Format($"[Peer account info: Peer ID: {PeerId}, Username: {Username}, Properties: {Properties}]");
+            return string.Format($"[Peer account info: Peer ID: {PeerId}, UserId: {UserId}, Username: {Username}, Properties: {Properties}]");
         }
     }
 }

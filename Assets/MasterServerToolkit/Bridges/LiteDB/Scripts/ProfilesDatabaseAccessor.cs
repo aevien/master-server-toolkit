@@ -17,7 +17,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             this.database = database;
 
             profiles = this.database.GetCollection<ProfileInfoData>("profiles");
-            profiles.EnsureIndex(a => a.Username, true);
+            profiles.EnsureIndex(a => a.UserId, true);
         }
 
         /// <summary>
@@ -59,17 +59,17 @@ namespace MasterServerToolkit.Bridges.LiteDB
         /// <returns></returns>
         private async Task<ProfileInfoData> FindOrCreateData(ObservableServerProfile profile)
         {
-            string username = profile.Username;
+            string userId = profile.UserId;
 
             var data = await Task.Run(() => {
-                return profiles.FindOne(a => a.Username == username);
+                return profiles.FindOne(a => a.UserId == userId);
             });
 
             if (data == null)
             {
                 data = new ProfileInfoData()
                 {
-                    Username = profile.Username,
+                    UserId = profile.UserId,
                     Data = profile.ToBytes()
                 };
 

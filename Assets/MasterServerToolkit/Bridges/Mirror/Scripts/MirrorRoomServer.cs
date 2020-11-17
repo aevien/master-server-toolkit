@@ -518,9 +518,9 @@ namespace MasterServerToolkit.Bridges.Mirror
                     }
 
                     // Create new room player
-                    var player = new MirrorRoomPlayer(usernameAndPeerId.PeerId, conn, accountInfo.Username, accountInfo.Properties)
+                    var player = new MirrorRoomPlayer(usernameAndPeerId.PeerId, conn, accountInfo.UserId, accountInfo.Username, accountInfo.Properties)
                     {
-                        Profile = ProfileFactory(accountInfo.Username)
+                        Profile = ProfileFactory(accountInfo.UserId)
                     };
 
                     // Add this player to filtered lists
@@ -550,11 +550,11 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// <summary>
         /// This will create room server player profile with all its properties
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userId"></param>
         /// <returns></returns>
-        protected virtual ObservableServerProfile ProfileFactory(string username)
+        protected virtual ObservableServerProfile ProfileFactory(string userId)
         {
-            return new ObservableServerProfile(username);
+            return new ObservableServerProfile(userId);
         }
 
         /// <summary>

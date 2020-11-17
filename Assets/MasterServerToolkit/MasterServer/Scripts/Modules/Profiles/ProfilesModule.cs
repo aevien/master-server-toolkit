@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public delegate ObservableServerProfile ProfileFactory(string username, IPeer clientPeer);
+    public delegate ObservableServerProfile ProfileFactory(string userId, IPeer clientPeer);
 
     /// <summary>
     /// Handles player profiles within master server.
@@ -139,32 +139,12 @@ namespace MasterServerToolkit.MasterServer
             if (authModule != null)
             {
                 authModule.OnUserLoggedInEvent += AuthModule_OnUserLoggedInEvent;
-                authModule.OnUsernameChangedEvent += AuthModule_OnUsernameChangedEvent;
             }
 
             // Games dependency setup
             server.RegisterMessageHandler((short)MstMessageCodes.ServerProfileRequest, GameServerProfileRequestHandler);
             server.RegisterMessageHandler((short)MstMessageCodes.UpdateServerProfile, ProfileUpdateHandler);
             server.RegisterMessageHandler((short)MstMessageCodes.ClientProfileRequest, ClientProfileRequestHandler);
-        }
-
-        /// <summary>
-        /// Triggered when the user has successfully changed their username
-        /// </summary>
-        /// <param name="oldUsername"></param>
-        /// <param name="newUsername"></param>
-        protected virtual async void AuthModule_OnUsernameChangedEvent(string oldUsername, string newUsername)
-        {
-            profilesList.TryGetValue(oldUsername, out ObservableServerProfile profile);
-
-            if(profile == null)
-            {
-                return;
-            }
-
-            profilesList.Add(newUsername, profile);
-
-            await Task.Delay(0);
         }
 
         /// <summary>
@@ -179,17 +159,17 @@ namespace MasterServerToolkit.MasterServer
             // Create a profile
             ObservableServerProfile profile;
 
-            if (profilesList.ContainsKey(user.Username))
+            if (profilesList.ContainsKey(user.UserId))
             {
                 // There's a profile from before, which we can use
-                profile = profilesList[user.Username];
+                profile = profilesList[user.UserId];
                 profile.ClientPeer = user.Peer;
             }
             else
             {
                 // We need to create a new one
-                profile = CreateProfile(user.Username, user.Peer);
-                profilesList.Add(user.Username, profile);
+                profile = CreateProfile(user.UserId, user.Peer);
+                profilesList.Add(user.UserId, profile);
             }
 
             // Restore profile data from database
@@ -206,17 +186,17 @@ namespace MasterServerToolkit.MasterServer
         /// Creates an observable profile for a client.
         /// Override this, if you want to customize the profile creation
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userId"></param>
         /// <param name="clientPeer"></param>
         /// <returns></returns>
-        protected virtual ObservableServerProfile CreateProfile(string username, IPeer clientPeer)
+        protected virtual ObservableServerProfile CreateProfile(string userId, IPeer clientPeer)
         {
             if (ProfileFactory != null)
             {
-                return ProfileFactory(username, clientPeer);
+                return ProfileFactory(userId, clientPeer);
             }
 
-            return new ObservableServerProfile(username, clientPeer);
+            return new ObservableServerProfile(userId, clientPeer);
         }
 
         /// <summary>
@@ -229,18 +209,18 @@ namespace MasterServerToolkit.MasterServer
 
             if(!user.Account.IsGuest || (user.Account.IsGuest && authModule.SaveGuestInfo))
             {
-                if (!profilesToBeSaved.Contains(profile.Username) && profile.ShouldBeSavedToDatabase)
+                if (!profilesToBeSaved.Contains(profile.UserId) && profile.ShouldBeSavedToDatabase)
                 {
                     // If profile is not already waiting to be saved
-                    profilesToBeSaved.Add(profile.Username);
+                    profilesToBeSaved.Add(profile.UserId);
                     _ = SaveProfile(profile, saveProfileInterval);
                 }
             }
 
-            if (!profilesToBeSentToClients.Contains(profile.Username))
+            if (!profilesToBeSentToClients.Contains(profile.UserId))
             {
                 // If it's a master server
-                profilesToBeSentToClients.Add(profile.Username);
+                profilesToBeSentToClients.Add(profile.UserId);
                 _ = SendUpdatesToClient(profile, clientUpdateInterval);
             }
         }
@@ -261,7 +241,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Unload profile
-            _ = UnloadProfile(profileExtension.Username, unloadProfileAfter);
+            _ = UnloadProfile(profileExtension.UserId, unloadProfileAfter);
         }
 
         /// <summary>
@@ -276,7 +256,7 @@ namespace MasterServerToolkit.MasterServer
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f * 1000 : delay * 1000));
 
             // Remove value from debounced updates
-            profilesToBeSaved.Remove(profile.Username);
+            profilesToBeSaved.Remove(profile.UserId);
 
             await profileDatabaseAccessor.UpdateProfileAsync(profile);
         }
@@ -298,7 +278,7 @@ namespace MasterServerToolkit.MasterServer
                 profile.ClearUpdates();
 
                 // Remove value from debounced updates
-                profilesToBeSentToClients.Remove(profile.Username);
+                profilesToBeSentToClients.Remove(profile.UserId);
 
                 return;
             }
@@ -313,27 +293,27 @@ namespace MasterServerToolkit.MasterServer
             profile.ClientPeer.SendMessage(MessageHelper.Create((short)MstMessageCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
 
             // Remove value from debounced updates
-            profilesToBeSentToClients.Remove(profile.Username);
+            profilesToBeSentToClients.Remove(profile.UserId);
         }
 
         /// <summary>
         /// Unloads profile after a period of time
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userId"></param>
         /// <param name="delay"></param>
         /// <returns></returns>
-        private async Task UnloadProfile(string username, float delay)
+        private async Task UnloadProfile(string userId, float delay)
         {
             // Wait for the delay
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f * 1000 : delay * 1000));
 
             // If user is logged in, do nothing
-            if (authModule.IsUserLoggedIn(username))
+            if (authModule.IsUserLoggedInById(userId))
             {
                 return;
             }
 
-            profilesList.TryGetValue(username, out ObservableServerProfile profile);
+            profilesList.TryGetValue(userId, out ObservableServerProfile profile);
 
             if (profile == null)
             {
@@ -341,7 +321,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Remove profile
-            profilesList.Remove(username);
+            profilesList.Remove(userId);
 
             // Remove listeners
             profile.OnModifiedInServerEvent -= OnProfileChangedEventHandler;
@@ -386,8 +366,8 @@ namespace MasterServerToolkit.MasterServer
 
                     for (var i = 0; i < count; i++)
                     {
-                        // Read username
-                        var username = reader.ReadString();
+                        // Read userId
+                        var userId = reader.ReadString();
 
                         // Read updates length
                         var updatesLength = reader.ReadInt32();
@@ -397,7 +377,7 @@ namespace MasterServerToolkit.MasterServer
 
                         try
                         {
-                            if (profilesList.TryGetValue(username, out ObservableServerProfile profile))
+                            if (profilesList.TryGetValue(userId, out ObservableServerProfile profile))
                             {
                                 profile.ApplyUpdates(updates);
                             }
@@ -452,10 +432,9 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var username = message.AsString();
+            var userId = message.AsString();
 
-            ObservableServerProfile profile;
-            profilesList.TryGetValue(username, out profile);
+            profilesList.TryGetValue(userId, out ObservableServerProfile profile);
 
             if (profile == null)
             {
@@ -469,15 +448,13 @@ namespace MasterServerToolkit.MasterServer
         #endregion
 
         /// <summary>
-        /// Gets user profile by username
+        /// Gets user profile by userId
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userId"></param>
         /// <returns></returns>
-        public ObservableServerProfile GetProfileByUsername(string username)
+        public ObservableServerProfile GetProfileByUserId(string userId)
         {
-            ObservableServerProfile profile;
-            profilesList.TryGetValue(username, out profile);
-
+            profilesList.TryGetValue(userId, out ObservableServerProfile profile);
             return profile;
         }
     }

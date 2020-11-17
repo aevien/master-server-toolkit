@@ -42,12 +42,12 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
         /// <summary>
         /// This method is just for creation of profile on server side as default for users that are logged in for the first time
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userId"></param>
         /// <param name="clientPeer"></param>
         /// <returns></returns>
-        private ObservableServerProfile CreateProfileInServer(string username, IPeer clientPeer)
+        private ObservableServerProfile CreateProfileInServer(string userId, IPeer clientPeer)
         {
-            return new ObservableServerProfile(username, clientPeer)
+            return new ObservableServerProfile(userId, clientPeer)
             {
                 new ObservableString((short)ObservablePropertiyCodes.DisplayName, SimpleNameGenerator.Generate(Gender.Male)),
                 new ObservableString((short)ObservablePropertiyCodes.Avatar, avatarUrl),

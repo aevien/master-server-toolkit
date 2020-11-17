@@ -5,7 +5,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class ChatChannel
     {
-        private Dictionary<string, ChatUserPeerExtension> _users;
+        private Dictionary<string, ChatUserPeerExtension> channelUsers;
 
         /// <summary>
         /// Name of the channel
@@ -15,12 +15,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Users connected to chis channel
         /// </summary>
-        public IEnumerable<ChatUserPeerExtension> Users { get { return _users.Values; } }
+        public IEnumerable<ChatUserPeerExtension> Users => channelUsers.Values;
 
         public ChatChannel(string name)
         {
             Name = name;
-            _users = new Dictionary<string, ChatUserPeerExtension>();
+            channelUsers = new Dictionary<string, ChatUserPeerExtension>();
         }
 
         /// <summary>
@@ -39,23 +39,24 @@ namespace MasterServerToolkit.MasterServer
             user.Peer.OnPeerDisconnectedEvent += OnUserDisconnect;
 
             // Add user
-            _users.Add(user.Username, user);
+            channelUsers.Add(user.UserId, user);
 
             // Add channel to users collection
             user.CurrentChannels.Add(this);
 
-            OnJoined(user);
+            NotifyOnJoined(user);
+
             return true;
         }
 
-        protected virtual void OnJoined(ChatUserPeerExtension newUser)
+        protected virtual void NotifyOnJoined(ChatUserPeerExtension newUser)
         {
-            var data = new List<string>() { Name, newUser.Username };
+            var data = new List<string>() { Name, newUser.UserId, newUser.Username };
             var msg = Mst.Create.Message((short)MstMessageCodes.UserJoinedChannel, data.ToBytes());
 
-            foreach (var user in _users.Values)
+            foreach (var user in channelUsers.Values)
             {
-                if (user != newUser)
+                if (user.UserId != newUser.UserId)
                 {
                     user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
                 }
@@ -64,12 +65,12 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnLeft(ChatUserPeerExtension removedUser)
         {
-            var data = new List<string>() { Name, removedUser.Username };
+            var data = new List<string>() { Name, removedUser.UserId, removedUser.Username };
             var msg = Mst.Create.Message((short)MstMessageCodes.UserLeftChannel, data.ToBytes());
 
-            foreach (var user in _users.Values)
+            foreach (var user in channelUsers.Values)
             {
-                if (user != removedUser)
+                if (user.UserId != removedUser.UserId)
                 {
                     user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
                 }
@@ -79,7 +80,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool IsUserAllowed(ChatUserPeerExtension user)
         {
             // Can't join if already here
-            return !_users.ContainsKey(user.Username);
+            return !channelUsers.ContainsKey(user.UserId);
         }
 
         /// <summary>
@@ -107,7 +108,7 @@ namespace MasterServerToolkit.MasterServer
             user.CurrentChannels.Remove(this);
 
             // Remove user
-            _users.Remove(user.Username);
+            channelUsers.Remove(user.UserId);
 
             if (user.DefaultChannel == this)
             {
@@ -127,7 +128,7 @@ namespace MasterServerToolkit.MasterServer
 
             var msg = Mst.Create.Message((short)MstMessageCodes.ChatMessage, packet);
 
-            foreach (var user in _users.Values)
+            foreach (var user in channelUsers.Values)
             {
                 user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
             }

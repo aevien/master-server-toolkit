@@ -32,7 +32,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicConnection
 
             if (summary.result == BuildResult.Succeeded)
             {
-                File.WriteAllText(Path.Combine(buildFolder, "Start Server.bat"), "start MasterServer.exe -msfStartMaster true");
+                File.WriteAllText(Path.Combine(buildFolder, "Start Server.bat"), $"start MasterServer.exe {Mst.Args.Names.StartMaster} true");
 
                 Debug.Log("Server build succeeded: " + (summary.totalSize / 1024) + " kb");
             }

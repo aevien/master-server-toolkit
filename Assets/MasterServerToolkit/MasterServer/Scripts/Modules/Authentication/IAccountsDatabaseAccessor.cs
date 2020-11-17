@@ -30,6 +30,12 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         Task<IAccountInfoData> GetAccountByEmailAsync(string email);
         /// <summary>
+        /// Gets user account from database by phone number
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
+        Task<IAccountInfoData> GetAccountByPhoneNumberAsync(string phoneNumber);
+        /// <summary>
         /// Gets user account from database by token
         /// </summary>
         /// <param name="token"></param>
@@ -72,6 +78,18 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="email"></param>
         /// <returns></returns>
         Task<string> GetEmailConfirmationCodeAsync(string email);
+        /// <summary>
+        /// Get phone number confirmation code for user
+        /// </summary>
+        /// <param name="phoneNumber"></param>
+        /// <returns></returns>
+        Task<string> GetPhoneNumberConfirmationCodeAsync(string phoneNumber);
+        /// <summary>
+        /// Check phone number confirmation code for user
+        /// </summary>
+        /// <param name="phoneNumber"></param>
+        /// <returns></returns>
+        Task<bool> CheckPhoneNumberConfirmationCodeAsync(string confirmationCode);
         /// <summary>
         /// Update all account information in database
         /// </summary>

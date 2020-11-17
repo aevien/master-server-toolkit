@@ -11,9 +11,9 @@ namespace MasterServerToolkit.MasterServer
     public class ObservableServerProfile : ObservableProfile
     {
         /// <summary>
-        /// Username of the client, who's profile this is
+        /// User id of the client, who's profile this is
         /// </summary>
-        public string Username { get; private set; }
+        public string UserId { get; private set; }
 
         /// <summary>
         /// Peer of the owner
@@ -39,9 +39,9 @@ namespace MasterServerToolkit.MasterServer
         /// Creates new instance of obsrvable profile
         /// </summary>
         /// <param name="username"></param>
-        public ObservableServerProfile(string username)
+        public ObservableServerProfile(string userId)
         {
-            Username = username;
+            UserId = userId;
         }
 
         /// <summary>
@@ -49,9 +49,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="username"></param>
         /// <param name="peer"></param>
-        public ObservableServerProfile(string username, IPeer peer)
+        public ObservableServerProfile(string userId, IPeer peer)
         {
-            Username = username;
+            UserId = userId;
             ClientPeer = peer;
         }
 

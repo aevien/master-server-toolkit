@@ -56,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ServerProfileRequest, profile.Username, (status, response) =>
+            connection.SendMessage((short)MstMessageCodes.ServerProfileRequest, profile.UserId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -71,7 +71,7 @@ namespace MasterServerToolkit.MasterServer
                 profile.ClearUpdates();
 
                 // Add profile to list
-                profilesList[profile.Username] = profile;
+                profilesList[profile.UserId] = profile;
 
                 // Register listener for modified 
                 profile.OnModifiedInServerEvent += serverProfile =>
@@ -102,7 +102,7 @@ namespace MasterServerToolkit.MasterServer
         private void OnProfileDisposed(ObservableServerProfile profile)
         {
             profile.OnDisposedEvent -= OnProfileDisposed;
-            profilesList.Remove(profile.Username);
+            profilesList.Remove(profile.UserId);
         }
 
         private IEnumerator KeepSendingUpdates(IClientSocket connection)
@@ -125,8 +125,8 @@ namespace MasterServerToolkit.MasterServer
 
                         foreach (var profile in modifiedProfilesList)
                         {
-                            // Write username
-                            writer.Write(profile.Username);
+                            // Write userId
+                            writer.Write(profile.UserId);
 
                             var updates = profile.GetUpdates();
 

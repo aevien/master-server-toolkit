@@ -40,9 +40,9 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
                 arguments.Append("@echo off\n");
                 arguments.Append("start \"Basic Spawner Mirror - Master and Spawner\" ");
                 arguments.Append("MasterAndSpawner.exe ");
-                arguments.Append($"{Mst.Args.Names.StartMaster} ");
-                arguments.Append($"{Mst.Args.Names.StartSpawner} ");
-                arguments.Append($"{Mst.Args.Names.StartClientConnection} ");
+                arguments.Append($"{Mst.Args.Names.StartMaster} true");
+                arguments.Append($"{Mst.Args.Names.StartSpawner} true");
+                arguments.Append($"{Mst.Args.Names.StartClientConnection} true");
                 arguments.Append($"{Mst.Args.Names.MasterIp} {Mst.Args.MasterIp} ");
                 arguments.Append($"{Mst.Args.Names.MasterPort} {Mst.Args.MasterPort} ");
                 arguments.Append($"{Mst.Args.Names.RoomExecutablePath} {roomExePath} ");
@@ -94,7 +94,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
                 arguments.Append("@echo off\n");
                 arguments.Append("start \"Basic Spawner Mirror - Room\" ");
                 arguments.Append("Room.exe ");
-                arguments.Append($"{Mst.Args.Names.StartClientConnection} ");
+                arguments.Append($"{Mst.Args.Names.StartClientConnection} true");
                 arguments.Append($"{Mst.Args.Names.MasterIp} 127.0.0.1 ");
                 arguments.Append($"{Mst.Args.Names.MasterPort} 5000 ");
                 arguments.Append($"{Mst.Args.Names.RoomIp} 127.0.0.1 ");

@@ -9,6 +9,8 @@ namespace MasterServerToolkit.MasterServer
 
         public ChatChannel DefaultChannel { get; set; }
 
+        public string UserId { get; private set; }
+
         public string Username { get; private set; }
 
         public IPeer Peer { get; private set; }

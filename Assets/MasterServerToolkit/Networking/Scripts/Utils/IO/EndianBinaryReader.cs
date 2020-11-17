@@ -551,6 +551,22 @@ namespace MasterServerToolkit.Networking
             return Encoding.GetString(data, 0, data.Length);
         }
 
+        /// <summary>
+        /// Reads DateTime from stream
+        /// </summary>
+        /// <returns></returns>
+        public DateTime ReadDateTime()
+        {
+            string dtString = ReadString();
+
+            if(DateTime.TryParse(dtString, out DateTime dt))
+            {
+                return dt;
+            }
+
+            return default;
+        }
+
         #endregion
 
         #region Private methods

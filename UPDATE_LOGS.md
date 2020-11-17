@@ -1,5 +1,13 @@
 ## Updates Log
 
+### Msf 4.2.3
+
+[changelog here](https://aevien.itch.io/mst/devlog/196684/mst-v423-released)
+
+### Msf 4.2.2
+
+[changelog here](https://aevien.itch.io/mst/devlog/194831/mst-v422-released)
+
 ### Msf 4.2.1
 
 [changelog here](https://aevien.itch.io/mst/devlog/193253/mst-v421-released)
@@ -10,13 +18,7 @@
 
 ### Msf 4.0.1
 
-​In this update I've fixed bugs and made some changes in next classes:
-
-- ProfilesModule -  ​fixed a bug that increased network traffic consumption by 2-3 times.​
-- ProfilesModule -  ​made changes and added new variables.​
-- ObservableServerProfile - fixed some bugs.
-- ObservableProfile - made some changes and deleted unnecessary members.
-- Character controller - fixed bugs. ​​
+[changelog here](https://aevien.itch.io/mst/devlog/175836/mst-v401-released)
 
 ### Msf 4.0
 

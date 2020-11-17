@@ -145,15 +145,15 @@ namespace MasterServerToolkit.MasterServer
                 {
                     Mst.Helper.GetPublicIp((ipInfo, error) =>
                     {
-                        if (ipInfo == null)
+                        if (string.IsNullOrEmpty(ipInfo))
                         {
                             logger.Error(error);
                             logger.Error($"Our public IP is not defined. Let's use IP default IP address {machineIp}");
                         }
                         else
                         {
-                            logger.Info($"Our public IP is {ipInfo.Ip}");
-                            machineIp = ipInfo.Ip;
+                            logger.Info($"Our public IP is {ipInfo}");
+                            machineIp = ipInfo;
                             StartSpawner();
                         }
                     });

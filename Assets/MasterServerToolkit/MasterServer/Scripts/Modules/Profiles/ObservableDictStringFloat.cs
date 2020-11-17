@@ -1,6 +1,8 @@
-﻿using MasterServerToolkit.Networking;
-using Newtonsoft.Json;
+﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.Networking;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -11,12 +13,18 @@ namespace MasterServerToolkit.MasterServer
 
         public override string Serialize()
         {
-            return JsonConvert.SerializeObject(_value);
+            IEnumerable<string> propertyStringArray = _value.Select(i => i.Key + ":" + i.Value.ToString());
+            return propertyStringArray != null ? string.Join(",", propertyStringArray) : "0";
         }
 
         public override void Deserialize(string value)
         {
-            _value = JsonConvert.DeserializeObject<Dictionary<string, float>>(value);
+            string[] kvpArray = value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            _value = kvpArray.Select(i =>
+            {
+                return i.Split(':');
+            }).ToDictionary(k => k[0], v => Convert.ToSingle(v[1]));
         }
 
         protected override void WriteValue(float value, EndianBinaryWriter writer)

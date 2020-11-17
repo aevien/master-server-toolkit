@@ -221,5 +221,20 @@ namespace MasterServerToolkit.Bridges.LiteDB
                 return accountsCollection.Update(account as AccountInfoLiteDb);
             });
         }
+
+        public Task<string> GetPhoneNumberConfirmationCodeAsync(string phoneNumber)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> CheckPhoneNumberConfirmationCodeAsync(string confirmationCode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IAccountInfoData> GetAccountByPhoneNumberAsync(string phoneNumber)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

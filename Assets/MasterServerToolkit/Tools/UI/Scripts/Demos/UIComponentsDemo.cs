@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -11,25 +9,25 @@ namespace Aevien.UI
     {
         public UIAutofillInputField autofillInputField;
 
-        private void Start()
-        {
-            StartCoroutine(SetAutofillInputField());
-        }
+        //private void Start()
+        //{
+        //    StartCoroutine(SetAutofillInputField());
+        //}
 
-        private IEnumerator SetAutofillInputField()
-        {
-            UnityWebRequest www = UnityWebRequest.Get("https://jsonplaceholder.typicode.com/todos");
-            yield return www.SendWebRequest();
+        //private IEnumerator SetAutofillInputField()
+        //{
+        //    UnityWebRequest www = UnityWebRequest.Get("https://jsonplaceholder.typicode.com/todos");
+        //    yield return www.SendWebRequest();
 
-            if (www.isNetworkError || www.isHttpError)
-            {
-                Debug.LogError(www.error);
-            }
-            else
-            {
-                var infoArray = JsonConvert.DeserializeObject<JArray>(www.downloadHandler.text);
-                autofillInputField.SetOptions(infoArray.Select(t => new TMPro.TMP_Dropdown.OptionData(t.Value<string>("title"))));
-            }
-        }
+        //    if (www.isNetworkError || www.isHttpError)
+        //    {
+        //        Debug.LogError(www.error);
+        //    }
+        //    else
+        //    {
+        //        var infoArray = JsonConvert.DeserializeObject<JArray>(www.downloadHandler.text);
+        //        autofillInputField.SetOptions(infoArray.Select(t => new TMPro.TMP_Dropdown.OptionData(t.Value<string>("title"))));
+        //    }
+        //}
     }
 }

@@ -21,7 +21,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override string ToString()
         {
-            return MstProperties.FromDictionary(_value).ToReadableString();
+            return Serialize();
         }
 
         /// <summary>

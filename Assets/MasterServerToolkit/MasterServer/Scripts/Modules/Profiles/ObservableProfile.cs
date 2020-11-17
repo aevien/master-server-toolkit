@@ -177,8 +177,8 @@ namespace MasterServerToolkit.MasterServer
         {
             foreach (var pair in dataData)
             {
-                IObservableProperty property;
-                Properties.TryGetValue(pair.Key, out property);
+                Properties.TryGetValue(pair.Key, out IObservableProperty property);
+
                 if (property != null)
                 {
                     property.Deserialize(pair.Value);

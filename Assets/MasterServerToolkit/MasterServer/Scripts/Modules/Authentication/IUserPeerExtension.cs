@@ -8,6 +8,11 @@
     public interface IUserPeerExtension : IPeerExtension
     {
         /// <summary>
+        /// Current peer userid
+        /// </summary>
+        string UserId { get; }
+
+        /// <summary>
         /// Current peer login
         /// </summary>
         string Username { get; }

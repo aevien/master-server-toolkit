@@ -189,7 +189,7 @@ namespace MasterServerToolkit.MasterServer
 
                 Mst.Helper.GetPublicIp((ipInfo, error) =>
                 {
-                    if (ipInfo == null)
+                    if (string.IsNullOrEmpty(ipInfo))
                     {
                         logger.Error(error);
                         logger.Error($"Our public IP is not defined. Let's use IP default IP address {serverIP}");
@@ -198,8 +198,8 @@ namespace MasterServerToolkit.MasterServer
                     }
                     else
                     {
-                        logger.Info($"Our public IP is {ipInfo.Ip}");
-                        SetIpAddress(ipInfo.Ip);
+                        logger.Info($"Our public IP is {ipInfo}");
+                        SetIpAddress(ipInfo);
                         callback?.Invoke();
                     }
                 });

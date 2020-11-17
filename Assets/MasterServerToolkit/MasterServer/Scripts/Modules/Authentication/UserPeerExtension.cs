@@ -9,8 +9,8 @@ namespace MasterServerToolkit.MasterServer
     public class UserPeerExtension : IUserPeerExtension
     {
         public IPeer Peer { get; private set; }
-
-        public string Username { get { return Account.Username; } }
+        public string UserId => Account.Id;
+        public string Username => Account.Username;
 
         public IAccountInfoData Account { get; set; }
 

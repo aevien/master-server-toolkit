@@ -142,6 +142,26 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
+        /// Writes a DateTime value to the stream.
+        /// </summary>
+        /// <param name="value">The value to write</param>
+        public void Write(DateTime value)
+        {
+            string dt;
+
+            if (value != null)
+            {
+                dt = value.ToString();
+            }
+            else
+            {
+                dt = new DateTime().ToString();
+            }
+
+            Write(dt);
+        }
+
+        /// <summary>
         ///     Writes a boolean value to the stream. 1 byte is written.
         /// </summary>
         /// <param name="value">The value to write</param>

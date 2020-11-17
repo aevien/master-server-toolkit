@@ -20,6 +20,7 @@
         public const string USER_NAME = "mst.userName";
         public const string USER_PASSWORD = "mst.userPassword";
         public const string USER_EMAIL = "mst.userEmail";
+        public const string USER_PHONE_NUMBER = "mst.userPhoneNumber";
         public const string USER_IS_GUEST = "mst.userIsGuest";
         public const string USER_AUTH_TOKEN = "token";
         public const string USER_AUTH_TOKEN_EXPIRES = "expires";
