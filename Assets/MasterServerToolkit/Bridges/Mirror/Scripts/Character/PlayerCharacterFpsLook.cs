@@ -2,7 +2,7 @@
 using Mirror;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacterInput))]
@@ -47,8 +47,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         /// </summary>
         public override bool IsReady => lookCamera && inputController;
 
-        [Client]
-        protected void Update()
+        protected override void Update()
         {
             if (isLocalPlayer && IsReady)
             {
@@ -57,21 +56,21 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             }
         }
 
-        protected virtual void OnDrawGizmosSelected()
+        protected virtual void OnDrawGizmos()
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(transform.position + transform.rotation * cameraPoint, 0.20f);
+            Gizmos.DrawSphere(transform.position + transform.rotation * cameraPoint, 0.1f);
         }
 
         public override void OnStartLocalPlayer()
         {
-            SetupPlayerCamera();
+            CreateCameraControls();
         }
 
         /// <summary>
         /// Setup player camera to <see cref="lookCamera"/> field
         /// </summary>
-        protected virtual void SetupPlayerCamera()
+        protected override void CreateCameraControls()
         {
             if (lookCamera == null)
                 lookCamera = Camera.main;
@@ -99,13 +98,13 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             }
         }
 
-        protected virtual void UpdateCameraPosition()
+        protected override void UpdateCameraPosition()
         {
             Vector3 newCameraPosition = transform.position + transform.rotation * cameraPoint;
             lookCamera.transform.position = newCameraPosition;
         }
 
-        protected virtual void UpdateCameraRotation()
+        protected override void UpdateCameraRotation()
         {
             cameraRotation.y += inputController.MouseX() * lookSensitivity.x;
             cameraRotation.x = Mathf.Clamp(cameraRotation.x - inputController.MouseY() * lookSensitivity.y, minLookAngle, maxLookAngle);

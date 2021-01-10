@@ -38,6 +38,26 @@ namespace MasterServerToolkit.Games
         protected static AuthBehaviour _instance;
         protected string outputMessage = string.Empty;
 
+        /// <summary>
+        /// Master server connector
+        /// </summary>
+        public virtual ClientToMasterConnector Connector
+        {
+            get
+            {
+                if (!clientToMasterConnector)
+                    clientToMasterConnector = FindObjectOfType<ClientToMasterConnector>();
+
+                if (!clientToMasterConnector)
+                {
+                    var connectorObject = new GameObject("--CLIENT_TO_MASTER_CONNECTOR");
+                    clientToMasterConnector = connectorObject.AddComponent<ClientToMasterConnector>();
+                }
+
+                return clientToMasterConnector;
+            }
+        }
+
         public static AuthBehaviour Instance
         {
             get
@@ -87,8 +107,6 @@ namespace MasterServerToolkit.Games
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Connecting to master... Please wait!");
 
-            FindOrCreateMasterConnector();
-
             // If we want to use default credentials for signin or signup views
             if (useDefaultCredentials && Mst.Runtime.IsEditor)
             {
@@ -111,7 +129,7 @@ namespace MasterServerToolkit.Games
 
                 if (!Connection.IsConnected && !Connection.IsConnecting)
                 {
-                    clientToMasterConnector.StartConnection();
+                    Connector.StartConnection();
                 }
             });
         }
@@ -201,21 +219,6 @@ namespace MasterServerToolkit.Games
         protected virtual void Auth_OnEmailConfirmedEvent()
         {
             OnEmailConfirmedEvent?.Invoke();
-        }
-
-        /// <summary>
-        /// Let's find or create master server connection
-        /// </summary>
-        protected virtual void FindOrCreateMasterConnector()
-        {
-            if (!clientToMasterConnector)
-                clientToMasterConnector = FindObjectOfType<ClientToMasterConnector>();
-
-            if (!clientToMasterConnector)
-            {
-                var connectorObject = new GameObject("--CLIENT_TO_MASTER_CONNECTOR");
-                clientToMasterConnector = connectorObject.AddComponent<ClientToMasterConnector>();
-            }
         }
 
         /// <summary>

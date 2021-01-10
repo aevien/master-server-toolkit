@@ -10,7 +10,7 @@ namespace MasterServerToolkit.MasterServer
         [Header("Application Settings"), Tooltip("Unique application key. Must be the same both on client and on server."), SerializeField]
         private string applicationKey = "mst";
 
-        [Header("Security Settings"), Tooltip("Whether to not to use secure connection"), SerializeField]
+        [Header("Security Settings"), Tooltip("Whether or not to use secure connection"), SerializeField]
         private bool useSecure = false;
 
         [SerializeField]

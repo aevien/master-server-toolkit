@@ -139,8 +139,8 @@
         public string UseDevMode { get { return "-mstUseDevMode"; } }
 
         /// <summary>
-        /// Use this to set guest user id to signin as guest. User with this id must exist in database. This only works in dev mode
+        /// Instructs the game to try to render at a specified frame rate
         /// </summary>
-        public string GuestId { get { return "-mstGuestId"; } }
+        public string TargetFrameRate { get { return "-mstTargetFrameRate"; } }
     }
 }

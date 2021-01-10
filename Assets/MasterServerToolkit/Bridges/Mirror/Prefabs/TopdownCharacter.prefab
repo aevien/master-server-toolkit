@@ -14,12 +14,10 @@ GameObject:
   - component: {fileID: 3509149489039363913}
   - component: {fileID: 4419978036856062522}
   - component: {fileID: 3678545693570467138}
-  - component: {fileID: 1037248149617175897}
-  - component: {fileID: 1627956425691095850}
   - component: {fileID: 1551455602030449161}
   - component: {fileID: 8311143467505641361}
   m_Layer: 0
-  m_Name: TdCharacter
+  m_Name: TopdownCharacter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -73,6 +71,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  logLevel: 3
 --- !u!114 &3509149489039363913
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -99,25 +98,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  resetCameraAfterDestroy: 1
+  logLevel: 3
   lookCamera: {fileID: 0}
   inputController: {fileID: 3509149489039363913}
   movementController: {fileID: 3678545693570467138}
+  resetCameraAfterDestroy: 1
+  rotationSencitivity: 3
+  collisionDstanceSmoothTime: 5
+  useCollisionDetection: 1
+  lookAtPoint: {x: 0, y: 0, z: 0}
+  followSmoothTime: 3
   minDistance: 5
   maxDistance: 25
   startDistance: 15
   distanceSmoothTime: 5
   distanceScrollPower: 1
-  useOffsetDistance: 1
-  maxOffsetDistance: 5
+  applyOffsetDistance: 1
+  maxOffsetDistance: 8
   pitchAngle: 45
-  minHorizontal: 100
-  minVertical: 100
-  maxHorizontal: 100
-  maxVertical: 100
+  minHorizontalPadding: 100
+  minVerticalPadding: 100
+  maxHorizontalPadding: 100
+  maxVerticalPadding: 100
   usePadding: 1
-  followSmoothTime: 1
-  rotationSencitivity: 3
 --- !u!114 &3678545693570467138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -132,6 +135,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  logLevel: 3
   gravityMultiplier: 1
   stickToGroundPower: 5
   walkSpeed: 3
@@ -143,35 +147,6 @@ MonoBehaviour:
   characterController: {fileID: 5372834753847571948}
   lookController: {fileID: 4419978036856062522}
   rotationSmoothTime: 10
---- !u!114 &1037248149617175897
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551455602030449158}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bea172a7515c66b43a6c950f22f14994, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  remoteParts: []
---- !u!114 &1627956425691095850
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551455602030449158}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce6893053f9fd7a48b92743dc95827ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
 --- !u!114 &1551455602030449161
 MonoBehaviour:
   m_ObjectHideFlags: 0

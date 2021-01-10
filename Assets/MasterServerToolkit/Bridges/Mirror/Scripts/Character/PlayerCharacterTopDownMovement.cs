@@ -1,23 +1,12 @@
 ﻿#if MIRROR
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacterInput), typeof(CharacterController))]
-    public class PlayerCharacterTdMovement : PlayerCharacterMovement
+    public class PlayerCharacterTopDownMovement : PlayerCharacterMovement
     {
-        [Header("Components"), SerializeField]
-        protected PlayerCharacterTdLook lookController;
-
-        [Header("Rotation Settings"), SerializeField, Range(5f, 20f)]
-        private float rotationSmoothTime = 5f;
-
-        /// <summary>
-        /// The direction to which the character is required to look
-        /// </summary>
-        private Quaternion playerTargetDirectionAngle;
-
         protected override void UpdateMovement()
         {
             if (!characterController.enabled) return;
@@ -58,7 +47,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
 
                 // Let's calculate input direction
                 var inputAxisAngle = inputController.MovementAxisDirection().Equals(Vector3.zero) ? Vector3.zero : Quaternion.LookRotation(inputController.MovementAxisDirection()).eulerAngles;
-                
+
                 //
                 var compositeAngle = inputAxisAngle - transform.eulerAngles;
 

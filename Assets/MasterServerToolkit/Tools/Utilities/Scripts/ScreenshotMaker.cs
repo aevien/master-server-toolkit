@@ -10,6 +10,7 @@ namespace Aevien.Utilities
         [Header("Settings")]
         public int resolutionMultiplier = 2;
         public KeyCode screenshoKey = KeyCode.K;
+        public TextureFormat format = TextureFormat.RGB24;
         #endregion
 
         private int resWidth;
@@ -44,12 +45,12 @@ namespace Aevien.Utilities
         private void TakeScreenshot()
         {
             RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
-            Camera.main.GetComponent<Camera>().targetTexture = rt;
-            Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
-            Camera.main.GetComponent<Camera>().Render();
+            Texture2D screenShot = new Texture2D(resWidth, resHeight, format, false);
+            Camera.main.targetTexture = rt;
+            Camera.main.Render();
             RenderTexture.active = rt;
             screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
-            Camera.main.GetComponent<Camera>().targetTexture = null;
+            Camera.main.targetTexture = null;
             RenderTexture.active = null;
             Destroy(rt);
             byte[] bytes = screenShot.EncodeToPNG();

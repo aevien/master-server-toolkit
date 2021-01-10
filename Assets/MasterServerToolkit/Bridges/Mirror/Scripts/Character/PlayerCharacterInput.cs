@@ -1,17 +1,11 @@
 ﻿#if MIRROR
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     [DisallowMultipleComponent]
     public class PlayerCharacterInput : MonoBehaviour
     {
-        public void SetMouseActive(bool value)
-        {
-            Cursor.visible = value;
-            Cursor.lockState = value ? CursorLockMode.Locked : CursorLockMode.None;
-        }
-
         public virtual float Horizontal()
         {
             return Input.GetAxis("Horizontal");
@@ -22,11 +16,6 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             return Input.GetAxis("Vertical");
         }
 
-        public float MouseVerticalScroll()
-        {
-            return Input.mouseScrollDelta.y;
-        }
-
         public virtual float MouseX()
         {
             return Input.GetAxis("Mouse X");
@@ -35,6 +24,11 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         public virtual float MouseY()
         {
             return Input.GetAxis("Mouse Y");
+        }
+
+        public float MouseVerticalScroll()
+        {
+            return Input.mouseScrollDelta.y;
         }
 
         public virtual bool IsRotateCameraMode()

@@ -5,7 +5,7 @@ using Mirror;
 using System;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class MirrorNetworkManager : NetworkManager
     {

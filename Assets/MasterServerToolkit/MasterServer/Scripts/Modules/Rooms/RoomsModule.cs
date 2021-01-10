@@ -120,7 +120,7 @@ namespace MasterServerToolkit.MasterServer
         public virtual RegisteredRoom RegisterRoom(IPeer peer, RoomOptions options)
         {
             var room = new RegisteredRoom(NextRoomId, peer, options);
-            var peerRooms = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
+            Dictionary<int, RegisteredRoom> peerRooms = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
 
             if (peerRooms == null)
             {
@@ -298,21 +298,25 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void ValidateRoomAccessRequestHandler(IIncomingMessage message)
         {
+            // Parse message
             var data = message.Deserialize(new RoomAccessValidatePacket());
 
+            // Trying to find room in list of registered
             if (!roomsList.TryGetValue(data.RoomId, out RegisteredRoom room))
             {
                 message.Respond("Room does not exist", ResponseStatus.Failed);
                 return;
             }
 
+            // if this message is not received from owner of room
             if (message.Peer != room.Peer)
             {
-                // Wrong peer unregistering the room
-                message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
+                // Wrong peer of room registrar
+                message.Respond("You're not the registrar of the room", ResponseStatus.Unauthorized);
                 return;
             }
 
+            // Trying to validate room access token
             if (!room.ValidateAccess(data.Token, out IPeer playerPeer))
             {
                 message.Respond("Failed to confirm the access", ResponseStatus.Unauthorized);

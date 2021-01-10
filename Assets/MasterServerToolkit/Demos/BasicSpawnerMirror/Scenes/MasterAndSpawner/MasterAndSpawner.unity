@@ -502,7 +502,7 @@ MonoBehaviour:
   lookForModules: 1
   lookInChildrenOnly: 1
   permissions: []
-  targetFrameRate: 30
+  targetFrameRate: 40
   logLevel: 0
   usePublicIp: 0
   serverIP: localhost
@@ -646,6 +646,7 @@ MonoBehaviour:
   logLevel: 0
   usernameMinChars: 4
   usernameMaxChars: 12
+  userPasswordMinChars: 8
   useEmailConfirmation: 1
   enableGuestLogin: 1
   guestPrefix: Guest
@@ -654,6 +655,7 @@ MonoBehaviour:
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
+  serviceCodeMinChars: 6
 --- !u!1 &1189862047
 GameObject:
   m_ObjectHideFlags: 0
@@ -750,10 +752,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 148bfe057370f264eaf655c830b76dac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  logLevel: 3
   useAccountDb: 1
-  accountDbName: mini_surv_accounts
+  accountDbName: accounts
   useProfilesDb: 1
-  profilesDbName: mini_surv_profiles
+  profilesDbName: profiles
 --- !u!1 &1509869343
 GameObject:
   m_ObjectHideFlags: 0

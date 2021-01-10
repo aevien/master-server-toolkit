@@ -2,7 +2,7 @@
 using MasterServerToolkit.Networking;
 using Mirror;
 
-namespace MasterServerToolkit.Bridges.Mirror
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class ValidateRoomAccessResultMessage : NetworkMessage
     {

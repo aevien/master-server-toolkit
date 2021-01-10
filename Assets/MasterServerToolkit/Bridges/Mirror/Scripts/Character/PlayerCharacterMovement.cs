@@ -2,7 +2,7 @@
 using Mirror;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacterInput), typeof(CharacterController))]
@@ -31,8 +31,18 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         protected PlayerCharacterInput inputController;
         [SerializeField]
         protected CharacterController characterController;
+        [SerializeField]
+        protected PlayerCharacterLook lookController;
+
+        [Header("Rotation Settings"), SerializeField, Range(5f, 20f)]
+        protected float rotationSmoothTime = 5f;
 
         #endregion
+
+        /// <summary>
+        /// The direction to which the character is required to look
+        /// </summary>
+        protected Quaternion playerTargetDirectionAngle;
 
         /// <summary>
         /// Check if running mode is allowed for character
@@ -50,13 +60,21 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         /// Current calculated movement direction
         /// </summary>
         protected Vector3 calculatedMovementDirection = new Vector3();
+
+        /// <summary>
+        /// Current calculated movement direction
+        /// </summary>
         protected Vector3 calculatedInputDirection = new Vector3();
+
+        /// <summary>
+        /// Next allowed jump time
+        /// </summary>
         protected float nextJumpTime = 0f;
 
         /// <summary>
         /// Check if this behaviour is ready
         /// </summary>
-        public override bool IsReady => inputController && characterController && ClientScene.ready;
+        public override bool IsReady => inputController && characterController && lookController && ClientScene.ready;
 
         /// <summary>
         /// Speed of the character

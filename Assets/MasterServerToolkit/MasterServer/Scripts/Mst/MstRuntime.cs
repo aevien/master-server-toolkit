@@ -14,7 +14,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Check if we are in editor
         /// </summary>
-        public bool IsEditor { get; private set; }
+        public bool IsEditor => Application.isEditor;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         private readonly string webGlQuitMessage = "You are in web browser window. The Quit command is not supported!";
@@ -35,13 +35,6 @@ namespace MasterServerToolkit.MasterServer
 #endif
         }
 
-        public MstRuntime()
-        {
-#if !UNITY_EDITOR
-            IsEditor = false;
-#else
-            IsEditor = true;
-#endif
-        }
+        public MstRuntime() { }
     }
 }

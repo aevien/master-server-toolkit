@@ -32,7 +32,12 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicConnection
 
             if (summary.result == BuildResult.Succeeded)
             {
-                File.WriteAllText(Path.Combine(buildFolder, "Start Server.bat"), $"start MasterServer.exe {Mst.Args.Names.StartMaster} true");
+                MstProperties properties = new MstProperties();
+                properties.Add(Mst.Args.Names.StartMaster, true);
+                properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
+                properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
+
+                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
 
                 Debug.Log("Server build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
@@ -61,6 +66,13 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicConnection
 
             if (summary.result == BuildResult.Succeeded)
             {
+                MstProperties properties = new MstProperties();
+                properties.Add(Mst.Args.Names.StartClientConnection, true);
+                properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
+                properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
+
+                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+
                 Debug.Log("Client build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
 

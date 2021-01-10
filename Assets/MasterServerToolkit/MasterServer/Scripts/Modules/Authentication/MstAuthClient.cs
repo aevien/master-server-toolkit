@@ -59,21 +59,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event Action OnPropertiesChangedEvent;
 
-        /// <summary>
-        /// Invokes when account is successfully linked
-        /// </summary>
-        public event Action OnLinkedEvent;
-
         public MstAuthClient(IClientSocket connection) : base(connection) { }
-
-        /// <summary>
-        /// Save user id
-        /// </summary>
-        private void SaveUserId(string userId)
-        {
-            PlayerPrefs.SetString(MstDictKeys.USER_ID, userId);
-            PlayerPrefs.Save();
-        }
 
         /// <summary>
         /// Save authentication token
@@ -109,54 +95,6 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// Check if we have user id after last login in player prefs
-        /// </summary>
-        /// <returns></returns>
-        public bool HasUserId()
-        {
-            if (PlayerPrefs.HasKey(MstDictKeys.USER_ID))
-            {
-                string key = PlayerPrefs.GetString(MstDictKeys.USER_ID);
-                return !string.IsNullOrEmpty(key);
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Get user Id from player prefs
-        /// </summary>
-        /// <returns></returns>
-        public string UserId()
-        {
-            // Get user Id if it is saved
-            string userId;
-
-            if (Mst.UseDevMode)
-            {
-                userId = Mst.Args.GuestId;
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    Logs.Error("You are trying to use user id from command-line arguments, but it is empty");
-                }
-
-                return Mst.Args.GuestId;
-            }
-
-            if (HasUserId())
-            {
-                userId = PlayerPrefs.GetString(MstDictKeys.USER_ID);
-            }
-            else
-            {
-                userId = string.Empty;
-            }
-
-            return userId;
         }
 
         /// <summary>
@@ -266,13 +204,21 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a request to server, to log in as a guest
         /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
         public void SignInAsGuest(SignInCallback callback, IClientSocket connection)
         {
-            var credentials = new MstProperties();
-            credentials.Add(MstDictKeys.USER_IS_GUEST);
-            credentials.Add(MstDictKeys.USER_ID, UserId());
+            if (HasAuthToken())
+            {
+                SignInWithToken(callback, connection);
+            }
+            else
+            {
+                 var credentials = new MstProperties();
+                credentials.Add(MstDictKeys.USER_IS_GUEST);
 
-            SignIn(credentials, callback, connection);
+                SignIn(credentials, callback, connection);
+            }
         }
 
         /// <summary>
@@ -281,12 +227,22 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         public void SignInWithToken(SignInCallback callback)
         {
+            SignInWithToken(callback, Connection);
+        }
+
+        /// <summary>
+        /// Sends a request to server, to log in with auth token
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void SignInWithToken(SignInCallback callback, IClientSocket connection)
+        {
             if (!HasAuthToken())
             {
                 throw new Exception("You have no auth token!");
             }
 
-            SignInWithToken(PlayerPrefs.GetString(MstDictKeys.USER_AUTH_TOKEN), callback);
+            SignInWithToken(PlayerPrefs.GetString(MstDictKeys.USER_AUTH_TOKEN), callback, connection);
         }
 
         /// <summary>
@@ -432,10 +388,6 @@ namespace MasterServerToolkit.MasterServer
                         IsEmailConfirmed = accountInfoPacket.IsEmailConfirmed,
                         Properties = accountInfoPacket.Properties,
                     };
-
-                    // Save user id if he is guest
-                    if (AccountInfo.IsGuest)
-                        SaveUserId(AccountInfo.Id);
 
                     // If RememberMe is checked on and we are not guset, then save auth token
                     if (RememberMe && !AccountInfo.IsGuest)

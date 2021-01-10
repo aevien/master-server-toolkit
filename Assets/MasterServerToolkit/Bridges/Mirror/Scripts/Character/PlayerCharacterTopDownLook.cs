@@ -4,18 +4,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacterInput))]
-    public class PlayerCharacterTdLook : PlayerCharacterLook
+    public class PlayerCharacterTopDownLook : PlayerCharacterLook
     {
         #region INSPECTOR
 
-        [Header("Components"), SerializeField]
-        private PlayerCharacterMovement movementController = null;
+        [Header("TD Look Settings"), SerializeField]
+        private Vector3 lookAtPoint = Vector3.zero;
+        [SerializeField, Range(1f, 5f)]
+        private float followSmoothTime = 2f;
 
-        [Header("Distance Settings"), SerializeField, Range(5f, 100f)]
+        [Header("TD Distance Settings"), SerializeField, Range(5f, 100f)]
         private float minDistance = 5f;
         [SerializeField, Range(5f, 100f)]
         private float maxDistance = 15f;
@@ -26,47 +28,44 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         [SerializeField, Range(0.01f, 1f)]
         private float distanceScrollPower = 1f;
         [SerializeField]
-        private bool useOffsetDistance = true;
+        private bool applyOffsetDistance = true;
         [SerializeField, Range(1f, 25f)]
         private float maxOffsetDistance = 5f;
-        [SerializeField, Range(35f, 90f)]
+
+        [Header("TD Rotation Settings"), SerializeField, Range(35f, 90f)]
         private float pitchAngle = 65f;
 
-        [Header("Padding Settings"), SerializeField, Range(5f, 100f)]
-        private float minHorizontal = 100f;
-        [SerializeField, Range(5f, 100f)]
-        private float minVertical = 100f;
-        [SerializeField, Range(5f, 100f)]
-        private float maxHorizontal = 100f;
-        [SerializeField, Range(5f, 100f)]
-        private float maxVertical = 100f;
+        [Header("TD Screen Padding Settings"), SerializeField, Range(5f, 300f)]
+        private float minHorizontalPadding = 100f;
+        [SerializeField, Range(5f, 300f)]
+        private float minVerticalPadding = 100f;
+        [SerializeField, Range(5f, 300f)]
+        private float maxHorizontalPadding = 100f;
+        [SerializeField, Range(5f, 300f)]
+        private float maxVerticalPadding = 100f;
         [SerializeField]
         private bool usePadding = false;
-
-        [Header("Movement Settings"), SerializeField, Range(1f, 5f)]
-        private float followSmoothTime = 2f;
-        [SerializeField, Range(1f, 10f)]
-        private float rotationSencitivity = 3f;
 
         #endregion
 
         private GameObject cameraRoot = null;
         private GameObject cameraYPoint = null;
         private GameObject cameraXPoint = null;
-        private GameObject cameraOffsetPoint = null;
 
         private float currentCameraDistance = 0f;
         private float currentCameraYawAngle = 0f;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        protected Vector3 cameraOffsetPosition = Vector3.zero;
+
         public override bool IsReady => base.IsReady
             && cameraRoot
             && cameraYPoint
-            && cameraXPoint
-            && cameraOffsetPoint
-            && movementController
-            && ClientScene.ready;
+            && cameraXPoint;
 
-        private void Update()
+        protected override void Update()
         {
             if (isLocalPlayer && IsReady)
             {
@@ -74,6 +73,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
                 UpdateCameraPosition();
                 UpdateCameraOffset();
                 UpdateCameraRotation();
+                UpdateCameraCollision();
             }
         }
 
@@ -90,7 +90,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         /// <summary>
         /// Create camera control elements
         /// </summary>
-        private void CreateCameraControls()
+        protected override void CreateCameraControls()
         {
             if (lookCamera == null)
                 lookCamera = Camera.main;
@@ -115,7 +115,7 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
                 initialCameraRotation = lookCamera.transform.rotation;
             }
 
-            cameraRoot = new GameObject("-- PLAYER_CAMERA_ROOT");
+            cameraRoot = new GameObject("--PLAYER_CAMERA_ROOT");
 
             cameraYPoint = new GameObject("CamYPoint");
             cameraYPoint.transform.SetParent(cameraRoot.transform);
@@ -131,17 +131,15 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             lookCamera.transform.localPosition = new Vector3(0f, 0f, startDistance * -1f);
             lookCamera.transform.localRotation = Quaternion.identity;
 
-            cameraOffsetPoint = new GameObject("CameraOffsetPoint");
-            cameraOffsetPoint.transform.SetParent(transform);
-            cameraOffsetPoint.transform.localPosition = Vector3.zero;
-
             cameraRoot.transform.SetPositionAndRotation(transform.position, transform.rotation);
+
+            cameraOffsetPosition = transform.position;
         }
 
         /// <summary>
         /// Just calculates the distance. If max distance less than min
         /// </summary>
-        private void RecalculateDistance()
+        protected void RecalculateDistance()
         {
             if (minDistance >= maxDistance)
             {
@@ -152,24 +150,64 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         }
 
         /// <summary>
-        /// Updates camera offset in front of character
+        /// 
         /// </summary>
-        private void UpdateCameraOffset()
+        protected void UpdateCameraCollision()
         {
-            if (inputController.IsMoving() && !IsCharacterOutOfBounds())
+            if (!useCollisionDetection) return;
+
+            Vector3 startPoint = transform.position + lookAtPoint;
+
+            var ray = new Ray(startPoint, lookCamera.transform.forward * maxDistance * -1f);
+            Debug.DrawRay(startPoint, lookCamera.transform.forward * maxDistance * -1f);
+
+            if (Physics.Raycast(ray, out RaycastHit hitInfo, maxDistance))
             {
-                cameraOffsetPoint.transform.localPosition = Vector3.Lerp(cameraOffsetPoint.transform.localPosition, Vector3.forward * maxOffsetDistance, Time.deltaTime * followSmoothTime);
+                cameraCollisionDistance = Vector3.Distance(startPoint, hitInfo.point);
+
+                isCameraCollided = true;
             }
             else
             {
-                cameraOffsetPoint.transform.localPosition = Vector3.Lerp(cameraOffsetPoint.transform.localPosition, Vector3.zero, Time.deltaTime * followSmoothTime);
+                isCameraCollided = false;
+            }
+        }
+
+        /// <summary>
+        /// Updates camera offset in front of character
+        /// </summary>
+        protected void UpdateCameraOffset()
+        {
+            if (applyOffsetDistance && inputController.IsMoving() && !IsCharacterOutOfBounds() && !isCameraCollided)
+            {
+                var newCameraOffsetPosition = transform.forward * maxOffsetDistance + transform.position;
+                cameraOffsetPosition = Vector3.Lerp(cameraOffsetPosition, newCameraOffsetPosition, Time.deltaTime * 3f);
+            }
+            else
+            {
+                cameraOffsetPosition = Vector3.Lerp(cameraOffsetPosition, transform.position, Time.deltaTime * 3f);
+            }
+        }
+
+        /// <summary>
+        /// Updates camera position
+        /// </summary>
+        protected override void UpdateCameraPosition()
+        {
+            if (applyOffsetDistance && !isCameraCollided)
+            {
+                cameraRoot.transform.position = Vector3.Lerp(cameraRoot.transform.position, cameraOffsetPosition + lookAtPoint, Time.deltaTime * followSmoothTime);
+            }
+            else
+            {
+                cameraRoot.transform.position = transform.position + lookAtPoint;
             }
         }
 
         /// <summary>
         /// Updates camera rotation
         /// </summary>
-        private void UpdateCameraRotation()
+        protected override void UpdateCameraRotation()
         {
             // Если нажата кнопка мыши вращения камеры
             if (inputController.IsRotateCameraMode())
@@ -179,31 +217,23 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             }
 
             // Интерполируем угол камеры плавно
-            float t_newAngle = Mathf.LerpAngle(cameraRoot.transform.rotation.eulerAngles.y, currentCameraYawAngle, Time.deltaTime * 4f);
-            cameraRoot.transform.rotation = Quaternion.Euler(0f, t_newAngle, 0f);
+            float newAngle = Mathf.LerpAngle(cameraRoot.transform.rotation.eulerAngles.y, currentCameraYawAngle, Time.deltaTime * 4f);
+            cameraRoot.transform.rotation = Quaternion.Euler(0f, newAngle, 0f);
         }
 
         /// <summary>
         /// Updates distance between camera and character
         /// </summary>
-        private void UpdateCameraDistance()
+        protected override void UpdateCameraDistance()
         {
-            currentCameraDistance = Mathf.Clamp(currentCameraDistance - (inputController.MouseVerticalScroll() * distanceScrollPower), minDistance, maxDistance);
-            lookCamera.transform.localPosition = Vector3.Lerp(lookCamera.transform.localPosition, new Vector3(0f, 0f, currentCameraDistance * -1f), Time.deltaTime * distanceSmoothTime);
-        }
-
-        /// <summary>
-        /// Updates camera position
-        /// </summary>
-        private void UpdateCameraPosition()
-        {
-            if (useOffsetDistance)
+            if (isCameraCollided && cameraCollisionDistance < currentCameraDistance)
             {
-                cameraRoot.transform.position = Vector3.Lerp(cameraRoot.transform.position, cameraOffsetPoint.transform.position, Time.deltaTime * followSmoothTime);
+                lookCamera.transform.localPosition = Vector3.Lerp(lookCamera.transform.localPosition, new Vector3(0f, 0f, (cameraCollisionDistance - 0.5f) * -1f), Time.deltaTime * collisionDstanceSmoothTime);
             }
             else
             {
-                cameraRoot.transform.position = transform.position;
+                currentCameraDistance = Mathf.Clamp(currentCameraDistance - (inputController.MouseVerticalScroll() * distanceScrollPower), minDistance, maxDistance);
+                lookCamera.transform.localPosition = Vector3.Lerp(lookCamera.transform.localPosition, new Vector3(0f, 0f, currentCameraDistance * -1f), Time.deltaTime * distanceSmoothTime);
             }
         }
 
@@ -213,8 +243,8 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         /// <returns></returns>
         private bool IsCharacterOutOfBounds()
         {
-            Vector3 t_screenPos = Camera.main.WorldToScreenPoint(transform.position);
-            if (usePadding) return (t_screenPos.x <= minHorizontal || t_screenPos.y <= minVertical || t_screenPos.x >= Screen.width - maxHorizontal || t_screenPos.y >= Screen.height - maxVertical);
+            Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position);
+            if (usePadding) return (screenPos.x <= minHorizontalPadding || screenPos.y <= minVerticalPadding || screenPos.x >= Screen.width - maxHorizontalPadding || screenPos.y >= Screen.height - maxVerticalPadding);
             else return false;
         }
 
@@ -225,6 +255,22 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         public override Quaternion GetCameraRotation()
         {
             return cameraRoot.transform.rotation;
+        }
+
+        /// <summary>
+        /// Direction to the point at what the character is looking in armed mode
+        /// </summary>
+        /// <returns></returns>
+        public override Vector3 AimDirection()
+        {
+            if (inputController.MouseToWorldHitPoint(out RaycastHit hit))
+            {
+                return hit.point - transform.position;
+            }
+            else
+            {
+                return Vector3.forward;
+            }
         }
     }
 }

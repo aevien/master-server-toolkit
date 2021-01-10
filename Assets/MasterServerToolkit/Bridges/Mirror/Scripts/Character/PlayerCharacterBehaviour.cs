@@ -6,20 +6,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     public class PlayerCharacterBehaviour : NetworkBehaviour
     {
-        /// <summary>
-        /// Logger assigned to this module
-        /// </summary>
-        protected Logging.Logger logger;
+        #region INSPECTOR
 
         /// <summary>
         /// Log levelof this module
         /// </summary>
         [Header("Base Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
+
+        #endregion
+
+        /// <summary>
+        /// Logger assigned to this module
+        /// </summary>
+        protected MasterServerToolkit.Logging.Logger logger;
 
         /// <summary>
         /// Check if this behaviour is ready

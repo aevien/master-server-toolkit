@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class MstBaseClient : IMstBaseClient
+    public abstract class MstBaseClient : IMstBaseClient
     {
         /// <summary>
         /// Client handlers list. Requires for connection changing process. <seealso cref="ChangeConnection(IClientSocket)"/>

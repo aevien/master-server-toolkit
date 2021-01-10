@@ -2,9 +2,9 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 
-namespace MasterServerToolkit.Bridges.Mirror
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class MirrorRoomClientStarter : BaseClientBehaviour
+    public class RoomClientStarter : BaseClientBehaviour
     {
         protected override void OnDestroy()
         {
@@ -25,7 +25,7 @@ namespace MasterServerToolkit.Bridges.Mirror
         {
             MstTimer.WaitForEndOfFrame(() =>
             {
-                MirrorRoomClient.Instance.StartClient();
+                RoomClient.Instance.StartClient();
             });
         }
     }

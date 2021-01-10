@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class MirrorRoomServer : BaseClientBehaviour, ITerminatableRoom
+    public class RoomServer : BaseClientBehaviour, ITerminatableRoom
     {
         #region INSPECTOR
 
@@ -64,24 +64,24 @@ namespace MasterServerToolkit.Bridges.Mirror
         #endregion
 
         /// <summary>
-        /// The instance of the <see cref="MirrorRoomServer"/>
+        /// The instance of the <see cref="RoomServer"/>
         /// </summary>
-        public static MirrorRoomServer Instance { get; protected set; }
+        public static RoomServer Instance { get; protected set; }
 
         /// <summary>
         /// List of players filtered by MSF peer Id
         /// </summary>
-        protected Dictionary<int, MirrorRoomPlayer> roomPlayersByMsfPeerId;
+        protected Dictionary<int, RoomPlayer> roomPlayersByMsfPeerId;
 
         /// <summary>
         /// List of players filtered by Mirror peer Id
         /// </summary>
-        protected Dictionary<int, MirrorRoomPlayer> roomPlayersByMirrorPeerId;
+        protected Dictionary<int, RoomPlayer> roomPlayersByMirrorPeerId;
 
         /// <summary>
         /// List of players filtered by username
         /// </summary>
-        protected Dictionary<string, MirrorRoomPlayer> roomPlayersByUsername;
+        protected Dictionary<string, RoomPlayer> roomPlayersByUsername;
 
         /// <summary>
         /// Options of this room we must share with clients
@@ -106,12 +106,12 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// <summary>
         /// Fires when new playerjoined room
         /// </summary>
-        public event Action<MirrorRoomPlayer> OnPlayerJoinedRoomEvent;
+        public event Action<RoomPlayer> OnPlayerJoinedRoomEvent;
 
         /// <summary>
         /// Fires when existing player left room
         /// </summary>
-        public event Action<MirrorRoomPlayer> OnPlayerLeftRoomEvent;
+        public event Action<RoomPlayer> OnPlayerLeftRoomEvent;
 
         /// <summary>
         /// Call this when you use <see cref="RoomTerminator"/> and want to check termination conditions
@@ -137,9 +137,9 @@ namespace MasterServerToolkit.Bridges.Mirror
             if (Mst.Client.Rooms.ForceClientMode) return;
 
             // Create filtered lists of players
-            roomPlayersByMsfPeerId = new Dictionary<int, MirrorRoomPlayer>();
-            roomPlayersByMirrorPeerId = new Dictionary<int, MirrorRoomPlayer>();
-            roomPlayersByUsername = new Dictionary<string, MirrorRoomPlayer>();
+            roomPlayersByMsfPeerId = new Dictionary<int, RoomPlayer>();
+            roomPlayersByMirrorPeerId = new Dictionary<int, RoomPlayer>();
+            roomPlayersByUsername = new Dictionary<string, RoomPlayer>();
 
             // If master IP is provided via cmd arguments
             masterIp = Mst.Args.AsString(Mst.Args.Names.MasterIp, masterIp);
@@ -251,7 +251,7 @@ namespace MasterServerToolkit.Bridges.Mirror
             MstTimer.WaitForSeconds(0.2f, () =>
             {
                 // Try to find player in filtered list
-                if (roomPlayersByMirrorPeerId.TryGetValue(connection.connectionId, out MirrorRoomPlayer player))
+                if (roomPlayersByMirrorPeerId.TryGetValue(connection.connectionId, out RoomPlayer player))
                 {
                     logger.Debug($"Room server player {player.Username} with room client Id {connection.connectionId} left the room");
 
@@ -518,7 +518,7 @@ namespace MasterServerToolkit.Bridges.Mirror
                     }
 
                     // Create new room player
-                    var player = new MirrorRoomPlayer(usernameAndPeerId.PeerId, conn, accountInfo.UserId, accountInfo.Username, accountInfo.Properties)
+                    var player = new RoomPlayer(usernameAndPeerId.PeerId, conn, accountInfo.UserId, accountInfo.Username, accountInfo.Properties)
                     {
                         Profile = ProfileFactory(accountInfo.UserId)
                     };
@@ -565,7 +565,7 @@ namespace MasterServerToolkit.Bridges.Mirror
         {
             if (roomPlayersByMirrorPeerId.ContainsKey(conn.connectionId))
             {
-                MirrorRoomPlayer player = roomPlayersByMirrorPeerId[conn.connectionId];
+                RoomPlayer player = roomPlayersByMirrorPeerId[conn.connectionId];
 
                 logger.Debug($"Client {conn.connectionId} has become a player of this room. Congratulations to {player.Username}");
 
@@ -586,13 +586,13 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// <param name="port"></param>
         public virtual void SetPort(int port)
         {
-            if (Transport.activeTransport is TelepathyTransport transport)
+            if (Transport.activeTransport is kcp2k.KcpTransport transport)
             {
-                transport.port = (ushort)port;
+                transport.Port = (ushort)port;
             }
             else
             {
-                logger.Error("You are trying to use TelepathyTransport. But it is not found on the scene. Try to override this method to create you own implementation");
+                logger.Error("You are trying to use KcpTransport. But it is not found on the scene. Try to override this method to create you own implementation");
             }
         }
 
@@ -602,13 +602,13 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// <returns></returns>
         public virtual int GetPort()
         {
-            if (Transport.activeTransport is TelepathyTransport transport)
+            if (Transport.activeTransport is kcp2k.KcpTransport transport)
             {
-                return (int)transport.port;
+                return (int)transport.Port;
             }
             else
             {
-                logger.Error("You are trying to use TelepathyTransport. But it is not found on the scene. Try to override this method to create you own implementation");
+                logger.Error("You are trying to use KcpTransport. But it is not found on the scene. Try to override this method to create you own implementation");
                 return 0;
             }
         }
@@ -621,7 +621,7 @@ namespace MasterServerToolkit.Bridges.Mirror
         {
             if (roomPlayersByUsername.ContainsKey(username))
             {
-                MirrorRoomPlayer player = roomPlayersByUsername[username];
+                RoomPlayer player = roomPlayersByUsername[username];
 
                 Mst.Server.Profiles.FillProfileValues(player.Profile, (isSuccess, error) =>
                 {
@@ -645,35 +645,35 @@ namespace MasterServerToolkit.Bridges.Mirror
         }
 
         /// <summary>
-        /// Get <see cref="MirrorRoomPlayer"/> by Mirror peer Id
+        /// Get <see cref="RoomPlayer"/> by Mirror peer Id
         /// </summary>
         /// <param name="connection"></param>
         /// <returns></returns>
-        public MirrorRoomPlayer GetRoomPlayerByMirrorPeer(NetworkConnection connection)
+        public RoomPlayer GetRoomPlayerByMirrorPeer(NetworkConnection connection)
         {
-            roomPlayersByMirrorPeerId.TryGetValue(connection.connectionId, out MirrorRoomPlayer player);
+            roomPlayersByMirrorPeerId.TryGetValue(connection.connectionId, out RoomPlayer player);
             return player;
         }
 
         /// <summary>
-        /// Get <see cref="MirrorRoomPlayer"/> by Msf peer Id
+        /// Get <see cref="RoomPlayer"/> by Msf peer Id
         /// </summary>
         /// <param name="connection"></param>
         /// <returns></returns>
-        public MirrorRoomPlayer GetRoomPlayerByMsfPeer(int connection)
+        public RoomPlayer GetRoomPlayerByMsfPeer(int connection)
         {
-            roomPlayersByMsfPeerId.TryGetValue(connection, out MirrorRoomPlayer player);
+            roomPlayersByMsfPeerId.TryGetValue(connection, out RoomPlayer player);
             return player;
         }
 
         /// <summary>
-        /// Get <see cref="MirrorRoomPlayer"/> by Msf username
+        /// Get <see cref="RoomPlayer"/> by Msf username
         /// </summary>
         /// <param name="connection"></param>
         /// <returns></returns>
-        public MirrorRoomPlayer GetRoomPlayerByUsername(string username)
+        public RoomPlayer GetRoomPlayerByUsername(string username)
         {
-            roomPlayersByUsername.TryGetValue(username, out MirrorRoomPlayer player);
+            roomPlayersByUsername.TryGetValue(username, out RoomPlayer player);
             return player;
         }
 
@@ -681,7 +681,7 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// Check if room satisfies the conditions to be terminated
         /// </summary>
         /// <returns></returns>
-        public bool IsAllowedToBeTerminated()
+        public virtual bool IsAllowedToBeTerminated()
         {
             return roomPlayersByMirrorPeerId.Count <= 0;
         }

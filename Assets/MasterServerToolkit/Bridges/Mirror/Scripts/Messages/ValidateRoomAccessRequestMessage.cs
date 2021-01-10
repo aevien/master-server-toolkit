@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class ValidateRoomAccessRequestMessage : NetworkMessage
     {

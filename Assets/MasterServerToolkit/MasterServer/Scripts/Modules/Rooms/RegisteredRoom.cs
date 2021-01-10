@@ -10,13 +10,6 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class RegisteredRoom
     {
-        private class RoomAccessData
-        {
-            public RoomAccessPacket Access { get; set; }
-            public IPeer Peer { get; set; }
-            public DateTime Timeout { get; set; }
-        }
-
         public delegate void GetAccessCallback(RoomAccessPacket access, string error);
 
         /// <summary>
@@ -50,14 +43,14 @@ namespace MasterServerToolkit.MasterServer
         public IPeer Peer { get; private set; }
 
         /// <summary>
+        /// Connected users list
+        /// </summary>
+        public Dictionary<int, IPeer> Players { get; protected set; }
+
+        /// <summary>
         /// Number of the connected users
         /// </summary>
         public int OnlineCount { get { return accessesInUse.Count; } }
-
-        /// <summary>
-        /// Connected players list
-        /// </summary>
-        public Dictionary<int, IPeer> Players { get; protected set; }
 
         /// <summary>
         /// Fires when player joined room 
@@ -80,10 +73,11 @@ namespace MasterServerToolkit.MasterServer
             Peer = peer;
             Options = options;
 
-            unconfirmedAccesses = new Dictionary<string, RoomAccessData>();
-            Players = new Dictionary<int, IPeer>();
-            accessesInUse = new Dictionary<int, RoomAccessPacket>();
             requestsInProgress = new HashSet<int>();
+            unconfirmedAccesses = new Dictionary<string, RoomAccessData>();
+            accessesInUse = new Dictionary<int, RoomAccessPacket>();
+
+            Players = new Dictionary<int, IPeer>();
         }
 
         /// <summary>
@@ -131,6 +125,7 @@ namespace MasterServerToolkit.MasterServer
             // If player has already received an access and didn't claim it
             // but is requesting again - send him the old one
             var currentAccess = unconfirmedAccesses.Values.FirstOrDefault(v => v.Peer == peer);
+
             if (currentAccess != null)
             {
                 // Restore the timeout
@@ -141,7 +136,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // If there's a player limit
-            if (Options.MaxConnections != 0)
+            if (Options.MaxConnections > 0)
             {
                 var playerSlotsTaken = requestsInProgress.Count + accessesInUse.Count + unconfirmedAccesses.Count;
 
@@ -163,6 +158,7 @@ namespace MasterServerToolkit.MasterServer
             // Try to find out if requester is logged in add the username if available
             // Simetimes we want to check if user is banned
             var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
+
             if (userPeerExtension != null && !string.IsNullOrEmpty(userPeerExtension.Username))
             {
                 provideRoomAccessCheckPacket.Username = userPeerExtension.Username;
@@ -197,7 +193,7 @@ namespace MasterServerToolkit.MasterServer
                 // Save the access info to list and wait for confirmation
                 unconfirmedAccesses[access.Access.Token] = access;
 
-                callback.Invoke(access.Access, null);
+                callback?.Invoke(access.Access, null);
             });
         }
 
@@ -234,12 +230,25 @@ namespace MasterServerToolkit.MasterServer
             peer = data.Peer;
 
             // Invoke the event
-            if (OnPlayerJoinedEvent != null)
-            {
-                OnPlayerJoinedEvent.Invoke(peer);
-            }
+            OnPlayerJoinedEvent?.Invoke(peer);
 
             return true;
+        }
+
+        /// <summary>
+        /// Removes player from room by his peer id
+        /// </summary>
+        /// <param name="peerId"></param>
+        public void RemovePlayer(int peerId)
+        {
+            accessesInUse.Remove(peerId);
+
+            if (!Players.TryGetValue(peerId, out IPeer playerPeer))
+            {
+                return;
+            }
+
+            OnPlayerLeftEvent?.Invoke(playerPeer);
         }
 
         /// <summary>
@@ -253,22 +262,6 @@ namespace MasterServerToolkit.MasterServer
             {
                 unconfirmedAccesses.Remove(access.Access.Token);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="peerId"></param>
-        public void RemovePlayer(int peerId)
-        {
-            accessesInUse.Remove(peerId);
-
-            if (!Players.TryGetValue(peerId, out IPeer playerPeer))
-            {
-                return;
-            }
-
-            OnPlayerLeftEvent?.Invoke(playerPeer);
         }
 
         /// <summary>

@@ -149,9 +149,9 @@ namespace MasterServerToolkit.MasterServer
         public bool UseDevMode { get; private set; }
 
         /// <summary>
-        /// Use this to set guest user id to signin as guest. User with this id must exist in database. This only works in dev mode. 
+        /// Instructs the game to try to render at a specified frame rate
         /// </summary>
-        public string GuestId { get; private set; }
+        public int TargetFrameRate { get; private set; }
 
         public MstArgNames Names { get; set; }
 
@@ -196,7 +196,8 @@ namespace MasterServerToolkit.MasterServer
             CertificatePassword = AsString(Names.CertificatePassword);
 
             UseDevMode = AsBool(Names.UseDevMode, false);
-            GuestId = AsString(Names.GuestId);
+
+            TargetFrameRate = AsInt(Names.TargetFrameRate, 60);
         }
 
         private void ParseArguments()
@@ -225,7 +226,7 @@ namespace MasterServerToolkit.MasterServer
             else
             {
                 string[] lines = File.ReadAllLines(path);
-                char[] spletters = new char[] { '=' };
+                char[] splitters = new char[] { '=' };
                 List<string> newArgs = new List<string>();
                 newArgs.AddRange(_args);
 
@@ -233,7 +234,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     foreach (string line in lines)
                     {
-                        string[] kvp = line.Split(spletters, StringSplitOptions.RemoveEmptyEntries);
+                        string[] kvp = line.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
 
                         if(kvp != null && kvp.Length > 1 && !newArgs.Contains(kvp[0]))
                         {

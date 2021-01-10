@@ -1,26 +1,32 @@
 ﻿#if MIRROR
 using Mirror;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     public class PlayerCharacterLook : PlayerCharacterBehaviour
     {
         #region INSPECTOR
 
-        [Header("Base Look Settings"), SerializeField]
-        protected bool resetCameraAfterDestroy = true;
-
-        [Header("Base Look Components"), SerializeField]
+        [Header("Base Components"), SerializeField]
         protected Camera lookCamera;
         [SerializeField]
         protected PlayerCharacterInput inputController;
+        [SerializeField]
+        protected PlayerCharacterMovement movementController = null;
+
+        [Header("Base Settings"), SerializeField]
+        protected bool resetCameraAfterDestroy = true;
+
+        [Header("Base Rotation Settings"), SerializeField, Range(1f, 10f)]
+        protected float rotationSencitivity = 3f;
+
+        [Header("Base Collision Settings"), SerializeField, Range(1f, 15f)]
+        protected float collisionDstanceSmoothTime = 5f;
+        [SerializeField]
+        protected bool useCollisionDetection = true;
 
         #endregion
-
-        public override bool IsReady => lookCamera && inputController;
 
         [SyncVar]
         protected bool lookIsAllowed = true;
@@ -40,18 +46,29 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
         /// </summary>
         protected Quaternion initialCameraRotation;
 
-        protected virtual void OnDestroy()
-        {
-            if (isLocalPlayer && resetCameraAfterDestroy)
-            {
-                DetachCamera();
-            }
-        }
+        /// <summary>
+        /// Check if camera is collided with something
+        /// </summary>
+        protected bool isCameraCollided = false;
+
+        /// <summary>
+        /// Check if camera is collided with something
+        /// </summary>
+        protected float cameraCollisionDistance = 0f;
+
+        public override bool IsReady => base.IsReady
+            && inputController
+            && movementController
+            && ClientScene.ready;
+
+        protected virtual void Update() { }
+
+        public override void OnStartLocalPlayer() { }
 
         /// <summary>
         /// Clears camera object and set camera back to its original place
         /// </summary>
-        public void DetachCamera()
+        protected void DetachCamera()
         {
             if (isLocalPlayer && lookCamera)
             {
@@ -78,24 +95,22 @@ namespace MasterServerToolkit.Bridges.Mirror.Character
             DetachCamera();
         }
 
+        protected virtual void CreateCameraControls() { }
+        protected virtual void UpdateCameraDistance() { }
+        protected virtual void UpdateCameraPosition() { }
+        protected virtual void UpdateCameraRotation() { }
+
         /// <summary>
         /// Direction to the point at what the character is looking in armed mode
         /// </summary>
         /// <returns></returns>
         public virtual Vector3 AimDirection()
         {
-            if (inputController.MouseToWorldHitPoint(out RaycastHit hit))
-            {
-                return hit.point - (transform.position + new Vector3(0f, 1.4f, 0f));
-            }
-            else
-            {
-                return Vector3.forward;
-            }
+            return lookCamera.transform.forward;
         }
 
         /// <summary>
-        /// Gets camera rotation angle in <see cref="Quaternion"/>
+        /// Gets camera root rotation angle in <see cref="Quaternion"/>
         /// </summary>
         /// <returns></returns>
         public virtual Quaternion GetCameraRotation()

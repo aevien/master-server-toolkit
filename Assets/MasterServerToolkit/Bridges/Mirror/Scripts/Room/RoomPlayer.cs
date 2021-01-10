@@ -2,19 +2,16 @@
 using MasterServerToolkit.MasterServer;
 using Mirror;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.Mirror
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class MirrorRoomPlayer
+    public class RoomPlayer
     {
-        public MirrorRoomPlayer()
+        public RoomPlayer()
         {
         }
 
-        public MirrorRoomPlayer(int msfPeerId, NetworkConnection mirrorPeer, string userId, string username, MstProperties customOptions)
+        public RoomPlayer(int msfPeerId, NetworkConnection mirrorPeer, string userId, string username, MstProperties customOptions)
         {
             MasterPeerId = msfPeerId;
             MirrorPeer = mirrorPeer ?? throw new ArgumentNullException(nameof(mirrorPeer));

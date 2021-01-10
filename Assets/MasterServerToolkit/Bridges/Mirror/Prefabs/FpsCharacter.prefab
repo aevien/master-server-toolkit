@@ -201,7 +201,6 @@ GameObject:
   - component: {fileID: 8543048771385146171}
   - component: {fileID: 6691141937492050761}
   - component: {fileID: 6494012680188734113}
-  - component: {fileID: 7065511509192696153}
   - component: {fileID: 2592435469385825381}
   - component: {fileID: 2251705295044275089}
   m_Layer: 0
@@ -275,6 +274,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  logLevel: 3
 --- !u!114 &6691141937492050761
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -287,8 +287,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f0af24057159dd448537af729435460, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
 --- !u!114 &6494012680188734113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -303,6 +301,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  logLevel: 3
   gravityMultiplier: 3
   stickToGroundPower: 5
   walkSpeed: 5
@@ -312,23 +311,8 @@ MonoBehaviour:
   jumpRate: 1
   inputController: {fileID: 6691141937492050761}
   characterController: {fileID: 2808155204996086252}
---- !u!114 &7065511509192696153
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8786336352432102918}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bea172a7515c66b43a6c950f22f14994, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  remoteParts:
-  - {fileID: 6689525707496942034}
-  - {fileID: 8475736430109875282}
+  lookController: {fileID: 2592435469385825381}
+  rotationSmoothTime: 5
 --- !u!114 &2592435469385825381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,10 +327,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  resetCameraAfterDestroy: 1
+  logLevel: 3
   lookCamera: {fileID: 0}
   inputController: {fileID: 6691141937492050761}
-  cameraPoint: {x: 0, y: 1.75, z: 0.15}
+  movementController: {fileID: 6494012680188734113}
+  resetCameraAfterDestroy: 1
+  rotationSencitivity: 3
+  collisionDstanceSmoothTime: 5
+  useCollisionDetection: 1
+  cameraPoint: {x: 0, y: 1.65, z: 0.15}
   lookSensitivity: {x: 8, y: 8}
   minLookAngle: -60
   maxLookAngle: 60

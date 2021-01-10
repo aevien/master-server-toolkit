@@ -11,9 +11,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace MasterServerToolkit.Bridges.Mirror
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class MirrorRoomClient : BaseClientBehaviour
+    public class RoomClient : BaseClientBehaviour
     {
         #region INSPECTOR
 
@@ -74,9 +74,9 @@ namespace MasterServerToolkit.Bridges.Mirror
         protected RoomAccessPacket roomAccess;
 
         /// <summary>
-        /// The instance of the <see cref="MirrorRoomServer"/>
+        /// The instance of the <see cref="RoomServer"/>
         /// </summary>
-        public static MirrorRoomClient Instance { get; protected set; }
+        public static RoomClient Instance { get; protected set; }
 
         /// <summary>
         /// Mirror network manager
@@ -447,13 +447,13 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// <param name="port"></param>
         public virtual void SetPort(int port)
         {
-            if (Transport.activeTransport is TelepathyTransport transport)
+            if (Transport.activeTransport is kcp2k.KcpTransport transport)
             {
-                transport.port = (ushort)port;
+                transport.Port = (ushort)port;
             }
             else
             {
-                logger.Error("You are trying to use TelepathyTransport. But it is not found on the scene. Try to override this method to create you own implementation");
+                logger.Error("You are trying to use KcpTransport. But it is not found on the scene. Try to override this method to create you own implementation");
             }
         }
 
@@ -463,13 +463,13 @@ namespace MasterServerToolkit.Bridges.Mirror
         /// <returns></returns>
         public virtual int GetPort()
         {
-            if (Transport.activeTransport is TelepathyTransport transport)
+            if (Transport.activeTransport is kcp2k.KcpTransport transport)
             {
-                return (int)transport.port;
+                return (int)transport.Port;
             }
             else
             {
-                logger.Error("You are trying to use TelepathyTransport. But it is not found on the scene. Try to override this method to create you own implementation");
+                logger.Error("You are trying to use KcpTransport. But it is not found on the scene. Try to override this method to create you own implementation");
                 return 0;
             }
         }

@@ -354,10 +354,10 @@ namespace MasterServerToolkit.MasterServer
             Unsubscribe(lobbyUser.Peer);
 
             // Notify player himself that he's removed
-            lobbyUser.Peer.SendMessage((short)MstMessageCodes.LeftLobby, Id);
+            if (lobbyUser.Peer.IsConnected)
+                lobbyUser.Peer.SendMessage((short)MstMessageCodes.LeftLobby, Id);
 
             OnPlayerRemoved(member);
-
             OnPlayerRemovedEvent?.Invoke(member);
         }
 

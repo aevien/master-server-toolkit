@@ -129,7 +129,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (string.IsNullOrEmpty(MstApplicationConfig.Instance.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
 
-            Application.targetFrameRate = targetFrameRate;
+            Application.targetFrameRate = Mst.Args.AsInt(Mst.Args.Names.TargetFrameRate, targetFrameRate);
 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
@@ -266,12 +266,14 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            logger.Info("Starting Server...\n"+
-                $"\tFPS is: {Application.targetFrameRate}\n" +
-                $"\tApp key: {socket.ApplicationKey}\n" +
-                $"\tSecure: {socket.UseSecure}\n" +
-                $"\tCertificate Path: {(!socket.UseSecure ? "Empty" : socket.CertificatePath)}\n" +
-                $"\tCertificate Pass: {(string.IsNullOrEmpty(socket.CertificatePath) || !socket.UseSecure ? "Empty" : "********")}");
+            MstProperties startInfo = new MstProperties();
+            startInfo.Add("\tFPS is", Application.targetFrameRate);
+            startInfo.Add("\tApp key", socket.ApplicationKey);
+            startInfo.Add("\tSecure", socket.UseSecure);
+            startInfo.Add("\tCertificate Path", !socket.UseSecure ? "Undefined" : socket.CertificatePath);
+            startInfo.Add("\tCertificate Pass", string.IsNullOrEmpty(socket.CertificatePath) || !socket.UseSecure ? "Undefined" : "********");
+
+            logger.Info($"Starting Server...\n{startInfo.ToReadableString(";\n", " ")}");
 
             socket.Listen(listenToIp, listenToPort);
             LookForModules();

@@ -36,18 +36,15 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
 
             if (summary.result == BuildResult.Succeeded)
             {
-                StringBuilder arguments = new StringBuilder();
-                arguments.Append("@echo off\n");
-                arguments.Append("start \"Basic Spawner Mirror - Master and Spawner\" ");
-                arguments.Append("MasterAndSpawner.exe ");
-                arguments.Append($"{Mst.Args.Names.StartMaster} true");
-                arguments.Append($"{Mst.Args.Names.StartSpawner} true");
-                arguments.Append($"{Mst.Args.Names.StartClientConnection} true");
-                arguments.Append($"{Mst.Args.Names.MasterIp} {Mst.Args.MasterIp} ");
-                arguments.Append($"{Mst.Args.Names.MasterPort} {Mst.Args.MasterPort} ");
-                arguments.Append($"{Mst.Args.Names.RoomExecutablePath} {roomExePath} ");
+                MstProperties properties = new MstProperties();
+                properties.Add(Mst.Args.Names.StartMaster, true);
+                properties.Add(Mst.Args.Names.StartSpawner, true);
+                properties.Add(Mst.Args.Names.StartClientConnection, true);
+                properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
+                properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
+                properties.Add(Mst.Args.Names.RoomExecutablePath, roomExePath);
 
-                File.WriteAllText(Path.Combine(buildFolder, "Start Master Server and Spawner.bat"), arguments.ToString());
+                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
 
                 Debug.Log("Master Server build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
@@ -90,17 +87,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
 
             if (summary.result == BuildResult.Succeeded)
             {
-                StringBuilder arguments = new StringBuilder();
-                arguments.Append("@echo off\n");
-                arguments.Append("start \"Basic Spawner Mirror - Room\" ");
-                arguments.Append("Room.exe ");
-                arguments.Append($"{Mst.Args.Names.StartClientConnection} true");
-                arguments.Append($"{Mst.Args.Names.MasterIp} 127.0.0.1 ");
-                arguments.Append($"{Mst.Args.Names.MasterPort} 5000 ");
-                arguments.Append($"{Mst.Args.Names.RoomIp} 127.0.0.1 ");
-                arguments.Append($"{Mst.Args.Names.RoomPort} 7777 ");
+                MstProperties properties = new MstProperties();
+                properties.Add(Mst.Args.Names.StartClientConnection, true);
+                properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
+                properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
+                properties.Add(Mst.Args.Names.RoomIp, Mst.Args.RoomIp);
+                properties.Add(Mst.Args.Names.RoomPort, Mst.Args.RoomPort);
 
-                File.WriteAllText(Path.Combine(buildFolder, "Start Room.bat"), arguments.ToString());
+                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
 
                 Debug.Log("Room build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
@@ -133,6 +127,13 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
 
             if (summary.result == BuildResult.Succeeded)
             {
+                MstProperties properties = new MstProperties();
+                properties.Add(Mst.Args.Names.StartClientConnection, true);
+                properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
+                properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
+
+                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+
                 Debug.Log("Client build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
 

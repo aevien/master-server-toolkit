@@ -7,8 +7,10 @@ namespace MasterServerToolkit.Games
     [RequireComponent(typeof(UIView))]
     public class LoadingInfoView : PopupViewComponent
     {
-        public override void OnOwnerStart()
+        public override void OnOwnerAwake()
         {
+            base.OnOwnerAwake();
+
             Mst.Events.AddEventListener(MstEventKeys.showLoadingInfo, OnShowLoadingInfoEventHandler);
             Mst.Events.AddEventListener(MstEventKeys.hideLoadingInfo, OnHideLoadingInfoEventHandler);
         }
