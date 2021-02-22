@@ -4,7 +4,7 @@ using Mirror;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class ValidateRoomAccessResultMessage : NetworkMessage
+    public struct ValidateRoomAccessResultMessage : NetworkMessage
     {
         public string Error { get; set; }
         public ResponseStatus Status { get; set; }

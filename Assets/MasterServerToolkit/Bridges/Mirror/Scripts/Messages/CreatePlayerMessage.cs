@@ -3,7 +3,7 @@ using Mirror;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class CreatePlayerMessage : NetworkMessage
+    public struct CreatePlayerMessage : NetworkMessage
     {
         
     }

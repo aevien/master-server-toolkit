@@ -7,13 +7,8 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class ValidateRoomAccessRequestMessage : NetworkMessage
+    public struct ValidateRoomAccessRequestMessage : NetworkMessage
     {
-        public ValidateRoomAccessRequestMessage()
-        {
-            Token = string.Empty;
-        }
-
         public ValidateRoomAccessRequestMessage(string token)
         {
             Token = token ?? throw new ArgumentNullException(nameof(token));
