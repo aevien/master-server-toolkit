@@ -107,6 +107,17 @@ namespace MasterServerToolkit.Bridges.MongoDB
                 return _accountsCollection.Find(filter).FirstOrDefault();
             });
         }
+
+        public async Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId)
+        {
+            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.DeviceId,deviceId.ToLower());
+            return await Task.Run(() =>
+            {
+                return _accountsCollection.Find(filter).FirstOrDefault();
+            });
+        }
+
+        
         
 
         public async Task<IEnumerable<IAccountInfoData>> GetAccountsByIdAsync(IEnumerable<string> ids)

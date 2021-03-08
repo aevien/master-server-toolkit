@@ -19,6 +19,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public string PhoneNumber { get; set; }
         public string Facebook { get; set; }
         public string Token { get; set; }
+        public string DeviceId { get; set; }
+        public string DeviceName { get; set; }
         public bool IsAdmin { get; set; }
         public bool IsGuest { get; set; }
         public bool IsEmailConfirmed { get; set; }
