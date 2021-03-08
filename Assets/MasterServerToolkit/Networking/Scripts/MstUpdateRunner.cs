@@ -1,6 +1,7 @@
 ﻿using Aevien.Utilities;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
@@ -10,8 +11,6 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public class MstUpdateRunner : DynamicSingleton<MstUpdateRunner>
     {
-        private List<IUpdatable> _addList;
-        private List<IUpdatable> _removeList;
         private List<IUpdatable> _runnables;
 
         public event Action OnApplicationQuitEvent;
@@ -19,43 +18,30 @@ namespace MasterServerToolkit.Networking
         protected void Awake()
         {
             _runnables = new List<IUpdatable>();
-            _addList = new List<IUpdatable>();
-            _removeList = new List<IUpdatable>();
         }
 
         private void Update()
         {
-            if (_addList.Count > 0)
+            for (int i = 0; i < _runnables.Count; i++)
             {
-                _runnables.AddRange(_addList);
-                _addList.Clear();
-            }
-
-            foreach (var runnable in _runnables)
-            {
+                IUpdatable runnable = _runnables[i];
                 runnable.Update();
-            }
-
-            if (_removeList.Count > 0)
-            {
-                _runnables.AddRange(_removeList);
-                _removeList.Clear();
             }
         }
 
         public void Add(IUpdatable updatable)
         {
-            if (_addList.Contains(updatable))
-            {
-                return;
-            }
+            //Debug.Log(_runnables.Count);
 
-            _addList.Add(updatable);
+            if (!_runnables.Contains(updatable))
+            {
+                _runnables.Add(updatable);
+            }
         }
 
         public void Remove(IUpdatable updatable)
         {
-            _removeList.Add(updatable);
+            _runnables.Add(updatable);
         }
 
         private void OnApplicationQuit()

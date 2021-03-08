@@ -51,10 +51,18 @@ namespace MasterServerToolkit.MasterServer
             StartCoroutine(StartQueueUpdater());
         }
 
+        /// <summary>
+        /// Creates spawner for given peer using options
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
         public virtual RegisteredSpawner CreateSpawner(IPeer peer, SpawnerOptions options)
         {
-            var spawner = new RegisteredSpawner(GenerateSpawnerId(), peer, options);
+            // Create registered spawner instance
+            var spawnerInstance = new RegisteredSpawner(GenerateSpawnerId(), peer, options);
 
+            // Find spawners in peer property
             Dictionary<int, RegisteredSpawner> peerSpawners = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
 
             // If this is the first time registering a spawners
@@ -64,28 +72,32 @@ namespace MasterServerToolkit.MasterServer
                 peerSpawners = new Dictionary<int, RegisteredSpawner>();
                 peer.SetProperty((int)MstPeerPropertyCodes.RegisteredSpawners, peerSpawners);
 
+                // Listen to disconnection
                 peer.OnPeerDisconnectedEvent += OnRegisteredPeerDisconnect;
             }
 
             // Add a new spawner
-            peerSpawners[spawner.SpawnerId] = spawner;
+            peerSpawners[spawnerInstance.SpawnerId] = spawnerInstance;
 
             // Add the spawner to a list of all spawners
-            spawnersList[spawner.SpawnerId] = spawner;
+            spawnersList[spawnerInstance.SpawnerId] = spawnerInstance;
 
             // Invoke the event
-            if (OnSpawnerRegisteredEvent != null)
-            {
-                OnSpawnerRegisteredEvent.Invoke(spawner);
-            }
+            OnSpawnerRegisteredEvent?.Invoke(spawnerInstance);
 
-            return spawner;
+            return spawnerInstance;
         }
 
+        /// <summary>
+        /// Invokes when peer disconnected from server
+        /// </summary>
+        /// <param name="peer"></param>
         private void OnRegisteredPeerDisconnect(IPeer peer)
         {
+            // Get registered spawners from peer property
             var peerSpawners = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
 
+            // Return if now spawner found
             if (peerSpawners == null)
             {
                 return;
@@ -94,42 +106,53 @@ namespace MasterServerToolkit.MasterServer
             // Create a copy so that we can iterate safely
             var registeredSpawners = peerSpawners.Values.ToList();
 
+            // Destroy all spawners
             foreach (var registeredSpawner in registeredSpawners)
             {
                 DestroySpawner(registeredSpawner);
             }
         }
 
+        /// <summary>
+        /// Destroys spawner
+        /// </summary>
+        /// <param name="spawner"></param>
         public void DestroySpawner(RegisteredSpawner spawner)
         {
+            // Get spawner owner peer
             var peer = spawner.Peer;
 
+            // If peer exists
             if (peer != null)
             {
-                var peerRooms = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
+                // Get spawners from peer property
+                var peerSpawners = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
 
                 // Remove the spawner from peer
-                if (peerRooms != null)
-                {
-                    peerRooms.Remove(spawner.SpawnerId);
-                }
+                if (peerSpawners != null)
+                    peerSpawners.Remove(spawner.SpawnerId);
             }
 
             // Remove the spawner from all spawners
             spawnersList.Remove(spawner.SpawnerId);
 
             // Invoke the event
-            if (OnSpawnerDestroyedEvent != null)
-            {
-                OnSpawnerDestroyedEvent.Invoke(spawner);
-            }
+            OnSpawnerDestroyedEvent?.Invoke(spawner);
         }
 
+        /// <summary>
+        /// Creates unique spawner id
+        /// </summary>
+        /// <returns></returns>
         public int GenerateSpawnerId()
         {
             return _spawnerId++;
         }
 
+        /// <summary>
+        /// Creates unique spawner tsak id
+        /// </summary>
+        /// <returns></returns>
         public int GenerateSpawnTaskId()
         {
             return _spawnTaskId++;
@@ -417,13 +440,17 @@ namespace MasterServerToolkit.MasterServer
         {
             logger.Debug($"Client [{message.Peer.Id}] requested to be registered as spawner");
 
+            // Check if peer has permissions to register spawner
             if (!HasCreationPermissions(message.Peer))
             {
                 message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
                 return;
             }
 
+            // Read options
             var options = message.Deserialize(new SpawnerOptions());
+
+            // Create new spawner
             var spawner = CreateSpawner(message.Peer, options);
 
             logger.Debug($"Client [{message.Peer.Id}] was successfully registered as spawner [{spawner.SpawnerId}] with options: {options}");

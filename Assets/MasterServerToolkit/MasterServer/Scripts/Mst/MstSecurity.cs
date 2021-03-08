@@ -11,7 +11,7 @@ namespace MasterServerToolkit.MasterServer
     /// <summary>
     /// Helper class, which implements means to encrypt and decrypt data
     /// </summary>
-    public class MstSecurity : MstBaseClient
+    public partial class MstSecurity : MstBaseClient
     {
         public delegate void PermissionLevelCallback(int? permissionLevel, string error);
 
@@ -37,9 +37,9 @@ namespace MasterServerToolkit.MasterServer
         public const int HASH_BYTE_SIZE = 24;
         public const int PBKDF2_ITERATIONS = 1000;
 
-        public const int ITERATION_INDEX = 0;
-        public const int SALT_INDEX = 1;
-        public const int PBKDF2_INDEX = 2;
+        public const int ITERATION_INDEX_IN_HASH = 0;
+        public const int SALT_INDEX_IN_HASH = 1;
+        public const int PBKDF2_INDEX_IN_HASH = 2;
 
         #endregion
 
@@ -397,9 +397,9 @@ namespace MasterServerToolkit.MasterServer
             // Extract the parameters from the hash
             char[] delimiter = { ':' };
             var split = correctHash.Split(delimiter);
-            var iterations = int.Parse(split[ITERATION_INDEX]);
-            var salt = Convert.FromBase64String(split[SALT_INDEX]);
-            var hash = Convert.FromBase64String(split[PBKDF2_INDEX]);
+            var iterations = int.Parse(split[ITERATION_INDEX_IN_HASH]);
+            var salt = Convert.FromBase64String(split[SALT_INDEX_IN_HASH]);
+            var hash = Convert.FromBase64String(split[PBKDF2_INDEX_IN_HASH]);
 
             var testHash = PBKDF2(password, salt, iterations, hash.Length);
             return SlowEquals(hash, testHash);
@@ -440,13 +440,6 @@ namespace MasterServerToolkit.MasterServer
             };
 
             return pbkdf2.GetBytes(outputBytes);
-        }
-
-        private class EncryptionData
-        {
-            public string ClientAesKey { get; set; }
-            public RSACryptoServiceProvider ClientsCsp { get; set; }
-            public RSAParameters ClientsPublicKey { get; set; }
         }
     }
 }

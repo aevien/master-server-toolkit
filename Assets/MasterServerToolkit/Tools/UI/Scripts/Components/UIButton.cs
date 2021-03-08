@@ -17,12 +17,23 @@ namespace Aevien.UI
         [SerializeField]
         private string lableValue = "Click me";
 
+        /// <summary>
+        /// 
+        /// </summary>
         public bool IsInteractable => button.interactable;
 
-        private void Awake()
+        /// <summary>
+        /// 
+        /// </summary>
+        public Button UnityButton
         {
-            if (!button)
-                button = GetComponent<Button>();
+            get
+            {
+                if (!button)
+                    button = GetComponent<Button>();
+
+                return button;
+            }
         }
 
         private void OnValidate()
@@ -38,23 +49,23 @@ namespace Aevien.UI
 
         public void SetInteractable(bool value)
         {
-            button.interactable = value;
+            UnityButton.interactable = value;
         }
 
         public void AddOnClickListener(UnityAction callback, bool removeIfExists = true)
         {
             if (removeIfExists) RemoveOnClickListener(callback);
-            button.onClick.AddListener(callback);
+            UnityButton.onClick.AddListener(callback);
         }
 
         public void RemoveOnClickListener(UnityAction callback)
         {
-            button.onClick.RemoveListener(callback);
+            UnityButton.onClick.RemoveListener(callback);
         }
 
         public void RemoveAllOnClickListeners()
         {
-            button.onClick.RemoveAllListeners();
+            UnityButton.onClick.RemoveAllListeners();
         }
     }
 }

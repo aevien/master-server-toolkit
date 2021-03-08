@@ -232,32 +232,29 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Signing in... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            Mst.Client.Auth.SignInWithLoginAndPassword(username, password, (accountInfo, error) =>
             {
-                Mst.Client.Auth.SignInWithLoginAndPassword(username, password, (accountInfo, error) =>
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+
+                if (accountInfo != null)
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
-
-                    if (accountInfo != null)
+                    if (accountInfo.IsEmailConfirmed)
                     {
-                        if (accountInfo.IsEmailConfirmed)
-                        {
-                            logger.Debug($"You are successfully logged in as {Mst.Client.Auth.AccountInfo}");
-                        }
-                        else
-                        {
-                            Mst.Events.Invoke(MstEventKeys.showEmailConfirmationView, Mst.Client.Auth.AccountInfo.Email);
-                        }
-
-                        Mst.Events.Invoke(MstEventKeys.hideSignInView);
+                        logger.Debug($"You are successfully logged in as {Mst.Client.Auth.AccountInfo}");
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while signing in: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
+                        Mst.Events.Invoke(MstEventKeys.showEmailConfirmationView, Mst.Client.Auth.AccountInfo.Email);
                     }
-                });
+
+                    Mst.Events.Invoke(MstEventKeys.hideSignInView);
+                }
+                else
+                {
+                    string outputMessage = $"An error occurred while signing in: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 
@@ -270,25 +267,22 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Signing in as guest... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            Mst.Client.Auth.SignInAsGuest((accountInfo, error) =>
             {
-                Mst.Client.Auth.SignInAsGuest((accountInfo, error) =>
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+
+                if (accountInfo != null)
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    Mst.Events.Invoke(MstEventKeys.hideSignInView);
 
-                    if (accountInfo != null)
-                    {
-                        Mst.Events.Invoke(MstEventKeys.hideSignInView);
-
-                        logger.Debug($"You are successfully logged in as {Mst.Client.Auth.AccountInfo}");
-                    }
-                    else
-                    {
-                        string outputMessage = $"An error occurred while signing in: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
-                    }
-                });
+                    logger.Debug($"You are successfully logged in as {Mst.Client.Auth.AccountInfo}");
+                }
+                else
+                {
+                    string outputMessage = $"An error occurred while signing in: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 
@@ -301,30 +295,27 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Signing in... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            Mst.Client.Auth.SignInWithToken((accountInfo, error) =>
             {
-                Mst.Client.Auth.SignInWithToken((accountInfo, error) =>
-                {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                    if (accountInfo != null)
+                if (accountInfo != null)
+                {
+                    if (accountInfo.IsGuest || accountInfo.IsEmailConfirmed)
                     {
-                        if (accountInfo.IsGuest || accountInfo.IsEmailConfirmed)
-                        {
-                            logger.Debug($"You are successfully logged in. {Mst.Client.Auth.AccountInfo}");
-                        }
-                        else
-                        {
-                            Mst.Events.Invoke(MstEventKeys.showEmailConfirmationView, Mst.Client.Auth.AccountInfo.Email);
-                        }
+                        logger.Debug($"You are successfully logged in. {Mst.Client.Auth.AccountInfo}");
                     }
                     else
                     {
-                        outputMessage = $"An error occurred while signing in: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
+                        Mst.Events.Invoke(MstEventKeys.showEmailConfirmationView, Mst.Client.Auth.AccountInfo.Email);
                     }
-                });
+                }
+                else
+                {
+                    outputMessage = $"An error occurred while signing in: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 
@@ -337,32 +328,29 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Signing up... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            var credentials = new MstProperties();
+            credentials.Set(MstDictKeys.USER_NAME, username);
+            credentials.Set(MstDictKeys.USER_EMAIL, useremail);
+            credentials.Set(MstDictKeys.USER_PASSWORD, userpassword);
+
+            Mst.Client.Auth.SignUp(credentials, (isSuccessful, error) =>
             {
-                var credentials = new MstProperties();
-                credentials.Set(MstDictKeys.USER_NAME, username);
-                credentials.Set(MstDictKeys.USER_EMAIL, useremail);
-                credentials.Set(MstDictKeys.USER_PASSWORD, userpassword);
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                Mst.Client.Auth.SignUp(credentials, (isSuccessful, error) =>
+                if (isSuccessful)
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    Mst.Events.Invoke(MstEventKeys.hideSignUpView);
+                    Mst.Events.Invoke(MstEventKeys.showSignInView);
+                    Mst.Events.Invoke(MstEventKeys.setSignInDefaultCredentials, credentials);
 
-                    if (isSuccessful)
-                    {
-                        Mst.Events.Invoke(MstEventKeys.hideSignUpView);
-                        Mst.Events.Invoke(MstEventKeys.showSignInView);
-                        Mst.Events.Invoke(MstEventKeys.setSignInDefaultCredentials, credentials);
-
-                        logger.Debug($"You have successfuly signed up. Now you may sign in");
-                    }
-                    else
-                    {
-                        string outputMessage = $"An error occurred while signing up: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
-                    }
-                });
+                    logger.Debug($"You have successfuly signed up. Now you may sign in");
+                }
+                else
+                {
+                    string outputMessage = $"An error occurred while signing up: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 
@@ -378,25 +366,22 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Changing password... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            Mst.Client.Auth.ChangePassword(userEmail, resetCode, newPassword, (isSuccessful, error) =>
             {
-                Mst.Client.Auth.ChangePassword(userEmail, resetCode, newPassword, (isSuccessful, error) =>
-                {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                    if (isSuccessful)
-                    {
-                        Mst.Events.Invoke(MstEventKeys.hidePasswordResetView);
-                        Mst.Events.Invoke(MstEventKeys.showSignInView);
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("You have successfuly changed your password. Now you can sign in.", null));
-                    }
-                    else
-                    {
-                        string outputMessage = $"An error occurred while changing password: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
-                    }
-                });
+                if (isSuccessful)
+                {
+                    Mst.Events.Invoke(MstEventKeys.hidePasswordResetView);
+                    Mst.Events.Invoke(MstEventKeys.showSignInView);
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("You have successfuly changed your password. Now you can sign in.", null));
+                }
+                else
+                {
+                    string outputMessage = $"An error occurred while changing password: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 
@@ -410,27 +395,24 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Sending reset password code... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            Mst.Client.Auth.RequestPasswordReset(userEmail, (isSuccessful, error) =>
             {
-                Mst.Client.Auth.RequestPasswordReset(userEmail, (isSuccessful, error) =>
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+
+                if (isSuccessful)
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    Mst.Options.Set(MstDictKeys.RESET_PASSWORD_EMAIL, userEmail);
 
-                    if (isSuccessful)
-                    {
-                        Mst.Options.Set(MstDictKeys.RESET_PASSWORD_EMAIL, userEmail);
-
-                        Mst.Events.Invoke(MstEventKeys.hidePasswordResetCodeView);
-                        Mst.Events.Invoke(MstEventKeys.showPasswordResetView);
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"We have sent an email with reset code to your address '{userEmail}'", null));
-                    }
-                    else
-                    {
-                        string outputMessage = $"An error occurred while password reset code: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
-                    }
-                });
+                    Mst.Events.Invoke(MstEventKeys.hidePasswordResetCodeView);
+                    Mst.Events.Invoke(MstEventKeys.showPasswordResetView);
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"We have sent an email with reset code to your address '{userEmail}'", null));
+                }
+                else
+                {
+                    string outputMessage = $"An error occurred while password reset code: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 
@@ -454,23 +436,20 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Sending confirmation code... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            Mst.Client.Auth.RequestEmailConfirmationCode((isSuccessful, error) =>
             {
-                Mst.Client.Auth.RequestEmailConfirmationCode((isSuccessful, error) =>
-                {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                    if (isSuccessful)
-                    {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"We have sent an email with confirmation code to your address '{Mst.Client.Auth.AccountInfo.Email}'", null));
-                    }
-                    else
-                    {
-                        string outputMessage = $"An error occurred while requesting confirmation code: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
-                    }
-                });
+                if (isSuccessful)
+                {
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"We have sent an email with confirmation code to your address '{Mst.Client.Auth.AccountInfo.Email}'", null));
+                }
+                else
+                {
+                    string outputMessage = $"An error occurred while requesting confirmation code: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 
@@ -483,23 +462,20 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Sending confirmation code... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            Mst.Client.Auth.ConfirmEmail(confirmationCode, (isSuccessful, error) =>
             {
-                Mst.Client.Auth.ConfirmEmail(confirmationCode, (isSuccessful, error) =>
-                {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                    if (isSuccessful)
-                    {
-                        Mst.Events.Invoke(MstEventKeys.hideEmailConfirmationView);
-                    }
-                    else
-                    {
-                        string outputMessage = $"An error occurred while confirming yor account: {error}";
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
-                    }
-                });
+                if (isSuccessful)
+                {
+                    Mst.Events.Invoke(MstEventKeys.hideEmailConfirmationView);
+                }
+                else
+                {
+                    string outputMessage = $"An error occurred while confirming yor account: {error}";
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
+                    logger.Error(outputMessage);
+                }
             });
         }
 

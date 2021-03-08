@@ -63,9 +63,7 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void SignOut()
         {
-            Logs.Debug("Sign out");
-            Mst.Client.Auth.SignOut(true);
-            ViewsManager.HideAllViews();
+            AuthBehaviour.Instance.SignOut();
         }
     }
 }

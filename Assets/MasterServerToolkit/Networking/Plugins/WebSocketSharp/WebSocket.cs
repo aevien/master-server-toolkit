@@ -15,8 +15,6 @@ namespace MasterServerToolkit.Networking
     {
         private Logging.Logger logger;
         private readonly Uri url;
-        private readonly Queue<byte[]> messages = new Queue<byte[]>();
-        private WebSocketSharp.WebSocket socket;
 
         public bool IsConnecting { get; private set; } = false;
 
@@ -35,9 +33,6 @@ namespace MasterServerToolkit.Networking
             {
                 throw new ArgumentException($"Unsupported protocol: {protocol}");
             }
-
-            // Create WebSocket instance with timeout info
-            socket = new WebSocketSharp.WebSocket(url.ToString());
         }
 
         /// <summary>
@@ -141,6 +136,15 @@ namespace MasterServerToolkit.Networking
             }
         }
 #else
+        /// <summary>
+        /// List of messages in queue
+        /// </summary>
+        private readonly Queue<byte[]> messages = new Queue<byte[]>();
+
+        /// <summary>
+        /// Socket instanse
+        /// </summary>
+        private WebSocketSharp.WebSocket socket;
 
         /// <summary>
         /// Connection status Connected/Disconnected
@@ -158,6 +162,9 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public IEnumerator Connect()
         {
+            // Create WebSocket instance with timeout info
+            socket = new WebSocketSharp.WebSocket(url.ToString());
+
             // Listen to messages
             socket.OnMessage += (sender, e) =>
             {
@@ -185,7 +192,7 @@ namespace MasterServerToolkit.Networking
                 IsConnected = false;
             };
 
-            socket.Connect();
+            socket.ConnectAsync();
 
             IsConnecting = true;
 

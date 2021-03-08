@@ -69,17 +69,17 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Collection of users who are currently logged in by user id
         /// </summary>
-        protected Dictionary<string, IUserPeerExtension> loggedInUsersById { get; set; }
+        protected Dictionary<string, IUserPeerExtension> LoggedInUsersById { get; set; }
 
         /// <summary>
         /// Collection of users who are currently logged in by username
         /// </summary>
-        protected Dictionary<string, IUserPeerExtension> loggedInUsersByUsername { get; set; }
+        protected Dictionary<string, IUserPeerExtension> LoggedInUsersByUsername { get; set; }
 
         /// <summary>
         /// Collection of users who are currently logged in
         /// </summary>
-        public IEnumerable<IUserPeerExtension> LoggedInUsers => loggedInUsersById.Values;
+        public IEnumerable<IUserPeerExtension> LoggedInUsers => LoggedInUsersById.Values;
 
         /// <summary>
         /// Whether or not to save guest info
@@ -143,8 +143,8 @@ namespace MasterServerToolkit.MasterServer
             mailer = mailer ?? FindObjectOfType<Mailer>();
 
             // Init logged in users list by id
-            loggedInUsersById = new Dictionary<string, IUserPeerExtension>();
-            loggedInUsersByUsername = new Dictionary<string, IUserPeerExtension>();
+            LoggedInUsersById = new Dictionary<string, IUserPeerExtension>();
+            LoggedInUsersByUsername = new Dictionary<string, IUserPeerExtension>();
 
             // Set handlers
             server.RegisterMessageHandler((short)MstMessageCodes.SignIn, SignInMessageHandler);
@@ -189,7 +189,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public IUserPeerExtension GetLoggedInUserByUsername(string username)
         {
-            if (loggedInUsersByUsername.TryGetValue(username.ToLower(), out IUserPeerExtension user))
+            if (LoggedInUsersByUsername.TryGetValue(username.ToLower(), out IUserPeerExtension user))
             {
                 return user;
             }
@@ -206,7 +206,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public IUserPeerExtension GetLoggedInUserById(string id)
         {
-            if (loggedInUsersById.TryGetValue(id, out IUserPeerExtension user))
+            if (LoggedInUsersById.TryGetValue(id, out IUserPeerExtension user))
             {
                 return user;
             }
@@ -223,7 +223,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool IsUserLoggedInByUsername(string username)
         {
-            return loggedInUsersByUsername.ContainsKey(username.ToLower());
+            return LoggedInUsersByUsername.ContainsKey(username.ToLower());
         }
 
         /// <summary>
@@ -233,7 +233,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool IsUserLoggedInById(string id)
         {
-            return loggedInUsersById.ContainsKey(id);
+            return LoggedInUsersById.ContainsKey(id);
         }
 
         /// <summary>
@@ -272,8 +272,8 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            loggedInUsersByUsername.Remove(extension.Username.ToLower());
-            loggedInUsersById.Remove(extension.UserId);
+            LoggedInUsersByUsername.Remove(extension.Username.ToLower());
+            LoggedInUsersById.Remove(extension.UserId);
 
             OnUserLoggedOutEvent?.Invoke(extension);
         }
@@ -341,7 +341,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         protected virtual void GetLoggedInUsersCountMessageHandler(IIncomingMessage message)
         {
-            message.Respond(loggedInUsersById.Count, ResponseStatus.Success);
+            message.Respond(LoggedInUsersById.Count, ResponseStatus.Success);
         }
 
         /// <summary>
@@ -641,25 +641,35 @@ namespace MasterServerToolkit.MasterServer
                 var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
 
                 // If guest user cansave its account info
-                if (authDbAccessor == null && saveGuestInfo)
+                if (authDbAccessor == null)
                 {
                     throw new Exception("Account database accessor is not defined in AuthModule");
                 }
 
+                // Get security extension
                 var securityExt = message.Peer.GetExtension<SecurityInfoPeerExtension>();
+
+                // Get AES key
                 var aesKey = securityExt.AesKey;
 
-                if (aesKey == null)
+                // If no AES key found
+                if (string.IsNullOrEmpty(aesKey))
                 {
                     // There's no aesKey that client and master agreed upon
                     message.Respond("Insecure request", ResponseStatus.Unauthorized);
                     return;
                 }
 
+                // Get encrypted data from message
                 var encryptedData = message.AsBytes();
+
+                // Let's decrypt it with our AES key
                 var decryptedBytesData = Mst.Security.DecryptAES(encryptedData, aesKey);
+
+                // Parse our data to user creadentials
                 var userCredentials = MstProperties.FromBytes(decryptedBytesData);
 
+                // Check if our registration request is valid
                 if (!userCredentials.Has(MstDictKeys.USER_NAME) || !userCredentials.Has(MstDictKeys.USER_PASSWORD) || !userCredentials.Has(MstDictKeys.USER_EMAIL))
                 {
                     message.Respond("Invalid registration request", ResponseStatus.Error);
@@ -670,19 +680,21 @@ namespace MasterServerToolkit.MasterServer
                 var userPassword = userCredentials.AsString(MstDictKeys.USER_PASSWORD);
                 var userEmail = userCredentials.AsString(MstDictKeys.USER_EMAIL).ToLower();
 
+                // Check if length of our password is valid
                 if(userPasswordMinChars > userPassword.Length)
                 {
                     message.Respond($"Invalid user password. It must consist at least {userPasswordMinChars} characters", ResponseStatus.Error);
                     return;
                 }
 
+                // Get peer extension
                 var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
-                // If user is already logged in but not as guest
-                if (userExtension != null && !userExtension.Account.IsGuest)
+                // If user is already logged in
+                if (userExtension != null)
                 {
                     // Fail, if user is already logged in, and not with a guest account
-                    message.Respond("Invalid registration request", ResponseStatus.Error);
+                    message.Respond("You are already logged in", ResponseStatus.Unauthorized);
                     return;
                 }
 
@@ -714,6 +726,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
+                // Create account instance
                 var userAccount = authDbAccessor.CreateAccountInstance();
                 userAccount.Username = userName;
                 userAccount.Email = userEmail;
@@ -726,11 +739,12 @@ namespace MasterServerToolkit.MasterServer
                     userAccount.IsEmailConfirmed = true;
                 }
 
+                // Insert new account ot DB
                 await authDbAccessor.InsertNewAccountAsync(userAccount);
 
-                OnUserRegisteredEvent?.Invoke(message.Peer, userAccount);
-
                 message.Respond(ResponseStatus.Success);
+
+                OnUserRegisteredEvent?.Invoke(message.Peer, userAccount);
             }
             catch (Exception e)
             {
@@ -775,10 +789,16 @@ namespace MasterServerToolkit.MasterServer
             IAccountInfoData userAccount = default;
 
             // Guest Authentication
-            if (userCredentials.Has(MstDictKeys.USER_IS_GUEST) && enableGuestLogin)
+            if (userCredentials.Has(MstDictKeys.USER_IS_GUEST))
             {
                 try
                 {
+                    // Check if guest login is allowed
+                    if (!enableGuestLogin)
+                    {
+                        throw new Exception("Guest login is not allowed in this game");
+                    }
+
                     // If user peer has IUserPeerExtension means this user is already logged in
                     if (userPeerExtension != null)
                     {
@@ -793,34 +813,39 @@ namespace MasterServerToolkit.MasterServer
                         throw new Exception("Account database accessor is not defined in AuthModule");
                     }
 
-                    // UserId
-                    var userId = userCredentials.AsString(MstDictKeys.USER_ID);
+                    // User device Name and Id
+                    var userDeviceName = userCredentials.AsString(MstDictKeys.USER_DEVICE_NAME);
+                    var userDeviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
 
+                    // If guest data was allowed to be saved
                     if (saveGuestInfo)
                         // Trying to get user account by user id
-                        userAccount = await authDbAccessor.GetAccountByIdAsync(userId);
+                        userAccount = await authDbAccessor.GetAccountByDeviceIdAsync(userDeviceId);
+
+                    // If current client is on the same device
+                    bool anotherGuestOnTheSameDevice = userAccount != null && IsUserLoggedInById(userAccount.Id);
 
                     // If guest has no account create it
-                    if (userAccount == null)
+                    if (userAccount == null || anotherGuestOnTheSameDevice)
                     {
                         userAccount = authDbAccessor.CreateAccountInstance();
                         userAccount.Username = GenerateGuestUsername();
+                        userAccount.DeviceId = userDeviceId;
+                        userAccount.DeviceName = userDeviceName;
 
-                        // If guest may save his data
-                        if (saveGuestInfo)
+                        // If guest may save his data and this guest is not on the same device
+                        if (saveGuestInfo && !anotherGuestOnTheSameDevice)
                         {
                             // Save account and return its id in DB
                             var accountId = await authDbAccessor.InsertNewAccountAsync(userAccount);
 
                             // Set account Id if it was not defined earlier
                             userAccount.Id = accountId;
+
+                            // Save all updates
+                            await authDbAccessor.UpdateAccountAsync(userAccount);
                         }
                     }
-
-                    // Let's save user auth token
-                    userAccount.SetToken(tokenExpiresInDays);
-
-                    await authDbAccessor.UpdateAccountAsync(userAccount);
                 }
                 catch (Exception e)
                 {
@@ -1059,8 +1084,8 @@ namespace MasterServerToolkit.MasterServer
             userExtension.Peer.OnPeerDisconnectedEvent += OnUserDisconnectedEventListener;
 
             // Add to lookup of logged in users
-            loggedInUsersByUsername.Add(userExtension.Username.ToLower(), userExtension);
-            loggedInUsersById.Add(userExtension.UserId, userExtension);
+            LoggedInUsersByUsername.Add(userExtension.Username.ToLower(), userExtension);
+            LoggedInUsersById.Add(userExtension.UserId, userExtension);
 
             logger.Debug($"User {message.Peer.Id} signed in as {userAccount.Username}");
 

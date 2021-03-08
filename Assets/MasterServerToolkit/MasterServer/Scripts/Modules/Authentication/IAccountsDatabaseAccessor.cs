@@ -42,6 +42,12 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         Task<IAccountInfoData> GetAccountByTokenAsync(string token);
         /// <summary>
+        /// Gets user account from database by device id. This method can be used for guest accounts
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId);
+        /// <summary>
         /// Gets user accounts from database by ids
         /// </summary>
         /// <param name="ids"></param>

@@ -250,7 +250,10 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             NetworkClient.RegisterHandler<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler, false);
 
             // Send validation message to room server
-            connection.Send(new ValidateRoomAccessRequestMessage(roomAccess.Token));
+            connection.Send(new ValidateRoomAccessRequestMessage()
+            {
+                Token = roomAccess.Token
+            });
         }
 
         #endregion

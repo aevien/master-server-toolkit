@@ -17,6 +17,8 @@
         public const string LOBBY_TEAM = "mst.lobbyTeam";
         public const string AUTOSTART_ROOM_CLIENT = "mst.autoStartRoomClient";
         public const string USER_ID = "mst.userId";
+        public const string USER_DEVICE_ID = "mst.userDeviceId";
+        public const string USER_DEVICE_NAME = "mst.userDeviceName";
         public const string USER_NAME = "mst.userName";
         public const string USER_PASSWORD = "mst.userPassword";
         public const string USER_EMAIL = "mst.userEmail";

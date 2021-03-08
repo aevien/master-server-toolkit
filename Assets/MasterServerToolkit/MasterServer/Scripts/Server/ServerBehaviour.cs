@@ -36,9 +36,6 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, Tooltip("Log level of this script")]
         protected LogLevel logLevel = LogLevel.Info;
 
-        [SerializeField, Tooltip("If true server will try to listen to your public IP address. This feature is for quick way to get IP of the machine on which the server is running. Do not use it on your local machine.")]
-        protected bool usePublicIp = false;
-
         [SerializeField, Tooltip("IP address, to which server will listen to")]
         protected string serverIP = "127.0.0.1";
 
@@ -165,10 +162,7 @@ namespace MasterServerToolkit.MasterServer
                 // Start the server on next frame
                 MstTimer.WaitForEndOfFrame(() =>
                 {
-                    WaitPublicIpIfRequired(() =>
-                    {
-                        StartServer();
-                    });
+                    StartServer();
                 });
             }
         }
@@ -176,38 +170,6 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void OnValidate()
         {
             if (maxConnections < 0) maxConnections = 0;
-        }
-
-        /// <summary>
-        /// If <see cref="usePublicIp"/> is set to true this method will wait before we get our IP. Otherwise method will be invoked immidiately
-        /// </summary>
-        protected virtual void WaitPublicIpIfRequired(Action callback)
-        {
-            if (usePublicIp)
-            {
-                logger.Info("Trying to get public IP...");
-
-                Mst.Helper.GetPublicIp((ipInfo, error) =>
-                {
-                    if (string.IsNullOrEmpty(ipInfo))
-                    {
-                        logger.Error(error);
-                        logger.Error($"Our public IP is not defined. Let's use IP default IP address {serverIP}");
-                        SetIpAddress(serverIP);
-                        callback?.Invoke();
-                    }
-                    else
-                    {
-                        logger.Info($"Our public IP is {ipInfo}");
-                        SetIpAddress(ipInfo);
-                        callback?.Invoke();
-                    }
-                });
-            }
-            else
-            {
-                callback?.Invoke();
-            }
         }
 
         /// <summary>
@@ -732,12 +694,5 @@ namespace MasterServerToolkit.MasterServer
         }
 
         #endregion
-
-        [Serializable]
-        public class PermissionEntry
-        {
-            public string key;
-            public int permissionLevel;
-        }
     }
 }

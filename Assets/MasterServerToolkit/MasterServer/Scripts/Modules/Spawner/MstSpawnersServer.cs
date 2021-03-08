@@ -9,14 +9,28 @@ namespace MasterServerToolkit.MasterServer
 
     public class MstSpawnersServer : MstBaseClient
     {
-        private Queue<int> _freePorts;
-        private int _lastPortTaken = -1;
-        private Dictionary<int, ISpawnerController> _locallyCreatedSpawners;
+        /// <summary>
+        /// Free ports
+        /// </summary>
+        private Queue<int> freePorts;
 
+        /// <summary>
+        /// Last taken port
+        /// </summary>
+        private int lastPortTaken = -1;
+
+        /// <summary>
+        /// Spawner controllers registered on one Spawner instance
+        /// </summary>
+        private Dictionary<int, ISpawnerController> createdSpawnerControllers;
+
+        /// <summary>
+        /// Default port that will be used to start
+        /// </summary>
         public int DefaultPort { get; set; } = 1500;
 
         /// <summary>
-        /// If true, this process is considered to be spawned by the spawner
+        /// Started room can use this to check if it was spawned or started manually
         /// </summary>
         public bool IsSpawnedProccess { get; private set; }
 
@@ -27,8 +41,8 @@ namespace MasterServerToolkit.MasterServer
 
         public MstSpawnersServer(IClientSocket connection) : base(connection)
         {
-            _locallyCreatedSpawners = new Dictionary<int, ISpawnerController>();
-            _freePorts = new Queue<int>();
+            createdSpawnerControllers = new Dictionary<int, ISpawnerController>();
+            freePorts = new Queue<int>();
 
             IsSpawnedProccess = Mst.Args.IsProvided(Mst.Args.Names.SpawnTaskUniqueCode);
         }
@@ -66,7 +80,7 @@ namespace MasterServerToolkit.MasterServer
                 var controller = new SpawnerController(spawnerId, connection, options);
 
                 // Save reference
-                _locallyCreatedSpawners[spawnerId] = controller;
+                createdSpawnerControllers[spawnerId] = controller;
 
                 callback.Invoke(controller, null);
 
@@ -201,7 +215,6 @@ namespace MasterServerToolkit.MasterServer
 
         /// <summary>
         /// Should be called by a spawned process, as soon as it is started
-        /// 
         /// </summary>
         /// <param name="spawnId"></param>
         /// <param name="processId"></param>
@@ -211,6 +224,13 @@ namespace MasterServerToolkit.MasterServer
             NotifyProcessStarted(spawnId, processId, cmdArgs, Connection);
         }
 
+        /// <summary>
+        /// Should be called by a spawned process, as soon as it is started
+        /// </summary>
+        /// <param name="spawnId"></param>
+        /// <param name="processId"></param>
+        /// <param name="cmdArgs"></param>
+        /// <param name="connection"></param>
         public void NotifyProcessStarted(int spawnId, int processId, string cmdArgs, IClientSocket connection)
         {
             if (!connection.IsConnected)
@@ -226,11 +246,20 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
+        /// <summary>
+        /// Should be called by a spawner controller when one of the processes killed
+        /// </summary>
+        /// <param name="spawnId"></param>
         public void NotifyProcessKilled(int spawnId)
         {
             NotifyProcessKilled(spawnId, Connection);
         }
 
+        /// <summary>
+        /// Should be called by a spawner controller when one of the processes killed
+        /// </summary>
+        /// <param name="spawnId"></param>
+        /// <param name="connection"></param>
         public void NotifyProcessKilled(int spawnId, IClientSocket connection)
         {
             if (!connection.IsConnected)
@@ -241,38 +270,50 @@ namespace MasterServerToolkit.MasterServer
             connection.SendMessage((short)MstMessageCodes.ProcessKilled, spawnId);
         }
 
-        public ISpawnerController GetController(int spawnerId)
+        /// <summary>
+        /// Get spawner controller by id
+        /// </summary>
+        /// <param name="spawnerId"></param>
+        /// <returns></returns>
+        public ISpawnerController GetSpawnerController(int spawnerId)
         {
             ISpawnerController controller;
-            _locallyCreatedSpawners.TryGetValue(spawnerId, out controller);
-
+            createdSpawnerControllers.TryGetValue(spawnerId, out controller);
             return controller;
         }
 
-        public IEnumerable<ISpawnerController> GetLocallyCreatedSpawners()
+        /// <summary>
+        /// Get list of spawner controllers
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<ISpawnerController> GetCreatedSpawnerControllers()
         {
-            return _locallyCreatedSpawners.Values;
+            return createdSpawnerControllers.Values;
         }
 
+        /// <summary>
+        /// Gets available port
+        /// </summary>
+        /// <returns></returns>
         public int GetAvailablePort()
         {
             // Return a port from a list of available ports
-            if (_freePorts.Count > 0)
+            if (freePorts.Count > 0)
             {
-                return _freePorts.Dequeue();
+                return freePorts.Dequeue();
             }
 
-            if (_lastPortTaken < 0)
+            if (lastPortTaken < 0)
             {
-                _lastPortTaken = DefaultPort;
+                lastPortTaken = DefaultPort;
             }
 
-            return _lastPortTaken++;
+            return lastPortTaken++;
         }
 
         public void ReleasePort(int port)
         {
-            _freePorts.Enqueue(port);
+            freePorts.Enqueue(port);
         }
     }
 }

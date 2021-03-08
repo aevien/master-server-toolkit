@@ -18,6 +18,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public bool IsAdmin { get; set; }
         public bool IsGuest { get; set; }
         public bool IsEmailConfirmed { get; set; }
+        public string DeviceId { get; set; }
+        public string DeviceName { get; set; }
         public Dictionary<string, string> Properties { get; set; }
 
         public event Action<IAccountInfoData> OnChangedEvent;

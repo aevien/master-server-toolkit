@@ -53,14 +53,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            if (_value.ContainsKey(key))
-            {
-                _value[key] = value;
-            }
-            else
-            {
-                _value.Add(key, value);
-            }
+            _value[key] = value;
 
             MarkDirty();
 
@@ -183,6 +176,8 @@ namespace MasterServerToolkit.MasterServer
                         }
                     }
                 }
+
+                MarkDirty();
             }
         }
 
@@ -205,6 +200,7 @@ namespace MasterServerToolkit.MasterServer
                         }
                     }
                 }
+
                 return ms.ToArray();
             }
         }
@@ -240,6 +236,7 @@ namespace MasterServerToolkit.MasterServer
                     }
                 }
             }
+
             MarkDirty();
         }
 

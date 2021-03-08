@@ -168,7 +168,12 @@ namespace MasterServerToolkit.MasterServer
             yield return new WaitForSeconds(waitAndConnect);
 
             if (!Connection.IsConnected)
+            {
                 logger.Info($"Starting MSF Connection Helper... {Mst.Version}");
+                logger.Info($"Connecting to MSF server at: {serverIp}:{serverPort}");
+            }
+
+            yield return new WaitForSeconds(0.1f);
 
             Connection.RemoveConnectionListener(OnConnectedEventHandler);
             Connection.RemoveDisconnectionListener(OnDisconnectedEventHandler);
@@ -183,7 +188,7 @@ namespace MasterServerToolkit.MasterServer
                     yield break;
                 }
 
-                // If currentAttemptToConnect of attemts is equals maxAttemptsToConnect stop connection
+                // If currentAttemptToConnect of attempts is equals maxAttemptsToConnect stop connection
                 if (currentAttemptToConnect == maxAttemptsToConnect)
                 {
                     logger.Info($"Client cannot to connect to MSF server at: {serverIp}:{serverPort}");
@@ -194,12 +199,10 @@ namespace MasterServerToolkit.MasterServer
                 // If we got here, we're not connected
                 if (Connection.IsConnecting)
                 {
+                    if (currentAttemptToConnect > 0)
+                        logger.Info($"Retrying to connect to MSF server at: {serverIp}:{serverPort}");
+
                     currentAttemptToConnect++;
-                    logger.Info($"Retrying to connect to MSF server at: {serverIp}:{serverPort}");
-                }
-                else
-                {
-                    logger.Info($"Connecting to MSF server at: {serverIp}:{serverPort}");
                 }
 
                 if (!Connection.IsConnected)

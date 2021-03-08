@@ -78,6 +78,14 @@ namespace MasterServerToolkit.Bridges.LiteDB
             });
         }
 
+        public async Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId)
+        {
+            return await Task.Run(() =>
+            {
+                return accountsCollection.FindOne(i => i.DeviceId == deviceId.ToLower());
+            });
+        }
+
         public async Task<IEnumerable<IAccountInfoData>> GetAccountsByIdAsync(IEnumerable<string> ids)
         {
             return await Task.Run(() =>

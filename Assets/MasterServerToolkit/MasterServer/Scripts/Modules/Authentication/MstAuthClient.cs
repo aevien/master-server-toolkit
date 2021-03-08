@@ -208,17 +208,12 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="connection"></param>
         public void SignInAsGuest(SignInCallback callback, IClientSocket connection)
         {
-            if (HasAuthToken())
-            {
-                SignInWithToken(callback, connection);
-            }
-            else
-            {
-                 var credentials = new MstProperties();
-                credentials.Add(MstDictKeys.USER_IS_GUEST);
+            var credentials = new MstProperties();
+            credentials.Add(MstDictKeys.USER_IS_GUEST);
+            credentials.Add(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
+            credentials.Add(MstDictKeys.USER_DEVICE_ID, SystemInfo.deviceUniqueIdentifier);
 
-                SignIn(credentials, callback, connection);
-            }
+            SignIn(credentials, callback, connection);
         }
 
         /// <summary>
@@ -390,10 +385,9 @@ namespace MasterServerToolkit.MasterServer
                     };
 
                     // If RememberMe is checked on and we are not guset, then save auth token
-                    if (RememberMe && !AccountInfo.IsGuest)
+                    if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
                     {
-                        if (!string.IsNullOrEmpty(AccountInfo.Token))
-                            SaveAuthToken(AccountInfo.Token);
+                        SaveAuthToken(AccountInfo.Token);
                     }
                     else
                     {

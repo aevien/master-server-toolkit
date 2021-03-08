@@ -4,11 +4,12 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace MasterServerToolkit.MasterServer
 {
     [AddComponentMenu("Master Server Toolkit/SpawnerBehaviour")]
-    public class SpawnerBehaviour : Singleton<SpawnerBehaviour>
+    public class SpawnerBehaviour : MonoBehaviour
     {
         #region INSPECTOR
 
@@ -37,9 +38,6 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, Tooltip("Default IP address")]
         protected string machineIp = "127.0.0.1";
 
-        [SerializeField, Tooltip("If true server will try to get you machine public IP. This feature is for quick way to get IP of the machine on which the room server is running. Do not use it on your local machine.")]
-        protected bool usePublicIp = false;
-
         [SerializeField, Tooltip("Default path to executable file")]
         protected string executableFilePath = "";
 
@@ -52,8 +50,8 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, Tooltip("Spawner region used when you are trying to start rooms by given region. Empty means International")]
         protected string region = "";
 
-        [Header("Runtime Settings"), SerializeField, Tooltip("If true, kills all spawned processes when master server quits")]
-        protected bool killProcessesWhenAppQuits = true;
+        [Header("Runtime Settings"), SerializeField, Tooltip("If true, kills all spawned processes when spawners stopped")]
+        protected bool killProcessesWhenStop = true;
 
         [Header("Editor Settings"), SerializeField]
         private HelpBox hpEditor = new HelpBox()
@@ -96,32 +94,33 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Invokes when this spawner is registered in Master server
         /// </summary>
-        public Action OnSpawnerRegisteredEvent;
+        public UnityEvent OnSpawnerStartedEvent;
 
-        protected override void Awake()
+        /// <summary>
+        /// Invokes when this spawner stopped
+        /// </summary>
+        public UnityEvent OnSpawnerStoppedEvent;
+
+        protected virtual void Awake()
         {
-            base.Awake();
-
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
             Mst.Server.Spawners.DefaultPort = Mst.Args.RoomDefaultPort;
-        }
 
-        protected virtual void Start()
-        {
             // Subscribe to connection event
-            Mst.Connection.AddConnectionListener(OnConnectedToMasterEventHandler, true);
+            Mst.Connection.AddConnectionListener(OnConnectedToMasterEventHandler);
             // Subscribe to disconnection event
-            Mst.Connection.AddDisconnectionListener(OnDisconnectedFromMasterEventHandler, true);
+            Mst.Connection.AddDisconnectionListener(OnDisconnectedFromMasterEventHandler, false);
+
+            DontDestroyOnLoad(gameObject);
         }
 
         protected virtual void OnApplicationQuit()
         {
-            if (killProcessesWhenAppQuits)
-            {
+            // Kill all the processes of spawner controller
+            if (killProcessesWhenStop)
                 spawnerController?.KillProcesses();
-            }
         }
 
         protected virtual void OnDestroy()
@@ -140,28 +139,7 @@ namespace MasterServerToolkit.MasterServer
             // If we want to start a spawner (cmd argument was found)
             if (Mst.Args.StartSpawner || (autoStartInEditor && Mst.Runtime.IsEditor))
             {
-                // if you want to use your public IP address
-                if (usePublicIp)
-                {
-                    Mst.Helper.GetPublicIp((ipInfo, error) =>
-                    {
-                        if (string.IsNullOrEmpty(ipInfo))
-                        {
-                            logger.Error(error);
-                            logger.Error($"Our public IP is not defined. Let's use IP default IP address {machineIp}");
-                        }
-                        else
-                        {
-                            logger.Info($"Our public IP is {ipInfo}");
-                            machineIp = ipInfo;
-                            StartSpawner();
-                        }
-                    });
-                }
-                else
-                {
-                    StartSpawner();
-                }
+                StartSpawner();
             }
         }
 
@@ -170,11 +148,12 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void OnDisconnectedFromMasterEventHandler()
         {
-            spawnerController?.KillProcesses();
+            logger.Info("Spawner disconnected from server. Stopping it...");
+            StopSpawner();
         }
 
         /// <summary>
-        /// Start spawner. But before start we are required to be connected
+        /// Starts spawner. But before start we are required to be connected
         /// </summary>
         public virtual void StartSpawner()
         {
@@ -191,12 +170,8 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            // We do not want to use public IP
-            if (!usePublicIp)
-            {
-                // If machine IP is defined in cmd
-                machineIp = Mst.Args.AsString(Mst.Args.Names.RoomIp, machineIp);
-            }
+            // If machine IP is defined in cmd
+            machineIp = Mst.Args.AsString(Mst.Args.Names.RoomIp, machineIp);
 
             // If room region is defined in cmd
             region = Mst.Args.AsString(Mst.Args.Names.RoomRegion, region);
@@ -218,7 +193,7 @@ namespace MasterServerToolkit.MasterServer
                 executableFilePath = exePathFromEditor;
             }
 
-            logger.Info("Registering as a spawner with options: \n" + spawnerOptions);
+            logger.Info($"Registering as a spawner with options: \n{spawnerOptions}");
 
             // 1. Register the spawner
             Mst.Server.Spawners.RegisterSpawner(spawnerOptions, (controller, error) =>
@@ -229,26 +204,56 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
+                // 2. Save spawner controller
                 spawnerController = controller;
+
+                // 3. Set its log level
                 spawnerController.Logger.LogLevel = spawnerLogLevel;
 
+                // 4. Set use web sockets if required
                 spawnerController.SpawnSettings.UseWebSockets = Mst.Args.AsBool(Mst.Args.Names.UseWebSockets, spawnWebSocketServers);
 
-                // 2. Set the default executable path
+                // 5. Set the default executable path
                 spawnerController.SpawnSettings.ExecutablePath = Mst.Args.AsString(Mst.Args.Names.RoomExecutablePath, executableFilePath);
 
-                // 3. Set the machine IP
+                // 6. Set the machine IP
                 spawnerController.SpawnSettings.MachineIp = machineIp;
 
-                // 4. Set region
+                // 7. Set region
                 spawnerController.SpawnSettings.Region = spawnerOptions.Region;
 
-                logger.Info("Spawner successfully created. Id: " + controller.SpawnerId);
+                logger.Info($"Spawner successfully created. Id: {controller.SpawnerId}");
 
-                OnSpawnerRegistered();
+                // 8. Inform listeners
+                OnSpawnerStartedEvent?.Invoke();
+                OnSpawnerStarted();
             });
         }
 
-        protected virtual void OnSpawnerRegistered() { }
+        /// <summary>
+        /// Stops spawner processes
+        /// </summary>
+        public virtual void StopSpawner()
+        {
+            // Kill all the processes of spawner controller
+            if (killProcessesWhenStop)
+                spawnerController?.KillProcesses();
+
+            // Set spawn behaviour as not started
+            IsSpawnerStarted = false;
+
+            if (spawnerController != null)
+                logger.Info($"Spawner stopped. Id: {spawnerController.SpawnerId}");
+
+            // Destroy spawner
+            spawnerController = null;
+
+            OnSpawnerStoppedEvent?.Invoke();
+        }
+
+        /// <summary>
+        /// Invokes when spawner registered and started
+        /// </summary>
+        protected virtual void OnSpawnerStarted() { }
     }
 }

@@ -100,6 +100,7 @@ namespace MasterServerToolkit.Games
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Room started. Finalizing... Please wait!");
 
                 // Wait for spawning status until it is finished
+                // This status must be send by room
                 MstTimer.WaitWhile(() =>
                 {
                     return controller.Status != SpawnStatus.Finalized;
