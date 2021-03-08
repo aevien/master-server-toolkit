@@ -25,7 +25,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
-                scenes = new[] { "Assets/MasterServerToolkit/Demos/BasicSpawnerMirror/Scenes/MasterAndSpawner/MasterAndSpawner.unity" },
+                scenes = new[] { "Assets/MasterServerToolkit/Bridges/Mirror/BasicSpawnerMirror/Scenes/MasterAndSpawner/MasterAndSpawner.unity" },
                 locationPathName = Path.Combine(buildFolder, "MasterAndSpawner.exe"),
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.EnableHeadlessMode | BuildOptions.ShowBuiltPlayer | BuildOptions.Development
@@ -74,8 +74,8 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
                 scenes = new[] {
-                    "Assets/MasterServerToolkit/Demos/BasicSpawnerMirror/Scenes/Room/RoomStart.unity",
-                    "Assets/MasterServerToolkit/Demos/BasicSpawnerMirror/Scenes/Room/RoomOnline.unity"
+                    "Assets/MasterServerToolkit/Bridges/Mirror/BasicSpawnerMirror/Scenes/Room/RoomStart.unity",
+                    "Assets/MasterServerToolkit/Bridges/Mirror/BasicSpawnerMirror/Scenes/Room/RoomOnline.unity"
                 },
                 locationPathName = Path.Combine(buildFolder, "Room.exe"),
                 target = BuildTarget.StandaloneWindows64,
@@ -113,9 +113,9 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
                 scenes = new[] {
-                    "Assets/MasterServerToolkit/Demos/BasicSpawnerMirror/Scenes/Client/Client.unity",
-                    "Assets/MasterServerToolkit/Demos/BasicSpawnerMirror/Scenes/Room/RoomStart.unity",
-                    "Assets/MasterServerToolkit/Demos/BasicSpawnerMirror/Scenes/Room/RoomOnline.unity"
+                    "Assets/MasterServerToolkit/Bridges/Mirror/BasicSpawnerMirror/Scenes/Client/Client.unity",
+                    "Assets/MasterServerToolkit/Bridges/Mirror/BasicSpawnerMirror/Scenes/Room/RoomStart.unity",
+                    "Assets/MasterServerToolkit/Bridges/Mirror/BasicSpawnerMirror/Scenes/Room/RoomOnline.unity"
                 },
                 locationPathName = Path.Combine(buildFolder, "Client.exe"),
                 target = BuildTarget.StandaloneWindows64,

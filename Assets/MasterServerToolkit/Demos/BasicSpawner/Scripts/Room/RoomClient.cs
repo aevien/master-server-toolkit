@@ -52,7 +52,7 @@ namespace MasterServerToolkit.Demo.BasicSpawner
         #endregion
 
         /// <summary>
-        /// This socket connects room server to master as client
+        /// This socket connects room client to room server
         /// </summary>
         protected IClientSocket roomServerConnection;
 

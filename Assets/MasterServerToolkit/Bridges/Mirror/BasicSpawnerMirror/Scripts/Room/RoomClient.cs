@@ -127,7 +127,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             NetworkClient.UnregisterHandler<ValidateRoomAccessResultMessage>();
 
             // Stop listening to OnServerStartedEvent of our MirrorNetworkManager
-            if (NetworkManager.singleton is MirrorNetworkManager manager)
+            if (NetworkManager.singleton is RoomNetworkManager manager)
             {
                 manager.OnClientStartedEvent -= OnMirrorClientStartedEventHandler;
             }
@@ -149,7 +149,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             }
 
             // Start listening to OnServerStartedEvent of our MirrorNetworkManager
-            if (NetworkManager.singleton is MirrorNetworkManager manager)
+            if (NetworkManager.singleton is RoomNetworkManager manager)
             {
                 manager.OnClientStartedEvent += OnMirrorClientStartedEventHandler;
                 manager.OnClientStoppedEvent += OnMirrorClientStoppedEventHandler;

@@ -43,7 +43,7 @@ namespace MasterServerToolkit.MasterServer
         protected int serverPort = 5000;
 
         [SerializeField, Tooltip("The max number of allowed connections. If 0 - means unlimeted")]
-        protected int maxConnections = 0;
+        protected ushort maxConnections = 0;
 
         [Header("Editor Settings"), SerializeField]
         private HelpBox hpEditor = new HelpBox()
@@ -169,7 +169,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnValidate()
         {
-            if (maxConnections < 0) maxConnections = 0;
+            maxConnections = (ushort)Mathf.Clamp(maxConnections, 0, ushort.MaxValue);
         }
 
         /// <summary>

@@ -91,7 +91,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <summary>
         /// Mirror network manager
         /// </summary>
-        public NetworkManager MirrorNetworkManager { get; set; }
+        public NetworkManager RoomNetworkManager { get; set; }
 
         /// <summary>
         /// Controller of the room
@@ -169,7 +169,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             Connection?.RemoveDisconnectionListener(OnDisconnectedFromMasterServerEventHandler);
 
             // Start listenin to OnServerStartedEvent of our MirrorNetworkManager
-            if (MirrorNetworkManager is MirrorNetworkManager manager)
+            if (RoomNetworkManager is RoomNetworkManager manager)
             {
                 manager.OnServerStartedEvent -= OnMirrorServerStartedEventHandler;
                 manager.OnClientDisconnectedEvent -= OnMirrorClientDisconnectedEvent;
@@ -185,10 +185,10 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             if (Mst.Client.Rooms.ForceClientMode) return;
 
             // Get mirror network manager
-            MirrorNetworkManager = NetworkManager.singleton;
+            RoomNetworkManager = NetworkManager.singleton;
 
             // Start listening to OnServerStartedEvent of our MirrorNetworkManager
-            if (MirrorNetworkManager is MirrorNetworkManager manager)
+            if (RoomNetworkManager is RoomNetworkManager manager)
             {
                 manager.OnServerStartedEvent += OnMirrorServerStartedEventHandler;
                 manager.OnClientDisconnectedEvent += OnMirrorClientDisconnectedEvent;
@@ -335,13 +335,13 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             if (startServerAsHost)
             {
-                MirrorNetworkManager.StopHost();
-                MstTimer.WaitForSeconds(0.2f, () => MirrorNetworkManager.StartHost());
+                RoomNetworkManager.StopHost();
+                MstTimer.WaitForSeconds(0.2f, () => RoomNetworkManager.StartHost());
             }
             else
             {
-                MirrorNetworkManager.StopServer();
-                MstTimer.WaitForSeconds(0.2f, () => MirrorNetworkManager.StartServer());
+                RoomNetworkManager.StopServer();
+                MstTimer.WaitForSeconds(0.2f, () => RoomNetworkManager.StartServer());
             }
         }
 
@@ -357,7 +357,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 IsPublic = true,
 
                 // This is for controlling max number of players that may be connected
-                MaxConnections = Mst.Args.AsInt(Mst.Args.Names.RoomMaxConnections, MirrorNetworkManager.maxConnections),
+                MaxConnections = Mst.Args.AsInt(Mst.Args.Names.RoomMaxConnections, RoomNetworkManager.maxConnections),
 
                 // Just the name of the room
                 Name = Mst.Args.AsString(Mst.Args.Names.RoomName, $"Room[{Mst.Helper.CreateRandomAlphanumericString(5)}]"),
@@ -421,7 +421,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 taskController.FinalizeTask(new MstProperties(), () =>
                 {
                     // Start Mirror server
-                    MirrorNetworkManager.StartServer();
+                    RoomNetworkManager.StartServer();
                 });
             });
         }

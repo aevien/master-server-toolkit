@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
-    public class MirrorNetworkManager : NetworkManager
+    public class RoomNetworkManager : NetworkManager
     {
         #region INSPECTOR
 
