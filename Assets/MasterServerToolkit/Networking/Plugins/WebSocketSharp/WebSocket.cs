@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -160,7 +161,7 @@ namespace MasterServerToolkit.Networking
         /// Connect to server using timeout
         /// </summary>
         /// <returns></returns>
-        public IEnumerator Connect()
+        public void Connect()
         {
             // Create WebSocket instance with timeout info
             socket = new WebSocketSharp.WebSocket(url.ToString());
@@ -168,6 +169,11 @@ namespace MasterServerToolkit.Networking
             // Listen to messages
             socket.OnMessage += (sender, e) =>
             {
+                if (e.IsPing)
+                {
+                    logger.Info("Received Pong responce from server");
+                }
+
                 messages.Enqueue(e.RawData);
             };
 
@@ -176,6 +182,7 @@ namespace MasterServerToolkit.Networking
             {
                 logger.Debug("WebSocket opened connection");
                 IsConnected = true;
+                IsConnecting = false;
             };
 
             // Listen to errors
@@ -188,20 +195,11 @@ namespace MasterServerToolkit.Networking
             // Listen to connection close
             socket.OnClose += (sender, args) =>
             {
-                logger.Debug("WebSocket closed connection");
+                logger.Debug($"WebSocket closed connection with code [{args.Code}]. Reason: [{args.Reason}]");
                 IsConnected = false;
             };
 
             socket.ConnectAsync();
-
-            IsConnecting = true;
-
-            while (!IsConnected && Error == null)
-            {
-                yield return null;
-            }
-
-            IsConnecting = false;
         }
 
         /// <summary>
@@ -210,7 +208,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="buffer"></param>
         public void Send(byte[] buffer)
         {
-            socket.Send(buffer);
+            socket.SendAsync(buffer, null);
         }
 
         /// <summary>
@@ -232,7 +230,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public void Close()
         {
-            socket.Close();
+            socket.CloseAsync();
         }
 #endif
     }

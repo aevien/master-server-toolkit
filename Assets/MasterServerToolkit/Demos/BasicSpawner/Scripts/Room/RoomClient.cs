@@ -52,9 +52,9 @@ namespace MasterServerToolkit.Demo.BasicSpawner
         #endregion
 
         /// <summary>
-        /// This socket connects room client to room server
+        /// This socket connects room client to master
         /// </summary>
-        protected IClientSocket roomServerConnection;
+        protected IClientSocket masterConnection;
 
         /// <summary>
         /// Room access that client gets from master server
@@ -99,12 +99,15 @@ namespace MasterServerToolkit.Demo.BasicSpawner
 
             base.Awake();
 
-            // Create room client connection
-            roomServerConnection = Mst.Create.ClientSocket();
+            // Get connection to master
+            masterConnection = Mst.Connection;
 
-            // Listen toconnection statuses
-            roomServerConnection.AddConnectionListener(OnClientConnectedToRoomServer, false);
-            roomServerConnection.AddDisconnectionListener(OnClientDisconnectedFromRoomServer, false);
+            // Create room client connection
+            Connection = ConnectionFactory();
+
+            // Listen to connection statuses
+            Connection.AddConnectionListener(OnClientConnectedToRoomServer, false);
+            Connection.AddDisconnectionListener(OnClientDisconnectedFromRoomServer, false);
 
             // If master IP is provided via cmd arguments
             masterIP = Mst.Args.AsString(Mst.Args.Names.MasterIp, masterIP);
@@ -115,7 +118,8 @@ namespace MasterServerToolkit.Demo.BasicSpawner
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            roomServerConnection?.Disconnect();
+            // Disconnect from room server
+            Connection?.Disconnect();
         }
 
         /// <summary>
@@ -153,7 +157,7 @@ namespace MasterServerToolkit.Demo.BasicSpawner
         protected override void OnInitialize()
         {
             // Listen to disconnection from master
-            Connection.AddDisconnectionListener(OnDisconnectedFromMasterEvent, false);
+            masterConnection.AddDisconnectionListener(OnDisconnectedFromMasterEvent, false);
 
             MstTimer.WaitForSeconds(1f, () =>
             {
@@ -190,14 +194,14 @@ namespace MasterServerToolkit.Demo.BasicSpawner
         private void ConnectToMaster()
         {
             // Start client connection
-            if (!Connection.IsConnected)
+            if (!masterConnection.IsConnected)
             {
-                Connection.UseSsl = MstApplicationConfig.Instance.UseSecure || Mst.Args.UseSecure;
-                Connection.Connect(masterIP, masterPort);
+                masterConnection.UseSsl = MstApplicationConfig.Instance.UseSecure || Mst.Args.UseSecure;
+                masterConnection.Connect(masterIP, masterPort);
             }
 
             // Wait a result of client connection
-            Connection.WaitForConnection((clientSocket) =>
+            masterConnection.WaitForConnection((clientSocket) =>
             {
                 if (!clientSocket.IsConnected)
                 {
@@ -205,7 +209,7 @@ namespace MasterServerToolkit.Demo.BasicSpawner
                 }
                 else
                 {
-                    logger.Info($"Successfully connected to {Connection.ConnectionIp}:{Connection.ConnectionPort}");
+                    logger.Info($"Successfully connected to master {masterConnection.ConnectionIp}:{masterConnection.ConnectionPort}");
 
                     // For the test purpose only
                     if (IsInTestMode())
@@ -237,7 +241,7 @@ namespace MasterServerToolkit.Demo.BasicSpawner
                         }
                     }
                 }
-            }, 4f);
+            }, 5f);
         }
 
         /// <summary>
@@ -305,18 +309,18 @@ namespace MasterServerToolkit.Demo.BasicSpawner
                 logger.Debug("Connecting to room server...");
 
                 // Start client connection
-                roomServerConnection.UseSsl = MstApplicationConfig.Instance.UseSecure || Mst.Args.UseSecure;
-                roomServerConnection.Connect(roomServerIp, roomServerPort);
+                //roomServerConnection.UseSsl = MstApplicationConfig.Instance.UseSecure || Mst.Args.UseSecure;
+                //roomServerConnection.Connect(roomServerIp, roomServerPort);
 
-                // Wait a result of client connection
-                roomServerConnection.WaitForConnection((clientSocket) =>
-                {
-                    if (!clientSocket.IsConnected)
-                    {
-                        logger.Error("Connection attempts to room server timed out");
-                        return;
-                    }
-                }, 4f);
+                //// Wait a result of client connection
+                //roomServerConnection.WaitForConnection((clientSocket) =>
+                //{
+                //    if (!clientSocket.IsConnected)
+                //    {
+                //        logger.Error("Connection attempts to room server timed out");
+                //        return;
+                //    }
+                //}, 4f);
             });
         }
 
@@ -329,20 +333,20 @@ namespace MasterServerToolkit.Demo.BasicSpawner
 
             OnConnectedToServerEvent?.Invoke(this);
 
-            roomServerConnection.RemoveConnectionListener(OnClientConnectedToRoomServer);
-            roomServerConnection.SendMessage((short)MstMessageCodes.ValidateRoomAccessRequest, roomServerAccessInfo.Token, (status, response) =>
-            {
-                // If access denied
-                if (status != ResponseStatus.Success)
-                {
-                    logger.Error(response.AsString());
-                    OnAccessDiniedEvent?.Invoke();
-                    return;
-                }
+            //roomServerConnection.RemoveConnectionListener(OnClientConnectedToRoomServer);
+            //roomServerConnection.SendMessage((short)MstMessageCodes.ValidateRoomAccessRequest, roomServerAccessInfo.Token, (status, response) =>
+            //{
+            //    // If access denied
+            //    if (status != ResponseStatus.Success)
+            //    {
+            //        logger.Error(response.AsString());
+            //        OnAccessDiniedEvent?.Invoke();
+            //        return;
+            //    }
 
-                // If access granted
-                OnAccessGrantedEvent?.Invoke();
-            });
+            //    // If access granted
+            //    OnAccessGrantedEvent?.Invoke();
+            //});
         }
 
         /// <summary>
@@ -352,7 +356,7 @@ namespace MasterServerToolkit.Demo.BasicSpawner
         {
             OnDisconnectedFromServerEvent?.Invoke(this);
 
-            roomServerConnection.RemoveDisconnectionListener(OnClientDisconnectedFromRoomServer);
+            //roomServerConnection.RemoveDisconnectionListener(OnClientDisconnectedFromRoomServer);
             logger.Error("We have lost the connection to room server");
         }
 
@@ -360,7 +364,7 @@ namespace MasterServerToolkit.Demo.BasicSpawner
         protected virtual void OnDisconnectedFromMasterEvent()
         {
             Connection?.RemoveDisconnectionListener(OnDisconnectedFromMasterEvent);
-            roomServerConnection?.Disconnect();
+            //roomServerConnection?.Disconnect();
         }
     }
 }

@@ -66,7 +66,6 @@ namespace MasterServerToolkit.Networking
 
             lock (_messageQueue)
             {
-                // Notify about new messages
                 while (_messageQueue.Count > 0)
                 {
                     OnMessageEvent?.Invoke(_messageQueue.Dequeue());

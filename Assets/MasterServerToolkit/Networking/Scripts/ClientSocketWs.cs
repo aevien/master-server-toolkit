@@ -299,7 +299,8 @@ namespace MasterServerToolkit.Networking
             Peer = _peer;
 
             MstUpdateRunner.Instance.Add(this);
-            MstUpdateRunner.Instance.StartCoroutine(webSocket.Connect());
+
+            webSocket.Connect();
 
             return this;
         }

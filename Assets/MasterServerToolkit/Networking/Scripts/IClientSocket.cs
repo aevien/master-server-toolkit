@@ -30,7 +30,7 @@ namespace MasterServerToolkit.Networking
         int ConnectionPort { get; }
 
         /// <summary>
-        /// Whether  or not to use secure connection
+        /// Whether or not to use secure connection
         /// </summary>
         bool UseSsl { get; set; }
 
