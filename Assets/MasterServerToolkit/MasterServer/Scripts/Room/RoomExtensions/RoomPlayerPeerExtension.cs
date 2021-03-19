@@ -21,7 +21,7 @@ namespace MasterServerToolkit.MasterServer
             MasterPeerId = masterPeerId;
             Username = username ?? throw new ArgumentNullException(nameof(username));
             Peer = roomPeer ?? throw new ArgumentNullException(nameof(roomPeer));
-            Options = customOptions ?? throw new ArgumentNullException(nameof(customOptions));
+            Properties = customOptions ?? throw new ArgumentNullException(nameof(customOptions));
         }
 
         /// <summary>
@@ -42,6 +42,6 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Account properties
         /// </summary>
-        public MstProperties Options { get; }
+        public MstProperties Properties { get; }
     }
 }

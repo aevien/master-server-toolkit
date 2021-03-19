@@ -73,7 +73,7 @@ namespace MasterServerToolkit.Networking
 
         public override void Disconnect(string reason)
         {
-            _session.Disconnect();
+            _session.Close(reason);
         }
     }
 }

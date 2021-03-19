@@ -28,11 +28,6 @@
         public string MasterIp { get { return "-mstMasterIp"; } }
 
         /// <summary>
-        /// Use this cmd to setup web server connection port
-        /// </summary>
-        public string WebPort { get { return "-mstWebPort"; } }
-
-        /// <summary>
         /// Use this cmd to setup spawned process task ID
         /// </summary>
         public string SpawnTaskId { get { return "-mstSpawnTaskId"; } }
@@ -142,5 +137,15 @@
         /// Instructs the game to try to render at a specified frame rate
         /// </summary>
         public string TargetFrameRate { get { return "-mstTargetFrameRate"; } }
+
+        /// <summary>
+        /// Use this cmd to setup web server connection port
+        /// </summary>
+        public string WebPort { get { return "-mstWebPort"; } }
+
+        /// <summary>
+        /// Use this cmd to setup web server root directory
+        /// </summary>
+        public string WebRootDir { get { return "-mstWebRootDir"; } }
     }
 }

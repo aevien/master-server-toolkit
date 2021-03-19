@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using WebSocketSharp;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         using System.Runtime.InteropServices;
@@ -163,6 +164,8 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public void Connect()
         {
+            IsConnecting = true;
+
             // Create WebSocket instance with timeout info
             socket = new WebSocketSharp.WebSocket(url.ToString());
 
@@ -195,8 +198,9 @@ namespace MasterServerToolkit.Networking
             // Listen to connection close
             socket.OnClose += (sender, args) =>
             {
-                logger.Debug($"WebSocket closed connection with code [{args.Code}]. Reason: [{args.Reason}]");
+                logger.Debug($"WebSocket closed connection with code [{args.Code}:{Enum.Parse(typeof(CloseStatusCode), args.Code.ToString())}]. Reason: [{args.Reason}]");
                 IsConnected = false;
+                IsConnecting = false;
             };
 
             socket.ConnectAsync();
@@ -228,9 +232,19 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Close websocket client connection
         /// </summary>
+        /// <param name="code"></param>
+        /// <param name="reason"></param>
+        public void Close(string reason = "")
+        {
+            socket.CloseAsync(WebSocketSharp.CloseStatusCode.Normal, reason);
+        }
+
+        /// <summary>
+        /// Close websocket client connection
+        /// </summary>
         public void Close()
         {
-            socket.CloseAsync();
+            socket.CloseAsync(WebSocketSharp.CloseStatusCode.Normal, "Connection closed successfuly");
         }
 #endif
     }

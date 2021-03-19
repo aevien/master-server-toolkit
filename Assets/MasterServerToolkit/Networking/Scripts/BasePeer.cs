@@ -1,9 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
-using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace MasterServerToolkit.Networking

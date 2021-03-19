@@ -13,7 +13,7 @@ namespace MasterServerToolkit.Networking
     /// <summary>
     /// Server socket, which accepts websocket connections
     /// </summary>
-    public partial class ServerSocketWs : IServerSocket, IUpdatable
+    public partial class WsServerSocket : IServerSocket, IUpdatable
     {
         private WebSocketServer server;
         private readonly Queue<Action> executeOnUpdate;
@@ -44,7 +44,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public event Action<IServerSocket> OnBeforeServerStart;
 
-        public ServerSocketWs()
+        public WsServerSocket()
         {
             executeOnUpdate = new Queue<Action>();
         }

@@ -15,6 +15,6 @@
         /// <summary>
         /// Properties of client account
         /// </summary>
-        MstProperties Options { get; }
+        MstProperties Properties { get; }
     }
 }

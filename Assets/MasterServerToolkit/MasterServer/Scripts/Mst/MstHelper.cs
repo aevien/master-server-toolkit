@@ -173,18 +173,22 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         private IEnumerator GetPublicIPCoroutine(GetPublicIPResult callback)
         {
-            UnityWebRequest www = UnityWebRequest.Get("https://ifconfig.co/ip");
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Get("https://ifconfig.co/ip"))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.isNetworkError || www.isHttpError)
-            {
-                callback?.Invoke(null, www.error);
-                Debug.LogError(www.error);
-            }
-            else
-            {
-                var ipInfo = www.downloadHandler.text;
-                callback?.Invoke(ipInfo, string.Empty);
+                if (www.result == UnityWebRequest.Result.ConnectionError
+                    || www.result == UnityWebRequest.Result.DataProcessingError
+                    || www.result == UnityWebRequest.Result.ProtocolError)
+                {
+                    callback?.Invoke(null, www.error);
+                    Debug.LogError(www.error);
+                }
+                else if (www.result == UnityWebRequest.Result.Success)
+                {
+                    var ipInfo = www.downloadHandler.text;
+                    callback?.Invoke(ipInfo, string.Empty);
+                }
             }
         }
     }

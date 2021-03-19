@@ -10,7 +10,7 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public class WsService : WebSocketBehavior
     {
-        private ServerSocketWs _serverSocket;
+        private WsServerSocket _serverSocket;
         private Queue<byte[]> _messageQueue;
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace MasterServerToolkit.Networking
             _messageQueue = new Queue<byte[]>();
         }
 
-        public WsService(ServerSocketWs serverSocket)
+        public WsService(WsServerSocket serverSocket)
         {
             IgnoreExtensions = true;
             _messageQueue = new Queue<byte[]>();
@@ -48,7 +48,7 @@ namespace MasterServerToolkit.Networking
             _serverSocket.OnUpdateEvent += Update;
         }
 
-        public void SetServerSocket(ServerSocketWs serverSocket)
+        public void SetServerSocket(WsServerSocket serverSocket)
         {
             if (_serverSocket == null)
             {
@@ -114,9 +114,9 @@ namespace MasterServerToolkit.Networking
             Send(data);
         }
 
-        public void Disconnect()
+        public void Close(string reason)
         {
-            Sessions.CloseSession(ID);
+            Sessions.CloseSession(ID, CloseStatusCode.Normal, reason);
         }
     }
 }

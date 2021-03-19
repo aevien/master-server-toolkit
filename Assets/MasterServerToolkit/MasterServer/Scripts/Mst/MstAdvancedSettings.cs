@@ -15,12 +15,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Factory, used to create client sockets
         /// </summary>
-        public Func<IClientSocket> ClientSocketFactory = () => new ClientSocketWs();
+        public Func<IClientSocket> ClientSocketFactory = () => new WsClientSocket();
 
         /// <summary>
         /// Factory, used to create server sockets
         /// </summary>
-        public Func<IServerSocket> ServerSocketFactory = () => new ServerSocketWs();
+        public Func<IServerSocket> ServerSocketFactory = () => new WsServerSocket();
 
         /// <summary>
         /// Message factory

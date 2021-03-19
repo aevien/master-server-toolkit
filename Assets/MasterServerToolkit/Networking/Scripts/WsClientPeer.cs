@@ -66,7 +66,7 @@ namespace MasterServerToolkit.Networking
 
         public override void Disconnect(string reason)
         {
-            socket.Close();
+            socket.Close(reason);
         }
     }
 }

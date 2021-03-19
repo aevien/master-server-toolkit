@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
@@ -20,6 +21,8 @@ namespace MasterServerToolkit.MasterServer
         protected int httpPort = 5056;
         [SerializeField]
         protected string[] defaultIndexPage = new string[] { "index", "home" };
+        [SerializeField]
+        protected string rootDirectory = "wwwroot";
 
         [Header("User Credentials Settings"), SerializeField]
         protected AuthenticationSchemes authenticationSchemes = AuthenticationSchemes.Digest;
@@ -68,12 +71,19 @@ namespace MasterServerToolkit.MasterServer
             CertificatePath = MstApplicationConfig.Instance.CertificatePath;
             CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
 
+            // Set port
             httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);
+
+            // Set root directory
+            rootDirectory = Mst.Args.AsString(Mst.Args.Names.WebRootDir, rootDirectory);
+
+            // Init root directory. Create if exists
+            InitRooDirectory();
 
             // Initialize server
             httpServer = new HttpServer(httpPort, UserSecure)
             {
-                AuthenticationSchemes = authenticationSchemes,
+                AuthenticationSchemes = authenticationSchemes == AuthenticationSchemes.None ? AuthenticationSchemes.Anonymous : authenticationSchemes,
                 Realm = realm,
                 UserCredentialsFinder = UserCredentialsFinder
             };
@@ -130,6 +140,32 @@ namespace MasterServerToolkit.MasterServer
             if (httpServer.IsListening)
             {
                 logger.Info($"Http server is started and listening port: {httpServer.Port}");
+            }
+        }
+
+        /// <summary>
+        /// Init root directory. Create if exists
+        /// </summary>
+        private void InitRooDirectory()
+        {
+            // Get app directory
+            string appDirectory = Directory.GetCurrentDirectory();
+
+            // Root directory path
+            string rootDirPath = Path.Combine(appDirectory, rootDirectory);
+
+            // Create if not eaxist
+            if (!Directory.Exists(rootDirPath))
+            {
+                logger.Info($"No web root directory found. Lets create it as \"{rootDirPath}\"");
+
+                Directory.CreateDirectory(rootDirPath);
+
+                logger.Info($"Root directory is created as \"{rootDirPath}\"");
+            }
+            else
+            {
+                logger.Info($"Root directory found in \"{rootDirPath}\"");
             }
         }
 
@@ -331,6 +367,7 @@ namespace MasterServerToolkit.MasterServer
                 }
                 else
                 {
+
                     byte[] contents = Encoding.UTF8.GetBytes(DefaultIndexPageHtml());
 
                     response.ContentType = "text/html";

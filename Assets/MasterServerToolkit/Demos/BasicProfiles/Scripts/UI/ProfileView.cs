@@ -133,19 +133,22 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
 
         private IEnumerator StartLoadAvatarImage(string url)
         {
-            UnityWebRequest www = UnityWebRequestTexture.GetTexture(url);
-
-            yield return www.SendWebRequest();
-
-            if (www.isNetworkError || www.isHttpError)
+            using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(url))
             {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-                avatarImage.sprite = null;
-                avatarImage.sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.ConnectionError
+                || www.result == UnityWebRequest.Result.DataProcessingError
+                || www.result == UnityWebRequest.Result.ProtocolError)
+                {
+                    Debug.Log(www.error);
+                }
+                else if (www.result == UnityWebRequest.Result.Success)
+                {
+                    var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+                    avatarImage.sprite = null;
+                    avatarImage.sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
+                }
             }
         }
     }

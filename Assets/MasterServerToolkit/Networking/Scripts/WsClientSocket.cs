@@ -9,7 +9,7 @@ namespace MasterServerToolkit.Networking
     /// <summary>
     /// Client for connecting to websocket server.
     /// </summary>
-    public class ClientSocketWs : BaseClientSocket, IClientSocket, IUpdatable
+    public class WsClientSocket : BaseClientSocket, IClientSocket, IUpdatable
     {
         private WsClientPeer _peer;
         private WebSocket webSocket;
@@ -42,7 +42,7 @@ namespace MasterServerToolkit.Networking
         public event Action OnDisconnectedEvent;
         public event Action<ConnectionStatus> OnStatusChangedEvent;
 
-        public ClientSocketWs()
+        public WsClientSocket()
         {
             SetStatus(ConnectionStatus.Disconnected);
             handlers = new Dictionary<short, IPacketHandler>();
