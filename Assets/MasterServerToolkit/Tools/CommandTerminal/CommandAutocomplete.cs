@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace CommandTerminal
+namespace MasterServerToolkit.Terminal
 {
     public class CommandAutocomplete
     {

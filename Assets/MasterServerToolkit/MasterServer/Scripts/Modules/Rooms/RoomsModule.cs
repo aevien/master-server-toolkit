@@ -291,8 +291,6 @@ namespace MasterServerToolkit.MasterServer
 
             DestroyRoom(room);
 
-            logger.Debug($"Room {roomId} has been successfully destroyed");
-
             message.Respond(ResponseStatus.Success);
         }
 

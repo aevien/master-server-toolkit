@@ -1,9 +1,5 @@
-﻿using Aevien.UI;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using MasterServerToolkit.UI;
 using TMPro;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
 {

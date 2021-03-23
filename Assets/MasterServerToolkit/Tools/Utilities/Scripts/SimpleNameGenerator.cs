@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using UnityEngine;
 
-namespace Aevien.Utilities
+namespace MasterServerToolkit.Utils
 {
     public sealed class SimpleNameGenerator
     {

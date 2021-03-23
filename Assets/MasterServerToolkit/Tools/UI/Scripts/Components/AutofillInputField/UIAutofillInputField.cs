@@ -8,7 +8,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using static TMPro.TMP_Dropdown;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public class UIAutofillInputField : MonoBehaviour
     {

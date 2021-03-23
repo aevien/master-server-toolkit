@@ -2,6 +2,7 @@
 using MasterServerToolkit.MasterServer;
 using UnityEngine;
 using MasterServerToolkit.Logging;
+using MasterServerToolkit.Utils;
 
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
 using LiteDB;

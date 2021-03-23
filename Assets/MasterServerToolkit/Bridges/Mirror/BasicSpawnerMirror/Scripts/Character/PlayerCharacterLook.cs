@@ -2,7 +2,7 @@
 using Mirror;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworkingOld.Character
 {
     public class PlayerCharacterLook : PlayerCharacterBehaviour
     {

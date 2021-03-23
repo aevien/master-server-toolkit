@@ -1,5 +1,5 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.MasterServer;
+﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.UI;
 using UnityEngine;
 
 namespace MasterServerToolkit.Games

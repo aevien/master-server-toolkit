@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace Aevien.UI
+﻿namespace MasterServerToolkit.UI
 {
     public interface IValidatableComponent
     {

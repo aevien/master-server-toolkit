@@ -2,7 +2,7 @@ using System.Text;
 using System.Diagnostics;
 using UnityEngine;
 
-namespace CommandTerminal
+namespace MasterServerToolkit.Terminal
 {
     public static class BuiltinCommands
     {

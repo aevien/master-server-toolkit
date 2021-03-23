@@ -1,9 +1,7 @@
-﻿using MasterServerToolkit.MasterServer;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using UnityEngine;
 
-namespace Aevien.Utilities
+namespace MasterServerToolkit.Utils
 {
     public class DynamicSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {

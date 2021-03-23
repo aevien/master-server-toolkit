@@ -1,11 +1,12 @@
 ﻿#if MIRROR
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils;
 using Mirror;
 using System;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworking
+namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 {
     public class RoomNetworkManager : NetworkManager
     {

@@ -1,12 +1,13 @@
 ﻿#if MIRROR
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using Mirror;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworking
+namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 {
     public class RoomServer : BaseClientBehaviour, ITerminatableRoom
     {
@@ -91,7 +92,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <summary>
         /// Mirror network manager
         /// </summary>
-        public NetworkManager RoomNetworkManager { get; set; }
+        public NetworkManager RoomNetworkManager => NetworkManager.singleton;
 
         /// <summary>
         /// Controller of the room
@@ -121,6 +122,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         protected override void Awake()
         {
             base.Awake();
+
+            bool self = Instance == this;
 
             // Only one room server can exist in scene
             if (Instance != null)
@@ -183,9 +186,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         protected override void OnInitialize()
         {
             if (Mst.Client.Rooms.ForceClientMode) return;
-
-            // Get mirror network manager
-            RoomNetworkManager = NetworkManager.singleton;
 
             // Start listening to OnServerStartedEvent of our MirrorNetworkManager
             if (RoomNetworkManager is RoomNetworkManager manager)
@@ -335,13 +335,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             if (startServerAsHost)
             {
-                RoomNetworkManager.StopHost();
-                MstTimer.WaitForSeconds(0.2f, () => RoomNetworkManager.StartHost());
+                RoomNetworkManager.StartHost();
             }
             else
             {
-                RoomNetworkManager.StopServer();
-                MstTimer.WaitForSeconds(0.2f, () => RoomNetworkManager.StartServer());
+                RoomNetworkManager.StartServer();
             }
         }
 

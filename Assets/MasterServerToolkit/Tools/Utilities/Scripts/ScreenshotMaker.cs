@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEngine;
 
-namespace Aevien.Utilities
+namespace MasterServerToolkit.Utils
 {
     public class ScreenshotMaker : Singleton<ScreenshotMaker>
     {

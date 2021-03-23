@@ -1082,27 +1082,15 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="state"></param>
         protected virtual void OnLobbyStateChange(LobbyState state)
         {
-            switch (state)
+            StatusText = state switch
             {
-                case LobbyState.FailedToStart:
-                    StatusText = "Failed to start server";
-                    break;
-                case LobbyState.Preparations:
-                    StatusText = "Failed to start server";
-                    break;
-                case LobbyState.StartingGameServer:
-                    StatusText = "Starting game server";
-                    break;
-                case LobbyState.GameInProgress:
-                    StatusText = "Game in progress";
-                    break;
-                case LobbyState.GameOver:
-                    StatusText = "Game is over";
-                    break;
-                default:
-                    StatusText = "Unknown lobby state";
-                    break;
-            }
+                LobbyState.FailedToStart => "Failed to start server",
+                LobbyState.Preparations => "Failed to start server",
+                LobbyState.StartingGameServer => "Starting game server",
+                LobbyState.GameInProgress => "Game in progress",
+                LobbyState.GameOver => "Game is over",
+                _ => "Unknown lobby state",
+            };
 
             // Disable ready states
             foreach (var lobbyMember in membersByUsernameList.Values)

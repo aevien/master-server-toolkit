@@ -1,10 +1,5 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.Logging;
-using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.UI;
 using TMPro;
 using UnityEngine;
 

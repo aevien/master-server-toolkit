@@ -1,9 +1,7 @@
-﻿using Aevien.Utilities;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer.Examples.BasicProfile

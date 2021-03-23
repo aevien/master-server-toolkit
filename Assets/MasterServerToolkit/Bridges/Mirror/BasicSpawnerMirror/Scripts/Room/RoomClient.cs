@@ -3,6 +3,7 @@ using MasterServerToolkit.Games;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using Mirror;
 using System;
 using System.Collections;
@@ -11,7 +12,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworking
+namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 {
     public class RoomClient : BaseClientBehaviour
     {
@@ -81,7 +82,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <summary>
         /// Mirror network manager
         /// </summary>
-        public NetworkManager MirrorNetworkManager { get; set; }
+        public NetworkManager RoomNetworkManager => NetworkManager.singleton;
 
         /// <summary>
         /// Fires when room server has given an access to us
@@ -138,14 +139,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
         protected override void OnInitialize()
         {
-            // Get mirror network manager
-            MirrorNetworkManager = NetworkManager.singleton;
-
             // If we hav offline scene in global options
             if (Mst.Options.Has(MstDictKeys.ROOM_OFFLINE_SCENE_NAME))
             {
                 logger.Debug("Assigning offline scene to mirror network manager");
-                MirrorNetworkManager.offlineScene = Mst.Options.AsString(MstDictKeys.ROOM_OFFLINE_SCENE_NAME);
+                RoomNetworkManager.offlineScene = Mst.Options.AsString(MstDictKeys.ROOM_OFFLINE_SCENE_NAME);
             }
 
             // Start listening to OnServerStartedEvent of our MirrorNetworkManager
@@ -183,7 +181,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             NetworkClient.UnregisterHandler<ValidateRoomAccessResultMessage>();
 
             // Stop mirror client
-            MirrorNetworkManager.StopClient();
+            RoomNetworkManager?.StopClient();
         }
 
         #region TEST MODE
@@ -277,13 +275,13 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                         new OkDialogBoxEventMessage("We could not get access to room. Please try again later or contact to administrator",
                         () =>
                         {
-                            if (string.IsNullOrEmpty(MirrorNetworkManager.offlineScene))
+                            if (string.IsNullOrEmpty(RoomNetworkManager.offlineScene))
                             {
                                 Mst.Runtime.Quit();
                             }
                             else
                             {
-                                SceneManager.LoadScene(MirrorNetworkManager.offlineScene);
+                                SceneManager.LoadScene(RoomNetworkManager.offlineScene);
                             }
                         }));
                     return;
@@ -312,7 +310,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 if (!isSuccessful)
                 {
                     logger.Error("We could not connect to room. Please try again later or contact to administrator");
-                    MirrorNetworkManager.StopClient();
+                    RoomNetworkManager.StopClient();
                 }
                 else
                 {
@@ -332,7 +330,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 logger.Debug("Connecting to mirror server...");
 
                 // Start mirror client
-                MirrorNetworkManager.StartClient();
+                RoomNetworkManager.StartClient();
             }
         }
 

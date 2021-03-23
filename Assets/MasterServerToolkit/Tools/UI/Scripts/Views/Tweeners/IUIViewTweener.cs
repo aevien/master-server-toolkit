@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Events;
+﻿using UnityEngine.Events;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public interface IUIViewTweener
     {

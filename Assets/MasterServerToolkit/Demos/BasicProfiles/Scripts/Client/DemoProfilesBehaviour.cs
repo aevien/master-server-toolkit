@@ -1,11 +1,8 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.Games;
-using MasterServerToolkit.MasterServer.Examples.BasicProfile;
+﻿using MasterServerToolkit.Games;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.UI;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.MasterServer.Examples.BasicProfile

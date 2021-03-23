@@ -1,8 +1,8 @@
-using Aevien.Utilities;
+using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace CommandTerminal
+namespace MasterServerToolkit.Terminal
 {
     public enum TerminalState
     {

@@ -3,7 +3,7 @@ using MasterServerToolkit.MasterServer;
 using Mirror;
 using System;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworking
+namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 {
     public class RoomPlayer
     {

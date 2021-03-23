@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Linq;
-using UnityEngine;
-using UnityEngine.Networking;
+﻿using UnityEngine;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public class UIComponentsDemo : MonoBehaviour
     {

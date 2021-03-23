@@ -2,6 +2,7 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.UI;
 using UnityEngine;
 using UnityEngine.Events;
 

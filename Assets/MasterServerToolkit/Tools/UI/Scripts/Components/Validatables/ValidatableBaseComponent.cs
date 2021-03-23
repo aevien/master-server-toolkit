@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public class ValidatableBaseComponent : MonoBehaviour, IValidatableComponent
     {

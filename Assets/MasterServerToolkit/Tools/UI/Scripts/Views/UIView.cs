@@ -1,12 +1,11 @@
 ﻿using MasterServerToolkit.Logging;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     [RequireComponent(typeof(Canvas), typeof(GraphicRaycaster), typeof(CanvasGroup))]
     public class UIView : MonoBehaviour, IUIView

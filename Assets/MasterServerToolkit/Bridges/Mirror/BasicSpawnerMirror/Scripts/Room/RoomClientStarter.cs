@@ -2,7 +2,7 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworking
+namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 {
     public class RoomClientStarter : BaseClientBehaviour
     {

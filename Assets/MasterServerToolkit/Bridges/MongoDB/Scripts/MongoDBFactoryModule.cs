@@ -1,5 +1,6 @@
 using UnityEngine;
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils;
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
 using MongoDB.Driver;
 #endif

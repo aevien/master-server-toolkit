@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public class UIAutofillInputFieldItem : MonoBehaviour
     {

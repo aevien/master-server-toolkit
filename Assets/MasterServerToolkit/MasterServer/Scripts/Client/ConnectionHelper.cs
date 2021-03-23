@@ -1,11 +1,9 @@
-﻿using Aevien.Utilities;
-using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using System.Collections;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
-
 
 namespace MasterServerToolkit.MasterServer
 {

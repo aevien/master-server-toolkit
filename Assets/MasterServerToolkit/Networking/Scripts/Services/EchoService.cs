@@ -1,5 +1,4 @@
-﻿using Aevien.Utilities;
-using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Logging;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 

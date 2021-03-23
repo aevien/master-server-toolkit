@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Aevien.Utilities
+namespace MasterServerToolkit.Utils
 {
     public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {

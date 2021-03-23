@@ -1,7 +1,7 @@
 ﻿#if MIRROR
 using MasterServerToolkit.MasterServer;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworkingOld.Character
 {
     public class PlayerCharacter : PlayerCharacterBehaviour
     {

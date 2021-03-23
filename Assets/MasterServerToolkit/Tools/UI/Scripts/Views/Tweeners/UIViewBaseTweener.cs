@@ -1,14 +1,18 @@
 ﻿
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     [RequireComponent(typeof(CanvasGroup))]
     public class UIViewBaseTweener : MonoBehaviour, IUIViewTweener
     {
+
+#if LEAN_TWEEN
         private int tweenerId = -1;
+#endif
         private UnityAction callback;
         private CanvasGroup canvasGroup;
 

@@ -1,7 +1,5 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.MasterServer;
-using System.Collections;
-using System.Collections.Generic;
+﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.UI;
 using UnityEngine;
 
 namespace MasterServerToolkit.Games

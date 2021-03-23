@@ -1,10 +1,8 @@
-﻿using Aevien.Utilities;
-using MasterServerToolkit.Logging;
-using MasterServerToolkit.MasterServer;
+﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 
 namespace MasterServerToolkit.Networking

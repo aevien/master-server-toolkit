@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public class ValidationFormComponent : MonoBehaviour, IUIViewComponent
     {
