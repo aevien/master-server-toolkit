@@ -236,7 +236,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="reason"></param>
         public void Close(string reason = "")
         {
-            socket.CloseAsync(WebSocketSharp.CloseStatusCode.Normal, reason);
+            socket.CloseAsync(CloseStatusCode.Normal, reason);
         }
 
         /// <summary>
@@ -244,7 +244,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public void Close()
         {
-            socket.CloseAsync(WebSocketSharp.CloseStatusCode.Normal, "Connection closed successfuly");
+            socket.CloseAsync(CloseStatusCode.Normal, "Connection closed successfuly");
         }
 #endif
     }

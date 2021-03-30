@@ -681,7 +681,7 @@ namespace MasterServerToolkit.MasterServer
                 var userEmail = userCredentials.AsString(MstDictKeys.USER_EMAIL).ToLower();
 
                 // Check if length of our password is valid
-                if(userPasswordMinChars > userPassword.Length)
+                if (userPasswordMinChars > userPassword.Length)
                 {
                     message.Respond($"Invalid user password. It must consist at least {userPasswordMinChars} characters", ResponseStatus.Error);
                     return;
@@ -759,341 +759,390 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         protected virtual async void SignInMessageHandler(IIncomingMessage message)
         {
-            logger.Debug($"Signing in user {message.Peer.Id}...");
-
-            var securityExt = message.Peer.GetExtension<SecurityInfoPeerExtension>();
-            var aesKey = securityExt.AesKey;
-
-            if (aesKey == null)
+            try
             {
-                // There's no aesKey that client and master agreed upon
-                message.Respond("Insecure request", ResponseStatus.Unauthorized);
-                return;
+                logger.Debug($"Signing in user {message.Peer.Id}...");
+
+                // Get security extension of a peer
+                var securityExt = message.Peer.GetExtension<SecurityInfoPeerExtension>();
+
+                // Get Aes key
+                var aesKey = securityExt.AesKey;
+
+                if (aesKey == null)
+                {
+                    // There's no aesKey that client and master agreed upon
+                    throw new MstMessageHandlerException("Insecure request", ResponseStatus.Unauthorized);
+                }
+
+                // Get excrypted data
+                var encryptedData = message.AsBytes();
+
+                // Decrypt data
+                var decryptedBytesData = Mst.Security.DecryptAES(encryptedData, aesKey);
+
+                // Parse user credentials
+                var userCredentials = MstProperties.FromBytes(decryptedBytesData);
+
+                // Let's run auth factory
+                IAccountInfoData userAccount = await RunAuthFactory(message.Peer, userCredentials);
+
+                // Setup auth extension
+                var userExtension = message.Peer.AddExtension(CreateUserPeerExtension(message.Peer));
+                userExtension.Account = userAccount ?? throw new MstMessageHandlerException("Account is not created!", ResponseStatus.Failed);
+
+                // Listen to disconnect event
+                userExtension.Peer.OnPeerDisconnectedEvent += OnUserDisconnectedEventListener;
+
+                // Add to lookup of logged in users
+                LoggedInUsersByUsername.Add(userExtension.Username.ToLower(), userExtension);
+                LoggedInUsersById.Add(userExtension.UserId, userExtension);
+
+                logger.Debug($"User {message.Peer.Id} signed in as {userAccount.Username}");
+
+                // Send response to logged in user
+                message.Respond(userExtension.CreateAccountInfoPacket(), ResponseStatus.Success);
+
+                // Trigger the login event
+                OnUserLoggedInEvent?.Invoke(userExtension);
             }
+            // If we got system exception
+            catch (MstMessageHandlerException e)
+            {
+                message.Respond(e.Message, e.Status);
+            }
+            // If we got another exception
+            catch (Exception e)
+            {
+                message.Respond(e.Message, ResponseStatus.Error);
+            }
+        }
 
-            var encryptedData = message.AsBytes();
-
-            // Decrypt data
-            var decryptedBytesData = Mst.Security.DecryptAES(encryptedData, aesKey);
-
-            // Parse user credentials
-            var userCredentials = MstProperties.FromBytes(decryptedBytesData);
-
-            // Get auth accessor
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-
-            // Trying to get user extension from peer
-            var userPeerExtension = message.Peer.GetExtension<IUserPeerExtension>();
-
-            // Initialize account
-            IAccountInfoData userAccount = default;
-
+        /// <summary>
+        /// This is auth factory to help you to extend auth module without global changes
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="userCredentials"></param>
+        /// <returns></returns>
+        protected virtual Task<IAccountInfoData> RunAuthFactory(IPeer peer, MstProperties userCredentials)
+        {
             // Guest Authentication
             if (userCredentials.Has(MstDictKeys.USER_IS_GUEST))
             {
-                try
-                {
-                    // Check if guest login is allowed
-                    if (!enableGuestLogin)
-                    {
-                        throw new Exception("Guest login is not allowed in this game");
-                    }
-
-                    // If user peer has IUserPeerExtension means this user is already logged in
-                    if (userPeerExtension != null)
-                    {
-                        logger.Debug($"User {message.Peer.Id} trying to login, but he is already logged in");
-                        message.Respond("You are already logged in", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // If guest user can save its account info
-                    if (authDbAccessor == null && saveGuestInfo)
-                    {
-                        throw new Exception("Account database accessor is not defined in AuthModule");
-                    }
-
-                    // User device Name and Id
-                    var userDeviceName = userCredentials.AsString(MstDictKeys.USER_DEVICE_NAME);
-                    var userDeviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
-
-                    // If guest data was allowed to be saved
-                    if (saveGuestInfo)
-                        // Trying to get user account by user id
-                        userAccount = await authDbAccessor.GetAccountByDeviceIdAsync(userDeviceId);
-
-                    // If current client is on the same device
-                    bool anotherGuestOnTheSameDevice = userAccount != null && IsUserLoggedInById(userAccount.Id);
-
-                    // If guest has no account create it
-                    if (userAccount == null || anotherGuestOnTheSameDevice)
-                    {
-                        userAccount = authDbAccessor.CreateAccountInstance();
-                        userAccount.Username = GenerateGuestUsername();
-                        userAccount.DeviceId = userDeviceId;
-                        userAccount.DeviceName = userDeviceName;
-
-                        // If guest may save his data and this guest is not on the same device
-                        if (saveGuestInfo && !anotherGuestOnTheSameDevice)
-                        {
-                            // Save account and return its id in DB
-                            var accountId = await authDbAccessor.InsertNewAccountAsync(userAccount);
-
-                            // Set account Id if it was not defined earlier
-                            userAccount.Id = accountId;
-
-                            // Save all updates
-                            await authDbAccessor.UpdateAccountAsync(userAccount);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    logger.Error(e.Message);
-                    message.Respond(e.Message, ResponseStatus.Error);
-                    return;
-                }
+                return SignInAsGuest(peer, userCredentials);
             }
             // Token Authentication
             else if (userCredentials.Has(MstDictKeys.USER_AUTH_TOKEN))
             {
-                try
-                {
-                    // If user peer has IUserPeerExtension means this user is already logged in
-                    if (userPeerExtension != null)
-                    {
-                        logger.Debug($"User {message.Peer.Id} trying to login, but he is already logged in");
-                        message.Respond("You are already logged in", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // If account accessor is not found
-                    if (authDbAccessor == null)
-                    {
-                        throw new Exception("Account database accessor is not defined in AuthModule");
-                    }
-
-                    // Get account by token
-                    userAccount = await authDbAccessor.GetAccountByTokenAsync(userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN));
-
-                    // if no account found
-                    if (userAccount == null)
-                    {
-                        message.Respond("Account does not exist", ResponseStatus.Failed);
-                        return;
-                    }
-
-                    // If token has expired
-                    if (userAccount.IsTokenExpired())
-                    {
-                        message.Respond("Your session token has expired", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // If another session found
-                    if (IsUserLoggedInByUsername(userAccount.Username))
-                    {
-                        // And respond to requester
-                        message.Respond("This account is already logged in", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // Let's save user auth token
-                    userAccount.SetToken(tokenExpiresInDays);
-
-                    await authDbAccessor.UpdateAccountAsync(userAccount);
-                }
-                catch (Exception e)
-                {
-                    logger.Error(e.Message);
-                    message.Respond(e.Message, ResponseStatus.Error);
-                    return;
-                }
+                return SignInByToken(peer, userCredentials);
             }
             // Username / Password authentication
             else if (userCredentials.Has(MstDictKeys.USER_NAME) && userCredentials.Has(MstDictKeys.USER_PASSWORD))
             {
-                try
-                {
-                    // If user peer has IUserPeerExtension means this user is already logged in
-                    if (userPeerExtension != null)
-                    {
-                        logger.Debug($"User { message.Peer.Id} trying to login, but he is already logged in");
-                        message.Respond("You are already logged in", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // If account accessor is not found
-                    if (authDbAccessor == null)
-                    {
-                        throw new Exception("Account database accessor is not defined in AuthModule");
-                    }
-
-                    // Get username
-                    var userName = userCredentials.AsString(MstDictKeys.USER_NAME);
-
-                    // Get user password
-                    var userPassword = userCredentials.AsString(MstDictKeys.USER_PASSWORD);
-
-                    // If another session found
-                    if (IsUserLoggedInByUsername(userName))
-                    {
-                        // And respond to requester
-                        message.Respond("This account is already logged in", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // Get account by its username
-                    userAccount = await authDbAccessor.GetAccountByUsernameAsync(userName);
-
-                    if (userAccount == null)
-                    {
-                        // Couldn't find an account with this name
-                        message.Respond("Invalid Credentials", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    if (!Mst.Security.ValidatePassword(userPassword, userAccount.Password))
-                    {
-                        // Password is not correct
-                        message.Respond("Invalid Credentials", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // Let's save user auth token
-                    userAccount.SetToken(tokenExpiresInDays);
-
-                    await authDbAccessor.UpdateAccountAsync(userAccount);
-                }
-                catch (Exception e)
-                {
-                    message.Respond(e.Message, ResponseStatus.Failed);
-                    return;
-                }
+                return SignInWithLoginAndPassword(peer, userCredentials);
             }
             // Email authentication
             else if (userCredentials.Has(MstDictKeys.USER_EMAIL))
             {
-                try
-                {
-                    // If user peer has IUserPeerExtension means this user is already logged in
-                    if (userPeerExtension != null)
-                    {
-                        logger.Debug($"User { message.Peer.Id} trying to login, but he is already logged in");
-                        message.Respond("You are already logged in", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // If account accessor is not found
-                    if (authDbAccessor == null)
-                    {
-                        throw new Exception("Account database accessor is not defined in AuthModule");
-                    }
-
-                    // Get user email
-                    var userEmail = userCredentials.AsString(MstDictKeys.USER_EMAIL);
-
-                    // if email is not in valid format
-                    if (!IsEmailValid(userEmail))
-                    {
-                        throw new Exception("Your email is not valid");
-                    }
-
-                    // If another session found
-                    if (IsUserLoggedInByUsername(userEmail))
-                    {
-                        // And respond to requester
-                        message.Respond("This account is already logged in", ResponseStatus.Unauthorized);
-                        return;
-                    }
-
-                    // Get account by its username
-                    userAccount = await authDbAccessor.GetAccountByEmailAsync(userEmail);
-
-                    // Create new password
-                    string newPassword = Mst.Helper.CreateRandomAlphanumericString(userPasswordMinChars);
-
-                    logger.Debug($"Created new password [{newPassword}] for user [{userEmail}]");
-
-                    // if no account found let's create it
-                    if (userAccount == null)
-                    {
-                        userAccount = authDbAccessor.CreateAccountInstance();
-                        userAccount.Username = userEmail;
-                        userAccount.Email = userEmail;
-                        userAccount.IsGuest = false;
-                        userAccount.Password = Mst.Security.CreateHash(newPassword);
-                        userAccount.IsEmailConfirmed = true;
-
-                        // Save account and return its id in DB
-                        var accountId = await authDbAccessor.InsertNewAccountAsync(userAccount);
-
-                        // Set account Id if it was not defined earlier
-                        userAccount.Id = accountId;
-                    }
-                    // if account found
-                    else
-                    {
-                        userAccount.Password = Mst.Security.CreateHash(newPassword);
-                    }
-
-                    // Let's save user auth token
-                    userAccount.SetToken(tokenExpiresInDays);
-
-                    await authDbAccessor.UpdateAccountAsync(userAccount);
-
-                    if (mailer == null)
-                    {
-                        message.Respond("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
-                        return;
-                    }
-
-                    StringBuilder emailBody = new StringBuilder();
-                    emailBody.Append($"<h3>You have requested sign in by email</h3>");
-                    emailBody.Append($"<p>Here are your account creadentials</p>");
-                    emailBody.Append($"<p><b>Username:</b> {userEmail}</p>");
-                    emailBody.Append($"<p><b>Password:</b> {newPassword}</p>");
-
-                    bool sentResult = await mailer.SendMailAsync(userEmail, "Login by Email", emailBody.ToString());
-
-                    if (!sentResult)
-                    {
-                        message.Respond("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
-                        return;
-                    }
-                }
-                catch (Exception e)
-                {
-                    message.Respond(e.Message, ResponseStatus.Failed);
-                    return;
-                }
+                return SignInWithEmail(peer, userCredentials);
             }
+            else
+            {
+                return Task.FromResult<IAccountInfoData>(null);
+            }
+        }
+
+        /// <summary>
+        /// Signs in user with his email as login and send created credentials to user
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="userCredentials"></param>
+        /// <returns></returns>
+        protected virtual async Task<IAccountInfoData> SignInWithEmail(IPeer peer, MstProperties userCredentials)
+        {
+            // Get auth accessor
+            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
+
+            // Trying to get user extension from peer
+            var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
+
+            // If user peer has IUserPeerExtension means this user is already logged in
+            if (userPeerExtension != null)
+            {
+                logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
+                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
+            }
+
+            // If guest user can save its account info
+            if (authDbAccessor == null && saveGuestInfo)
+            {
+                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+            }
+
+            // Get user email
+            var userEmail = userCredentials.AsString(MstDictKeys.USER_EMAIL);
+
+            // if email is not in valid format
+            if (!IsEmailValid(userEmail))
+            {
+                throw new MstMessageHandlerException("Your email is not valid", ResponseStatus.Invalid);
+            }
+
+            // If another session found
+            if (IsUserLoggedInByUsername(userEmail))
+            {
+                logger.Debug("Another user is already logged in with this account");
+                throw new MstMessageHandlerException("This account is already logged in", ResponseStatus.Failed);
+            }
+
+            // Get account by its email
+            IAccountInfoData userAccount = await authDbAccessor.GetAccountByEmailAsync(userEmail);
+
+            // Create new password
+            string newPassword = Mst.Helper.CreateRandomAlphanumericString(userPasswordMinChars);
+
+            logger.Debug($"Created new password [{newPassword}] for user [{userEmail}]");
+
+            // if no account found let's create it
+            if (userAccount == null)
+            {
+                userAccount = authDbAccessor.CreateAccountInstance();
+                userAccount.Username = userEmail;
+                userAccount.Email = userEmail;
+                userAccount.IsGuest = false;
+                userAccount.Password = Mst.Security.CreateHash(newPassword);
+                userAccount.IsEmailConfirmed = true;
+
+                // Save account and return its id in DB
+                var accountId = await authDbAccessor.InsertNewAccountAsync(userAccount);
+
+                // Set account Id if it was not defined earlier
+                userAccount.Id = accountId;
+            }
+            // if account found
+            else
+            {
+                userAccount.Password = Mst.Security.CreateHash(newPassword);
+            }
+
+            // Let's save user auth token
+            userAccount.SetToken(tokenExpiresInDays);
+
+            await authDbAccessor.UpdateAccountAsync(userAccount);
+
+            if (mailer == null)
+            {
+                throw new MstMessageHandlerException("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
+            }
+
+            StringBuilder emailBody = new StringBuilder();
+            emailBody.Append($"<h3>You have requested sign in by email</h3>");
+            emailBody.Append($"<p>Here are your account creadentials</p>");
+            emailBody.Append($"<p><b>Username:</b> {userEmail}</p>");
+            emailBody.Append($"<p><b>Password:</b> {newPassword}</p>");
+
+            bool sentResult = await mailer.SendMailAsync(userEmail, "Login by Email", emailBody.ToString());
+
+            if (!sentResult)
+            {
+                throw new MstMessageHandlerException("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
+            }
+
+            return userAccount;
+        }
+
+        /// <summary>
+        /// Signs in user with his login and password
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="userCredentials"></param>
+        /// <returns></returns>
+        protected virtual async Task<IAccountInfoData> SignInWithLoginAndPassword(IPeer peer, MstProperties userCredentials)
+        {
+            // Get auth accessor
+            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
+
+            // Trying to get user extension from peer
+            var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
+
+            // If user peer has IUserPeerExtension means this user is already logged in
+            if (userPeerExtension != null)
+            {
+                logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
+                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
+            }
+
+            // If guest user can save its account info
+            if (authDbAccessor == null && saveGuestInfo)
+            {
+                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+            }
+
+            // Get username
+            var userName = userCredentials.AsString(MstDictKeys.USER_NAME);
+
+            // Get user password
+            var userPassword = userCredentials.AsString(MstDictKeys.USER_PASSWORD);
+
+            // If another session found
+            if (IsUserLoggedInByUsername(userName))
+            {
+                logger.Debug("Another user is already logged in with this account");
+                throw new MstMessageHandlerException("This account is already logged in", ResponseStatus.Failed);
+            }
+
+            // Get account by its username
+            IAccountInfoData userAccount = await authDbAccessor.GetAccountByUsernameAsync(userName);
+
+            if (userAccount == null)
+            {
+                // Couldn't find an account with this name
+                throw new MstMessageHandlerException("Invalid Credentials", ResponseStatus.Invalid);
+            }
+
+            if (!Mst.Security.ValidatePassword(userPassword, userAccount.Password))
+            {
+                // Password is not correct
+                throw new MstMessageHandlerException("Invalid Credentials", ResponseStatus.Invalid);
+            }
+
+            // Let's save user auth token
+            userAccount.SetToken(tokenExpiresInDays);
+
+            await authDbAccessor.UpdateAccountAsync(userAccount);
+
+            return userAccount;
+        }
+
+        /// <summary>
+        /// Signs in user with auth token
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="userCredentials"></param>
+        /// <returns></returns>
+        protected virtual async Task<IAccountInfoData> SignInByToken(IPeer peer, MstProperties userCredentials)
+        {
+            // Get auth accessor
+            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
+
+            // Trying to get user extension from peer
+            var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
+
+            // If user peer has IUserPeerExtension means this user is already logged in
+            if (userPeerExtension != null)
+            {
+                logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
+                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
+            }
+
+            // If guest user can save its account info
+            if (authDbAccessor == null && saveGuestInfo)
+            {
+                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+            }
+
+            // Get account by token
+            IAccountInfoData userAccount = await authDbAccessor.GetAccountByTokenAsync(userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN));
 
             // if no account found
             if (userAccount == null)
             {
-                message.Respond("Invalid request", ResponseStatus.Invalid);
-                return;
+                throw new MstMessageHandlerException("Your token is not valid", ResponseStatus.Invalid);
             }
 
-            // Setup auth extension
-            var userExtension = message.Peer.AddExtension(CreateUserPeerExtension(message.Peer));
-            userExtension.Account = userAccount;
+            // If token has expired
+            if (userAccount.IsTokenExpired())
+            {
+                throw new MstMessageHandlerException("Your session token has expired", ResponseStatus.Invalid);
+            }
 
-            // Listen to disconnect event
-            userExtension.Peer.OnPeerDisconnectedEvent += OnUserDisconnectedEventListener;
+            // If another session found
+            if (IsUserLoggedInByUsername(userAccount.Username))
+            {
+                logger.Debug("Another user is already logged in with this account");
+                throw new MstMessageHandlerException("This account is already logged in", ResponseStatus.Failed);
+            }
 
-            // Add to lookup of logged in users
-            LoggedInUsersByUsername.Add(userExtension.Username.ToLower(), userExtension);
-            LoggedInUsersById.Add(userExtension.UserId, userExtension);
+            // Let's set new user auth token
+            userAccount.SetToken(tokenExpiresInDays);
 
-            logger.Debug($"User {message.Peer.Id} signed in as {userAccount.Username}");
+            // Save account
+            await authDbAccessor.UpdateAccountAsync(userAccount);
 
-            // Send response to logged in user
-            message.Respond(userExtension.CreateAccountInfoPacket(), ResponseStatus.Success);
+            return userAccount;
+        }
 
-            // Trigger the login event
-            OnUserLoggedInEvent?.Invoke(userExtension);
+        /// <summary>
+        /// Signs in user as guest using his guest parametars such as device id
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="userCredentials"></param>
+        /// <returns></returns>
+        protected virtual async Task<IAccountInfoData> SignInAsGuest(IPeer peer, MstProperties userCredentials)
+        {
+            // Get auth accessor
+            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
+
+            // Trying to get user extension from peer
+            var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
+
+            // If user peer has IUserPeerExtension means this user is already logged in
+            if (userPeerExtension != null)
+            {
+                logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
+                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
+            }
+
+            // Check if guest login is allowed
+            if (!enableGuestLogin)
+            {
+                throw new MstMessageHandlerException("Guest login is not allowed in this game", ResponseStatus.Error);
+            }
+
+            // If guest user can save its account info
+            if (authDbAccessor == null && saveGuestInfo)
+            {
+                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+            }
+
+            // User device Name and Id
+            var userDeviceName = userCredentials.AsString(MstDictKeys.USER_DEVICE_NAME);
+            var userDeviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
+
+            // Create null account
+            IAccountInfoData userAccount = default;
+
+            // If guest data was allowed to be saved
+            if (saveGuestInfo)
+                // Trying to get user account by user device id
+                userAccount = await authDbAccessor.GetAccountByDeviceIdAsync(userDeviceId);
+
+            // If current client is on the same device
+            bool anotherGuestOnTheSameDevice = userAccount != null && IsUserLoggedInById(userAccount.Id);
+
+            // If guest has no account create it
+            if (userAccount == null || anotherGuestOnTheSameDevice)
+            {
+                userAccount = authDbAccessor.CreateAccountInstance();
+                userAccount.Username = GenerateGuestUsername();
+                userAccount.DeviceId = userDeviceId;
+                userAccount.DeviceName = userDeviceName;
+
+                // If guest may save his data and this guest is not on the same device
+                if (saveGuestInfo && !anotherGuestOnTheSameDevice)
+                {
+                    // Save account and return its id in DB
+                    var accountId = await authDbAccessor.InsertNewAccountAsync(userAccount);
+
+                    // Set account Id if it was not defined earlier
+                    userAccount.Id = accountId;
+
+                    // Save all updates
+                    await authDbAccessor.UpdateAccountAsync(userAccount);
+                }
+            }
+
+            return userAccount;
         }
 
         #endregion

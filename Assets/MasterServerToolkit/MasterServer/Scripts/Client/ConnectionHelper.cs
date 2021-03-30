@@ -167,8 +167,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (!Connection.IsConnected)
             {
-                logger.Info($"Starting MSF Connection Helper... {Mst.Version}");
-                logger.Info($"Connecting to MSF server at: {serverIp}:{serverPort}");
+                logger.Info($"Starting MASTER Connection Helper... {Mst.Version}");
+                logger.Info($"Connecting to MASTER server at: {serverIp}:{serverPort}");
             }
 
             yield return new WaitForSeconds(0.1f);
@@ -189,7 +189,7 @@ namespace MasterServerToolkit.MasterServer
                 // If currentAttemptToConnect of attempts is equals maxAttemptsToConnect stop connection
                 if (currentAttemptToConnect == maxAttemptsToConnect)
                 {
-                    logger.Info($"Client cannot to connect to MSF server at: {serverIp}:{serverPort}");
+                    logger.Info($"Client cannot to connect to MASTER server at: {serverIp}:{serverPort}");
                     Connection.Disconnect();
                     yield break;
                 }
@@ -198,7 +198,7 @@ namespace MasterServerToolkit.MasterServer
                 if (Connection.IsConnecting)
                 {
                     if (currentAttemptToConnect > 0)
-                        logger.Info($"Retrying to connect to MSF server at: {serverIp}:{serverPort}");
+                        logger.Info($"Retrying to connect to MASTER server at: {serverIp}:{serverPort}");
 
                     currentAttemptToConnect++;
                 }
@@ -222,14 +222,14 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnDisconnectedEventHandler()
         {
-            logger.Info($"Disconnected from MSF server");
+            logger.Info($"Disconnected from MASTER server");
             timeToConnect = minTimeToConnect;
             OnDisconnectedEvent?.Invoke();
         }
 
         protected virtual void OnConnectedEventHandler()
         {
-            logger.Info($"Connected to MSF server at: {serverIP}:{serverPort}");
+            logger.Info($"Connected to MASTER server at: {serverIP}:{serverPort}");
             timeToConnect = minTimeToConnect;
             OnConnectedEvent?.Invoke();
         }

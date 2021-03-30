@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -147,8 +148,8 @@ namespace MasterServerToolkit.MasterServer
             socket.CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
             socket.ApplicationKey = MstApplicationConfig.Instance.ApplicationKey;
 
-            socket.OnPeerConnectedEvent += OnConnectedEventHandle;
-            socket.OnPeerDisconnectedEvent += OnDisconnectedEventHandler;
+            socket.OnPeerConnectedEvent += OnPeerConnectedEventHandle;
+            socket.OnPeerDisconnectedEvent += OnPeerDisconnectedEventHandler;
 
             // AesKey handler
             RegisterMessageHandler((short)MstMessageCodes.AesKeyRequest, GetAesKeyRequestHandler);
@@ -282,7 +283,7 @@ namespace MasterServerToolkit.MasterServer
             OnStoppedServer();
         }
 
-        private void OnConnectedEventHandle(IPeer peer)
+        private void OnPeerConnectedEventHandle(IPeer peer)
         {
             // Check if max number of connections has been reached
             if (maxConnections > 0 && connectedPeers.Count >= maxConnections)
@@ -314,7 +315,7 @@ namespace MasterServerToolkit.MasterServer
             OnPeerConnected(peer);
         }
 
-        private void OnDisconnectedEventHandler(IPeer peer)
+        private void OnPeerDisconnectedEventHandler(IPeer peer)
         {
             logger.Debug($"Client {peer.Id} disconnected from server. Total clients are: {connectedPeers.Count - 1}");
 
@@ -325,6 +326,7 @@ namespace MasterServerToolkit.MasterServer
             connectedPeers.Remove(peer.Id);
 
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
+
             if (extension != null)
             {
                 // Remove from guid lookup
@@ -340,8 +342,8 @@ namespace MasterServerToolkit.MasterServer
         {
             if (socket != null)
             {
-                socket.OnPeerConnectedEvent -= OnConnectedEventHandle;
-                socket.OnPeerDisconnectedEvent -= OnDisconnectedEventHandler;
+                socket.OnPeerConnectedEvent -= OnPeerConnectedEventHandle;
+                socket.OnPeerDisconnectedEvent -= OnPeerDisconnectedEventHandler;
             }
         }
 
@@ -397,7 +399,7 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void GetAesKeyRequestHandler(IIncomingMessage message)
+        protected virtual async void GetAesKeyRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
             var encryptedKey = extension.AesKeyEncrypted;
@@ -421,17 +423,22 @@ namespace MasterServerToolkit.MasterServer
             var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
             var clientsPublicKey = (RSAParameters)xs.Deserialize(sr);
 
-            using (var csp = new RSACryptoServiceProvider())
+            byte[] encryptedAes = await Task.Run(() =>
             {
-                csp.ImportParameters(clientsPublicKey);
-                var encryptedAes = csp.Encrypt(Encoding.Unicode.GetBytes(aesKey), false);
+                using (var csp = new RSACryptoServiceProvider())
+                {
+                    csp.ImportParameters(clientsPublicKey);
+                    encryptedAes = csp.Encrypt(Encoding.Unicode.GetBytes(aesKey), false);
 
-                // Save keys for later use
-                extension.AesKeyEncrypted = encryptedAes;
-                extension.AesKey = aesKey;
+                    // Save keys for later use
+                    extension.AesKeyEncrypted = encryptedAes;
+                    extension.AesKey = aesKey;
 
-                message.Respond(encryptedAes, ResponseStatus.Success);
-            }
+                    return encryptedAes;
+                }
+            });
+
+            message.Respond(encryptedAes, ResponseStatus.Success);
         }
 
         #endregion

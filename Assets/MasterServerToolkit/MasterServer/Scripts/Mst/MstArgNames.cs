@@ -139,6 +139,11 @@
         public string TargetFrameRate { get { return "-mstTargetFrameRate"; } }
 
         /// <summary>
+        /// Use this cmd to setup web server connection address
+        /// </summary>
+        public string WebAddress { get { return "-mstWebAddress"; } }
+
+        /// <summary>
         /// Use this cmd to setup web server connection port
         /// </summary>
         public string WebPort { get { return "-mstWebPort"; } }

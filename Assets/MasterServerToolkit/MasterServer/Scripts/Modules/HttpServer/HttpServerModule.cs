@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.Networking;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
@@ -10,7 +12,8 @@ using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public delegate void OnHttpRequestDelegate(HttpListenerRequest request, HttpListenerResponse response);
+    public delegate void OnHttpRequestDelegate(HttpRequestEventArgs eventArgs);
+
     public enum HttpMethod { GET, POST, PUT, DELETE }
 
     public class HttpServerModule : BaseServerModule
@@ -18,9 +21,14 @@ namespace MasterServerToolkit.MasterServer
         #region INSPECTOR
 
         [Header("Http Server Settings"), SerializeField]
+        protected string httpAddress = "127.0.0.1";
+        [SerializeField]
         protected int httpPort = 5056;
         [SerializeField]
         protected string[] defaultIndexPage = new string[] { "index", "home" };
+        [SerializeField]
+        protected List<MimeTypeInfo> mimeTypes;
+
         [SerializeField]
         protected string rootDirectory = "wwwroot";
 
@@ -41,18 +49,60 @@ namespace MasterServerToolkit.MasterServer
         private HttpServer httpServer;
 
         /// <summary>
-        /// List of surface controllers
-        /// </summary>
-        private Dictionary<Type, IHttpController> surfaceControllers;
-
-        /// <summary>
         /// List of http request handlers
         /// </summary>
         private Dictionary<string, OnHttpRequestDelegate> httpRequestHandlers;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private string wsServicePath = "ws";
+
+        /// <summary>
+        /// List of surface controllers
+        /// </summary>
+        public Dictionary<Type, IHttpController> SurfaceControllers { get; protected set; }
+
+        /// <summary>
+        /// List of web socket controllers
+        /// </summary>
+        public Dictionary<Type, IWsController> WsControllers { get; protected set; }
+
+        /// <summary>
+        /// Invokes before server frame is updated
+        /// </summary>
+        public event Action OnUpdateEvent;
+
         public bool UserSecure { get; set; }
         public string CertificatePath { get; set; }
         public string CertificatePassword { get; set; }
+
+        private void OnValidate()
+        {
+            if (mimeTypes == null || mimeTypes.Count == 0)
+            {
+                mimeTypes = new List<MimeTypeInfo>
+                {
+                    new MimeTypeInfo() { name = ".html", type = "text/html" },
+                    new MimeTypeInfo() { name = ".htm", type = "text/html" },
+                    new MimeTypeInfo() { name = ".txt", type = "text/plain" },
+                    new MimeTypeInfo() { name = ".css", type = "text/css" },
+                    new MimeTypeInfo() { name = ".xml", type = "text/xml" },
+                    new MimeTypeInfo() { name = ".js", type = "application/javascript" },
+                    new MimeTypeInfo() { name = ".json", type = "application/json" },
+                    new MimeTypeInfo() { name = ".gif", type = "image/gif" },
+                    new MimeTypeInfo() { name = ".jpeg", type = "image/jpeg" },
+                    new MimeTypeInfo() { name = ".jpg", type = "image/jpeg" },
+                    new MimeTypeInfo() { name = ".png", type = "image/png" },
+                    new MimeTypeInfo() { name = ".tif", type = "image/tiff" }
+                };
+            }
+        }
+
+        private void Update()
+        {
+            OnUpdateEvent?.Invoke();
+        }
 
         private void OnDestroy()
         {
@@ -74,19 +124,22 @@ namespace MasterServerToolkit.MasterServer
             // Set port
             httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);
 
+            // Set port
+            httpAddress = Mst.Args.AsString(Mst.Args.Names.WebAddress, httpAddress);
+
             // Set root directory
             rootDirectory = Mst.Args.AsString(Mst.Args.Names.WebRootDir, rootDirectory);
 
-            // Init root directory. Create if exists
-            InitRooDirectory();
-
             // Initialize server
-            httpServer = new HttpServer(httpPort, UserSecure)
+            httpServer = new HttpServer(System.Net.IPAddress.Parse(httpAddress), httpPort, UserSecure)
             {
                 AuthenticationSchemes = authenticationSchemes == AuthenticationSchemes.None ? AuthenticationSchemes.Anonymous : authenticationSchemes,
                 Realm = realm,
                 UserCredentialsFinder = UserCredentialsFinder
             };
+
+            // Init root directory. Create if exists
+            InitRooDirectory();
 
             if (UserSecure)
             {
@@ -107,22 +160,34 @@ namespace MasterServerToolkit.MasterServer
                     | System.Security.Authentication.SslProtocols.Default;
             }
 
-            // Initialize controllers list
-            surfaceControllers = new Dictionary<Type, IHttpController>();
+            // Initialize controllers lists
+            SurfaceControllers = new Dictionary<Type, IHttpController>();
+            WsControllers = new Dictionary<Type, IWsController>();
 
             // Initialize handlers list
             httpRequestHandlers = new Dictionary<string, OnHttpRequestDelegate>();
 
-            // Find all controllers and add them to server
+            // Find all surface controllers and add them to server
             foreach (var controller in GetComponentsInChildren<IHttpController>())
             {
-                if (surfaceControllers.ContainsKey(controller.GetType()))
+                if (SurfaceControllers.ContainsKey(controller.GetType()))
                 {
                     throw new Exception("A controller already exists in the server: " + controller.GetType());
                 }
 
-                surfaceControllers[controller.GetType()] = controller;
+                SurfaceControllers[controller.GetType()] = controller;
                 controller.Initialize(this);
+            }
+
+            // Find all web socket controllers and add them to server
+            foreach (var controller in GetComponentsInChildren<IWsController>())
+            {
+                if (WsControllers.ContainsKey(controller.GetType()))
+                {
+                    throw new Exception("A controller already exists in the server: " + controller.GetType());
+                }
+
+                WsControllers[controller.GetType()] = controller;
             }
 
             // Start listen to Get request
@@ -134,12 +199,20 @@ namespace MasterServerToolkit.MasterServer
             // Start listen to Put request
             httpServer.OnPut += HttpServer_OnPut;
 
+            // Register web socket controller service
+            httpServer.AddWebSocketService<WsControllerService>($"/{wsServicePath}", (service) =>
+            {
+                service.IgnoreExtensions = true;
+                service.SetHttpServer(this);
+            });
+
             // Start http server
             httpServer.Start();
 
             if (httpServer.IsListening)
             {
-                logger.Info($"Http server is started and listening port: {httpServer.Port}");
+                logger.Info($"Web socket server is started and listening: {httpServer.Address}:{httpServer.Port}/{wsServicePath}");
+                logger.Info($"Http server is started and listening: {httpServer.Address}:{httpServer.Port}");
             }
         }
 
@@ -167,6 +240,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 logger.Info($"Root directory found in \"{rootDirPath}\"");
             }
+
+            httpServer.DocumentRootPath = rootDirPath;
         }
 
         /// <summary>
@@ -213,7 +288,7 @@ namespace MasterServerToolkit.MasterServer
             html.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">");
             html.Append("<meta name=\"description\" content=\"Master Server Toolkit is designed to kickstart your back-end server development. It contains solutions to some of the common problems.\">");
             html.Append($"<meta name=\"author\" content=\"{Mst.Name}\">");
-            html.Append("<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css\" integrity=\"sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z\" crossorigin=\"anonymous\">");
+            html.Append("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css\" integrity=\"sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl\" crossorigin=\"anonymous\">");
             html.Append($"<title>404 | {Mst.Name} {Mst.Version}</title>");
             html.Append("</head>");
             html.Append("<body class=\"vh-100\">");
@@ -227,9 +302,7 @@ namespace MasterServerToolkit.MasterServer
             html.Append("</div>");
             html.Append("</div>");
             html.Append("</div>");
-            html.Append("<script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\" integrity=\"sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj\" crossorigin=\"anonymous\"></script>");
-            html.Append("<script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js\" integrity=\"sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN\" crossorigin=\"anonymous\"></script>");
-            html.Append("<script src=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js\" integrity=\"sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV\" crossorigin=\"anonymous\"></script>");
+            html.Append("<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0\" crossorigin=\"anonymous\"></script>");
             html.Append("</body>");
             html.Append("</html>");
 
@@ -250,7 +323,7 @@ namespace MasterServerToolkit.MasterServer
             html.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">");
             html.Append("<meta name=\"description\" content=\"Master Server Toolkit is designed to kickstart your back-end server development. It contains solutions to some of the common problems.\">");
             html.Append($"<meta name=\"author\" content=\"{Mst.Name}\">");
-            html.Append("<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css\" integrity=\"sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z\" crossorigin=\"anonymous\">");
+            html.Append("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css\" integrity=\"sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl\" crossorigin=\"anonymous\">");
             html.Append($"<title>Index | {Mst.Name} {Mst.Version}</title>");
             html.Append("</head>");
             html.Append("<body class=\"vh-100\">");
@@ -264,9 +337,7 @@ namespace MasterServerToolkit.MasterServer
             html.Append("</div>");
             html.Append("</div>");
             html.Append("</div>");
-            html.Append("<script src=\"https://code.jquery.com/jquery-3.5.1.slim.min.js\" integrity=\"sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj\" crossorigin=\"anonymous\"></script>");
-            html.Append("<script src=\"https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js\" integrity=\"sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN\" crossorigin=\"anonymous\"></script>");
-            html.Append("<script src=\"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js\" integrity=\"sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV\" crossorigin=\"anonymous\"></script>");
+            html.Append("<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0\" crossorigin=\"anonymous\"></script>");
             html.Append("</body>");
             html.Append("</html>");
 
@@ -276,21 +347,53 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="urlParts"></param>
+        /// <param name="page"></param>
         /// <returns></returns>
         protected bool IsDefaultPage(string page)
         {
             if (string.IsNullOrEmpty(page.Trim())) return true;
+            if (defaultIndexPage == null || defaultIndexPage.Length == 0) return false;
 
-            foreach (string i in defaultIndexPage)
+            foreach (string pageName in defaultIndexPage)
             {
-                if (CreateUrlKey(i.ToLower(), HttpMethod.GET) == page.ToLower())
+                if (CreateUrlKey(pageName.ToLower(), HttpMethod.GET) == page.ToLower())
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="extension"></param>
+        /// <returns></returns>
+        public bool TryGetExtension(HttpListenerRequest request, out string extension)
+        {
+            string path = UrlToPath(request);
+            return TryGetExtension(path, out extension);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="extension"></param>
+        /// <returns></returns>
+        public bool TryGetExtension(string path, out string extension)
+        {
+            extension = string.Empty;
+            int indexOfExtension = path.LastIndexOf('.');
+
+            if (indexOfExtension >= 0)
+            {
+                extension = path.Substring(indexOfExtension);
+            }
+
+            return !string.IsNullOrEmpty(extension);
         }
 
         /// <summary>
@@ -349,25 +452,15 @@ namespace MasterServerToolkit.MasterServer
             {
                 OnHttpRequestDelegate defaultPageHandler = null;
 
-                if (defaultIndexPage.Length > 0)
-                {
-                    foreach (var page in defaultIndexPage)
-                    {
-                        if (httpRequestHandlers.ContainsKey(urlKey))
-                        {
-                            defaultPageHandler = httpRequestHandlers[urlKey];
-                            break;
-                        }
-                    }
-                }
+                if (httpRequestHandlers.ContainsKey(urlKey))
+                    defaultPageHandler = httpRequestHandlers[urlKey];
 
                 if (defaultPageHandler != null)
                 {
-                    defaultPageHandler.Invoke(request, response);
+                    defaultPageHandler.Invoke(e);
                 }
                 else
                 {
-
                     byte[] contents = Encoding.UTF8.GetBytes(DefaultIndexPageHtml());
 
                     response.ContentType = "text/html";
@@ -378,18 +471,57 @@ namespace MasterServerToolkit.MasterServer
             }
             else if (httpRequestHandlers.ContainsKey(urlKey))
             {
-                httpRequestHandlers[urlKey].Invoke(request, response);
+                httpRequestHandlers[urlKey].Invoke(e);
+            }
+            else if (TryGetExtension(parsedUrl, out string extension))
+            {
+                HandlePathWithExtension(e, extension);
             }
             else
             {
                 byte[] contents = Encoding.UTF8.GetBytes(Default404Page());
 
-                response.StatusCode = 404;
+                response.StatusCode = (int)HttpStatusCode.NotFound;
                 response.ContentType = "text/html";
                 response.ContentEncoding = Encoding.UTF8;
                 response.ContentLength64 = contents.LongLength;
                 response.Close(contents, true);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
+        /// <param name="extension"></param>
+        private void HandlePathWithExtension(HttpRequestEventArgs e, string extension)
+        {
+            // Let's parse user
+            string path = UrlToPath(e.Request);
+
+            if (e.TryReadFile(path, out byte[] contents))
+            {
+                var mt = mimeTypes.Find(i => i.name.ToLower() == extension.ToLower());
+
+                if (mt != null)
+                {
+                    e.Response.ContentType = mt.type;
+                }
+                else
+                {
+                    e.Response.ContentType = "text/plain";
+                }
+            }
+            else
+            {
+                e.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                contents = Encoding.UTF8.GetBytes($"File \"{path}\" not found");
+                e.Response.ContentType = "text/html";
+            }
+
+            e.Response.ContentEncoding = Encoding.UTF8;
+            e.Response.ContentLength64 = contents.LongLength;
+            e.Response.Close(contents, true);
         }
 
         /// <summary>
@@ -415,13 +547,13 @@ namespace MasterServerToolkit.MasterServer
 
             if (httpRequestHandlers.ContainsKey(urlKey))
             {
-                httpRequestHandlers[urlKey].Invoke(request, response);
+                httpRequestHandlers[urlKey].Invoke(e);
             }
             else
             {
-                byte[] contents = Encoding.UTF8.GetBytes("There is no such method");
+                byte[] contents = Encoding.UTF8.GetBytes("There is no such controller");
 
-                response.StatusCode = 400;
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
                 response.ContentType = "application/json";
                 response.ContentEncoding = Encoding.UTF8;
                 response.ContentLength64 = contents.LongLength;
@@ -452,13 +584,13 @@ namespace MasterServerToolkit.MasterServer
 
             if (httpRequestHandlers.ContainsKey(urlKey))
             {
-                httpRequestHandlers[urlKey].Invoke(request, response);
+                httpRequestHandlers[urlKey].Invoke(e);
             }
             else
             {
-                byte[] contents = Encoding.UTF8.GetBytes("There is no such method");
+                byte[] contents = Encoding.UTF8.GetBytes("There is no such controller");
 
-                response.StatusCode = 400;
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
                 response.ContentType = "application/json";
                 response.ContentEncoding = Encoding.UTF8;
                 response.ContentLength64 = contents.LongLength;

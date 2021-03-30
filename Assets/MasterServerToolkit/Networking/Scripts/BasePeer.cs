@@ -2,7 +2,6 @@
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
@@ -516,7 +515,7 @@ namespace MasterServerToolkit.Networking
             }
             catch (Exception e)
             {
-                Debug.LogError("Failed parsing an incomming message: " + e);
+                Logs.Error("Failed parsing an incomming message: " + e);
                 return;
             }
 

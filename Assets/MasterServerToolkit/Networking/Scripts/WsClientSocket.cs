@@ -36,6 +36,7 @@ namespace MasterServerToolkit.Networking
                 }
             }
         }
+
         public bool UseSsl { get; set; }
 
         public event Action OnConnectedEvent;
@@ -44,7 +45,7 @@ namespace MasterServerToolkit.Networking
 
         public WsClientSocket()
         {
-            SetStatus(ConnectionStatus.Disconnected);
+            SetStatus(ConnectionStatus.Disconnected, false);
             handlers = new Dictionary<short, IPacketHandler>();
         }
 
@@ -307,6 +308,8 @@ namespace MasterServerToolkit.Networking
 
         public void Disconnect(bool fireEvent = true)
         {
+            MstUpdateRunner.Instance.Remove(this);
+
             if (webSocket != null)
             {
                 webSocket.Close();

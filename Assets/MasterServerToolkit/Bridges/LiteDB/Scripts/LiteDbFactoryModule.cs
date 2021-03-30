@@ -26,6 +26,9 @@ namespace MasterServerToolkit.Bridges.LiteDB
         [SerializeField]
         private string profilesDbName = "profiles";
 
+        private LiteDatabase accountsDb;
+        private LiteDatabase profilesDb;
+
         private void OnValidate()
         {
             if (string.IsNullOrEmpty(accountDbName))
@@ -45,10 +48,17 @@ namespace MasterServerToolkit.Bridges.LiteDB
             try
             {
                 if (useAccountDb)
-                    Mst.Server.DbAccessors.SetAccessor<IAccountsDatabaseAccessor>(new AccountsDatabaseAccessor(new LiteDatabase($"{accountDbName}.db")));
+                {
+                    accountsDb = new LiteDatabase($"{accountDbName}.db");
+                    Mst.Server.DbAccessors.SetAccessor<IAccountsDatabaseAccessor>(new AccountsDatabaseAccessor(accountsDb));
+                }
+                    
                 
                 if (useProfilesDb)
-                    Mst.Server.DbAccessors.SetAccessor<IProfilesDatabaseAccessor>(new ProfilesDatabaseAccessor(new LiteDatabase($"{profilesDbName}.db")));
+                {
+                    profilesDb = new LiteDatabase($"{profilesDbName}.db");
+                    Mst.Server.DbAccessors.SetAccessor<IProfilesDatabaseAccessor>(new ProfilesDatabaseAccessor(profilesDb));
+                }
             }
             catch (Exception e)
             {
@@ -56,6 +66,12 @@ namespace MasterServerToolkit.Bridges.LiteDB
                 logger.Error(e);
             }
 #endif
+        }
+
+        private void OnDestroy()
+        {
+            accountsDb?.Dispose();
+            profilesDb?.Dispose();
         }
     }
 }

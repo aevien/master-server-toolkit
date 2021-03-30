@@ -3,9 +3,7 @@ using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.Networking
@@ -141,31 +139,36 @@ namespace MasterServerToolkit.Networking
         private void SetupService(WebSocketServer server)
         {
             // Master server service
-            server.AddWebSocketService<WsService>($"/app/{ApplicationKey}", (service) =>
+            server.AddWebSocketService<WsService>($"/app/{ApplicationKey}", (serviceForPeer) =>
             {
-                service.IgnoreExtensions = true;
-                service.SetServerSocket(this);
-                var peer = new WsServerPeer(service);
+                serviceForPeer.IgnoreExtensions = true;
+                serviceForPeer.SetServerSocket(this);
 
-                service.OnMessageEvent += (data) =>
+                var peer = new WsServerPeer(serviceForPeer);
+
+                serviceForPeer.OnOpenEvent += () =>
+                {
+                    Logs.Debug($"Connection for peer [{peer.Id}] is open");
+                };
+
+                serviceForPeer.OnMessageEvent += (data) =>
                 {
                     peer.HandleDataReceived(data);
                 };
 
                 ExecuteOnUpdate(() =>
                 {
-                    MstTimer.Instance.StartCoroutine(peer.SendDelayedMessages(initialSendMessageDelayTime));
+                    //MstTimer.Instance.StartCoroutine(peer.SendDelayedMessages(initialSendMessageDelayTime));
                     OnPeerConnectedEvent?.Invoke(peer);
                 });
 
-                peer.OnPeerDisconnectedEvent += OnPeerDisconnectedEvent;
-
-                service.OnCloseEvent += reason =>
+                serviceForPeer.OnCloseEvent += reason =>
                 {
+                    OnPeerDisconnectedEvent?.Invoke(peer);
                     peer.NotifyDisconnectEvent();
                 };
 
-                service.OnErrorEvent += reason =>
+                serviceForPeer.OnErrorEvent += reason =>
                 {
                     Logs.Error(reason);
                     peer.NotifyDisconnectEvent();

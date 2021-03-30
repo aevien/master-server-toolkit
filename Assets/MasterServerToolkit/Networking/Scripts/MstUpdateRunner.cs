@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Utils;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
@@ -30,8 +31,6 @@ namespace MasterServerToolkit.Networking
 
         public void Add(IUpdatable updatable)
         {
-            //Debug.Log(_runnables.Count);
-
             if (!_runnables.Contains(updatable))
             {
                 _runnables.Add(updatable);
@@ -40,7 +39,7 @@ namespace MasterServerToolkit.Networking
 
         public void Remove(IUpdatable updatable)
         {
-            _runnables.Add(updatable);
+            _runnables.Remove(updatable);
         }
 
         private void OnApplicationQuit()

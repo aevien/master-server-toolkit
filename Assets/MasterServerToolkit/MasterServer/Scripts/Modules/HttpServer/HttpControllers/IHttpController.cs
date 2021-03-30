@@ -2,7 +2,8 @@
 {
     public interface IHttpController
     {
-        HttpServerModule Server { get; set; }
+        HttpServerModule HttpServer { get; set; }
+        ServerBehaviour MasterServer { get; set; }
         void Initialize(HttpServerModule server);
     }
 }

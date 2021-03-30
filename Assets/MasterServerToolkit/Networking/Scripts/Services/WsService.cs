@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MasterServerToolkit.Logging;
+using System;
 using System.Collections.Generic;
 using WebSocketSharp;
 using WebSocketSharp.Server;
@@ -10,8 +11,8 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public class WsService : WebSocketBehavior
     {
-        private WsServerSocket _serverSocket;
-        private Queue<byte[]> _messageQueue;
+        private WsServerSocket serverSocket;
+        private Queue<byte[]> messageQueue = new Queue<byte[]>();
 
         /// <summary>
         /// 
@@ -33,49 +34,34 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public event Action<byte[]> OnMessageEvent;
 
-        public WsService()
-        {
-            IgnoreExtensions = true;
-            _messageQueue = new Queue<byte[]>();
-        }
-
-        public WsService(WsServerSocket serverSocket)
-        {
-            IgnoreExtensions = true;
-            _messageQueue = new Queue<byte[]>();
-
-            _serverSocket = serverSocket;
-            _serverSocket.OnUpdateEvent += Update;
-        }
-
         public void SetServerSocket(WsServerSocket serverSocket)
         {
-            if (_serverSocket == null)
+            if (this.serverSocket == null)
             {
-                _serverSocket = serverSocket;
-                _serverSocket.OnUpdateEvent += Update;
+                this.serverSocket = serverSocket;
+                this.serverSocket.OnUpdateEvent += Update;
             }
         }
 
         private void Update()
         {
-            if (_messageQueue.Count <= 0)
+            if (messageQueue.Count <= 0)
             {
                 return;
             }
 
-            lock (_messageQueue)
+            lock (messageQueue)
             {
-                while (_messageQueue.Count > 0)
+                while (messageQueue.Count > 0)
                 {
-                    OnMessageEvent?.Invoke(_messageQueue.Dequeue());
+                    OnMessageEvent?.Invoke(messageQueue.Dequeue());
                 }
             }
         }
 
         protected override void OnOpen()
         {
-            _serverSocket.ExecuteOnUpdate(() =>
+            serverSocket.ExecuteOnUpdate(() =>
             {
                 OnOpenEvent?.Invoke();
             });
@@ -83,9 +69,9 @@ namespace MasterServerToolkit.Networking
 
         protected override void OnClose(CloseEventArgs e)
         {
-            _serverSocket.OnUpdateEvent -= Update;
+            serverSocket.OnUpdateEvent -= Update;
 
-            _serverSocket.ExecuteOnUpdate(() =>
+            serverSocket.ExecuteOnUpdate(() =>
             {
                 OnCloseEvent?.Invoke(e.Reason);
             });
@@ -93,9 +79,9 @@ namespace MasterServerToolkit.Networking
 
         protected override void OnError(ErrorEventArgs e)
         {
-            _serverSocket.OnUpdateEvent -= Update;
+            serverSocket.OnUpdateEvent -= Update;
 
-            _serverSocket.ExecuteOnUpdate(() =>
+            serverSocket.ExecuteOnUpdate(() =>
             {
                 OnErrorEvent?.Invoke(e.Message);
             });
@@ -103,20 +89,20 @@ namespace MasterServerToolkit.Networking
 
         protected override void OnMessage(MessageEventArgs e)
         {
-            lock (_messageQueue)
+            lock (messageQueue)
             {
-                _messageQueue.Enqueue(e.RawData);
+                messageQueue.Enqueue(e.RawData);
             }
         }
 
-        public void SendData(byte[] data)
+        public void SendAsync(byte[] data)
         {
-            Send(data);
+            SendAsync(data, null);
         }
 
-        public void Close(string reason)
+        public void CloseAsync(string reason)
         {
-            Sessions.CloseSession(ID, CloseStatusCode.Normal, reason);
+            CloseAsync(CloseStatusCode.Normal, reason);
         }
     }
 }

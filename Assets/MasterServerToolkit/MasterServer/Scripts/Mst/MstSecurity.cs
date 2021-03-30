@@ -96,6 +96,19 @@ namespace MasterServerToolkit.MasterServer
         /// sends it to master, which returns encrypted AES key. After decrypting AES key,
         /// callback is invoked with the value. You can then use the AES key to encrypt data
         /// </summary>
+        /// <param name="callback"></param>
+        public void GetAesKey(Action<string> callback)
+        {
+            GetAesKey(callback, Connection);
+        }
+
+        /// <summary>
+        /// Should be called on client. Generates RSA public key, 
+        /// sends it to master, which returns encrypted AES key. After decrypting AES key,
+        /// callback is invoked with the value. You can then use the AES key to encrypt data
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
         public void GetAesKey(Action<string> callback, IClientSocket connection)
         {
             _encryptionData.TryGetValue(connection, out EncryptionData data);

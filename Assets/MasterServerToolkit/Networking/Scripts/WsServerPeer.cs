@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using MasterServerToolkit.Logging;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,74 +7,79 @@ namespace MasterServerToolkit.Networking
 {
     public class WsServerPeer : BasePeer
     {
-        private readonly WsService _session;
-        private bool _isConnected;
-        private Queue<byte[]> _delayedMessages;
+        private readonly WsService serviceForPeer;
+        //private Queue<byte[]> _delayedMessages;
+        private bool _isConnected = false;
 
         public WsServerPeer(WsService session)
         {
-            _session = session;
+            serviceForPeer = session;
 
-            _session.OnOpenEvent += () => { _isConnected = true; };
-            _session.OnCloseEvent += (msg) => { _isConnected = false; };
-            _session.OnErrorEvent += (msg) => { _isConnected = false; };
+            serviceForPeer.OnOpenEvent += () => { _isConnected = true; };
+            serviceForPeer.OnCloseEvent += (msg) => { _isConnected = false; };
+            serviceForPeer.OnErrorEvent += (msg) => { _isConnected = false; };
 
-            _delayedMessages = new Queue<byte[]>();
+            //_delayedMessages = new Queue<byte[]>();
 
-            // When we're creating a peer in server, it's considered that there's 
-            // already a connection for which we're making it.
             _isConnected = true;
         }
 
-        public IEnumerator SendDelayedMessages(float delay)
-        {
-            yield return new WaitForSecondsRealtime(delay);
+        //public IEnumerator SendDelayedMessages(float delay)
+        //{
+        //    yield return new WaitForSecondsRealtime(delay);
 
-            if (_delayedMessages == null)
-            {
-                Debug.LogError("Delayed messages are already sent");
-                yield break;
-            }
+        //    if (_delayedMessages == null)
+        //    {
+        //        Debug.LogError("Delayed messages are already sent");
+        //        yield break;
+        //    }
 
-            lock (_delayedMessages)
-            {
-                if (_delayedMessages == null)
-                {
-                    yield break;
-                }
+        //    lock (_delayedMessages)
+        //    {
+        //        if (_delayedMessages == null)
+        //        {
+        //            yield break;
+        //        }
 
-                var copy = _delayedMessages;
-                _delayedMessages = null;
+        //        var copy = _delayedMessages;
+        //        _delayedMessages = null;
 
-                foreach (var data in copy)
-                {
-                    _session.SendData(data);
-                }
-            }
-        }
+        //        foreach (var data in copy)
+        //        {
+        //            _session.SendMessage(data);
+        //        }
+        //    }
+        //}
 
         public override bool IsConnected => _isConnected;
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
-            if (_delayedMessages != null)
+            if(serviceForPeer.ConnectionState == WebSocketSharp.WebSocketState.Open)
             {
-                lock (_delayedMessages)
-                {
-                    if (_delayedMessages != null)
-                    {
-                        _delayedMessages.Enqueue(message.ToBytes());
-                        return;
-                    }
-                }
-            }
+                //if (_delayedMessages != null)
+                //{
+                //    lock (_delayedMessages)
+                //    {
+                //        if (_delayedMessages != null)
+                //        {
+                //            _delayedMessages.Enqueue(message.ToBytes());
+                //            return;
+                //        }
+                //    }
+                //}
 
-            _session.SendData(message.ToBytes());
+                serviceForPeer.SendAsync(message.ToBytes());
+            }
+            else
+            {
+                Logs.Error($"Server is trying to send data to peer {Id}, but it is not connected");
+            }
         }
 
         public override void Disconnect(string reason)
         {
-            _session.Close(reason);
+            serviceForPeer.CloseAsync(reason);
         }
     }
 }
