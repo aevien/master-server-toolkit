@@ -5,7 +5,7 @@
     /// Implementation of this interface will be stored in peer's extensions
     /// after he logs in
     /// </summary>
-    public interface IUserPeerExtension : IPeerExtension
+    public interface IUserPeerExtension : Networking.IPeerExtension
     {
         /// <summary>
         /// Current peer userid

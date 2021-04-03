@@ -1,6 +1,4 @@
-﻿
-using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Utils;
+﻿using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Events;
 

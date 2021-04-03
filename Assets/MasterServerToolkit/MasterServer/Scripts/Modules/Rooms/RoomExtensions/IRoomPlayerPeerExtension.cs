@@ -1,6 +1,6 @@
 ﻿namespace MasterServerToolkit.MasterServer
 {
-    public interface IRoomPlayerPeerExtension : IPeerExtension
+    public interface IRoomPlayerPeerExtension : Networking.IPeerExtension
     {
         /// <summary>
         /// Peer Id that master server gives to client

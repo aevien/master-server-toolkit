@@ -1,0 +1,17 @@
+{
+    "name": "MasterServerToolkit",
+    "rootNamespace": "",
+    "references": [
+        "Unity.TextMeshPro",
+        "Mirror"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

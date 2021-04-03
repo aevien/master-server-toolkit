@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Demo.BasicSpawner;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
 

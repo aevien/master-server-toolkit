@@ -1,12 +1,10 @@
-﻿using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace MasterServerToolkit.Demo.BasicSpawner
+namespace MasterServerToolkit.MasterServer
 {
     [Serializable]
     public class RoomServerPlayerEvent : UnityEvent<IRoomPlayerPeerExtension> { }

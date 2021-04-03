@@ -36,7 +36,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 
-namespace MasterServerToolkit.Tools
+namespace MasterServerToolkit.Json
 {
     public class JSONObject : IEnumerable
     {

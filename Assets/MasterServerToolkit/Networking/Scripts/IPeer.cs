@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.MasterServer;
-using System;
+﻿using System;
 
 namespace MasterServerToolkit.Networking
 {

@@ -1,6 +1,4 @@
-﻿using MasterServerToolkit.Networking;
-
-namespace MasterServerToolkit.MasterServer
+﻿namespace MasterServerToolkit.Networking
 {
     public interface IPeerExtension
     {

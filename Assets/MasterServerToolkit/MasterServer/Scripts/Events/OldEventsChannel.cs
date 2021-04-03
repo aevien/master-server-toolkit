@@ -1,7 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.MasterServer

@@ -28,7 +28,7 @@ using UnityEditor;
 using UnityEngine.Networking;
 #endif
 
-namespace MasterServerToolkit.Tools
+namespace MasterServerToolkit.Json
 {
     public class JSONChecker : EditorWindow
     {
