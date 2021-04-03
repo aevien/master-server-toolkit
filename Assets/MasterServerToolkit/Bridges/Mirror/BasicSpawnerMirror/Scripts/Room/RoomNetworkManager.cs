@@ -6,7 +6,7 @@ using Mirror;
 using System;
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class RoomNetworkManager : NetworkManager
     {
@@ -87,6 +87,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 
             // Prevent start network manager in headless mode automatically
             autoStartServerBuild = false;
+
+            // This will be removed in future
+            PersistNetworkManagerToOfflineScene = true;
 
             base.Awake();
         }

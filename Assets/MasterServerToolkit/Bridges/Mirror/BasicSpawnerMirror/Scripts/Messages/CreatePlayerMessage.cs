@@ -1,7 +1,7 @@
 ﻿#if MIRROR
 using Mirror;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public struct CreatePlayerMessage : NetworkMessage { }
 }

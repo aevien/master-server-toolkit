@@ -6,9 +6,11 @@ using Mirror;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
+    [AddComponentMenu("Master Server Toolkit/Mirror/RoomServer")]
     public class RoomServer : BaseClientBehaviour, ITerminatableRoom
     {
         #region INSPECTOR

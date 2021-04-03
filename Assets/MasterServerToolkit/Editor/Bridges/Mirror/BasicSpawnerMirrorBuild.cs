@@ -1,6 +1,5 @@
-﻿using System;
+﻿#if MIRROR
 using System.IO;
-using System.Text;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -144,3 +143,4 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicSpawnerMirror
         }
     }
 }
+#endif

@@ -614,7 +614,7 @@ MonoBehaviour:
   killProcessesWhenStop: 1
   autoStartInEditor: 1
   overrideExePathInEditor: 1
-  exePathFromEditor: C:\UnityProjects\MSF\Builds\BasicSpawnerMirror\Room\Room.exe
+  exePathFromEditor: C:\UnityProjects\MST\Builds\BasicSpawnerMirror\Room\Room.exe
   OnSpawnerStartedEvent:
     m_PersistentCalls:
       m_Calls: []

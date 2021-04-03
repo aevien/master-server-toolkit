@@ -12,7 +12,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
+namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class RoomClient : BaseClientBehaviour
     {
@@ -309,7 +309,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 
                 if (!isSuccessful)
                 {
-                    logger.Error("We could not connect to room. Please try again later or contact to administrator");
+                    logger.Error("We could not join the room. Please try again later or contact to administrator");
                     RoomNetworkManager.StopClient();
                 }
                 else
@@ -339,13 +339,13 @@ namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
         /// </summary>
         /// <param name="conn"></param>
         /// <param name="msg"></param>
-        protected virtual void ValidateRoomAccessResultHandler(NetworkConnection conn, ValidateRoomAccessResultMessage msg)
+        protected virtual void ValidateRoomAccessResultHandler(ValidateRoomAccessResultMessage msg)
         {
             if (msg.Status != ResponseStatus.Success)
             {
                 logger.Error(msg.Error);
 
-                OnAccessDenied(conn);
+                OnAccessDenied();
                 OnAccessDiniedEvent?.Invoke();
 
                 return;
@@ -353,7 +353,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
 
             logger.Debug("Access to server room is successfully validated");
 
-            OnAccessGranted(conn);
+            OnAccessGranted();
             OnAccessGrantedEvent?.Invoke();
         }
 
@@ -361,7 +361,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
         /// Fires when access to room server granted
         /// </summary>
         /// <param name="conn"></param>
-        protected virtual void OnAccessGranted(NetworkConnection conn)
+        protected virtual void OnAccessGranted()
         {
             CreatePlayer();
         }
@@ -370,7 +370,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworkingOld
         /// Fires when access to room server denied
         /// </summary>
         /// <param name="conn"></param>
-        protected virtual void OnAccessDenied(NetworkConnection conn) { }
+        protected virtual void OnAccessDenied() { }
 
         /// <summary>
         /// Start room client

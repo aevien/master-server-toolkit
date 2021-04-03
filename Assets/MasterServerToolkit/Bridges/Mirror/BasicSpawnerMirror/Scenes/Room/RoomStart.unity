@@ -580,9 +580,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dontDestroyOnLoad: 1
+  PersistNetworkManagerToOfflineScene: 0
   runInBackground: 1
   autoStartServerBuild: 1
-  showDebugMessages: 0
   serverTickRate: 30
   serverBatching: 0
   serverBatchInterval: 0
@@ -881,7 +881,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terminateRoomWhenLastPlayerQuits: 0
   terminateEmptyRoomInSeconds: 60
-  logLevel: 3
+  logLevel: 0
 --- !u!1001 &1547812731
 PrefabInstance:
   m_ObjectHideFlags: 0

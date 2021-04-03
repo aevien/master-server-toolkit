@@ -1,7 +1,7 @@
 ﻿#if MIRROR
 using UnityEngine;
 
-namespace MasterServerToolkit.Bridges.MirrorNetworkingOld.Character
+namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     [DisallowMultipleComponent]
     public class PlayerCharacterInput : MonoBehaviour
