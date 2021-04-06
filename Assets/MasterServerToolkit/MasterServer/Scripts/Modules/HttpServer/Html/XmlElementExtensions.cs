@@ -22,20 +22,25 @@ namespace MasterServerToolkit.MasterServer.Web
         /// <param name="className"></param>
         public static void AddClass(this XmlElement el, string className)
         {
+            List<string> newClasses = className.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
             if (el.HasAttribute("class"))
             {
-                List<string> classes = el.GetAttribute("class").Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                List<string> existingClasses = el.GetAttribute("class").Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
-                if (!classes.ToList().Contains(className.Trim()))
+                foreach(string newClass in newClasses)
                 {
-                    classes.Add(className);
+                    if (!existingClasses.Contains(newClass.Trim()))
+                    {
+                        existingClasses.Add(className);
+                    }
                 }
 
-                el.SetAttribute("class", string.Join(" ", classes));
+                el.SetAttribute("class", string.Join(" ", existingClasses));
             }
             else
             {
-                el.SetAttribute("class", className);
+                el.SetAttribute("class", string.Join(" ", newClasses));
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -161,6 +162,21 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler((short)MstMessageCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
 
             server.RegisterMessageHandler((short)MstMessageCodes.UpdateAccountInfo, UpdateAccountInfoMessageHandler);
+        }
+
+        public override MstProperties Info()
+        {
+            MstProperties info = base.Info();
+
+            info.Add("Users", LoggedInUsers.Count());
+            info.Add("Allow Gusets", enableGuestLogin);
+            info.Add("Save Gusets", saveGuestInfo);
+            info.Add("Guset name prefix", guestPrefix);
+            info.Add("Email Confirm", useEmailConfirmation);
+            info.Add("Min username length", usernameMinChars);
+            info.Add("Min password length", userPasswordMinChars);
+
+            return info;
         }
 
         /// <summary>
@@ -809,11 +825,13 @@ namespace MasterServerToolkit.MasterServer
             // If we got system exception
             catch (MstMessageHandlerException e)
             {
+                logger.Error(e.Message);
                 message.Respond(e.Message, e.Status);
             }
             // If we got another exception
             catch (Exception e)
             {
+                logger.Error(e.Message);
                 message.Respond(e.Message, ResponseStatus.Error);
             }
         }
@@ -873,8 +891,8 @@ namespace MasterServerToolkit.MasterServer
                 throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
             }
 
-            // If guest user can save its account info
-            if (authDbAccessor == null && saveGuestInfo)
+            // If no db accessor found
+            if (authDbAccessor == null)
             {
                 throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
             }
@@ -972,8 +990,8 @@ namespace MasterServerToolkit.MasterServer
                 throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
             }
 
-            // If guest user can save its account info
-            if (authDbAccessor == null && saveGuestInfo)
+            // If no db accessor found
+            if (authDbAccessor == null)
             {
                 throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
             }
@@ -1035,8 +1053,8 @@ namespace MasterServerToolkit.MasterServer
                 throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
             }
 
-            // If guest user can save its account info
-            if (authDbAccessor == null && saveGuestInfo)
+            // If no db accessor found
+            if (authDbAccessor == null)
             {
                 throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
             }
@@ -1099,8 +1117,8 @@ namespace MasterServerToolkit.MasterServer
                 throw new MstMessageHandlerException("Guest login is not allowed in this game", ResponseStatus.Error);
             }
 
-            // If guest user can save its account info
-            if (authDbAccessor == null && saveGuestInfo)
+            // If no db accessor found
+            if (authDbAccessor == null)
             {
                 throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
             }

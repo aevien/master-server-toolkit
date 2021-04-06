@@ -88,9 +88,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             // Prevent start network manager in headless mode automatically
             autoStartServerBuild = false;
 
-            // This will be removed in future
-            PersistNetworkManagerToOfflineScene = true;
-
             base.Awake();
         }
 

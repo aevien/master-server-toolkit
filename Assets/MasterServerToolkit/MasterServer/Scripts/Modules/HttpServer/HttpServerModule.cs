@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.MasterServer.Web;
 using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
@@ -280,31 +281,65 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual string Default404Page()
         {
-            StringBuilder html = new StringBuilder();
-            html.Append("<!doctype html>");
-            html.Append("<html lang=\"en\">");
-            html.Append("<head>");
-            html.Append("<meta charset=\"utf-8\">");
-            html.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">");
-            html.Append("<meta name=\"description\" content=\"Master Server Toolkit is designed to kickstart your back-end server development. It contains solutions to some of the common problems.\">");
-            html.Append($"<meta name=\"author\" content=\"{Mst.Name}\">");
-            html.Append("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css\" integrity=\"sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl\" crossorigin=\"anonymous\">");
-            html.Append($"<title>404 | {Mst.Name} {Mst.Version}</title>");
-            html.Append("</head>");
-            html.Append("<body class=\"vh-100\">");
-            html.Append("<div class=\"container h-100\">");
-            html.Append("<div class=\"row h-100\">");
-            html.Append("<div class=\"col align-self-center text-center\">");
-            html.Append($"<h2>{Mst.Name} {Mst.Version}</h2>");
-            html.Append("<h3 class=\"display-3\">404:Page Not Found</h3>");
-            html.Append("<p>This is default 404 page. You can override it by overloading Default404Page() method in HttpServerModule</p>");
-            html.Append("<p><a href=\"/\">Open Home page...</a></p>");
-            html.Append("</div>");
-            html.Append("</div>");
-            html.Append("</div>");
-            html.Append("<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0\" crossorigin=\"anonymous\"></script>");
-            html.Append("</body>");
-            html.Append("</html>");
+            HtmlDocument html = new HtmlDocument
+            {
+                Title = "404 | Master Server Toolkit"
+            };
+
+            html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
+            html.AddMeta(new KeyValuePair<string, string>("name", "viewport"), new KeyValuePair<string, string>("content", "width=device-width, initial-scale=1"));
+            html.AddMeta(new KeyValuePair<string, string>("name", "description"), new KeyValuePair<string, string>("content", "Master Server Toolkit is designed to kickstart your back-end server development. It contains solutions to some of the common problems."));
+            html.AddMeta(new KeyValuePair<string, string>("name", "author"), new KeyValuePair<string, string>("content", "Master Server Toolkit"));
+
+            html.Links.Add(new HtmlLinkElement()
+            {
+                Href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css",
+                Rel = "stylesheet",
+                Integrity = "sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl",
+                Crossorigin = "anonymous"
+            });
+
+            html.Scripts.Add(new HtmlScriptElement()
+            {
+                Src = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js",
+                Integrity = "sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0",
+                Crossorigin = "anonymous"
+            });
+
+            html.Body.AddClass("vh-100");
+
+            var container = html.CreateElement("div");
+            container.AddClass("container h-100");
+            html.Body.AppendChild(container);
+
+            var row = html.CreateElement("div");
+            row.AddClass("row h-100");
+            container.AppendChild(row);
+
+            var col = html.CreateElement("div");
+            col.AddClass("col align-self-center text-center");
+            row.AppendChild(col);
+
+            var h2 = html.CreateElement("h2");
+            h2.InnerText = $"{Mst.Name} {Mst.Version}";
+            col.AppendChild(h2);
+
+            var h3 = html.CreateElement("h3");
+            h3.AddClass("display-3");
+            h3.InnerText = "Home Page";
+            col.AppendChild(h3);
+
+            var p1 = html.CreateElement("p");
+            p1.InnerText = "This is default 404 page. You can override it by overloading Default404Page() method in HttpServerModule";
+            col.AppendChild(p1);
+
+            var p2 = html.CreateElement("p");
+            col.AppendChild(p2);
+
+            var href1 = html.CreateElement("a");
+            href1.InnerText = "Open Home page...";
+            href1.SetAttribute("href", "/");
+            p2.AppendChild(href1);
 
             return html.ToString();
         }
@@ -315,31 +350,65 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual string DefaultIndexPageHtml()
         {
-            StringBuilder html = new StringBuilder();
-            html.Append("<!doctype html>");
-            html.Append("<html lang=\"en\">");
-            html.Append("<head>");
-            html.Append("<meta charset=\"utf-8\">");
-            html.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">");
-            html.Append("<meta name=\"description\" content=\"Master Server Toolkit is designed to kickstart your back-end server development. It contains solutions to some of the common problems.\">");
-            html.Append($"<meta name=\"author\" content=\"{Mst.Name}\">");
-            html.Append("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css\" integrity=\"sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl\" crossorigin=\"anonymous\">");
-            html.Append($"<title>Index | {Mst.Name} {Mst.Version}</title>");
-            html.Append("</head>");
-            html.Append("<body class=\"vh-100\">");
-            html.Append("<div class=\"container h-100\">");
-            html.Append("<div class=\"row h-100\">");
-            html.Append("<div class=\"col align-self-center text-center\">");
-            html.Append($"<h2>{Mst.Name} {Mst.Version}</h2>");
-            html.Append("<h3 class=\"display-3\">Index</h3>");
-            html.Append("<p>This is default Index page. You can override it by overloading DefaultIndexPageHtml() method in HttpServerModule</p>");
-            html.Append("<p><a href=\"somewhere\">Open 404 page...</a></p>");
-            html.Append("</div>");
-            html.Append("</div>");
-            html.Append("</div>");
-            html.Append("<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js\" integrity=\"sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0\" crossorigin=\"anonymous\"></script>");
-            html.Append("</body>");
-            html.Append("</html>");
+            HtmlDocument html = new HtmlDocument
+            {
+                Title = "Home | Master Server Toolkit"
+            };
+
+            html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
+            html.AddMeta(new KeyValuePair<string, string>("name", "viewport"), new KeyValuePair<string, string>("content", "width=device-width, initial-scale=1"));
+            html.AddMeta(new KeyValuePair<string, string>("name", "description"), new KeyValuePair<string, string>("content", "Master Server Toolkit is designed to kickstart your back-end server development. It contains solutions to some of the common problems."));
+            html.AddMeta(new KeyValuePair<string, string>("name", "author"), new KeyValuePair<string, string>("content", "Master Server Toolkit"));
+
+            html.Links.Add(new HtmlLinkElement()
+            {
+                Href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css",
+                Rel = "stylesheet",
+                Integrity = "sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl",
+                Crossorigin = "anonymous"
+            });
+
+            html.Scripts.Add(new HtmlScriptElement()
+            {
+                Src = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js",
+                Integrity = "sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0",
+                Crossorigin = "anonymous"
+            });
+
+            html.Body.AddClass("vh-100");
+
+            var container = html.CreateElement("div");
+            container.AddClass("container h-100");
+            html.Body.AppendChild(container);
+
+            var row = html.CreateElement("div");
+            row.AddClass("row h-100");
+            container.AppendChild(row);
+
+            var col = html.CreateElement("div");
+            col.AddClass("col align-self-center text-center");
+            row.AppendChild(col);
+
+            var h2 = html.CreateElement("h2");
+            h2.InnerText = $"{Mst.Name} {Mst.Version}";
+            col.AppendChild(h2);
+
+            var h3 = html.CreateElement("h3");
+            h3.AddClass("display-3");
+            h3.InnerText = "Home Page";
+            col.AppendChild(h3);
+
+            var p1 = html.CreateElement("p");
+            p1.InnerText = "This is default Index page. You can override it by overloading DefaultIndexPageHtml() method in HttpServerModule";
+            col.AppendChild(p1);
+
+            var p2 = html.CreateElement("p");
+            col.AppendChild(p2);
+
+            var href1 = html.CreateElement("a");
+            href1.InnerText = "Open 404 page...";
+            href1.SetAttribute("href", "somewhere");
+            p2.AppendChild(href1);
 
             return html.ToString();
         }

@@ -9,5 +9,6 @@ namespace MasterServerToolkit.MasterServer
         List<Type> OptionalDependencies { get; }
         ServerBehaviour Server { get; set; }
         void Initialize(IServer server);
+        MstProperties Info();
     }
 }

@@ -147,6 +147,16 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler((short)MstMessageCodes.ClientProfileRequest, ClientProfileRequestHandler);
         }
 
+        public override MstProperties Info()
+        {
+            MstProperties info = base.Info();
+
+            info.Add("Database Accessor", profileDatabaseAccessor != null ? "Connected" : "Not Connected");
+            info.Add("Profiles", Profiles.Count());
+
+            return info;
+        }
+
         /// <summary>
         /// Triggered when the user has successfully logged in
         /// </summary>

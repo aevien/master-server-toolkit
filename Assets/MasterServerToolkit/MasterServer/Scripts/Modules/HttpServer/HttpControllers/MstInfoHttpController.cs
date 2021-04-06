@@ -18,10 +18,22 @@ namespace MasterServerToolkit.MasterServer
 
     public class MstInfoHttpController : HttpController
     {
+        Dictionary<string, string> info;
+
         public override void Initialize(HttpServerModule server)
         {
             base.Initialize(server);
             server.RegisterHttpRequestHandler("info", OnGetMstInfoJsonHttpRequestHandler);
+
+            info = new Dictionary<string, string>
+            {
+                { "Device Id", SystemInfo.deviceUniqueIdentifier },
+                { "Device Model", SystemInfo.deviceModel },
+                { "Device Name", SystemInfo.deviceName },
+                { "Graphics Device Name", SystemInfo.graphicsDeviceName },
+                { "Graphics Device Version", SystemInfo.graphicsDeviceVersion },
+                { "...", "etc." },
+            };
         }
 
         private void OnGetMstInfoJsonHttpRequestHandler(HttpRequestEventArgs eventArgs)
@@ -29,7 +41,7 @@ namespace MasterServerToolkit.MasterServer
             var response = eventArgs.Response;
 
             HtmlDocument html = new HtmlDocument();
-            html.Title("MST Info");
+            html.Title = "MST Info";
             html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
             html.AddMeta(new KeyValuePair<string, string>("name", "viewport"), new KeyValuePair<string, string>("content", "width=device-width, initial-scale=1"));
 
@@ -51,24 +63,46 @@ namespace MasterServerToolkit.MasterServer
             html.Body.AddClass("body");
 
             var container = html.CreateElement("div");
-            container.AddClass("container");
+            container.AddClass("container-fluid pt-5");
             html.Body.AppendChild(container);
+
+            var h1 = html.CreateElement("h1");
+            h1.InnerText = $"{Mst.Name} {Mst.Version}";
+            container.AppendChild(h1);
 
             var row = html.CreateElement("div");
             row.AddClass("row");
             container.AppendChild(row);
 
-            var col = html.CreateElement("div");
-            col.AddClass("col");
-            row.AppendChild(col);
+            var col1 = html.CreateElement("div");
+            col1.AddClass("col-md-4");
+            row.AppendChild(col1);
 
-            var h1 = html.CreateElement("h1");
-            h1.InnerText = "Hello World!";
-            col.AppendChild(h1);
+            var col2 = html.CreateElement("div");
+            col2.AddClass("col-md-8");
+            row.AppendChild(col2);
+
+            GenerateMachineInfo(html, col1);
+
+            GenerateListOfModules(html, col2);
+
+            byte[] contents = Encoding.UTF8.GetBytes(html.ToString());
+
+            response.ContentType = "text/html";
+            response.ContentEncoding = Encoding.UTF8;
+            response.ContentLength64 = contents.LongLength;
+            response.Close(contents, true);
+        }
+
+        private void GenerateMachineInfo(HtmlDocument html, XmlElement parent)
+        {
+            var h2 = html.CreateElement("h2");
+            h2.InnerText = "System Info";
+            parent.AppendChild(h2);
 
             var table = html.CreateElement("table");
-            table.AddClass("table table-bordered");
-            col.AppendChild(table);
+            table.AddClass("table table-bordered table-striped table-hover table-sm mb-5");
+            parent.AppendChild(table);
 
             var thead = html.CreateElement("thead");
             table.AppendChild(thead);
@@ -79,14 +113,64 @@ namespace MasterServerToolkit.MasterServer
             var thr = html.CreateElement("tr");
             thead.AppendChild(thr);
 
-            var thr1 = html.CreateElement("th");
-            thr1.InnerText = "#";
-            thr1.SetAttribute("scope", "col");
-            thr.AppendChild(thr1);
+            var th1 = html.CreateElement("th");
+            th1.InnerText = "#";
+            th1.SetAttribute("scope", "col");
+            th1.SetAttribute("width", "200");
+            thr.AppendChild(th1);
 
             var thr2 = html.CreateElement("th");
             thr2.InnerText = "Name";
             thr.AppendChild(thr2);
+
+            foreach (var property in info)
+            {
+                var tr = html.CreateElement("tr");
+                tbody.AppendChild(tr);
+
+                var th = html.CreateElement("th");
+                th.InnerText = property.Key;
+                th.SetAttribute("scope", "row");
+                tr.AppendChild(th);
+
+                var th2 = html.CreateElement("td");
+                th2.InnerText = property.Value;
+                tr.AppendChild(th2);
+            }
+        }
+
+        private void GenerateListOfModules(HtmlDocument html, XmlElement parent)
+        {
+            var h2 = html.CreateElement("h2");
+            h2.InnerText = "Modules";
+            parent.AppendChild(h2);
+
+            var table = html.CreateElement("table");
+            table.AddClass("table table-bordered table-striped table-hover table-sm");
+            parent.AppendChild(table);
+
+            var thead = html.CreateElement("thead");
+            table.AppendChild(thead);
+
+            var tbody = html.CreateElement("tbody");
+            table.AppendChild(tbody);
+
+            var thr = html.CreateElement("tr");
+            thead.AppendChild(thr);
+
+            var th1 = html.CreateElement("th");
+            th1.InnerText = "#";
+            th1.SetAttribute("scope", "col");
+            th1.SetAttribute("width", "50");
+            thr.AppendChild(th1);
+
+            var th2 = html.CreateElement("th");
+            th2.InnerText = "Name";
+            thr.AppendChild(th2);
+
+            var th3 = html.CreateElement("th");
+            th3.InnerText = "Info";
+            thr.AppendChild(th3);
 
             int index = 1;
 
@@ -95,24 +179,32 @@ namespace MasterServerToolkit.MasterServer
                 var tr = html.CreateElement("tr");
                 tbody.AppendChild(tr);
 
-                var th1 = html.CreateElement("th");
-                th1.InnerText = index.ToString();
-                th1.SetAttribute("scope", "row");
-                tr.AppendChild(th1);
+                var th = html.CreateElement("th");
+                th.InnerText = index.ToString();
+                th.SetAttribute("scope", "row");
+                tr.AppendChild(th);
 
-                var th2 = html.CreateElement("td");
-                th2.InnerText = module.GetType().Name;
-                tr.AppendChild(th2);
+                var td = html.CreateElement("td");
+                td.InnerText = module.GetType().Name;
+                tr.AppendChild(td);
+
+                var td1 = html.CreateElement("td");
+                tr.AppendChild(td1);
+
+                var ul = html.CreateElement("ul");
+                td1.AppendChild(ul);
+
+                string[] infos = module.Info().ToReadableString("\n", ": ").Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach(string info in infos)
+                {
+                    var li = html.CreateElement("li");
+                    li.InnerText = info;
+                    ul.AppendChild(li);
+                }
 
                 index++;
             }
-
-            byte[] contents = Encoding.UTF8.GetBytes(html.ToString());
-
-            response.ContentType = "text/html";
-            response.ContentEncoding = Encoding.UTF8;
-            response.ContentLength64 = contents.LongLength;
-            response.Close(contents, true);
         }
     }
 }

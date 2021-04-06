@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -89,6 +90,37 @@ namespace MasterServerToolkit.MasterServer
 
             instances.Add(GetType(), gameObject);
             return false;
+        }
+
+        public virtual MstProperties Info()
+        {
+            MstProperties info = new MstProperties();
+
+            if(Dependencies.Count > 0)
+            {
+                StringBuilder dep = new StringBuilder();
+
+                for (int i = 0; i < Dependencies.Count; i++)
+                {
+                    dep.Append(Dependencies[i].Name + (Dependencies.Count == i + 1 ? "" : ", "));
+                }
+
+                info.Add("Dependencies", dep.ToString());
+            }
+
+            if(OptionalDependencies.Count > 0)
+            {
+                StringBuilder dep = new StringBuilder();
+
+                for (int i = 0; i < OptionalDependencies.Count; i++)
+                {
+                    dep.Append(OptionalDependencies[i].Name + (OptionalDependencies.Count == i + 1 ? "" : ", "));
+                }
+
+                info.Add("Optional Dependencies", dep.ToString());
+            }
+
+            return info;
         }
     }
 }

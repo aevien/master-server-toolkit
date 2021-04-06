@@ -57,9 +57,16 @@ namespace MasterServerToolkit.MasterServer.Web
         /// 
         /// </summary>
         /// <param name="value"></param>
-        public void Title(string value)
+        public string Title
         {
-            title.InnerText = value;
+            get
+            {
+                return title.InnerText;
+            }
+            set
+            {
+                title.InnerText = value;
+            }
         }
 
         /// <summary>
