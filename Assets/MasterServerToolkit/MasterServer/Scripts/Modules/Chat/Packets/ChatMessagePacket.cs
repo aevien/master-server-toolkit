@@ -16,7 +16,13 @@ namespace MasterServerToolkit.MasterServer
         /// or channel name, if channel message
         /// </summary>
         public string Receiver { get; set; } = string.Empty;
+        /// <summary>
+        /// Represents sender username
+        /// </summary>
         public string Sender { get; set; } = string.Empty;
+        /// <summary>
+        /// Messages text
+        /// </summary>
         public string Message { get; set; } = string.Empty;
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)

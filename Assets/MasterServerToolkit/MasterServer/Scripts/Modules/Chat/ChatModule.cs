@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -102,12 +103,12 @@ namespace MasterServerToolkit.MasterServer
             // Setup censorModule
             censorModule = server.GetModule<CensorModule>();
 
-            if (useAuthModule && authModule != null)
+            if (useAuthModule && authModule)
             {
                 authModule.OnUserLoggedInEvent += OnUserLoggedInEventHandler;
                 authModule.OnUserLoggedOutEvent += OnUserLoggedOutEventHandler;
             }
-            else if (useAuthModule)
+            else if (useAuthModule && !authModule)
             {
                 logger.Error("Chat module was set to use Auth module, but Auth module was not found");
             }
@@ -120,7 +121,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual bool AddChatUser(ChatUserPeerExtension user)
         {
-            string username = user.Username.ToLower();
+            string username = user.Username;
 
             if (ChatUsers.ContainsKey(username))
             {
@@ -131,7 +132,7 @@ namespace MasterServerToolkit.MasterServer
             else
             {
                 // Add the new user
-                ChatUsers[user.Username.ToLower()] = user;
+                ChatUsers[user.Username] = user;
 
                 // Start listening user disconnection
                 user.Peer.OnPeerDisconnectedEvent += OnClientDisconnected;
@@ -148,7 +149,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="user"></param>
         protected virtual void RemoveChatUser(ChatUserPeerExtension user)
         {
-            string username = user.Username.ToLower();
+            string username = user.Username;
 
             // Remove from chat users list
             ChatUsers.Remove(username);
@@ -168,9 +169,10 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Create chat user as <see cref="ChatUserPeerExtension"/>
+        /// Creates chat user as <see cref="ChatUserPeerExtension"/>
         /// </summary>
         /// <param name="peer"></param>
+        /// <param name="userId"></param>
         /// <param name="username"></param>
         /// <returns></returns>
         protected virtual ChatUserPeerExtension CreateChatUser(IPeer peer, string username)
@@ -200,18 +202,14 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual ChatChannel GetOrCreateChannel(string channelName, bool ignoreForbidden)
         {
-            var lowercaseName = channelName.ToLower();
+            var lowercaseName = channelName;
 
             logger.Debug($"Trying to get channel {channelName}");
 
             if (!ChatChannels.TryGetValue(lowercaseName, out ChatChannel channel))
             {
-                if (channelName.Length < minChannelNameLength)
-                {
-                    return null;
-                }
-
-                if (channelName.Length > maxChannelNameLength)
+                // Check if our new channel name is incorrect
+                if (channelName.Length < minChannelNameLength || channelName.Length > maxChannelNameLength)
                 {
                     return null;
                 }
@@ -223,7 +221,10 @@ namespace MasterServerToolkit.MasterServer
                     return null;
                 }
 
+                // Create new channel
                 channel = new ChatChannel(channelName);
+
+                // Add this channel to list
                 ChatChannels.Add(lowercaseName, channel);
             }
             else
@@ -293,68 +294,66 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual bool TryHandleChatMessage(ChatMessagePacket message, ChatUserPeerExtension sender, IIncomingMessage rawMessage)
         {
-            // Set a true sender
-            message.Sender = sender.Username;
-
-            string responseMsg = string.Empty;
-
-            switch (message.MessageType)
+            try
             {
-                case ChatMessageType.ChannelMessage:
+                // Set a true sender
+                message.Sender = sender.Username;
 
-                    if (string.IsNullOrEmpty(message.Receiver))
-                    {
-                        // If this is a local chat message (no receiver is provided)
-                        if (sender.DefaultChannel == null)
+                switch (message.MessageType)
+                {
+                    case ChatMessageType.ChannelMessage:
+
+                        if (string.IsNullOrEmpty(message.Receiver))
                         {
-                            responseMsg = "No channel is set to be your local channel";
+                            // If this is a local chat message (no receiver is provided)
+                            if (sender.DefaultChannel == null)
+                            {
+                                throw new MstMessageHandlerException("No channel is set to be your local channel", ResponseStatus.Failed);
+                            }
 
-                            logger.Debug(responseMsg);
-
-                            rawMessage.Respond(responseMsg, ResponseStatus.Failed);
+                            sender.DefaultChannel.BroadcastMessage(message);
+                            rawMessage.Respond(ResponseStatus.Success);
                             return true;
                         }
 
-                        sender.DefaultChannel.BroadcastMessage(message);
+                        // Find the channel
+                        if (!ChatChannels.TryGetValue(message.Receiver, out ChatChannel channel) || !sender.CurrentChannels.Contains(channel))
+                        {
+                            throw new MstMessageHandlerException($"You're not in the '{message.Receiver}' channel", ResponseStatus.Failed);
+                        }
+
+                        channel.BroadcastMessage(message);
                         rawMessage.Respond(ResponseStatus.Success);
                         return true;
-                    }
 
-                    // Find the channel
-                    if (!ChatChannels.TryGetValue(message.Receiver.ToLower(), out ChatChannel channel) || !sender.CurrentChannels.Contains(channel))
-                    {
-                        responseMsg = $"You're not in the '{message.Receiver}' channel";
+                    case ChatMessageType.PrivateMessage:
 
-                        logger.Error(responseMsg);
+                        if (!ChatUsers.TryGetValue(message.Receiver, out ChatUserPeerExtension receiver))
+                        {
+                            throw new MstMessageHandlerException($"User '{message.Receiver}' is not online", ResponseStatus.Failed);
+                        }
 
-                        // Not in this channel
-                        rawMessage.Respond(responseMsg, ResponseStatus.Failed);
+                        receiver.Peer.SendMessage((short)MstMessageCodes.ChatMessage, message);
+                        rawMessage.Respond(ResponseStatus.Success);
                         return true;
-                    }
+                }
 
-                    channel.BroadcastMessage(message);
-
-                    rawMessage.Respond(ResponseStatus.Success);
-                    return true;
-
-                case ChatMessageType.PrivateMessage:
-
-                    if (!ChatUsers.TryGetValue(message.Receiver.ToLower(), out ChatUserPeerExtension receiver))
-                    {
-                        responseMsg = $"User '{message.Receiver}' is not online";
-
-                        logger.Error(responseMsg);
-
-                        rawMessage.Respond(responseMsg, ResponseStatus.Failed);
-                        return true;
-                    }
-
-                    receiver.Peer.SendMessage((short)MstMessageCodes.ChatMessage, message);
-                    rawMessage.Respond(ResponseStatus.Success);
-                    return true;
+                return false;
             }
-
-            return false;
+            // If we got system exception
+            catch (MstMessageHandlerException e)
+            {
+                logger.Error(e.Message);
+                rawMessage.Respond(e.Message, e.Status);
+                return false;
+            }
+            // If we got another exception
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                rawMessage.Respond(e.Message, ResponseStatus.Error);
+                return false;
+            }
         }
 
         #region Event Handlers
@@ -414,279 +413,303 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnPickUsernameRequestHandler(IIncomingMessage message)
         {
-            string responseMsg;
-            if (!allowUsernamePicking)
+            try
             {
-                responseMsg = "Username picking is disabled";
+                if (!allowUsernamePicking)
+                {
+                    throw new MstMessageHandlerException("Username picking is disabled", ResponseStatus.Failed);
+                }
 
-                logger.Error(responseMsg);
+                var username = message.AsString();
 
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
+                if (username.Contains(" "))
+                {
+                    throw new MstMessageHandlerException("Username cannot contain whitespaces", ResponseStatus.Failed);
+                }
+
+                var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
+
+                if (chatUser != null)
+                {
+                    throw new MstMessageHandlerException($"You're already identified as: {chatUser.Username}", ResponseStatus.Failed);
+                }
+
+                if (ChatUsers.ContainsKey(username))
+                {
+                    throw new MstMessageHandlerException("There's already a user who has the same username", ResponseStatus.Failed);
+                }
+
+                chatUser = CreateChatUser(message.Peer, username);
+
+                if (!AddChatUser(chatUser))
+                {
+                    throw new MstMessageHandlerException("Failed to add user to chat", ResponseStatus.Failed);
+                }
+
+                // Add the extension
+                message.Peer.AddExtension(chatUser);
+
+                // Send response
+                message.Respond(ResponseStatus.Success);
             }
-
-            var username = message.AsString();
-
-            if (username.Contains(" "))
+            // If we got system exception
+            catch (MstMessageHandlerException e)
             {
-                responseMsg = "Username cannot contain whitespaces";
-
-                logger.Error(responseMsg);
-
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
             }
-
-            var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
-
-            if (chatUser != null)
+            // If we got another exception
+            catch (Exception e)
             {
-                responseMsg = $"You're already identified as: {chatUser.Username}";
-
-                logger.Error(responseMsg);
-
-                message.Respond(responseMsg);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
             }
-
-            if (ChatUsers.ContainsKey(username.ToLower()))
-            {
-                responseMsg = "There's already a user who has the same username";
-
-                logger.Error(responseMsg);
-
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
-            }
-
-            chatUser = new ChatUserPeerExtension(message.Peer, username);
-
-            if (!AddChatUser(chatUser))
-            {
-                responseMsg = "Failed to add user to chat";
-
-                logger.Error(responseMsg);
-
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
-            }
-
-            // Add the extension
-            message.Peer.AddExtension(chatUser);
-
-            message.Respond(ResponseStatus.Success);
         }
 
         protected virtual void OnJoinChannelRequestHandler(IIncomingMessage message)
         {
-            var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
-
-            string responseMsg;
-
-            if (chatUser == null)
+            try
             {
-                responseMsg = "Chat cannot identify you";
+                // Get user from peer
+                var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
 
-                logger.Error(responseMsg);
+                // If peer has no user
+                if (chatUser == null)
+                {
+                    throw new MstMessageHandlerException("Chat cannot identify you", ResponseStatus.Unauthorized);
+                }
 
-                message.Respond(responseMsg, ResponseStatus.Unauthorized);
-                return;
+                // Get channel name
+                var channelName = message.AsString();
+
+                // Trying to create channel with given name
+                var channel = GetOrCreateChannel(channelName);
+
+                if (channel == null)
+                {
+                    throw new MstMessageHandlerException("This channel is forbidden", ResponseStatus.Failed);
+                }
+
+                if (!channel.AddUser(chatUser))
+                {
+                    throw new MstMessageHandlerException("Failed to join a channel", ResponseStatus.Failed);
+                }
+
+                if (setFirstChannelAsLocal && chatUser.CurrentChannels.Count == 1)
+                {
+                    chatUser.DefaultChannel = channel;
+                }
+
+                message.Respond(ResponseStatus.Success);
             }
-
-            var channelName = message.AsString();
-
-            var channel = GetOrCreateChannel(channelName);
-
-            if (channel == null)
+            // If we got system exception
+            catch (MstMessageHandlerException e)
             {
-                responseMsg = "This channel is forbidden";
-
-                logger.Error(responseMsg);
-
-                // There's no such channel
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
             }
-
-            if (!channel.AddUser(chatUser))
+            // If we got another exception
+            catch (Exception e)
             {
-                responseMsg = "Failed to join a channel";
-
-                logger.Error(responseMsg);
-
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
             }
-
-            if (setFirstChannelAsLocal && chatUser.CurrentChannels.Count == 1)
-            {
-                chatUser.DefaultChannel = channel;
-            }
-
-            message.Respond(ResponseStatus.Success);
         }
 
         protected virtual void OnLeaveChannelRequestHandler(IIncomingMessage message)
         {
-            var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
-
-            string responseMsg;
-
-            if (chatUser == null)
+            try
             {
-                responseMsg = "Chat cannot identify you";
+                // Get user from peer
+                var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
 
-                logger.Error(responseMsg);
+                // If peer has no user
+                if (chatUser == null)
+                {
+                    throw new MstMessageHandlerException("Chat cannot identify you", ResponseStatus.Unauthorized);
+                }
 
-                message.Respond(responseMsg, ResponseStatus.Unauthorized);
-                return;
+                // Get channel name
+                var channelName = message.AsString();
+
+                // Trying to get channel by name
+                if (!ChatChannels.TryGetValue(channelName, out ChatChannel channel))
+                {
+                    throw new MstMessageHandlerException("This channel does not exist", ResponseStatus.Failed);
+                }
+
+                // Remove user from channel
+                channel.RemoveUser(chatUser);
+
+                if (setLastChannelAsLocal && chatUser.CurrentChannels.Count == 1)
+                {
+                    chatUser.DefaultChannel = chatUser.CurrentChannels.First();
+                }
+
+                message.Respond(ResponseStatus.Success);
             }
-
-            var channelName = message.AsString().ToLower();
-
-            if (!ChatChannels.TryGetValue(channelName, out ChatChannel channel))
+            // If we got system exception
+            catch (MstMessageHandlerException e)
             {
-                responseMsg = "This channel does not exist";
-
-                logger.Error(responseMsg);
-
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
             }
-
-            channel.RemoveUser(chatUser);
-
-            if (setLastChannelAsLocal && chatUser.CurrentChannels.Count == 1)
+            // If we got another exception
+            catch (Exception e)
             {
-                chatUser.DefaultChannel = chatUser.CurrentChannels.First();
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
             }
-
-            message.Respond(ResponseStatus.Success);
         }
 
         protected virtual void OnSetDefaultChannelRequestHandler(IIncomingMessage message)
         {
-            var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
-
-            string responseMsg;
-
-            if (chatUser == null)
+            try
             {
-                responseMsg = "Chat cannot identify you";
+                var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
 
-                logger.Error(responseMsg);
+                // If peer has no user
+                if (chatUser == null)
+                {
+                    throw new MstMessageHandlerException("Chat cannot identify you", ResponseStatus.Unauthorized);
+                }
 
-                message.Respond(responseMsg, ResponseStatus.Unauthorized);
-                return;
+                var channelName = message.AsString();
+                var channel = GetOrCreateChannel(channelName);
+
+                if (channel == null)
+                {
+                    throw new MstMessageHandlerException("This channel is forbidden", ResponseStatus.Failed);
+                }
+
+                // Add user to channel
+                channel.AddUser(chatUser);
+
+                // Set the property of default chat channel
+                chatUser.DefaultChannel = channel;
+
+                // Respond with a "success" status
+                message.Respond(ResponseStatus.Success);
             }
-
-            var channelName = message.AsString();
-
-            var channel = GetOrCreateChannel(channelName);
-
-            if (channel == null)
+            // If we got system exception
+            catch (MstMessageHandlerException e)
             {
-                responseMsg = "This channel is forbidden";
-
-                logger.Error(responseMsg);
-
-                // There's no such channel
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
             }
-
-            // Add user to channel
-            channel.AddUser(chatUser);
-
-            // Set the property of default chat channel
-            chatUser.DefaultChannel = channel;
-
-            // Respond with a "success" status
-            message.Respond(ResponseStatus.Success);
+            // If we got another exception
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
+            }
         }
 
         protected virtual void OnGetUsersInChannelRequestHandler(IIncomingMessage message)
         {
-            string responseMsg = string.Empty;
-
-            var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
-
-            if (chatUser == null)
+            try
             {
-                responseMsg = "Chat cannot identify you";
+                var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
 
-                logger.Error(responseMsg);
+                // If peer has no user
+                if (chatUser == null)
+                {
+                    throw new MstMessageHandlerException("Chat cannot identify you", ResponseStatus.Unauthorized);
+                }
 
-                message.Respond(responseMsg, ResponseStatus.Unauthorized);
-                return;
+                var channelName = message.AsString();
+                var channel = GetOrCreateChannel(channelName);
+
+                if (channel == null)
+                {
+                    throw new MstMessageHandlerException("This channel is forbidden", ResponseStatus.Failed);
+                }
+
+                var users = channel.Users.Select(u => u.Username);
+                message.Respond(users.ToBytes(), ResponseStatus.Success);
             }
-
-            var channelName = message.AsString();
-            var channel = GetOrCreateChannel(channelName);
-
-            if (channel == null)
+            // If we got system exception
+            catch (MstMessageHandlerException e)
             {
-                responseMsg = "This channel is forbidden";
-
-                logger.Error(responseMsg);
-
-                // There's no such channel
-                message.Respond(responseMsg, ResponseStatus.Failed);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
             }
-
-            var users = channel.Users.Select(u => u.Username);
-
-            message.Respond(users.ToBytes(), ResponseStatus.Success);
+            // If we got another exception
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
+            }
         }
 
         protected virtual void OnChatMessageHandler(IIncomingMessage message)
         {
-            var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
-
-            string responseMsg;
-
-            if (chatUser == null)
+            try
             {
-                responseMsg = "Chat cannot identify you";
+                var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
 
-                logger.Error(responseMsg);
+                // If peer has no user
+                if (chatUser == null)
+                {
+                    throw new MstMessageHandlerException("Chat cannot identify you", ResponseStatus.Unauthorized);
+                }
 
-                message.Respond(responseMsg, ResponseStatus.Unauthorized);
-                return;
+                var packet = message.Deserialize(new ChatMessagePacket());
+
+                if (!TryHandleChatMessage(packet, chatUser, message))
+                {
+                    throw new MstMessageHandlerException("Invalid message", ResponseStatus.NotHandled);
+                }
             }
-
-            var packet = message.Deserialize(new ChatMessagePacket());
-
-            if (!TryHandleChatMessage(packet, chatUser, message))
+            // If we got system exception
+            catch (MstMessageHandlerException e)
             {
-                responseMsg = "Invalid message";
-
-                logger.Error(responseMsg);
-
-                // If message was not handled
-                message.Respond(responseMsg, ResponseStatus.NotHandled);
-                return;
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
+            }
+            // If we got another exception
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
             }
         }
 
         protected virtual void OnGetCurrentChannelsRequestHandler(IIncomingMessage message)
         {
-            var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
-
-            if (chatUser == null)
+            try
             {
-                string responseMsg = "Chat cannot identify you";
+                var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
 
-                logger.Error(responseMsg);
+                // If peer has no user
+                if (chatUser == null)
+                {
+                    throw new MstMessageHandlerException("Chat cannot identify you", ResponseStatus.Unauthorized);
+                }
 
-                message.Respond(responseMsg, ResponseStatus.Unauthorized);
-                return;
+                var channels = chatUser.CurrentChannels.Select(c =>
+                {
+                    return new ChatChannelInfo
+                    {
+                        Name = c.Name,
+                        OnlineCount = (ushort)c.Users.Count()
+                    };
+                });
+
+                message.Respond(new ChatChannelsListPacket() { Channels = channels.ToList() }, ResponseStatus.Success);
             }
-
-            var channels = chatUser.CurrentChannels.Select(c => c.Name);
-
-            message.Respond(channels.ToBytes(), ResponseStatus.Success);
+            // If we got system exception
+            catch (MstMessageHandlerException e)
+            {
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
+            }
+            // If we got another exception
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
+            }
         }
 
         #endregion

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Terminal
+namespace MasterServerToolkit.CommandTerminal
 {
     public enum TerminalLogType
     {

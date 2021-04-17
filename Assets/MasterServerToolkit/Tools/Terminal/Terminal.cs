@@ -2,7 +2,7 @@ using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace MasterServerToolkit.Terminal
+namespace MasterServerToolkit.CommandTerminal
 {
     public enum TerminalState
     {

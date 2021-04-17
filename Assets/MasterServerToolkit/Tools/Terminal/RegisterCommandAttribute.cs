@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 
-namespace MasterServerToolkit.Terminal
+namespace MasterServerToolkit.CommandTerminal
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class RegisterCommandAttribute : Attribute

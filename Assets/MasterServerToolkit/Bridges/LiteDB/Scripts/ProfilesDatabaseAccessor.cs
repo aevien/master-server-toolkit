@@ -9,14 +9,22 @@ namespace MasterServerToolkit.Bridges.LiteDB
 {
     public class ProfilesDatabaseAccessor : IProfilesDatabaseAccessor
     {
-        private readonly ILiteCollection<ProfileInfoData> profiles;
+        private ILiteCollection<ProfileInfoData> profiles;
         private readonly ILiteDatabase database;
 
-        public ProfilesDatabaseAccessor(LiteDatabase database)
+        public ProfilesDatabaseAccessor(string database)
         {
-            this.database = database;
+            this.database = new LiteDatabase($"{database}.db");
+        }
 
-            profiles = this.database.GetCollection<ProfileInfoData>("profiles");
+        ~ProfilesDatabaseAccessor()
+        {
+            database?.Dispose();
+        }
+
+        public void InitCollections()
+        {
+            profiles = database.GetCollection<ProfileInfoData>("profiles");
             profiles.EnsureIndex(a => a.UserId, true);
         }
 

@@ -448,9 +448,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <param name="port"></param>
         public virtual void SetPort(int port)
         {
-            if (Transport.activeTransport is kcp2k.KcpTransport transport)
+            if (Transport.activeTransport is TelepathyTransport transport)
             {
-                transport.Port = (ushort)port;
+                transport.port = (ushort)port;
             }
             else
             {
@@ -464,9 +464,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <returns></returns>
         public virtual int GetPort()
         {
-            if (Transport.activeTransport is kcp2k.KcpTransport transport)
+            if (Transport.activeTransport is TelepathyTransport transport)
             {
-                return (int)transport.Port;
+                return (int)transport.port;
             }
             else
             {

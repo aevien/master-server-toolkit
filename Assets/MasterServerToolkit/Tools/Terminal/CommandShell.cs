@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Terminal
+namespace MasterServerToolkit.CommandTerminal
 {
     public struct CommandInfo
     {

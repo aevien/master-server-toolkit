@@ -16,7 +16,7 @@ namespace MasterServerToolkit.Games
         [SerializeField]
         private RectTransform listContainer;
         [SerializeField]
-        private TextMeshProUGUI statusInfoText;
+        private TMP_Text statusInfoText;
 
         public UnityEvent OnStartGameEvent;
 

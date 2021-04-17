@@ -1,5 +1,9 @@
 ## Updates Log
 
+### Msf 4.5.0
+
+[changelog here](https://aevien.itch.io/mst/devlog/243562/mst-v450-released-mini-survival-template)
+
 ### Msf 4.4.0
 
 [changelog here](https://aevien.itch.io/mst/devlog/239735/mst-v440-released)

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class MstDbAccessorFactory
+    public class MstDbAccessor
     {
         /// <summary>
         /// List of the db/api accessors

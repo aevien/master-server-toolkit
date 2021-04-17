@@ -9,23 +9,31 @@ namespace MasterServerToolkit.Bridges.LiteDB
 {
     public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor
     {
-        private readonly ILiteCollection<AccountInfoLiteDb> accountsCollection;
-        private readonly ILiteCollection<PasswordResetDataLiteDb> resetCodesCollection;
-        private readonly ILiteCollection<EmailConfirmationDataLiteDb> emailConfirmationCodesCollection;
-
+        private ILiteCollection<AccountInfoLiteDb> accountsCollection;
+        private ILiteCollection<PasswordResetDataLiteDb> resetCodesCollection;
+        private ILiteCollection<EmailConfirmationDataLiteDb> emailConfirmationCodesCollection;
         private readonly LiteDatabase database;
 
-        public AccountsDatabaseAccessor(LiteDatabase database)
+        public AccountsDatabaseAccessor(string database)
         {
-            this.database = database;
+            Logs.Info($"Create {database} database accessor");
+            this.database = new LiteDatabase($"{database}.db");
+        }
 
-            accountsCollection = this.database.GetCollection<AccountInfoLiteDb>("accounts");
+        ~AccountsDatabaseAccessor()
+        {
+            database?.Dispose();
+        }
+
+        public void InitCollections()
+        {
+            accountsCollection = database.GetCollection<AccountInfoLiteDb>("accounts");
             accountsCollection.EnsureIndex(a => a.Id, true);
 
-            resetCodesCollection = this.database.GetCollection<PasswordResetDataLiteDb>("resetCodes");
+            resetCodesCollection = database.GetCollection<PasswordResetDataLiteDb>("resetCodes");
             resetCodesCollection.EnsureIndex(a => a.Email, true);
 
-            emailConfirmationCodesCollection = this.database.GetCollection<EmailConfirmationDataLiteDb>("emailConfirmationCodes");
+            emailConfirmationCodesCollection = database.GetCollection<EmailConfirmationDataLiteDb>("emailConfirmationCodes");
             emailConfirmationCodesCollection.EnsureIndex(a => a.Email, true);
         }
 

@@ -7,8 +7,10 @@ namespace MasterServerToolkit.MasterServer
 {
     public class MstConcurrency
     {
-        public int CurrentThreadId => Thread.CurrentThread.ManagedThreadId;
-
+		/// <summary>
+		/// Runs method in main thread
+		/// </summary>
+		/// <param name="action"></param>
         public void RunInMainThread(Action action)
         {
             MstTimer.RunInMainThread(action);
@@ -32,30 +34,18 @@ namespace MasterServerToolkit.MasterServer
 		public void RunInThreadPool(Action expression, int delayOrSleep = 0)
 		{
 			// Wrap the expression in a method so that we can apply the delayOrSleep before and remove the task after it finishes
-			WaitCallback inline = (state) =>
+			WaitCallback callback = (state) =>
 			{
 				// Apply the specified delay
 				if (delayOrSleep > 0)
-					Sleep(delayOrSleep);
+					Thread.Sleep(delayOrSleep);
 
 				// Call the requested method
 				expression.Invoke();
 			};
 
 			// Set the method to be called on the separate thread to be the inline method we have just created
-			RunInThreadPool(inline);
+			RunInThreadPool(callback);
 		}
-
-#if WINDOWS_UWP
-		public async void Sleep(int milliseconds)
-		{
-			await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(milliseconds));
-		}
-#else
-		public void Sleep(int milliseconds)
-		{
-			Thread.Sleep(milliseconds);
-		}
-#endif
 	}
 }

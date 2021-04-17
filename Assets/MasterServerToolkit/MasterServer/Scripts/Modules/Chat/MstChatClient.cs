@@ -5,7 +5,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class MstChatClient : MstBaseClient
     {
-        public delegate void ChatChannelsCallback(List<string> channels, string error);
+        public delegate void ChatChannelsCallback(List<ChatChannelInfo> channels, string error);
         public delegate void ChatUsersCallback(List<string> users, string error);
 
         public delegate void ChatUserHandler(string channel, string user);
@@ -88,15 +88,15 @@ namespace MasterServerToolkit.MasterServer
             }
 
             connection.SendMessage((short)MstMessageCodes.JoinChannel, channel, (status, response) =>
-           {
-               if (status != ResponseStatus.Success)
-               {
-                   callback.Invoke(false, response.AsString("Unknown error"));
-                   return;
-               }
+            {
+                if (status != ResponseStatus.Success)
+                {
+                    callback.Invoke(false, response.AsString("Unknown error"));
+                    return;
+                }
 
-               callback.Invoke(true, null);
-           });
+                callback.Invoke(true, null);
+            });
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(new List<string>(), "Not connected");
+                callback.Invoke(new List<ChatChannelInfo>(), "Not connected");
                 return;
             }
 
@@ -187,13 +187,12 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(new List<string>(), response.AsString("Unknown error"));
+                    callback.Invoke(new List<ChatChannelInfo>(), response.AsString("Unknown error"));
                     return;
                 }
 
-                var list = new List<string>().FromBytes(response.AsBytes());
-
-                callback.Invoke(list, null);
+                var data = response.Deserialize(new ChatChannelsListPacket());
+                callback.Invoke(data.Channels, null);
             });
         }
 
@@ -328,10 +327,7 @@ namespace MasterServerToolkit.MasterServer
         private void OnUserJoinedChannelHandler(IIncomingMessage message)
         {
             var data = new List<string>().FromBytes(message.AsBytes());
-            if (OnUserJoinedChannelEvent != null)
-            {
-                OnUserJoinedChannelEvent.Invoke(data[0], data[1]);
-            }
+            OnUserJoinedChannelEvent?.Invoke(data[0], data[1]);
         }
 
         #endregion

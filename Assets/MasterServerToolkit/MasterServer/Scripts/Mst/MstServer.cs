@@ -9,11 +9,11 @@ namespace MasterServerToolkit.MasterServer
         public MstProfilesServer Profiles { get; private set; }
         public MstRoomsServer Rooms { get; private set; }
         public MstSpawnersServer Spawners { get; private set; }
-        public MstDbAccessorFactory DbAccessors { get; private set; }
+        public MstDbAccessor DbAccessors { get; private set; }
 
         public MstServer(IClientSocket connection) : base(connection)
         {
-            DbAccessors = new MstDbAccessorFactory();
+            DbAccessors = new MstDbAccessor();
             Rooms = new MstRoomsServer(connection);
             Spawners = new MstSpawnersServer(connection);
             Auth = new MstAuthServer(connection);

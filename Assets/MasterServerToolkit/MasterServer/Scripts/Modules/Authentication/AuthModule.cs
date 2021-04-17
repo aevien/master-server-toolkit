@@ -60,6 +60,12 @@ namespace MasterServerToolkit.MasterServer
         [Header("Generic"), SerializeField, Tooltip("Min number of characters the service code must contain")]
         protected int serviceCodeMinChars = 6;
 
+        /// <summary>
+        /// Database accessor factory that helps to create integration with accounts db
+        /// </summary>
+        [Tooltip("Database accessor factory that helps to create integration with accounts db")]
+        public DatabaseAccessorFactory databaseAccessorFactory;
+
         #endregion
 
         /// <summary>
@@ -140,6 +146,8 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
+            databaseAccessorFactory?.CreateAccessors();
+
             censorModule = server.GetModule<CensorModule>();
             mailer = mailer ?? FindObjectOfType<Mailer>();
 
@@ -169,9 +177,9 @@ namespace MasterServerToolkit.MasterServer
             MstProperties info = base.Info();
 
             info.Add("Users", LoggedInUsers.Count());
-            info.Add("Allow Gusets", enableGuestLogin);
-            info.Add("Save Gusets", saveGuestInfo);
-            info.Add("Guset name prefix", guestPrefix);
+            info.Add("Allow Guests", enableGuestLogin);
+            info.Add("Save Guests", saveGuestInfo);
+            info.Add("Guest name prefix", guestPrefix);
             info.Add("Email Confirm", useEmailConfirmation);
             info.Add("Min username length", usernameMinChars);
             info.Add("Min password length", userPasswordMinChars);

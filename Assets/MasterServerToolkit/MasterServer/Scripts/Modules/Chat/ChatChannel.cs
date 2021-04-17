@@ -39,48 +39,62 @@ namespace MasterServerToolkit.MasterServer
             user.Peer.OnPeerDisconnectedEvent += OnUserDisconnect;
 
             // Add user
-            channelUsers.Add(user.UserId, user);
+            channelUsers.Add(user.Username, user);
 
             // Add channel to users collection
             user.CurrentChannels.Add(this);
 
+            // Notify about new user
             NotifyOnJoined(user);
 
             return true;
         }
 
+        /// <summary>
+        /// Notify all users about new user who joined this channel
+        /// </summary>
+        /// <param name="newUser"></param>
         protected virtual void NotifyOnJoined(ChatUserPeerExtension newUser)
         {
-            var data = new List<string>() { Name, newUser.UserId, newUser.Username };
+            var data = new List<string>() { Name, newUser.Username };
             var msg = Mst.Create.Message((short)MstMessageCodes.UserJoinedChannel, data.ToBytes());
 
             foreach (var user in channelUsers.Values)
             {
-                if (user.UserId != newUser.UserId)
+                if (user.Username != newUser.Username)
                 {
                     user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
                 }
             }
         }
 
-        protected virtual void OnLeft(ChatUserPeerExtension removedUser)
+        /// <summary>
+        /// Notify all users about user who left this channel
+        /// </summary>
+        /// <param name="removedUser"></param>
+        protected virtual void NotifyOnLeft(ChatUserPeerExtension removedUser)
         {
-            var data = new List<string>() { Name, removedUser.UserId, removedUser.Username };
+            var data = new List<string>() { Name, removedUser.Username };
             var msg = Mst.Create.Message((short)MstMessageCodes.UserLeftChannel, data.ToBytes());
 
             foreach (var user in channelUsers.Values)
             {
-                if (user.UserId != removedUser.UserId)
+                if (user.Username != removedUser.Username)
                 {
                     user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
                 }
             }
         }
 
+        /// <summary>
+        /// Check if user is allowed to be added to channel
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         protected virtual bool IsUserAllowed(ChatUserPeerExtension user)
         {
             // Can't join if already here
-            return !channelUsers.ContainsKey(user.UserId);
+            return !channelUsers.ContainsKey(user.Username);
         }
 
         /// <summary>
@@ -99,6 +113,10 @@ namespace MasterServerToolkit.MasterServer
             RemoveUser(extension);
         }
 
+        /// <summary>
+        /// Removes user from channel
+        /// </summary>
+        /// <param name="user"></param>
         public void RemoveUser(ChatUserPeerExtension user)
         {
             // Remove disconnect listener
@@ -108,14 +126,14 @@ namespace MasterServerToolkit.MasterServer
             user.CurrentChannels.Remove(this);
 
             // Remove user
-            channelUsers.Remove(user.UserId);
+            channelUsers.Remove(user.Username);
 
             if (user.DefaultChannel == this)
             {
                 user.DefaultChannel = null;
             }
 
-            OnLeft(user);
+            NotifyOnLeft(user);
         }
 
         /// <summary>

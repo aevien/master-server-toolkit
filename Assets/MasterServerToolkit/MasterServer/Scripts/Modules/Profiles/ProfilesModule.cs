@@ -54,6 +54,12 @@ namespace MasterServerToolkit.MasterServer
         [Tooltip("Ignore errors occurred when profile data mismatch")]
         public bool ignoreProfileMissmatchError = false;
 
+        /// <summary>
+        /// Database accessor factory that helps to create integration with profile db
+        /// </summary>
+        [Tooltip("Database accessor factory that helps to create integration with profile db")]
+        public DatabaseAccessorFactory databaseAccessorFactory;
+
         #endregion
 
         /// <summary>
@@ -126,6 +132,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
+            databaseAccessorFactory?.CreateAccessors();
             profileDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IProfilesDatabaseAccessor>();
 
             if (profileDatabaseAccessor == null)
