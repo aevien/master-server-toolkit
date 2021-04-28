@@ -98,9 +98,10 @@ var LibraryWebSockets = {
         socket.messages = socket.messages.slice(1);
     },
 
-    MsfSocketClose: function (socketInstance) {
+    MsfSocketClose: function (socketInstance, reason) {
         var socket = webSocketInstances[socketInstance];
         socket.socket.close();
+		console.log('Client closed connection by reason: ' + reason); 
     },
 	
 	MsfAlert:function(msg){

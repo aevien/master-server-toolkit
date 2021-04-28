@@ -300,8 +300,11 @@ namespace MasterServerToolkit.Networking
 
             MstUpdateRunner.Instance.Add(this);
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+            MstTimer.Instance.StartCoroutine(webSocket.Connect());
+#else
             webSocket.Connect();
-
+#endif
             return this;
         }
 

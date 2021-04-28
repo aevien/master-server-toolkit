@@ -1,5 +1,4 @@
 ﻿using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using System;
 using UnityEngine;
@@ -20,7 +19,10 @@ namespace MasterServerToolkit.Bridges.LiteDB
         private bool useProfilesDb = false;
         [SerializeField]
         private string profilesDbName = "profiles";
+
+#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
         private ProfilesDatabaseAccessor profilesAccessor;
+#endif
 
         private void OnValidate()
         {

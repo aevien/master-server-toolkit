@@ -1,5 +1,6 @@
 using MasterServerToolkit.MasterServer;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using WebSocketSharp;
@@ -80,7 +81,7 @@ namespace MasterServerToolkit.Networking
         private static extern int MsfSocketRecvLength(int socketInstance);
 
         [DllImport("__Internal")]
-        private static extern void MsfSocketClose(int socketInstance);
+        private static extern void MsfSocketClose(int socketInstance, string reason);
 
         [DllImport("__Internal")]
         private static extern int MsfSocketError(int socketInstance, byte[] ptr, int length);
@@ -112,9 +113,9 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Close web socket connection
         /// </summary>
-        public void Close()
+        public void Close(string reason = "")
         {
-            MsfSocketClose(m_NativeRef);
+            MsfSocketClose(m_NativeRef, reason);
         }
 
         /// <summary>
@@ -135,6 +136,7 @@ namespace MasterServerToolkit.Networking
             }
         }
 #else
+
         /// <summary>
         /// List of messages in queue
         /// </summary>

@@ -2,6 +2,7 @@
 using UnityEditor;
 #endif
 using UnityEngine;
+using MasterServerToolkit.Logging;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         using System.Runtime.InteropServices;
@@ -14,7 +15,11 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Check if we are in editor
         /// </summary>
-        public bool IsEditor => Application.isEditor;
+#if UNITY_EDITOR
+        public bool IsEditor => true;
+#else
+        public bool IsEditor => false;
+#endif
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         private readonly string webGlQuitMessage = "You are in web browser window. The Quit command is not supported!";
@@ -25,7 +30,7 @@ namespace MasterServerToolkit.MasterServer
 
         public void Quit()
         {
-#if UNITY_EDITOR && !UNITY_WEBGL
+#if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #elif !UNITY_EDITOR && !UNITY_WEBGL
             Application.Quit();
