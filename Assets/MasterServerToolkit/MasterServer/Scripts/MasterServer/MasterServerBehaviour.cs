@@ -73,7 +73,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnStartedServer()
         {
-            logger.Info($"Master Server is started and listening to: {serverIP}:{serverPort}");
+            logger.Info($"Master Server started and listening to: {serverIP}:{serverPort}");
 
             base.OnStartedServer();
 
@@ -82,7 +82,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnStoppedServer()
         {
-            logger.Info("Master Server is stopped");
+            logger.Info("Master Server stopped");
 
             OnMasterStoppedEvent?.Invoke(this);
         }

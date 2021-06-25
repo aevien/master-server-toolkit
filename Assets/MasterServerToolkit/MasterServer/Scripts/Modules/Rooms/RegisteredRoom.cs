@@ -229,6 +229,9 @@ namespace MasterServerToolkit.MasterServer
 
             peer = data.Peer;
 
+            // Save player in room
+            Players[peer.Id] = peer;
+
             // Invoke the event
             OnPlayerJoinedEvent?.Invoke(peer);
 

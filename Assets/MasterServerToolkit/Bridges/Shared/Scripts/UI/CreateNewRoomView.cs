@@ -3,6 +3,7 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ namespace MasterServerToolkit.Games
         [SerializeField]
         private TMP_InputField roomMaxConnectionsInputField;
         [SerializeField]
-        private TMP_InputField roomRegionNameInputField;
+        private TMP_Dropdown roomRegionNameInputDropdown;
         [SerializeField]
         private TMP_InputField roomPasswordInputField;
 
@@ -36,6 +37,22 @@ namespace MasterServerToolkit.Games
         private void OnHideCreateNewRoomEventHandler(EventMessage message)
         {
             Hide();
+        }
+
+        protected override void OnShow()
+        {
+            base.OnShow();
+
+            Mst.Client.Matchmaker.GetRegions(regions =>
+            {
+                roomRegionNameInputDropdown.ClearOptions();
+                roomRegionNameInputDropdown.interactable = regions.Count > 0;
+
+                if (regions.Count > 0)
+                {
+                    roomRegionNameInputDropdown.AddOptions(regions);
+                }
+            });
         }
 
         public string RoomName
@@ -70,13 +87,7 @@ namespace MasterServerToolkit.Games
         {
             get
             {
-                return roomRegionNameInputField != null ? roomRegionNameInputField.text : string.Empty;
-            }
-
-            set
-            {
-                if (roomRegionNameInputField)
-                    roomRegionNameInputField.text = value;
+                return roomRegionNameInputDropdown != null && roomRegionNameInputDropdown.options.Count > 0 ? roomRegionNameInputDropdown.options[roomRegionNameInputDropdown.value].text : string.Empty;
             }
         }
 
@@ -104,7 +115,7 @@ namespace MasterServerToolkit.Games
 
             // Spawn options for spawner controller
             var spawnOptions = new MstProperties();
-            spawnOptions.Add(MstDictKeys.ROOM_MAX_PLAYERS, MaxConnections);
+            spawnOptions.Add(MstDictKeys.ROOM_MAX_CONNECTIONS, MaxConnections);
             spawnOptions.Add(MstDictKeys.ROOM_NAME, RoomName);
             spawnOptions.Add(MstDictKeys.ROOM_PASSWORD, Password);
 

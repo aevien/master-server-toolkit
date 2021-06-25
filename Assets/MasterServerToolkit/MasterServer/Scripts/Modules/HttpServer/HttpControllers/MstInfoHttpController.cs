@@ -18,14 +18,14 @@ namespace MasterServerToolkit.MasterServer
 
     public class MstInfoHttpController : HttpController
     {
-        Dictionary<string, string> info;
+        Dictionary<string, string> systemInfo;
 
         public override void Initialize(HttpServerModule server)
         {
             base.Initialize(server);
             server.RegisterHttpRequestHandler("info", OnGetMstInfoJsonHttpRequestHandler);
 
-            info = new Dictionary<string, string>
+            systemInfo = new Dictionary<string, string>
             {
                 { "Device Id", SystemInfo.deviceUniqueIdentifier },
                 { "Device Model", SystemInfo.deviceModel },
@@ -83,7 +83,7 @@ namespace MasterServerToolkit.MasterServer
             row.AppendChild(col2);
 
             GenerateMachineInfo(html, col1);
-
+            GenerateServerInfo(html, col1);
             GenerateListOfModules(html, col2);
 
             byte[] contents = Encoding.UTF8.GetBytes(html.ToString());
@@ -92,6 +92,60 @@ namespace MasterServerToolkit.MasterServer
             response.ContentEncoding = Encoding.UTF8;
             response.ContentLength64 = contents.LongLength;
             response.Close(contents, true);
+        }
+
+        private void GenerateServerInfo(HtmlDocument html, XmlElement parent)
+        {
+            var h2 = html.CreateElement("h2");
+            h2.InnerText = "Server Info";
+            parent.AppendChild(h2);
+
+            var table = html.CreateElement("table");
+            table.AddClass("table table-bordered table-striped table-hover table-sm mb-5");
+            parent.AppendChild(table);
+
+            var thead = html.CreateElement("thead");
+            table.AppendChild(thead);
+
+            var tbody = html.CreateElement("tbody");
+            table.AppendChild(tbody);
+
+            var thr = html.CreateElement("tr");
+            thead.AppendChild(thr);
+
+            var th1 = html.CreateElement("th");
+            th1.InnerText = "#";
+            th1.SetAttribute("scope", "col");
+            th1.SetAttribute("width", "200");
+            thr.AppendChild(th1);
+
+            var thr2 = html.CreateElement("th");
+            thr2.InnerText = "Value";
+            thr.AppendChild(thr2);
+
+            Dictionary<string, string> serverInfo = new Dictionary<string, string>();
+            serverInfo.Add("Initialized modules: ", MasterServer.GetInitializedModules().Count.ToString());
+            serverInfo.Add("Unitialized modules: ", MasterServer.GetUninitializedModules().Count.ToString());
+            serverInfo.Add("Total clients: ", MasterServer.TotalPeersCount.ToString());
+            serverInfo.Add("Use SSL: ", MstApplicationConfig.Instance.UseSecure.ToString());
+            serverInfo.Add("Certificate Path: ", MstApplicationConfig.Instance.CertificatePath.ToString());
+            serverInfo.Add("Certificate Password: ", MstApplicationConfig.Instance.CertificatePassword.ToString());
+            serverInfo.Add("Application Key: ", MstApplicationConfig.Instance.ApplicationKey.ToString());
+
+            foreach (var property in serverInfo)
+            {
+                var tr = html.CreateElement("tr");
+                tbody.AppendChild(tr);
+
+                var th = html.CreateElement("th");
+                th.InnerText = property.Key;
+                th.SetAttribute("scope", "row");
+                tr.AppendChild(th);
+
+                var th2 = html.CreateElement("td");
+                th2.InnerText = property.Value;
+                tr.AppendChild(th2);
+            }
         }
 
         private void GenerateMachineInfo(HtmlDocument html, XmlElement parent)
@@ -123,7 +177,7 @@ namespace MasterServerToolkit.MasterServer
             thr2.InnerText = "Name";
             thr.AppendChild(thr2);
 
-            foreach (var property in info)
+            foreach (var property in systemInfo)
             {
                 var tr = html.CreateElement("tr");
                 tbody.AppendChild(tr);

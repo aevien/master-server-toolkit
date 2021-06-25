@@ -1,7 +1,8 @@
-﻿using MasterServerToolkit.UI;
+﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.UI;
 using TMPro;
 
-namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
+namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class ProfileSettingsView : UIView
     {

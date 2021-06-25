@@ -27,5 +27,15 @@ namespace MasterServerToolkit.Utils
         {
             sceneLoadManager.LoadSceneByIndex(sceneBuildIndex, onProgress, onLoaded);
         }
+
+        public static void LoadSceneByNameAdditive(string sceneName, UnityAction<float> onProgress, UnityAction onLoaded)
+        {
+            sceneLoadManager.LoadSceneByNameAdditive(sceneName, onProgress, onLoaded);
+        }
+
+        public static void LoadSceneByIndexAdditive(int sceneBuildIndex, UnityAction<float> onProgress, UnityAction onLoaded)
+        {
+            sceneLoadManager.LoadSceneByIndexAdditive(sceneBuildIndex, onProgress, onLoaded);
+        }
     }
 }

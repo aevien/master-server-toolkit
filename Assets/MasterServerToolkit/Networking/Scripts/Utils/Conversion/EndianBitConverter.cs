@@ -11,23 +11,23 @@ namespace MasterServerToolkit.Networking
         #region Private struct used for Single/Int32 conversions
 
         /// <summary>
-        ///     Union used solely for the equivalent of DoubleToInt64Bits and vice versa.
+        /// Union used solely for the equivalent of DoubleToInt64Bits and vice versa.
         /// </summary>
         [StructLayout(LayoutKind.Explicit)]
         private struct Int32SingleUnion
         {
             /// <summary>
-            ///     Int32 version of the value.
+            /// Int32 version of the value.
             /// </summary>
             [FieldOffset(0)] private readonly int i;
 
             /// <summary>
-            ///     Single version of the value.
+            /// Single version of the value.
             /// </summary>
             [FieldOffset(0)] private readonly float f;
 
             /// <summary>
-            ///     Creates an instance representing the given integer.
+            /// Creates an instance representing the given integer.
             /// </summary>
             /// <param name="i">The integer value of the new instance.</param>
             internal Int32SingleUnion(int i)
@@ -37,7 +37,7 @@ namespace MasterServerToolkit.Networking
             }
 
             /// <summary>
-            ///     Creates an instance representing the given floating point number.
+            /// Creates an instance representing the given floating point number.
             /// </summary>
             /// <param name="f">The floating point value of the new instance.</param>
             internal Int32SingleUnion(float f)
@@ -47,7 +47,7 @@ namespace MasterServerToolkit.Networking
             }
 
             /// <summary>
-            ///     Returns the value of the instance as an integer.
+            /// Returns the value of the instance as an integer.
             /// </summary>
             internal int AsInt32
             {
@@ -55,7 +55,7 @@ namespace MasterServerToolkit.Networking
             }
 
             /// <summary>
-            ///     Returns the value of the instance as a floating point number.
+            /// Returns the value of the instance as a floating point number.
             /// </summary>
             internal float AsSingle
             {
@@ -68,18 +68,18 @@ namespace MasterServerToolkit.Networking
         #region Endianness of this converter
 
         /// <summary>
-        ///     Indicates the byte order ("endianess") in which data is converted using this class.
+        /// Indicates the byte order ("endianess") in which data is converted using this class.
         /// </summary>
         /// <remarks>
-        ///     Different computer architectures store data using different byte orders. "Big-endian"
-        ///     means the most significant byte is on the left end of a word. "Little-endian" means the
-        ///     most significant byte is on the right end of a word.
+        /// Different computer architectures store data using different byte orders. "Big-endian"
+        /// means the most significant byte is on the left end of a word. "Little-endian" means the
+        /// most significant byte is on the right end of a word.
         /// </remarks>
         /// <returns>true if this converter is little-endian, false otherwise.</returns>
         public abstract bool IsLittleEndian();
 
         /// <summary>
-        ///     Indicates the byte order ("endianess") in which data is converted using this class.
+        /// Indicates the byte order ("endianess") in which data is converted using this class.
         /// </summary>
         public abstract Endianness Endianness { get; }
 

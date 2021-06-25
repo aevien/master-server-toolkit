@@ -8,7 +8,6 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.Games
 {
-    [AddComponentMenu("MSF/Shared/AuthBehaviour")]
     public class AuthBehaviour : BaseClientBehaviour
     {
         #region INSPECTOR

@@ -6,11 +6,15 @@ namespace MasterServerToolkit.Utils
     public class DynamicSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         /// <summary>
+        /// Check if this object is not currently being destroyed
+        /// </summary>
+        protected bool isNowDestroying = false;
+        /// <summary>
         /// Current instance of this singleton
         /// </summary>
         private static T _instance { get; set; }
 
-        protected virtual void Start()
+        protected virtual void Awake()
         {
             StartCoroutine(WaitAndDestroy());
         }
@@ -21,6 +25,7 @@ namespace MasterServerToolkit.Utils
 
             if (_instance != null && _instance != this)
             {
+                isNowDestroying = true;
                 Destroy(gameObject);
             }
         }
@@ -59,9 +64,7 @@ namespace MasterServerToolkit.Utils
             _instance = FindObjectOfType<T>();
 
             if (_instance)
-            {
                 return;
-            }
 
             string newName = !string.IsNullOrEmpty(name) ? name : $"--{typeof(T).Name}".ToUpper();
             var go = new GameObject(newName);

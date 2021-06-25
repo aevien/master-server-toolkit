@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -332,75 +333,79 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SignIn(MstProperties data, SignInCallback callback, IClientSocket connection)
         {
-            Logs.Debug("Signing in...");
+            Task.Run(() => {
+                Logs.Debug("Signing in...");
 
-            if (!connection.IsConnected)
-            {
-                callback.Invoke(null, "Not connected to server");
-                return;
-            }
-
-            IsNowSigningIn = true;
-
-            // We first need to get an aes key 
-            // so that we can encrypt our login data
-            Mst.Security.GetAesKey(aesKey =>
-            {
-                if (aesKey == null)
+                if (!connection.IsConnected)
                 {
-                    IsNowSigningIn = false;
-                    callback.Invoke(null, "Failed to log in due to security issues");
+                    callback.Invoke(null, "Not connected to server");
                     return;
                 }
 
-                var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
+                IsNowSigningIn = true;
 
-                connection.SendMessage((short)MstMessageCodes.SignIn, encryptedData, (status, response) =>
+                // We first need to get an aes key 
+                // so that we can encrypt our login data
+                Mst.Security.GetAesKey(aesKey =>
                 {
-                    IsNowSigningIn = false;
-
-                    if (status != ResponseStatus.Success)
+                    if (aesKey == null)
                     {
-                        ClearAuthToken();
-
-                        callback.Invoke(null, response.AsString("Unknown error"));
+                        IsNowSigningIn = false;
+                        callback.Invoke(null, "Failed to log in due to security issues");
                         return;
                     }
 
-                    // Parse account info
-                    var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
+                    var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                    AccountInfo = new ClientAccountInfo()
+                    connection.SendMessage((short)MstMessageCodes.SignIn, encryptedData, (status, response) =>
                     {
-                        Id = accountInfoPacket.Id,
-                        Username = accountInfoPacket.Username,
-                        Email = accountInfoPacket.Email,
-                        PhoneNumber = accountInfoPacket.PhoneNumber,
-                        Facebook = accountInfoPacket.Facebook,
-                        Token = accountInfoPacket.Token,
-                        IsAdmin = accountInfoPacket.IsAdmin,
-                        IsGuest = accountInfoPacket.IsGuest,
-                        IsEmailConfirmed = accountInfoPacket.IsEmailConfirmed,
-                        Properties = accountInfoPacket.Properties,
-                    };
+                        IsNowSigningIn = false;
 
-                    // If RememberMe is checked on and we are not guset, then save auth token
-                    if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
-                    {
-                        SaveAuthToken(AccountInfo.Token);
-                    }
-                    else
-                    {
-                        ClearAuthToken();
-                    }
+                        if (status != ResponseStatus.Success)
+                        {
+                            ClearAuthToken();
 
-                    IsSignedIn = true;
+                            callback.Invoke(null, response.AsString("Unknown error"));
+                            return;
+                        }
 
-                    callback.Invoke(AccountInfo, null);
+                        // Parse account info
+                        var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
 
-                    OnSignedInEvent?.Invoke();
-                });
-            }, connection);
+                        AccountInfo = new ClientAccountInfo()
+                        {
+                            Id = accountInfoPacket.Id,
+                            Username = accountInfoPacket.Username,
+                            Email = accountInfoPacket.Email,
+                            PhoneNumber = accountInfoPacket.PhoneNumber,
+                            Facebook = accountInfoPacket.Facebook,
+                            Token = accountInfoPacket.Token,
+                            IsAdmin = accountInfoPacket.IsAdmin,
+                            IsGuest = accountInfoPacket.IsGuest,
+                            IsEmailConfirmed = accountInfoPacket.IsEmailConfirmed,
+                            Properties = accountInfoPacket.Properties,
+                        };
+
+                        // If RememberMe is checked on and we are not guset, then save auth token
+                        if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
+                        {
+                            SaveAuthToken(AccountInfo.Token);
+                        }
+                        else
+                        {
+                            ClearAuthToken();
+                        }
+
+                        IsSignedIn = true;
+
+                        Mst.Concurrency.RunInMainThread(() =>
+                        {
+                            callback.Invoke(AccountInfo, null);
+                            OnSignedInEvent?.Invoke();
+                        });
+                    });
+                }, connection);
+            });
         }
 
         /// <summary>

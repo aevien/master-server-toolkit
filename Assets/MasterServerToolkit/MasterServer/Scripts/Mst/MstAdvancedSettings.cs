@@ -11,7 +11,6 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class MstAdvancedSettings
     {
-
         /// <summary>
         /// Factory, used to create client sockets
         /// </summary>

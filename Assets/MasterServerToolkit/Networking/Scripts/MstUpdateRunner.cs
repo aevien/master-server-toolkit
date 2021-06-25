@@ -10,14 +10,10 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public class MstUpdateRunner : DynamicSingleton<MstUpdateRunner>
     {
-        private List<IUpdatable> _runnables;
-
-        public event Action OnApplicationQuitEvent;
-
-        protected void Awake()
-        {
-            _runnables = new List<IUpdatable>();
-        }
+        /// <summary>
+        /// List of <see cref="IUpdatable"/>
+        /// </summary>
+        private List<IUpdatable> _runnables = new List<IUpdatable>();
 
         private void Update()
         {
@@ -28,6 +24,10 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        /// <summary>
+        /// Adds <see cref="IUpdatable"/> to list of updates that are running in main Unity thread
+        /// </summary>
+        /// <param name="updatable"></param>
         public void Add(IUpdatable updatable)
         {
             if (!_runnables.Contains(updatable))
@@ -36,14 +36,13 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        /// <summary>
+        /// Removes <see cref="IUpdatable"/> from list of updates that are running in main Unity thread
+        /// </summary>
+        /// <param name="updatable"></param>
         public void Remove(IUpdatable updatable)
         {
             _runnables.Remove(updatable);
-        }
-
-        private void OnApplicationQuit()
-        {
-            OnApplicationQuitEvent?.Invoke();
         }
     }
 }

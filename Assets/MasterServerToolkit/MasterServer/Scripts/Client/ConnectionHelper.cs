@@ -18,9 +18,6 @@ namespace MasterServerToolkit.MasterServer
             Type = HelpBoxType.Info
         };
 
-        [Tooltip("Log level of this script"), SerializeField]
-        protected LogLevel logLevel = LogLevel.Info;
-
         [Header("Connection Settings"), Tooltip("Address to the server"), SerializeField]
         protected string serverIP = "127.0.0.1";
 
@@ -53,7 +50,6 @@ namespace MasterServerToolkit.MasterServer
 
         protected int currentAttemptToConnect = 0;
         protected float timeToConnect = 0.5f;
-        protected Logging.Logger logger;
 
         /// <summary>
         /// Main connection to server
@@ -66,9 +62,6 @@ namespace MasterServerToolkit.MasterServer
 
             // If current object is destroying just make a return
             if (isNowDestroying) return;
-
-            logger = Mst.Create.Logger(typeof(ClientToMasterConnector).Name);
-            logger.LogLevel = logLevel;
 
             // Set connection if it is null
             if (Connection == null) Connection = ConnectionFactory();
@@ -89,7 +82,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void Start()
         {
             if (connectOnStart)
-            {
+            { 
                 StartConnection();
             }
         }

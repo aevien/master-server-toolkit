@@ -23,6 +23,9 @@
         public static string showGamesListView = "msf.showGamesListView";
         public static string hideGamesListView = "msf.hideGamesListView";
 
+        public static string showPlayersListView = "msf.showPlayersListView";
+        public static string hidePlayersListView = "msf.hidePlayersListView";
+
         public static string showCreateLobbyView = "msf.showCreateLobbyView";
         public static string hideCreateLobbyView = "msf.hideCreateLobbyView";
 

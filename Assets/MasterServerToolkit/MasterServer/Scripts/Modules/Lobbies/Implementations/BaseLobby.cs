@@ -362,47 +362,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Set the lobby property
-        /// </summary>
-        /// <param name="setter"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public virtual bool SetProperty(LobbyUserPeerExtension setter, string key, string value)
-        {
-            if (!Config.AllowPlayersChangeLobbyProperties)
-            {
-                return false;
-            }
-
-            if (Config.EnableGameMasters)
-            {
-                membersByPeerIdList.TryGetValue(setter.Peer.Id, out LobbyMember member);
-
-                if (GameMaster != member)
-                {
-                    return false;
-                }
-            }
-
-            return SetProperty(key, value);
-        }
-
-        /// <summary>
-        /// Set the lobby property
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public bool SetProperty(string key, string value)
-        {
-            propertiesList.Set(key, value);
-
-            OnLobbyPropertyChange(key);
-            return true;
-        }
-
-        /// <summary>
         /// Get member of the lobby by extension
         /// </summary>
         /// <param name="playerExt"></param>
@@ -467,12 +426,53 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Set a lobby player property
+        /// Set a lobby properties
         /// </summary>
         /// <param name="properties"></param>
         public void SetLobbyProperties(Dictionary<string, string> properties)
         {
             propertiesList.Append(properties);
+        }
+
+        /// <summary>
+        /// Set the lobby property
+        /// </summary>
+        /// <param name="setter"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual bool SetProperty(LobbyUserPeerExtension setter, string key, string value)
+        {
+            if (!Config.AllowPlayersChangeLobbyProperties)
+            {
+                return false;
+            }
+
+            if (Config.EnableGameMasters)
+            {
+                membersByPeerIdList.TryGetValue(setter.Peer.Id, out LobbyMember member);
+
+                if (GameMaster != member)
+                {
+                    return false;
+                }
+            }
+
+            return SetProperty(key, value);
+        }
+
+        /// <summary>
+        /// Set the lobby property
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool SetProperty(string key, string value)
+        {
+            propertiesList.Set(key, value);
+
+            OnLobbyPropertyChange(key);
+            return true;
         }
 
         /// <summary>
@@ -638,16 +638,13 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
-            string region = "";
+            // Extract the region if available
+            string region = propertiesList.AsString(MstDictKeys.ROOM_REGION);
 
+            // Set room as private because this one is created for lobby
             propertiesList.Set(MstDictKeys.ROOM_IS_PUBLIC, false);
 
-            // Extract the region if available
-            if (propertiesList.Has(MstDictKeys.ROOM_REGION))
-            {
-                region = propertiesList.AsString(MstDictKeys.ROOM_REGION);
-            }
-
+            // Create start task
             var task = Module.SpawnersModule.Spawn(propertiesList, region, GenerateOptions());
 
             if (task == null)
@@ -656,11 +653,31 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
+            // Set starting status
             State = LobbyState.StartingGameServer;
 
+            // Set task
             SetGameSpawnTask(task);
 
             return true;
+        }
+
+        public void SetGameSpawnTask(SpawnTask task)
+        {
+            if (task == null || gameSpawnTask == task)
+            {
+                return;
+            }
+
+            if (gameSpawnTask != null)
+            {
+                // Unsubscribe from previous game
+                gameSpawnTask.OnStatusChangedEvent -= OnSpawnServerStatusChanged;
+                gameSpawnTask.Abort();
+            }
+
+            gameSpawnTask = task;
+            gameSpawnTask.OnStatusChangedEvent += OnSpawnServerStatusChanged;
         }
 
         public void Destroy()
@@ -691,32 +708,7 @@ namespace MasterServerToolkit.MasterServer
         {
             var options = new MstProperties();
             options.Set(Mst.Args.Names.LobbyId, Id.ToString());
-
             return options;
-        }
-
-        public void SetGameSpawnTask(SpawnTask task)
-        {
-            if (task == null)
-            {
-                return;
-            }
-
-            if (gameSpawnTask == task)
-            {
-                return;
-            }
-
-            if (gameSpawnTask != null)
-            {
-                // Unsubscribe from previous game
-                gameSpawnTask.OnStatusChangedEvent -= OnSpawnServerStatusChanged;
-                gameSpawnTask.Abort();
-            }
-
-            gameSpawnTask = task;
-
-            task.OnStatusChangedEvent += OnSpawnServerStatusChanged;
         }
 
         protected virtual void OnSpawnServerStatusChanged(SpawnStatus status)
@@ -777,7 +769,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            this.lobbyRoom = room;
+            lobbyRoom = room;
 
             GameIp = room.Options.RoomIp;
             GamePort = room.Options.RoomPort;
@@ -883,7 +875,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var requestData = new MstProperties(new Dictionary<string, string>().FromBytes(message.AsBytes()));
+            var requestData = MstProperties.FromBytes(message.AsBytes());
 
             lobbyRoom.GetAccess(message.Peer, requestData, (access, error) =>
             {
@@ -913,7 +905,7 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
-            // If not game maester
+            // If not game master
             if (GameMaster != member)
             {
                 SendChatMessage(member, "You're not the master of this game", true);

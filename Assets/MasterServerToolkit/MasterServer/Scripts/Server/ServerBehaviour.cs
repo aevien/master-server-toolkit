@@ -105,6 +105,11 @@ namespace MasterServerToolkit.MasterServer
         public bool IsRunning { get; protected set; } = false;
 
         /// <summary>
+        /// Gets total peers connected to server
+        /// </summary>
+        public int TotalPeersCount => connectedPeers != null ? connectedPeers.Count : 0;
+
+        /// <summary>
         /// Fires when any client connected to server
         /// </summary>
         public event PeerActionHandler OnPeerConnectedEvent;
@@ -202,7 +207,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Start server
+        /// Starts server
         /// </summary>
         public virtual void StartServer()
         {
@@ -210,7 +215,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Start server with given port
+        /// Starts server with given port
         /// </summary>
         /// <param name="listenToPort"></param>
         public virtual void StartServer(int listenToPort)
@@ -219,7 +224,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Start server with given port and ip
+        /// Starts server with given port and ip
         /// </summary>
         /// <param name="listenToIp">IP который слшаем</param>
         /// <param name="listenToPort"></param>
@@ -229,6 +234,9 @@ namespace MasterServerToolkit.MasterServer
             {
                 return;
             }
+
+            serverIP = listenToIp;
+            serverPort = listenToPort;
 
             MstProperties startInfo = new MstProperties();
             startInfo.Add("\tFPS is", Application.targetFrameRate);
@@ -242,8 +250,8 @@ namespace MasterServerToolkit.MasterServer
             socket.Listen(listenToIp, listenToPort);
             LookForModules();
             IsRunning = true;
-            OnServerStartedEvent?.Invoke();
             OnStartedServer();
+            OnServerStartedEvent?.Invoke();
         }
 
         private void LookForModules()
@@ -273,7 +281,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Stp server
+        /// Stops server
         /// </summary>
         public virtual void StopServer()
         {
@@ -291,8 +299,6 @@ namespace MasterServerToolkit.MasterServer
                 peer.Disconnect("The max number of connections has been reached");
                 return;
             }
-
-            logger.Debug($"Client {peer.Id} connected to server. Total clients are: {connectedPeers.Count + 1}");
 
             // Listen to messages
             peer.OnMessageReceivedEvent += OnMessageReceived;
@@ -313,12 +319,12 @@ namespace MasterServerToolkit.MasterServer
             // Invoke the event
             OnPeerConnectedEvent?.Invoke(peer);
             OnPeerConnected(peer);
+
+            logger.Debug($"Client {peer.Id} connected to server. Total clients are: {connectedPeers.Count}");
         }
 
         private void OnPeerDisconnectedEventHandler(IPeer peer)
         {
-            logger.Debug($"Client {peer.Id} disconnected from server. Total clients are: {connectedPeers.Count - 1}");
-
             // Remove listener to messages
             peer.OnMessageReceivedEvent -= OnMessageReceived;
 
@@ -336,6 +342,8 @@ namespace MasterServerToolkit.MasterServer
             // Invoke the event
             OnPeerDisconnectedEvent?.Invoke(peer);
             OnPeerDisconnected(peer);
+
+            logger.Debug($"Client {peer.Id} disconnected from server. Total clients are: {connectedPeers.Count}");
         }
 
         protected virtual void OnDestroy()
@@ -476,6 +484,7 @@ namespace MasterServerToolkit.MasterServer
                         message.Respond(internalServerErrorMessage, ResponseStatus.NotHandled);
                         return;
                     }
+
                     return;
                 }
 

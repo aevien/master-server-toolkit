@@ -3,6 +3,7 @@ using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using WebSocketSharp.Server;
 
@@ -62,53 +63,64 @@ namespace MasterServerToolkit.Networking
         /// <param name="port"></param>
         public void Listen(string ip, int port)
         {
-            // Stop listening when application closes
-            MstTimer.Instance.OnApplicationQuitEvent += Stop;
+            try
+            {
+                // Stop listening when application closes
+                MstTimer.Instance.OnApplicationQuitEvent += Stop;
 
-            if (server != null)
-            {
-                server.Stop();
-            }
-
-            if (ip == "127.0.0.1" | ip == "localhost")
-            {
-                server = new WebSocketServer(port, UseSecure);
-            }
-            else
-            {
-                server = new WebSocketServer(IPAddress.Parse(ip), port, UseSecure);
-            }
-
-            if (UseSecure)
-            {
-                if (string.IsNullOrEmpty(CertificatePath.Trim()))
+                if (server != null)
                 {
-                    Logs.Error("You are using secure connection, but no path to certificate defined. Stop connection process.");
-                    return;
+                    server.Stop();
                 }
 
-                if (string.IsNullOrEmpty(CertificatePassword.Trim()))
-                    server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath);
+                if (ip == "127.0.0.1" | ip == "localhost")
+                {
+                    server = new WebSocketServer(port, UseSecure);
+                }
                 else
-                    server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath, CertificatePassword);
+                {
+                    server = new WebSocketServer(IPAddress.Parse(ip), port, UseSecure);
+                }
 
-                server.SslConfiguration.EnabledSslProtocols =
-                    System.Security.Authentication.SslProtocols.Tls12
-                    | System.Security.Authentication.SslProtocols.Ssl3
-                    | System.Security.Authentication.SslProtocols.Default;
+                if (UseSecure)
+                {
+                    if (string.IsNullOrEmpty(CertificatePath.Trim()))
+                    {
+                        Logs.Error("You are using secure connection, but no path to certificate defined. Stop connection process.");
+                        return;
+                    }
+
+                    if (string.IsNullOrEmpty(CertificatePassword.Trim()))
+                        server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath);
+                    else
+                        server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath, CertificatePassword);
+
+                    server.SslConfiguration.EnabledSslProtocols =
+                        System.Security.Authentication.SslProtocols.Tls12
+                        | System.Security.Authentication.SslProtocols.Ssl3
+                        | System.Security.Authentication.SslProtocols.Default;
+                }
+
+                // Setup all services used by server
+                SetupService(server);
+
+                // Setup something else if needed
+                OnBeforeServerStart?.Invoke(this);
+
+                // Start server
+                server.Start();
+
+                // Add this server to updater
+                MstUpdateRunner.Instance.Add(this);
             }
-
-            // Setup all services used by server
-            SetupService(server);
-
-            // Setup something else if needed
-            OnBeforeServerStart?.Invoke(this);
-
-            // Start server
-            server.Start();
-
-            // Add this server to updater
-            MstUpdateRunner.Instance.Add(this);
+            catch (CryptographicException e)
+            {
+                Logs.Error(e.Message);
+            }
+            catch (PlatformNotSupportedException e)
+            {
+                Logs.Error(e.Message);
+            }
         }
 
         /// <summary>

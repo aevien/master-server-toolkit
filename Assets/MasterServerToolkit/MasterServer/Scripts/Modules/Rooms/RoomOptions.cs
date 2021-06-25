@@ -29,7 +29,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// If true, room will appear in public listings
         /// </summary>
-        public bool IsPublic { get; set; } = true;
+        public bool IsPublic { get; set; } = false;
 
         /// <summary>
         /// If 0 - player number is not limited
@@ -46,13 +46,6 @@ namespace MasterServerToolkit.MasterServer
         /// to allow new players. Make sure it's long enought to allow player to load gameplay scene
         /// </summary>
         public float AccessTimeoutPeriod { get; set; } = 10;
-
-        /// <summary>
-        /// If set to false, users will no longer be able to request access directly.
-        /// This is useful when you want players to get accesses through other means, for example
-        /// through Lobby module,
-        /// </summary>
-        public bool AllowUsersRequestAccess { get; set; } = true;
 
         /// <summary>
         /// Region, to which the spawned room belongs
@@ -78,7 +71,6 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(MaxConnections);
             writer.Write(Password);
             writer.Write(AccessTimeoutPeriod);
-            writer.Write(AllowUsersRequestAccess);
             writer.Write(Region);
             writer.Write(CustomOptions.ToDictionary());
         }
@@ -92,7 +84,6 @@ namespace MasterServerToolkit.MasterServer
             MaxConnections = reader.ReadInt32();
             Password = reader.ReadString();
             AccessTimeoutPeriod = reader.ReadSingle();
-            AllowUsersRequestAccess = reader.ReadBoolean();
             Region = reader.ReadString();
             CustomOptions = new MstProperties(reader.ReadDictionary());
         }
@@ -103,10 +94,10 @@ namespace MasterServerToolkit.MasterServer
             options.Add("RoomName", Name);
             options.Add("RoomIp", RoomIp);
             options.Add("RoomPort", RoomPort);
+            options.Add("IsPublic", IsPublic);
             options.Add("MaxConnections", MaxConnections <= 0 ? "Unlimited" : MaxConnections.ToString());
             options.Add("Use Password", !string.IsNullOrEmpty(Password));
             options.Add("AccessTimeoutPeriod", $"{AccessTimeoutPeriod} sec.");
-            options.Add("AllowUsersRequestAccess", AllowUsersRequestAccess);
             options.Add("Region", string.IsNullOrEmpty(Region) ? "International" : Region);
             options.Append(CustomOptions);
 

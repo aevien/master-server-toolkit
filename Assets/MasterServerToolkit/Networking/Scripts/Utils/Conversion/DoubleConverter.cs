@@ -4,15 +4,15 @@ using System.Globalization;
 namespace MasterServerToolkit.Networking
 {
     /// <summary>
-    ///     A class to allow the conversion of doubles to string representations of
-    ///     their exact decimal values. The implementation aims for readability over
-    ///     efficiency.
+    /// A class to allow the conversion of doubles to string representations of
+    /// their exact decimal values. The implementation aims for readability over
+    /// efficiency.
     /// </summary>
     public class DoubleConverter
     {
         /// <summary>
-        ///     Converts the given double to a string representation of its
-        ///     exact decimal value.
+        /// Converts the given double to a string representation of its
+        /// exact decimal value.
         /// </summary>
         /// <param name="d">The double to convert.</param>
         /// <returns>A string representation of the double's exact decimal value.</returns>
@@ -104,12 +104,12 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Private class used for manipulating sequences of decimal digits.
+        /// Private class used for manipulating sequences of decimal digits.
         /// </summary>
         private class ArbitraryDecimal
         {
             /// <summary>
-            ///     How many digits are *after* the decimal point
+            /// How many digits are *after* the decimal point
             /// </summary>
             private int decimalPoint;
 
@@ -117,8 +117,8 @@ namespace MasterServerToolkit.Networking
             private byte[] digits;
 
             /// <summary>
-            ///     Constructs an arbitrary decimal expansion from the given long.
-            ///     The long must not be negative.
+            /// Constructs an arbitrary decimal expansion from the given long.
+            /// The long must not be negative.
             /// </summary>
             internal ArbitraryDecimal(long x)
             {
@@ -133,8 +133,8 @@ namespace MasterServerToolkit.Networking
             }
 
             /// <summary>
-            ///     Multiplies the current expansion by the given amount, which should
-            ///     only be 2 or 5.
+            /// Multiplies the current expansion by the given amount, which should
+            /// only be 2 or 5.
             /// </summary>
             internal void MultiplyBy(int amount)
             {
@@ -153,15 +153,14 @@ namespace MasterServerToolkit.Networking
                 {
                     Array.Copy(result, 1, digits, 0, digits.Length);
                 }
-
                 Normalize();
             }
 
             /// <summary>
-            ///     Shifts the decimal point; a negative value makes
-            ///     the decimal expansion bigger (as fewer digits come after the
-            ///     decimal place) and a positive value makes the decimal
-            ///     expansion smaller.
+            /// Shifts the decimal point; a negative value makes
+            /// the decimal expansion bigger (as fewer digits come after the
+            /// decimal place) and a positive value makes the decimal
+            /// expansion smaller.
             /// </summary>
             internal void Shift(int amount)
             {
@@ -169,7 +168,7 @@ namespace MasterServerToolkit.Networking
             }
 
             /// <summary>
-            ///     Removes leading/trailing zeroes from the expansion.
+            /// Removes leading/trailing zeroes from the expansion.
             /// </summary>
             internal void Normalize()
             {
@@ -207,7 +206,7 @@ namespace MasterServerToolkit.Networking
             }
 
             /// <summary>
-            ///     Converts the value to a proper decimal string representation.
+            /// Converts the value to a proper decimal string representation.
             /// </summary>
             public override string ToString()
             {

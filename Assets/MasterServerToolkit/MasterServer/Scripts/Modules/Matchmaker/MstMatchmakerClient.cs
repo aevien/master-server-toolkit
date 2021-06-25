@@ -6,6 +6,8 @@ using System.Linq;
 namespace MasterServerToolkit.MasterServer
 {
     public delegate void FindGamesCallback(List<GameInfoPacket> games);
+    public delegate void GetRegionsCallback(List<string> regions);
+    public delegate void GetPlayersCallback(List<string> players);
 
     public class MstMatchmakerClient : MstBaseClient
     {
@@ -13,8 +15,105 @@ namespace MasterServerToolkit.MasterServer
         /// List of the last loaded games
         /// </summary>
         public List<GameInfoPacket> Games { get; private set; }
+        /// <summary>
+        /// List of regions at which all the rooms are registered
+        /// </summary>
+        public List<string> Regions { get; private set; }
 
         public MstMatchmakerClient(IClientSocket connection) : base(connection) { }
+
+        /// <summary>
+        /// Get list of players
+        /// </summary>
+        /// <param name="callback"></param>
+        public void GetPlayers(GetPlayersCallback callback)
+        {
+            GetPlayers(callback, Connection);
+        }
+
+        /// <summary>
+        /// Get list of players
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void GetPlayers(GetPlayersCallback callback, IClientSocket connection)
+        {
+            List<string> players = new List<string>();
+
+            if (!connection.IsConnected)
+            {
+                Logs.Error("Not connected");
+                callback?.Invoke(players);
+                return;
+            }
+
+            if (Mst.Client.Lobbies.IsInLobby)
+            {
+                players = Mst.Client.Lobbies.JoinedLobby.Members.Select(m => m.Value.Username).ToList();
+                callback?.Invoke(players);
+            }
+            else
+            {
+                if (!Mst.Client.Rooms.HasAccess)
+                {
+                    Logs.Error("Not joined any room");
+                    callback?.Invoke(players);
+                    return;
+                }
+
+                connection.SendMessage((short)MstMessageCodes.GetPlayersRequest, Mst.Client.Rooms.ReceivedAccess.RoomId, (status, response) =>
+                {
+                    if (status != ResponseStatus.Success)
+                    {
+                        Logs.Error(response.AsString("Unknown error while requesting a list of players"));
+                        callback?.Invoke(players);
+                        return;
+                    }
+
+                    players = response.Deserialize(new PlayersPacket()).Players;
+                    callback?.Invoke(players);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Gets list of regions at which all the rooms are registered
+        /// </summary>
+        /// <param name="callback"></param>
+        public void GetRegions(GetRegionsCallback callback)
+        {
+            GetRegions(callback, Connection);
+        }
+
+        /// <summary>
+        /// Gets list of regions at which all the rooms are registered
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void GetRegions(GetRegionsCallback callback, IClientSocket connection)
+        {
+            if (!connection.IsConnected)
+            {
+                Regions = new List<string>();
+                Logs.Error("Not connected");
+                callback?.Invoke(Regions);
+                return;
+            }
+
+            connection.SendMessage((short)MstMessageCodes.GetRegionsRequest, (status, response) =>
+            {
+                if (status != ResponseStatus.Success)
+                {
+                    Regions = new List<string>();
+                    Logs.Error(response.AsString("Unknown error while requesting a list of regions"));
+                    callback?.Invoke(Regions);
+                    return;
+                }
+
+                Regions = response.Deserialize(new RegionsPacket()).Regions;
+                callback?.Invoke(Regions);
+            });
+        }
 
         /// <summary>
         /// Retrieves a list of all public games
@@ -46,7 +145,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 Games = new List<GameInfoPacket>();
                 Logs.Error("Not connected");
-                callback.Invoke(Games);
+                callback?.Invoke(Games);
                 return;
             }
 
@@ -56,12 +155,12 @@ namespace MasterServerToolkit.MasterServer
                 {
                     Games = new List<GameInfoPacket>();
                     Logs.Error(response.AsString("Unknown error while requesting a list of games"));
-                    callback.Invoke(Games);
+                    callback?.Invoke(Games);
                     return;
                 }
 
                 Games = response.DeserializeList(() => new GameInfoPacket()).ToList();
-                callback.Invoke(Games);
+                callback?.Invoke(Games);
             });
         }
     }

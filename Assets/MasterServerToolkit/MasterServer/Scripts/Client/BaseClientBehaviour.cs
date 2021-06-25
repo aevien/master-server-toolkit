@@ -18,7 +18,7 @@ namespace MasterServerToolkit.MasterServer
         protected Logging.Logger logger;
 
         /// <summary>
-        /// Log levelof this module
+        /// Log level of this module
         /// </summary>
         [Header("Base Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;

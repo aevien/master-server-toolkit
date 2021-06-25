@@ -1,5 +1,4 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
@@ -12,12 +11,6 @@ namespace MasterServerToolkit.Games
     public class MatchmakingBehaviour : BaseClientBehaviour
     {
         #region INSPECTOR
-
-        /// <summary>
-        /// Name of the room that will be loaded after a match is successfully created
-        /// </summary>
-        [SerializeField, Tooltip("Name of the room that will be loaded after a match is successfully created")]
-        protected string startRoomScene = "Room";
 
         /// <summary>
         /// Time to wait before match creation process will be aborted
@@ -65,14 +58,19 @@ namespace MasterServerToolkit.Games
         }
 
         /// <summary>
-        /// Starte match scene
+        /// Tries to get access to room
         /// </summary>
-        protected virtual void StartLoadingGameScene()
+        /// <param name="gameInfo"></param>
+        protected virtual void GetAccess(GameInfoPacket gameInfo)
         {
-            ScenesLoader.LoadSceneByName(startRoomScene, (progressValue) =>
+            Mst.Client.Rooms.GetAccess(gameInfo.Id, (access, error) =>
             {
-                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
-            }, null);
+                if (!string.IsNullOrEmpty(error))
+                {
+                    logger.Error(error);
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, null));
+                }
+            });
         }
 
         /// <summary>
@@ -147,21 +145,22 @@ namespace MasterServerToolkit.Games
             // Save room Id in buffer, may be very helpful
             Mst.Options.Set(MstDictKeys.ROOM_ID, gameInfo.Id);
             // Save max players to buffer, may be very helpful
-            Mst.Options.Set(MstDictKeys.ROOM_MAX_PLAYERS, gameInfo.MaxPlayers);
+            Mst.Options.Set(MstDictKeys.ROOM_MAX_CONNECTIONS, gameInfo.MaxPlayers);
 
             if (gameInfo.IsPasswordProtected)
             {
                 Mst.Events.Invoke(MstEventKeys.showPasswordDialogBox,
-                    new PasswordInputDialoxBoxEventMessage("Room is required the password. Please enter room password below",
-                    () =>
+                    new PasswordInputDialoxBoxEventMessage("Room is required the password. Please enter room password below", () =>
                     {
-                        StartLoadingGameScene();
+                        GetAccess(gameInfo);
                     }));
             }
             else
             {
-                StartLoadingGameScene();
+                GetAccess(gameInfo);
             }
         }
+
+
     }
 }

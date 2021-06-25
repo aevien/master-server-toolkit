@@ -9,17 +9,27 @@ namespace MasterServerToolkit.Utils
     {
         public void LoadSceneByName(string sceneName, UnityAction<float> onProgress, UnityAction onLoaded)
         {
-            StartCoroutine(LoadAsyncScene(sceneName, onProgress, onLoaded));
+            StartCoroutine(LoadAsyncScene(sceneName, false, onProgress, onLoaded));
         }
 
         public void LoadSceneByIndex(int sceneBuildIndex, UnityAction<float> onProgress, UnityAction onLoaded)
         {
-            StartCoroutine(LoadAsyncScene(SceneManager.GetSceneAt(sceneBuildIndex).name, onProgress, onLoaded));
+            StartCoroutine(LoadAsyncScene(SceneManager.GetSceneAt(sceneBuildIndex).name, false, onProgress, onLoaded));
         }
 
-        IEnumerator LoadAsyncScene(string sceneName, UnityAction<float> onProgress, UnityAction onLoaded)
+        public void LoadSceneByNameAdditive(string sceneName, UnityAction<float> onProgress, UnityAction onLoaded)
         {
-            AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName);
+            StartCoroutine(LoadAsyncScene(sceneName, true, onProgress, onLoaded));
+        }
+
+        public void LoadSceneByIndexAdditive(int sceneBuildIndex, UnityAction<float> onProgress, UnityAction onLoaded)
+        {
+            StartCoroutine(LoadAsyncScene(SceneManager.GetSceneAt(sceneBuildIndex).name, true, onProgress, onLoaded));
+        }
+
+        IEnumerator LoadAsyncScene(string sceneName, bool isAdditive, UnityAction<float> onProgress, UnityAction onLoaded)
+        {
+            AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
             asyncOperation.completed += (op) => {
                 onLoaded?.Invoke();
             };

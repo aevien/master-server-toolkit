@@ -1,11 +1,12 @@
 ﻿using Aevien.UI;
+using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
+namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class ProfileView : UIView
     {

@@ -244,11 +244,20 @@ namespace MasterServerToolkit.MasterServer
             return GetSpawners(region);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public virtual List<RegisteredSpawner> GetSpawners()
         {
             return GetSpawners(null);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="region"></param>
+        /// <returns></returns>
         public virtual List<RegisteredSpawner> GetSpawners(string region)
         {
             // If region is not provided, retrieve all spawners
@@ -260,11 +269,36 @@ namespace MasterServerToolkit.MasterServer
             return GetSpawnersInRegion(region);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="region"></param>
+        /// <returns></returns>
         public virtual List<RegisteredSpawner> GetSpawnersInRegion(string region)
         {
             return spawnersList.Values
                 .Where(s => s.Options.Region == region)
                 .ToList();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public List<string> GetRegions()
+        {
+            var list = new List<string>();
+            var regions = spawnersList.Values.Select(i => i.Options.Region);
+
+            foreach(string region in regions)
+            {
+                if (!string.IsNullOrEmpty(region) && !list.Contains(region))
+                {
+                    list.Add(region);
+                }
+            }
+
+            return list;
         }
 
         /// <summary>

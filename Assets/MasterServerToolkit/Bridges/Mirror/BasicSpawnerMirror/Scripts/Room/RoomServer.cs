@@ -1,4 +1,5 @@
 ﻿#if MIRROR
+using kcp2k;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
@@ -125,8 +126,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             base.Awake();
 
-            bool self = Instance == this;
-
             // Only one room server can exist in scene
             if (Instance != null)
             {
@@ -208,7 +207,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             SetPort(roomOptions.RoomPort);
 
             // Add master server connection and disconnection listeners
-            Connection.AddConnectionListener(OnConnectedToMasterServerEventHandler, true);
+            Connection.AddConnectionListener(OnConnectedToMasterServerEventHandler);
             Connection.AddDisconnectionListener(OnDisconnectedFromMasterServerEventHandler, false);
 
             // If connection to master server is not established
@@ -403,9 +402,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 }
 
                 // If max players param was given from spawner task
-                if (taskController.Options.Has(MstDictKeys.ROOM_MAX_PLAYERS))
+                if (taskController.Options.Has(MstDictKeys.ROOM_MAX_CONNECTIONS))
                 {
-                    roomOptions.MaxConnections = taskController.Options.AsInt(MstDictKeys.ROOM_MAX_PLAYERS);
+                    roomOptions.MaxConnections = taskController.Options.AsInt(MstDictKeys.ROOM_MAX_CONNECTIONS);
                 }
 
                 // If password was given from spawner task
@@ -417,8 +416,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 // Set port of the Mirror server
                 SetPort(roomOptions.RoomPort);
 
+                var finalizationProperties = new MstProperties();
+                finalizationProperties.Set(MstDictKeys.ROOM_ID, RoomController.RoomId);
+
                 // Finalize spawn task before we start mirror server 
-                taskController.FinalizeTask(new MstProperties(), () =>
+                taskController.FinalizeTask(finalizationProperties, () =>
                 {
                     // Start Mirror server
                     RoomNetworkManager.StartServer();
@@ -586,9 +588,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <param name="port"></param>
         public virtual void SetPort(int port)
         {
-            if (Transport.activeTransport is TelepathyTransport transport)
+            if (Transport.activeTransport is KcpTransport transport)
             {
-                transport.port = (ushort)port;
+                transport.Port = (ushort)port;
             }
             else
             {
@@ -602,13 +604,13 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <returns></returns>
         public virtual int GetPort()
         {
-            if (Transport.activeTransport is TelepathyTransport transport)
+            if (Transport.activeTransport is KcpTransport transport)
             {
-                return (int)transport.port;
+                return (int)transport.Port;
             }
             else
             {
-                logger.Error("You are trying to use TelepathyTransport. But it is not found on the scene. Try to override this method to create you own implementation");
+                logger.Error("You are trying to use KcpTransport. But it is not found on the scene. Try to override this method to create you own implementation");
                 return 0;
             }
         }

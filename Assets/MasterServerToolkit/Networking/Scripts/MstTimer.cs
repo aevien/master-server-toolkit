@@ -40,8 +40,10 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public event Action OnApplicationQuitEvent;
 
-        protected void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             // Framework requires applications to run in background
             Application.runInBackground = true;
 

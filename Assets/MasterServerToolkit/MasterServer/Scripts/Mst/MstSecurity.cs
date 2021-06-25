@@ -238,6 +238,7 @@ namespace MasterServerToolkit.MasterServer
                     aesAlg.IV = ReadByteArray(msDecrypt);
                     // Create a decrytor to perform the stream transform.
                     ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
                     using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
                     {
                         using (var reader = new EndianBinaryReader(EndianBitConverter.Big, csDecrypt))

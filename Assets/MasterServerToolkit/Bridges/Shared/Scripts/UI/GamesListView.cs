@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Logging;
+﻿using Aevien.UI;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
@@ -12,7 +13,11 @@ namespace MasterServerToolkit.Games
     public class GamesListView : UIView
     {
         [Header("Components"), SerializeField]
-        private GameListItem gameItemPrefab;
+        private UILable uiLablePrefab;
+        [SerializeField]
+        private UILable uiColLablePrefab;
+        [SerializeField]
+        private UIButton uiButtonPrefab;
         [SerializeField]
         private RectTransform listContainer;
         [SerializeField]
@@ -92,14 +97,55 @@ namespace MasterServerToolkit.Games
 
         private void DrawGamesList(IEnumerable<GameInfoPacket> games)
         {
-            if (listContainer && gameItemPrefab)
+            if (listContainer)
             {
-                foreach (GameInfoPacket game in games)
-                {
-                    var gameItemInstance = Instantiate(gameItemPrefab, listContainer, false);
-                    gameItemInstance.SetInfo(game, this);
+                int index = 0;
 
-                    Logs.Info(game);
+                var gameNameCol = Instantiate(uiColLablePrefab, listContainer, false);
+                gameNameCol.Lable = "Name";
+
+                var gameAddressCol = Instantiate(uiColLablePrefab, listContainer, false);
+                gameAddressCol.Lable = "Address";
+
+                var gameRegionCol = Instantiate(uiColLablePrefab, listContainer, false);
+                gameRegionCol.Lable = "Region";
+
+                var gamePlayersCol = Instantiate(uiColLablePrefab, listContainer, false);
+                gamePlayersCol.Lable = "Players";
+
+                var ConnectBtnCol = Instantiate(uiColLablePrefab, listContainer, false);
+                ConnectBtnCol.Lable = "#";
+
+                foreach (GameInfoPacket gameInfo in games)
+                {
+                    var gameNameLable = Instantiate(uiLablePrefab, listContainer, false);
+                    gameNameLable.Lable = gameInfo.IsPasswordProtected ? $"{gameInfo.Name} <color=yellow>[Password]</color>" : gameInfo.Name;
+                    gameNameLable.name = $"gameNameLable_{index}";
+
+                    var gameAddressLable = Instantiate(uiLablePrefab, listContainer, false);
+                    gameAddressLable.Lable = gameInfo.Address;
+                    gameAddressLable.name = $"gameAddressLable_{index}";
+
+                    var gameRegionLable = Instantiate(uiLablePrefab, listContainer, false);
+                    string region = string.IsNullOrEmpty(gameInfo.Region) ? "International" : gameInfo.Region;
+                    gameRegionLable.Lable = region;
+                    gameRegionLable.name = $"gameRegionLable_{index}";
+
+                    var gamePlayersLable = Instantiate(uiLablePrefab, listContainer, false);
+                    string maxPleyers = gameInfo.MaxPlayers <= 0 ? "∞" : gameInfo.MaxPlayers.ToString();
+                    gamePlayersLable.Lable = $"{gameInfo.OnlinePlayers} / {maxPleyers}";
+                    gamePlayersLable.name = $"gamePlayersLable_{index}";
+
+                    var gameConnectBtn = Instantiate(uiButtonPrefab, listContainer, false);
+                    gameConnectBtn.SetLable("Join");
+                    gameConnectBtn.AddOnClickListener(() => {
+                        MatchmakingBehaviour.Instance.StartMatch(gameInfo);
+                    });
+                    gameConnectBtn.name = $"gameConnectBtn_{index}";
+
+                    index++;
+
+                    Logs.Info(gameInfo);
                 }
             }
             else

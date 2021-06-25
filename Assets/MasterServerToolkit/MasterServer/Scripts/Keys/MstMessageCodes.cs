@@ -40,6 +40,8 @@
 
         // Matchmaker
         FindGamesRequest,
+        GetRegionsRequest,
+        GetPlayersRequest,
 
         // Auth
         SignIn,

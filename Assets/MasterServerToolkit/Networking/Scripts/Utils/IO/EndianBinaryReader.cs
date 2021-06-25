@@ -5,16 +5,16 @@ using System.Text;
 namespace MasterServerToolkit.Networking
 {
     /// <summary>
-    ///     Equivalent of System.IO.BinaryReader, but with either endianness, depending on
-    ///     the EndianBitConverter it is constructed with. No data is buffered in the
-    ///     reader; the client may seek within the stream at will.
+    /// Equivalent of System.IO.BinaryReader, but with either endianness, depending on
+    /// the EndianBitConverter it is constructed with. No data is buffered in the
+    /// reader; the client may seek within the stream at will.
     /// </summary>
     public class EndianBinaryReader : IDisposable
     {
         #region IDisposable Members
 
         /// <summary>
-        ///     Disposes of the underlying stream.
+        /// Disposes of the underlying stream.
         /// </summary>
         public void Dispose()
         {
@@ -30,27 +30,27 @@ namespace MasterServerToolkit.Networking
         #region Fields not directly related to properties
 
         /// <summary>
-        ///     Whether or not this reader has been disposed yet.
+        /// Whether or not this reader has been disposed yet.
         /// </summary>
         private bool disposed;
 
         /// <summary>
-        ///     Decoder to use for string conversions.
+        /// Decoder to use for string conversions.
         /// </summary>
         private readonly Decoder decoder;
 
         /// <summary>
-        ///     Buffer used for temporary storage before conversion into primitives
+        /// Buffer used for temporary storage before conversion into primitives
         /// </summary>
         private readonly byte[] buffer = new byte[16];
 
         /// <summary>
-        ///     Buffer used for temporary storage when reading a single character
+        /// Buffer used for temporary storage when reading a single character
         /// </summary>
         private readonly char[] charBuffer = new char[1];
 
         /// <summary>
-        ///     Minimum number of bytes used to encode a character
+        /// Minimum number of bytes used to encode a character
         /// </summary>
         private readonly int minBytesPerChar;
 
@@ -59,38 +59,25 @@ namespace MasterServerToolkit.Networking
         #region Constructors
 
         /// <summary>
-        ///     Equivalent of System.IO.BinaryWriter, but with either endianness, depending on
-        ///     the EndianBitConverter it is constructed with.
+        /// Equivalent of System.IO.BinaryWriter, but with either endianness, depending on
+        /// the EndianBitConverter it is constructed with.
         /// </summary>
         /// <param name="bitConverter">Converter to use when reading data</param>
         /// <param name="stream">Stream to read data from</param>
-        public EndianBinaryReader(EndianBitConverter bitConverter,
-            Stream stream) : this(bitConverter, stream, Encoding.UTF8)
-        {
-        }
+        public EndianBinaryReader(EndianBitConverter bitConverter, Stream stream) : this(bitConverter, stream, Encoding.UTF8) { }
 
         /// <summary>
-        ///     Constructs a new binary reader with the given bit converter, reading
-        ///     to the given stream, using the given encoding.
+        /// Constructs a new binary reader with the given bit converter, reading
+        /// to the given stream, using the given encoding.
         /// </summary>
         /// <param name="bitConverter">Converter to use when reading data</param>
         /// <param name="stream">Stream to read data from</param>
         /// <param name="encoding">Encoding to use when reading character data</param>
         public EndianBinaryReader(EndianBitConverter bitConverter, Stream stream, Encoding encoding)
         {
-            if (bitConverter == null)
-            {
-                throw new ArgumentNullException("bitConverter");
-            }
-
             if (stream == null)
             {
                 throw new ArgumentNullException("stream");
-            }
-
-            if (encoding == null)
-            {
-                throw new ArgumentNullException("encoding");
             }
 
             if (!stream.CanRead)
@@ -99,8 +86,8 @@ namespace MasterServerToolkit.Networking
             }
 
             BaseStream = stream;
-            BitConverter = bitConverter;
-            Encoding = encoding;
+            BitConverter = bitConverter ?? throw new ArgumentNullException("bitConverter");
+            Encoding = encoding ?? throw new ArgumentNullException("encoding");
             decoder = encoding.GetDecoder();
             minBytesPerChar = 1;
 
@@ -115,17 +102,17 @@ namespace MasterServerToolkit.Networking
         #region Properties
 
         /// <summary>
-        ///     The bit converter used to read values from the stream
+        /// The bit converter used to read values from the stream
         /// </summary>
         public EndianBitConverter BitConverter { get; private set; }
 
         /// <summary>
-        ///     The encoding used to read strings
+        /// The encoding used to read strings
         /// </summary>
         public Encoding Encoding { get; private set; }
 
         /// <summary>
-        ///     Gets the underlying stream of the EndianBinaryReader.
+        /// Gets the underlying stream of the EndianBinaryReader.
         /// </summary>
         public Stream BaseStream { get; private set; }
 
@@ -134,7 +121,7 @@ namespace MasterServerToolkit.Networking
         #region Public methods
 
         /// <summary>
-        ///     Closes the reader, including the underlying stream..
+        /// Closes the reader, including the underlying stream..
         /// </summary>
         public void Close()
         {
@@ -142,7 +129,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Seeks within the stream.
+        /// Seeks within the stream.
         /// </summary>
         /// <param name="offset">Offset to seek to.</param>
         /// <param name="origin">Origin of seek operation.</param>
@@ -153,7 +140,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a single byte from the stream.
+        /// Reads a single byte from the stream.
         /// </summary>
         /// <returns>The byte read</returns>
         public byte ReadByte()
@@ -163,7 +150,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a single signed byte from the stream.
+        /// Reads a single signed byte from the stream.
         /// </summary>
         /// <returns>The byte read</returns>
         public sbyte ReadSByte()
@@ -173,7 +160,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a boolean from the stream. 1 byte is read.
+        /// Reads a boolean from the stream. 1 byte is read.
         /// </summary>
         /// <returns>The boolean read</returns>
         public bool ReadBoolean()
@@ -183,8 +170,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 16-bit signed integer from the stream, using the bit converter
-        ///     for this reader. 2 bytes are read.
+        /// Reads a 16-bit signed integer from the stream, using the bit converter
+        /// for this reader. 2 bytes are read.
         /// </summary>
         /// <returns>The 16-bit integer read</returns>
         public short ReadInt16()
@@ -194,8 +181,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 32-bit signed integer from the stream, using the bit converter
-        ///     for this reader. 4 bytes are read.
+        /// Reads a 32-bit signed integer from the stream, using the bit converter
+        /// for this reader. 4 bytes are read.
         /// </summary>
         /// <returns>The 32-bit integer read</returns>
         public int ReadInt32()
@@ -205,8 +192,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 64-bit signed integer from the stream, using the bit converter
-        ///     for this reader. 8 bytes are read.
+        /// Reads a 64-bit signed integer from the stream, using the bit converter
+        /// for this reader. 8 bytes are read.
         /// </summary>
         /// <returns>The 64-bit integer read</returns>
         public long ReadInt64()
@@ -216,8 +203,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 16-bit unsigned integer from the stream, using the bit converter
-        ///     for this reader. 2 bytes are read.
+        /// Reads a 16-bit unsigned integer from the stream, using the bit converter
+        /// for this reader. 2 bytes are read.
         /// </summary>
         /// <returns>The 16-bit unsigned integer read</returns>
         public ushort ReadUInt16()
@@ -227,8 +214,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 32-bit unsigned integer from the stream, using the bit converter
-        ///     for this reader. 4 bytes are read.
+        /// Reads a 32-bit unsigned integer from the stream, using the bit converter
+        /// for this reader. 4 bytes are read.
         /// </summary>
         /// <returns>The 32-bit unsigned integer read</returns>
         public uint ReadUInt32()
@@ -238,8 +225,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 64-bit unsigned integer from the stream, using the bit converter
-        ///     for this reader. 8 bytes are read.
+        /// Reads a 64-bit unsigned integer from the stream, using the bit converter
+        /// for this reader. 8 bytes are read.
         /// </summary>
         /// <returns>The 64-bit unsigned integer read</returns>
         public ulong ReadUInt64()
@@ -249,8 +236,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a single-precision floating-point value from the stream, using the bit converter
-        ///     for this reader. 4 bytes are read.
+        /// Reads a single-precision floating-point value from the stream, using the bit converter
+        /// for this reader. 4 bytes are read.
         /// </summary>
         /// <returns>The floating point value read</returns>
         public float ReadSingle()
@@ -260,8 +247,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a double-precision floating-point value from the stream, using the bit converter
-        ///     for this reader. 8 bytes are read.
+        /// Reads a double-precision floating-point value from the stream, using the bit converter
+        /// for this reader. 8 bytes are read.
         /// </summary>
         /// <returns>The floating point value read</returns>
         public double ReadDouble()
@@ -271,8 +258,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a decimal value from the stream, using the bit converter
-        ///     for this reader. 16 bytes are read.
+        /// Reads a decimal value from the stream, using the bit converter
+        /// for this reader. 16 bytes are read.
         /// </summary>
         /// <returns>The decimal value read</returns>
         public decimal ReadDecimal()
@@ -282,9 +269,9 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a single character from the stream, using the character encoding for
-        ///     this reader. If no characters have been fully read by the time the stream ends,
-        ///     -1 is returned.
+        /// Reads a single character from the stream, using the character encoding for
+        /// this reader. If no characters have been fully read by the time the stream ends,
+        /// -1 is returned.
         /// </summary>
         /// <returns>The character read, or -1 for end of stream.</returns>
         public int Read()
@@ -299,15 +286,15 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads the specified number of characters into the given buffer, starting at
-        ///     the given index.
+        /// Reads the specified number of characters into the given buffer, starting at
+        /// the given index.
         /// </summary>
         /// <param name="data">The buffer to copy data into</param>
         /// <param name="index">The first index to copy data into</param>
         /// <param name="count">The number of characters to read</param>
         /// <returns>
-        ///     The number of characters actually read. This will only be less than
-        ///     the requested number of characters if the end of the stream is reached.
+        /// The number of characters actually read. This will only be less than
+        /// the requested number of characters if the end of the stream is reached.
         /// </returns>
         public int Read(char[] data, int index, int count)
         {
@@ -379,15 +366,15 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads the specified number of bytes into the given buffer, starting at
-        ///     the given index.
+        /// Reads the specified number of bytes into the given buffer, starting at
+        /// the given index.
         /// </summary>
         /// <param name="buffer">The buffer to copy data into</param>
         /// <param name="index">The first index to copy data into</param>
         /// <param name="count">The number of bytes to read</param>
         /// <returns>
-        ///     The number of bytes actually read. This will only be less than
-        ///     the requested number of bytes if the end of the stream is reached.
+        /// The number of bytes actually read. This will only be less than
+        /// the requested number of bytes if the end of the stream is reached.
         /// </returns>
         public int Read(byte[] buffer, int index, int count)
         {
@@ -426,13 +413,14 @@ namespace MasterServerToolkit.Networking
                 read += block;
                 count -= block;
             }
+
             return read;
         }
 
         /// <summary>
-        ///     Reads the specified number of bytes, returning them in a new byte array.
-        ///     If not enough bytes are available before the end of the stream, this
-        ///     method will return what is available.
+        /// Reads the specified number of bytes, returning them in a new byte array.
+        /// If not enough bytes are available before the end of the stream, this
+        /// method will return what is available.
         /// </summary>
         /// <param name="count">The number of bytes to read</param>
         /// <returns>The bytes read</returns>
@@ -462,9 +450,9 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads the specified number of bytes, returning them in a new byte array.
-        ///     If not enough bytes are available before the end of the stream, this
-        ///     method will throw an IOException.
+        /// Reads the specified number of bytes, returning them in a new byte array.
+        /// If not enough bytes are available before the end of the stream, this
+        /// method will throw an IOException.
         /// </summary>
         /// <param name="count">The number of bytes to read</param>
         /// <returns>The bytes read</returns>
@@ -476,10 +464,10 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 7-bit encoded integer from the stream. This is stored with the least significant
-        ///     information first, with 7 bits of information per byte of value, and the top
-        ///     bit as a continuation flag. This method is not affected by the endianness
-        ///     of the bit converter.
+        /// Reads a 7-bit encoded integer from the stream. This is stored with the least significant
+        /// information first, with 7 bits of information per byte of value, and the top
+        /// bit as a continuation flag. This method is not affected by the endianness
+        /// of the bit converter.
         /// </summary>
         /// <returns>The 7-bit encoded integer read from the stream.</returns>
         public int Read7BitEncodedInt()
@@ -506,10 +494,10 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a 7-bit encoded integer from the stream. This is stored with the most significant
-        ///     information first, with 7 bits of information per byte of value, and the top
-        ///     bit as a continuation flag. This method is not affected by the endianness
-        ///     of the bit converter.
+        /// Reads a 7-bit encoded integer from the stream. This is stored with the most significant
+        /// information first, with 7 bits of information per byte of value, and the top
+        /// bit as a continuation flag. This method is not affected by the endianness
+        /// of the bit converter.
         /// </summary>
         /// <returns>The 7-bit encoded integer read from the stream.</returns>
         public int ReadBigEndian7BitEncodedInt()
@@ -536,10 +524,10 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads a length-prefixed string from the stream, using the encoding for this reader.
-        ///     A 7-bit encoded integer is first read, which specifies the number of bytes
-        ///     to read from the stream. These bytes are then converted into a string with
-        ///     the encoding for this reader.
+        /// Reads a length-prefixed string from the stream, using the encoding for this reader.
+        /// A 7-bit encoded integer is first read, which specifies the number of bytes
+        /// to read from the stream. These bytes are then converted into a string with
+        /// the encoding for this reader.
         /// </summary>
         /// <returns>The string read from the stream.</returns>
         public string ReadString()
@@ -557,14 +545,8 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public DateTime ReadDateTime()
         {
-            string dtString = ReadString();
-
-            if(DateTime.TryParse(dtString, out DateTime dt))
-            {
-                return dt;
-            }
-
-            return default;
+            long dtBinary = ReadInt64();
+            return DateTime.FromBinary(dtBinary);
         }
 
         #endregion
@@ -572,7 +554,7 @@ namespace MasterServerToolkit.Networking
         #region Private methods
 
         /// <summary>
-        ///     Checks whether or not the reader has been disposed, throwing an exception if so.
+        /// Checks whether or not the reader has been disposed, throwing an exception if so.
         /// </summary>
         private void CheckDisposed()
         {
@@ -583,8 +565,8 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads the given number of bytes from the stream, throwing an exception
-        ///     if they can't all be read.
+        /// Reads the given number of bytes from the stream, throwing an exception
+        /// if they can't all be read.
         /// </summary>
         /// <param name="data">Buffer to read into</param>
         /// <param name="size">Number of bytes to read</param>
@@ -607,9 +589,9 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        ///     Reads the given number of bytes from the stream if possible, returning
-        ///     the number of bytes actually read, which may be less than requested if
-        ///     (and only if) the end of the stream is reached.
+        /// Reads the given number of bytes from the stream if possible, returning
+        /// the number of bytes actually read, which may be less than requested if
+        /// (and only if) the end of the stream is reached.
         /// </summary>
         /// <param name="data">Buffer to read into</param>
         /// <param name="size">Number of bytes to read</param>

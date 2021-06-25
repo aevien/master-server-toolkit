@@ -39,28 +39,13 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public abstract void Initialize(IServer server);
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void Awake()
         {
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
-        }
-
-        /// <summary>
-        /// Adds a dependency to list. Should be called in Awake or Start methods of module
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        public void AddDependency<T>() where T : class, IBaseServerModule
-        {
-            Dependencies.Add(typeof(T));
-        }
-
-        /// <summary>
-        /// Adds an optional dependency to list. Should be called in Awake or Start methods of module
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        public void AddOptionalDependency<T>() where T : class, IBaseServerModule
-        {
-            OptionalDependencies.Add(typeof(T));
         }
 
         /// <summary>
@@ -92,11 +77,33 @@ namespace MasterServerToolkit.MasterServer
             return false;
         }
 
+        /// <summary>
+        /// Adds a dependency to list. Should be called in Awake or Start methods of module
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public void AddDependency<T>() where T : class, IBaseServerModule
+        {
+            Dependencies.Add(typeof(T));
+        }
+
+        /// <summary>
+        /// Adds an optional dependency to list. Should be called in Awake or Start methods of module
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public void AddOptionalDependency<T>() where T : class, IBaseServerModule
+        {
+            OptionalDependencies.Add(typeof(T));
+        }
+
+        /// <summary>
+        /// Gets base module info
+        /// </summary>
+        /// <returns></returns>
         public virtual MstProperties Info()
         {
             MstProperties info = new MstProperties();
 
-            if(Dependencies.Count > 0)
+            if (Dependencies.Count > 0)
             {
                 StringBuilder dep = new StringBuilder();
 
@@ -108,7 +115,7 @@ namespace MasterServerToolkit.MasterServer
                 info.Add("Dependencies", dep.ToString());
             }
 
-            if(OptionalDependencies.Count > 0)
+            if (OptionalDependencies.Count > 0)
             {
                 StringBuilder dep = new StringBuilder();
 

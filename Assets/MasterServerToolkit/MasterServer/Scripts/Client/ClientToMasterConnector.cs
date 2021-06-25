@@ -5,7 +5,6 @@ namespace MasterServerToolkit.MasterServer
     /// <summary>
     /// Automatically connects to master server
     /// </summary>
-    [AddComponentMenu("Master Server Toolkit/ClientToMasterConnector")]
     public class ClientToMasterConnector : ConnectionHelper<ClientToMasterConnector>
     {
         protected override void Awake()

@@ -9,7 +9,7 @@
         public const string ROOM_REGION = "mst.roomRegion";
         public const string ROOM_ONLINE_SCENE_NAME = "mst.roomOnlineSceneName";
         public const string ROOM_OFFLINE_SCENE_NAME = "mst.roomOfflineSceneName";
-        public const string ROOM_MAX_PLAYERS = "mst.roomMaxPlayers";
+        public const string ROOM_MAX_CONNECTIONS = "mst.roomMaxPlayers";
         public const string ROOM_EXE_PATH = "mst.roomExePath";
         public const string LOBBY_FACTORY_ID = "mst.lobbyFactory";
         public const string LOBBY_NAME = "mst.lobbyName";

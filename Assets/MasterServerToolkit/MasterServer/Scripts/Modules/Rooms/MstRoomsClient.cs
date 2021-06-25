@@ -23,7 +23,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// An access, which was last received
         /// </summary>
-        public RoomAccessPacket LastReceivedAccess { get; private set; }
+        public RoomAccessPacket ReceivedAccess { get; private set; }
+
+        /// <summary>
+        /// Check if current client has access to room
+        /// </summary>
+        public bool HasAccess => ReceivedAccess != null;
 
         /// <summary>
         /// Tries to get an access to a room with a given room id
@@ -104,7 +109,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 var access = response.Deserialize(new RoomAccessPacket());
-                LastReceivedAccess = access;
+                ReceivedAccess = access;
                 callback.Invoke(access, null);
                 OnAccessReceivedEvent?.Invoke(access);
             });
@@ -117,7 +122,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="access"></param>
         public void TriggerAccessReceivedEvent(RoomAccessPacket access)
         {
-            LastReceivedAccess = access;
+            ReceivedAccess = access;
             OnAccessReceivedEvent?.Invoke(access);
         }
     }

@@ -117,7 +117,6 @@ namespace MasterServerToolkit.MasterServer
         {
             var msgHandler = new WsControllerMessageHandler();
             msgHandler.SetHandler(handler);
-
             messageHandlers[id] = msgHandler;
         }
 

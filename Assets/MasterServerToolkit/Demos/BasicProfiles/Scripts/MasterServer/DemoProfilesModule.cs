@@ -1,10 +1,11 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
+namespace MasterServerToolkit.Examples.BasicProfile
 {
     public enum ObservablePropertiyCodes { DisplayName, Avatar, Bronze, Silver, Gold }
 
@@ -83,7 +84,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
 
             try
             {
-                if (profilesList.TryGetValue(userExtension.Username, out ObservableServerProfile profile))
+                if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile))
                 {
                     profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.DisplayName).Set(newProfileData["displayName"]);
                     profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.Avatar).Set(newProfileData["avatarUrl"]);

@@ -241,12 +241,6 @@ namespace MasterServerToolkit.MasterServer
 
             var isProviderDone = false;
 
-            var requester = new UsernameAndPeerIdPacket()
-            {
-                PeerId = provideRoomAccessCheckPacket.PeerId,
-                Username = provideRoomAccessCheckPacket.Username
-            };
-
             // Create access provider check options
             var roomAccessProviderCheck = new RoomAccessProviderCheck()
             {

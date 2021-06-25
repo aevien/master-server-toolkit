@@ -202,13 +202,13 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         public void GetLobbyRoomAccess(RoomAccessCallback callback)
         {
-            Mst.Client.Lobbies.GetLobbyRoomAccess(new Dictionary<string, string>(), callback, _connection);
+            Mst.Client.Lobbies.GetLobbyRoomAccess(new MstProperties(), callback, _connection);
         }
 
         /// <summary>
         /// Retrieves an access to room, which is assigned to this lobby
         /// </summary>
-        public void GetLobbyRoomAccess(Dictionary<string, string> properties, RoomAccessCallback callback)
+        public void GetLobbyRoomAccess(MstProperties properties, RoomAccessCallback callback)
         {
             Mst.Client.Lobbies.GetLobbyRoomAccess(properties, callback, _connection);
         }

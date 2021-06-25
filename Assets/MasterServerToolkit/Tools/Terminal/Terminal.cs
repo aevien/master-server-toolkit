@@ -11,7 +11,7 @@ namespace MasterServerToolkit.CommandTerminal
         OpenFull
     }
 
-    public class Terminal : Singleton<Terminal>
+    public class Terminal : MonoBehaviour
     {
         [Header("Window")]
         [Range(0, 1)]

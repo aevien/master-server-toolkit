@@ -1,11 +1,12 @@
 ﻿using MasterServerToolkit.Games;
+using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Events;
 
-namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
+namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class DemoProfilesBehaviour : ProfilesBehaviour
     {
@@ -64,7 +65,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicProfile
         {
             Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-            if(status == ResponseStatus.Success)
+            if (status == ResponseStatus.Success)
             {
                 OnProfileSavedEvent?.Invoke();
 

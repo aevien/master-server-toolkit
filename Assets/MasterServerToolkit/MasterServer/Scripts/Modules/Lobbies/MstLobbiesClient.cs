@@ -2,6 +2,7 @@
 using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -11,12 +12,6 @@ namespace MasterServerToolkit.MasterServer
     public class MstLobbiesClient : MstBaseClient
     {
         /// <summary>
-        /// Key is in format 'lobbyId:connectionPeerId' - this is to allow
-        /// mocking multiple clients on the same client and same lobby
-        /// </summary>
-        private Dictionary<string, JoinedLobby> joinedLobbies;
-
-        /// <summary>
         /// Invoked, when user joins a lobby
         /// </summary>
         public event Action<JoinedLobby> OnLobbyJoinedEvent;
@@ -24,12 +19,14 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Instance of a lobby that was joined the last
         /// </summary>
-        public JoinedLobby LastJoinedLobby { get; private set; }
+        public JoinedLobby JoinedLobby { get; private set; }
 
-        public MstLobbiesClient(IClientSocket connection) : base(connection)
-        {
-            joinedLobbies = new Dictionary<string, JoinedLobby>();
-        }
+        /// <summary>
+        /// Check if client currently is in lobby
+        /// </summary>
+        public bool IsInLobby => JoinedLobby != null;
+
+        public MstLobbiesClient(IClientSocket connection) : base(connection) { }
 
         /// <summary>
         /// Sends a request to create a lobby and joins it
@@ -121,23 +118,11 @@ namespace MasterServerToolkit.MasterServer
 
                 var data = response.Deserialize(new LobbyDataPacket());
 
-                var key =  $"{data.LobbyId}:{connection.Peer.Id}";
-
-                if (joinedLobbies.ContainsKey(key))
-                {
-                    // If there's already a lobby
-                    callback.Invoke(joinedLobbies[key], null);
-                    return;
-                }
-
                 var joinedLobby = new JoinedLobby(data, connection);
 
-                LastJoinedLobby = joinedLobby;
+                JoinedLobby = joinedLobby;
 
-                // Save the lobby
-                joinedLobbies[key] = joinedLobby;
-
-                callback.Invoke(joinedLobby, null);
+                callback?.Invoke(joinedLobby, null);
 
                 OnLobbyJoinedEvent?.Invoke(joinedLobby);
             });
@@ -171,7 +156,9 @@ namespace MasterServerToolkit.MasterServer
                     Logs.Error(response.AsString("Something went wrong when trying to leave a lobby"));
                 }
 
-                callback.Invoke();
+                JoinedLobby = null;
+
+                callback?.Invoke();
             });
         }
 
@@ -323,7 +310,9 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a request to get access to room, which is assigned to this lobby
         /// </summary>
-        public void GetLobbyRoomAccess(Dictionary<string, string> properties, RoomAccessCallback callback)
+        /// <param name="properties"></param>
+        /// <param name="callback"></param>
+        public void GetLobbyRoomAccess(MstProperties properties, RoomAccessCallback callback)
         {
             GetLobbyRoomAccess(properties, callback, Connection);
         }
@@ -331,7 +320,10 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a request to get access to room, which is assigned to this lobby
         /// </summary>
-        public void GetLobbyRoomAccess(Dictionary<string, string> properties, RoomAccessCallback callback, IClientSocket connection)
+        /// <param name="properties"></param>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void GetLobbyRoomAccess(MstProperties properties, RoomAccessCallback callback, IClientSocket connection)
         {
             if (!connection.IsConnected)
             {

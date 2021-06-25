@@ -270,7 +270,7 @@ MonoBehaviour:
   lookInChildrenOnly: 1
   permissions: []
   targetFrameRate: 60
-  logLevel: 0
+  logLevel: 8
   serverIP: 127.0.0.1
   serverPort: 5000
   maxConnections: 0
