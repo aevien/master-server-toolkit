@@ -131,10 +131,14 @@ namespace MasterServerToolkit.Games
                     gameRegionLable.Lable = region;
                     gameRegionLable.name = $"gameRegionLable_{index}";
 
-                    var gamePlayersLable = Instantiate(uiLablePrefab, listContainer, false);
+                    var gamePlayersBtn = Instantiate(uiButtonPrefab, listContainer, false);
                     string maxPleyers = gameInfo.MaxPlayers <= 0 ? "∞" : gameInfo.MaxPlayers.ToString();
-                    gamePlayersLable.Lable = $"{gameInfo.OnlinePlayers} / {maxPleyers}";
-                    gamePlayersLable.name = $"gamePlayersLable_{index}";
+                    gamePlayersBtn.SetLable($"{gameInfo.OnlinePlayers} / {maxPleyers} [Show]");
+                    gamePlayersBtn.name = $"gamePlayersLable_{index}";
+                    gamePlayersBtn.AddOnClickListener(() => {
+                        Mst.Events.Invoke(MstEventKeys.showPlayersListView, new EventMessage(gameInfo.Id));
+                        Hide();
+                    });
 
                     var gameConnectBtn = Instantiate(uiButtonPrefab, listContainer, false);
                     gameConnectBtn.SetLable("Join");

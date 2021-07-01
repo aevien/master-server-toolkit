@@ -40,8 +40,10 @@ namespace MasterServerToolkit.MasterServer
         {
             var response = eventArgs.Response;
 
-            HtmlDocument html = new HtmlDocument();
-            html.Title = "MST Info";
+            HtmlDocument html = new HtmlDocument
+            {
+                Title = "MST Info"
+            };
             html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
             html.AddMeta(new KeyValuePair<string, string>("name", "viewport"), new KeyValuePair<string, string>("content", "width=device-width, initial-scale=1"));
 

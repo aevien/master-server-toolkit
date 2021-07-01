@@ -251,6 +251,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
+            Players.Remove(peerId);
             OnPlayerLeftEvent?.Invoke(playerPeer);
         }
 

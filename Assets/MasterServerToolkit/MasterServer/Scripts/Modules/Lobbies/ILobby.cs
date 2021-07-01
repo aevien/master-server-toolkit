@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
+using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -12,6 +13,7 @@ namespace MasterServerToolkit.MasterServer
         int MaxPlayers { get; }
         int PlayerCount { get; }
         string Name { get; set; }
+        List<LobbyMember> Members { get; }
 
         event Action<ILobby> OnDestroyedEvent;
 

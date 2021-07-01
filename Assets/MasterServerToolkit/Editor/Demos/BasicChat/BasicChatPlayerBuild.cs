@@ -34,12 +34,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicChat
 
             if (summary.result == BuildResult.Succeeded)
             {
+                string appConfig = Mst.Args.AppConfigFile(buildFolder);
+
                 MstProperties properties = new MstProperties();
                 properties.Add(Mst.Args.Names.StartMaster, true);
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
 
-                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+                File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 
                 Debug.Log("Server build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
@@ -68,12 +70,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicChat
 
             if (summary.result == BuildResult.Succeeded)
             {
+                string appConfig = Mst.Args.AppConfigFile(buildFolder);
+
                 MstProperties properties = new MstProperties();
                 properties.Add(Mst.Args.Names.StartClientConnection, true);
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
 
-                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+                File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 
                 Debug.Log("Client build succeeded: " + (summary.totalSize / 1024) + " kb");
             }

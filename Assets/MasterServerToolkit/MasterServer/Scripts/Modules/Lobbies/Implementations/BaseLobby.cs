@@ -69,6 +69,11 @@ namespace MasterServerToolkit.MasterServer
         protected LobbiesModule Module { get; private set; }
 
         /// <summary>
+        /// List of all members
+        /// </summary>
+        public List<LobbyMember> Members => membersByPeerIdList.Values.ToList();
+
+        /// <summary>
         /// When new player added to lobby
         /// </summary>
         public event Action<LobbyMember> OnPlayerAddedEvent;

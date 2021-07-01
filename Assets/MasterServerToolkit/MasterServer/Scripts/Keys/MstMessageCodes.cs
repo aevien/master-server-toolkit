@@ -39,9 +39,9 @@
         UpdateSpawnerProcessesCount,
 
         // Matchmaker
+        GetGameRequest,
         FindGamesRequest,
         GetRegionsRequest,
-        GetPlayersRequest,
 
         // Auth
         SignIn,

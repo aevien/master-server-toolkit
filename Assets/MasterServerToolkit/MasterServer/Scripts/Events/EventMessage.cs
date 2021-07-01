@@ -1,10 +1,12 @@
-﻿namespace MasterServerToolkit.MasterServer
+﻿using System;
+
+namespace MasterServerToolkit.MasterServer
 {
     public class EventMessage
     {
         private object _data;
 
-        public EventMessage() { }
+        public EventMessage() : this(new object()) { }
 
         public EventMessage(object data)
         {
@@ -24,6 +26,23 @@
         public T GetData<T>() where T : class
         {
             return (T)_data;
+        }
+
+        public int AsInt()
+        {
+            try
+            {
+                return Convert.ToInt32(_data);
+            }
+            catch
+            {
+                return -1;
+            }
+        }
+
+        public string AsString()
+        {
+            return _data.ToString();
         }
     }
 }

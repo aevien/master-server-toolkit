@@ -4,6 +4,7 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -12,12 +13,18 @@ namespace MasterServerToolkit.Games
 {
     public class PlayersListView : UIView
     {
+        #region INSPECTOR
+
         [Header("Components"), SerializeField]
         private UILable uiLablePrefab;
         [SerializeField]
         private UILable uiColLablePrefab;
         [SerializeField]
         private RectTransform listContainer;
+
+        #endregion
+
+        private int roomId = -1;
 
         protected override void Awake()
         {
@@ -43,11 +50,13 @@ namespace MasterServerToolkit.Games
 
         private void OnShowPlayersListEventHandler(EventMessage message)
         {
+            roomId = message.AsInt();
             Show();
         }
 
         private void OnHidePlayersListEventHandler(EventMessage message)
         {
+            roomId = -1;
             Hide();
         }
 
@@ -62,13 +71,35 @@ namespace MasterServerToolkit.Games
         public void FindPlayers()
         {
             ClearPlayersList();
-
             canvasGroup.interactable = false;
+            List<string> players;
 
-            Mst.Client.Matchmaker.GetPlayers((players) =>
+            // if we are in lobby game
+            if (Mst.Client.Lobbies.IsInLobby)
             {
+                players = Mst.Client.Lobbies.JoinedLobby.Members.Select(m => m.Value.Username).ToList();
                 DrawPlayersList(players);
                 canvasGroup.interactable = true;
+                return;
+            }
+
+            // if we have room access
+            if (roomId < 0 && Mst.Client.Rooms.HasAccess)
+            {
+                roomId = Mst.Client.Rooms.ReceivedAccess.RoomId;
+            }
+
+            var filter = new MstProperties();
+            filter.Set(MstDictKeys.ROOM_ID, roomId);
+
+            Mst.Client.Matchmaker.FindGames(filter, (games) =>
+            {
+                if (games.Count > 0)
+                {
+                    var game = games.First();
+                    DrawPlayersList(game.OnlinePlayersList);
+                    canvasGroup.interactable = true;
+                }
             });
         }
 

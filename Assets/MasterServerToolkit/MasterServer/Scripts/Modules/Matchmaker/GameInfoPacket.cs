@@ -14,6 +14,7 @@ namespace MasterServerToolkit.MasterServer
         public bool IsPasswordProtected { get; set; }
         public int MaxPlayers { get; set; }
         public int OnlinePlayers { get; set; }
+        public List<string> OnlinePlayersList { get; set; }
         public MstProperties Properties { get; set; }
 
         public GameInfoPacket()
@@ -26,6 +27,7 @@ namespace MasterServerToolkit.MasterServer
             IsPasswordProtected = false;
             MaxPlayers = 0;
             OnlinePlayers = 0;
+            OnlinePlayersList = new List<string>();
             Properties = new MstProperties();
         }
 
@@ -40,6 +42,16 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(IsPasswordProtected);
             writer.Write(MaxPlayers);
             writer.Write(OnlinePlayers);
+
+            ushort count = (ushort)OnlinePlayersList.Count;
+
+            writer.Write(count);
+
+            foreach(string player in OnlinePlayersList)
+            {
+                writer.Write(player);
+            }
+
             writer.Write(Properties.ToDictionary());
         }
 
@@ -54,6 +66,14 @@ namespace MasterServerToolkit.MasterServer
             IsPasswordProtected = reader.ReadBoolean();
             MaxPlayers = reader.ReadInt32();
             OnlinePlayers = reader.ReadInt32();
+
+            ushort count = reader.ReadUInt16();
+
+            for(int i = 0; i < count; i++)
+            {
+                OnlinePlayersList.Add(reader.ReadString());
+            }
+
             Properties = new MstProperties(reader.ReadDictionary());
         }
 

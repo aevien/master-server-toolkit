@@ -464,17 +464,28 @@ namespace MasterServerToolkit.MasterServer
 
         public virtual IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
         {
-            return lobbies.Values.Select(lobby => new GameInfoPacket()
+            var lobbiesList = filters != null && filters.Has(MstDictKeys.ROOM_ID) ? lobbies.Values.Where(l => l.Id == filters.AsInt(MstDictKeys.ROOM_ID)) : lobbies.Values;
+            var games = new List<GameInfoPacket>();
+
+            foreach (var lobby in lobbiesList)
             {
-                Address = lobby.GameIp + ":" + lobby.GamePort,
-                Id = lobby.Id,
-                IsPasswordProtected = false,
-                MaxPlayers = lobby.MaxPlayers,
-                Name = lobby.Name,
-                OnlinePlayers = lobby.PlayerCount,
-                Properties = GetPublicLobbyProperties(peer, lobby, filters),
-                Type = GameInfoType.Lobby
-            });
+                var game = new GameInfoPacket
+                {
+                    Id = lobby.Id,
+                    Address = lobby.GameIp + ":" + lobby.GamePort,
+                    IsPasswordProtected = false,
+                    MaxPlayers = lobby.MaxPlayers,
+                    Name = lobby.Name,
+                    OnlinePlayers = lobby.PlayerCount,
+                    Properties = GetPublicLobbyProperties(peer, lobby, filters),
+                    Type = GameInfoType.Lobby
+                };
+
+                game.OnlinePlayersList = lobby.Members.Select(m => m.Username).ToList();
+                games.Add(game);
+            }
+
+            return games;
         }
 
         public virtual MstProperties GetPublicLobbyProperties(IPeer peer, ILobby lobby, MstProperties playerFilters)

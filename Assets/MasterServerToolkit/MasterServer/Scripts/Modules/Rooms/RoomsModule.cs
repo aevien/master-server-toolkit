@@ -193,18 +193,32 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
         {
-            return roomsList.Values.Where(r => r.Options.IsPublic).Select(r => new GameInfoPacket()
+            var rooms = filters != null && filters.Has(MstDictKeys.ROOM_ID) 
+                ? roomsList.Values.Where(r => (r.Players.ContainsKey(peer.Id) || r.Options.IsPublic) && r.RoomId == filters.AsInt(MstDictKeys.ROOM_ID)) 
+                : roomsList.Values.Where(r => r.Options.IsPublic);
+            var games = new List<GameInfoPacket>();
+
+            foreach (var room in rooms)
             {
-                Id = r.RoomId,
-                Address = r.Options.RoomIp + ":" + r.Options.RoomPort,
-                MaxPlayers = r.Options.MaxConnections,
-                Name = r.Options.Name,
-                OnlinePlayers = r.OnlineCount,
-                Properties = GetPublicRoomOptions(peer, r, filters),
-                IsPasswordProtected = !string.IsNullOrEmpty(r.Options.Password),
-                Type = GameInfoType.Room,
-                Region = r.Options.Region
-            });
+                var game = new GameInfoPacket
+                {
+                    Id = room.RoomId,
+                    Address = room.Options.RoomIp + ":" + room.Options.RoomPort,
+                    MaxPlayers = room.Options.MaxConnections,
+                    Name = room.Options.Name,
+                    OnlinePlayers = room.OnlineCount,
+                    Properties = GetPublicRoomOptions(peer, room, filters),
+                    IsPasswordProtected = !string.IsNullOrEmpty(room.Options.Password),
+                    Type = GameInfoType.Room,
+                    Region = room.Options.Region
+                };
+
+                var players = room.Players.Values.Where(pl => pl.HasExtension<IUserPeerExtension>()).Select(pl => pl.GetExtension<IUserPeerExtension>().Username);
+                game.OnlinePlayersList = players.ToList();
+                games.Add(game);
+            }
+
+            return games;
         }
 
         /// <summary>

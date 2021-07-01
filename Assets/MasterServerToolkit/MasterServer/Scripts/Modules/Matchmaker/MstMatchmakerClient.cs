@@ -23,60 +23,6 @@ namespace MasterServerToolkit.MasterServer
         public MstMatchmakerClient(IClientSocket connection) : base(connection) { }
 
         /// <summary>
-        /// Get list of players
-        /// </summary>
-        /// <param name="callback"></param>
-        public void GetPlayers(GetPlayersCallback callback)
-        {
-            GetPlayers(callback, Connection);
-        }
-
-        /// <summary>
-        /// Get list of players
-        /// </summary>
-        /// <param name="callback"></param>
-        /// <param name="connection"></param>
-        public void GetPlayers(GetPlayersCallback callback, IClientSocket connection)
-        {
-            List<string> players = new List<string>();
-
-            if (!connection.IsConnected)
-            {
-                Logs.Error("Not connected");
-                callback?.Invoke(players);
-                return;
-            }
-
-            if (Mst.Client.Lobbies.IsInLobby)
-            {
-                players = Mst.Client.Lobbies.JoinedLobby.Members.Select(m => m.Value.Username).ToList();
-                callback?.Invoke(players);
-            }
-            else
-            {
-                if (!Mst.Client.Rooms.HasAccess)
-                {
-                    Logs.Error("Not joined any room");
-                    callback?.Invoke(players);
-                    return;
-                }
-
-                connection.SendMessage((short)MstMessageCodes.GetPlayersRequest, Mst.Client.Rooms.ReceivedAccess.RoomId, (status, response) =>
-                {
-                    if (status != ResponseStatus.Success)
-                    {
-                        Logs.Error(response.AsString("Unknown error while requesting a list of players"));
-                        callback?.Invoke(players);
-                        return;
-                    }
-
-                    players = response.Deserialize(new PlayersPacket()).Players;
-                    callback?.Invoke(players);
-                });
-            }
-        }
-
-        /// <summary>
         /// Gets list of regions at which all the rooms are registered
         /// </summary>
         /// <param name="callback"></param>

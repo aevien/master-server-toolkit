@@ -223,37 +223,61 @@ namespace MasterServerToolkit.MasterServer
             }
 #endif
 
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "application.cfg");
+            string path = AppConfigFile();
 
-            if (!File.Exists(path))
+            string[] lines = File.ReadAllLines(path);
+            char[] splitters = new char[] { '=' };
+            List<string> newArgs = new List<string>();
+            newArgs.AddRange(_args);
+
+            if (lines != null && lines.Length > 0)
             {
-                File.Create(path);
+                foreach (string line in lines)
+                {
+                    string[] kvp = line.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (kvp != null && kvp.Length > 1 && !newArgs.Contains(kvp[0]))
+                    {
+                        newArgs.Add(kvp[0]);
+                        newArgs.Add(kvp[1]);
+                    }
+                }
+            }
+
+            _args = newArgs.ToArray();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="rootPath"></param>
+        /// <returns></returns>
+        public string AppConfigFile(string rootPath = "")
+        {
+            string path;
+
+            if (string.IsNullOrEmpty(rootPath))
+            {
+                path = Path.Combine(Directory.GetCurrentDirectory(), "application.cfg");
             }
             else
             {
-                string[] lines = File.ReadAllLines(path);
-                char[] splitters = new char[] { '=' };
-                List<string> newArgs = new List<string>();
-                newArgs.AddRange(_args);
-
-                if (lines != null && lines.Length > 0)
-                {
-                    foreach (string line in lines)
-                    {
-                        string[] kvp = line.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
-
-                        if(kvp != null && kvp.Length > 1 && !newArgs.Contains(kvp[0]))
-                        {
-                            newArgs.Add(kvp[0]);
-                            newArgs.Add(kvp[1]);
-                        }
-                    }
-                }
-
-                _args = newArgs.ToArray();
+                path = Path.Combine(rootPath, "application.cfg");
             }
-        }
 
+            if (!File.Exists(path))
+            {
+                using var file = File.Create(path);
+                file.Close();
+            }
+
+            return path;
+        } 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return string.Join(" ", _args);

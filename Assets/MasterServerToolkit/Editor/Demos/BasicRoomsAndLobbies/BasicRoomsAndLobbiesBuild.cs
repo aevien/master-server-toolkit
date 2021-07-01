@@ -40,6 +40,8 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
 
             if (summary.result == BuildResult.Succeeded)
             {
+                string appConfig = Mst.Args.AppConfigFile(buildFolder);
+
                 MstProperties properties = new MstProperties();
                 properties.Add(Mst.Args.Names.StartClientConnection, true);
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
@@ -47,7 +49,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
                 properties.Add(Mst.Args.Names.RoomIp, Mst.Args.RoomIp);
                 properties.Add(Mst.Args.Names.RoomPort, Mst.Args.RoomPort);
 
-                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+                File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 
                 Debug.Log("Room build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
@@ -61,7 +63,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
         [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Spawner")]
         private static void BuildSpawnerForWindows()
         {
-            string buildFolder = Path.Combine("Builds", "BasicRoomsAndLobbies", "Room");
+            string buildFolder = Path.Combine("Builds", "BasicRoomsAndLobbies", "Spawner");
             string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicRoomsAndLobbies", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
@@ -79,6 +81,8 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
 
             if (summary.result == BuildResult.Succeeded)
             {
+                string appConfig = Mst.Args.AppConfigFile(buildFolder);
+
                 MstProperties properties = new MstProperties();
                 properties.Add(Mst.Args.Names.StartSpawner, true);
                 properties.Add(Mst.Args.Names.StartClientConnection, true);
@@ -86,7 +90,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
                 properties.Add(Mst.Args.Names.RoomExecutablePath, roomExePath);
 
-                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+                File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 
                 Debug.Log("Spawner build succeeded: " + (summary.totalSize / 1024) + " kb");
             }
@@ -118,12 +122,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
 
             if (summary.result == BuildResult.Succeeded)
             {
+                string appConfig = Mst.Args.AppConfigFile(buildFolder);
+
                 MstProperties properties = new MstProperties();
                 properties.Add(Mst.Args.Names.StartClientConnection, true);
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
 
-                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+                File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 
                 Debug.Log("Client build succeeded: " + (summary.totalSize / 1024) + " kb");
             }

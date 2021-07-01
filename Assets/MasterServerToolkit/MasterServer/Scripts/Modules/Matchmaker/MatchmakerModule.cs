@@ -21,7 +21,6 @@ namespace MasterServerToolkit.MasterServer
         {
             base.Awake();
 
-            AddOptionalDependency<RoomsModule>();
             AddOptionalDependency<LobbiesModule>();
             AddDependency<SpawnersModule>();
         }
@@ -50,7 +49,6 @@ namespace MasterServerToolkit.MasterServer
             // Add handlers
             server.RegisterMessageHandler((short)MstMessageCodes.FindGamesRequest, FindGamesRequestHandler);
             server.RegisterMessageHandler((short)MstMessageCodes.GetRegionsRequest, GetRegionsRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.GetPlayersRequest, GetPlayersRequestHandler);
         }
 
         /// <summary>
@@ -69,12 +67,11 @@ namespace MasterServerToolkit.MasterServer
             try
             {
                 var list = new List<GameInfoPacket>();
-
                 var filters = MstProperties.FromBytes(message.AsBytes());
 
-                foreach (var provider in GameProviders)
+                foreach (var game in GameProviders.SelectMany(pr => pr.GetPublicGames(message.Peer, filters), (provider, game) => game))
                 {
-                    list.AddRange(provider.GetPublicGames(message.Peer, filters));
+                    list.Add(game);
                 }
 
                 if (list.Count == 0)
@@ -114,58 +111,6 @@ namespace MasterServerToolkit.MasterServer
                 message.Respond(new RegionsPacket()
                 {
                     Regions = list
-                }, ResponseStatus.Success);
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                logger.Error(e.Message);
-                message.Respond(e.Message, e.Status);
-            }
-            // If we got another exception
-            catch (Exception e)
-            {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
-            }
-        }
-
-        protected virtual void GetPlayersRequestHandler(IIncomingMessage message)
-        {
-            try
-            {
-                // Trying to get room module
-                var roomsModule = Server.GetModule<RoomsModule>();
-
-                if (roomsModule == null)
-                    throw new MstMessageHandlerException("No rooms module found on master server", ResponseStatus.Failed);
-
-                // Parse room id
-                int roomId = message.AsInt();
-
-                // Find room
-                var room = roomsModule.GetRoom(roomId);
-
-                if (room == null)
-                    throw new MstMessageHandlerException($"No room found with id:{roomId} on master server", ResponseStatus.Failed);
-
-                // Check if player is not a member of this room
-                if (!room.Players.ContainsKey(message.Peer.Id))
-                    throw new MstMessageHandlerException($"You are not a member of the room with id:{roomId}", ResponseStatus.Unauthorized);
-
-                var list = room.Players.Values
-                    .Where(pl => pl.HasExtension<IUserPeerExtension>())
-                    .Select(pl => pl.GetExtension<IUserPeerExtension>().Username)
-                    .ToList();
-
-                if (list.Count == 0)
-                {
-                    throw new MstMessageHandlerException("No player found", ResponseStatus.Default);
-                }
-
-                message.Respond(new PlayersPacket()
-                {
-                    Players = list
                 }, ResponseStatus.Success);
             }
             // If we got system exception
