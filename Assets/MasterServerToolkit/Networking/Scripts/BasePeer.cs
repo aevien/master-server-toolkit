@@ -14,7 +14,7 @@ namespace MasterServerToolkit.Networking
     {
         private readonly Dictionary<int, ResponseCallback> acknowledgements;
         protected readonly List<long[]> ackTimeoutQueue;
-        private readonly Dictionary<int, object> data;
+        private readonly Dictionary<int, object> peerPropertyData;
         private int _id = -1;
         private int nextAckId = 1;
         private readonly IIncomingMessage timeoutMessage;
@@ -29,18 +29,18 @@ namespace MasterServerToolkit.Networking
         public static int DefaultTimeoutSecs { get; set; } = 60;
 
         /// <summary>
-        /// True, if connection is stil valid
+        /// True, if connection is still valid
         /// </summary>
         public abstract bool IsConnected { get; }
 
         protected BasePeer()
         {
-            data = new Dictionary<int, object>();
+            peerPropertyData = new Dictionary<int, object>();
             acknowledgements = new Dictionary<int, ResponseCallback>(30);
             ackTimeoutQueue = new List<long[]>();
             extensionsList = new Dictionary<Type, IPeerExtension>();
 
-            MstTimer.Instance.OnTickEvent += HandleAckDisposalTick;
+            MstTimer.Singleton.OnTickEvent += HandleAckDisposalTick;
 
             timeoutMessage = new IncomingMessage(-1, 0, "Time out".ToBytes(), DeliveryMethod.Reliable, this)
             {
@@ -62,6 +62,24 @@ namespace MasterServerToolkit.Networking
         /// Current peer info
         /// </summary>
         public IPeer Peer { get; private set; }
+
+        /// <summary>
+        /// Unique peer id
+        /// </summary>
+        public int Id
+        {
+            get
+            {
+                if (_id < 0)
+                    lock (idGenerationLock)
+                    {
+                        if (_id < 0)
+                            _id = peerIdGenerator++;
+                    }
+
+                return _id;
+            }
+        }
 
         /// <summary>
         /// Sends a message to peer
@@ -322,13 +340,13 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         public void SetProperty(int id, object data)
         {
-            if (this.data.ContainsKey(id))
+            if (this.peerPropertyData.ContainsKey(id))
             {
-                this.data[id] = data;
+                this.peerPropertyData[id] = data;
             }
             else
             {
-                this.data.Add(id, data);
+                this.peerPropertyData.Add(id, data);
             }
         }
 
@@ -339,7 +357,7 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public object GetProperty(int id)
         {
-            data.TryGetValue(id, out object value);
+            peerPropertyData.TryGetValue(id, out object value);
             return value;
         }
 
@@ -471,7 +489,7 @@ namespace MasterServerToolkit.Networking
         private void StartAckTimeout(int ackId, int timeoutSecs)
         {
             // +1, because it might be about to tick in a few miliseconds
-            ackTimeoutQueue.Add(new[] { ackId, MstTimer.Instance.CurrentTick + timeoutSecs + 1 });
+            ackTimeoutQueue.Add(new[] { ackId, MstTimer.Singleton.CurrentTick + timeoutSecs + 1 });
         }
 
         /// <summary>
@@ -524,27 +542,12 @@ namespace MasterServerToolkit.Networking
 
         #region Ack Disposal Stuff
 
-        public int Id
-        {
-            get
-            {
-                if (_id < 0)
-                {
-                    lock (idGenerationLock)
-                    {
-                        if (_id < 0)
-                        {
-                            _id = peerIdGenerator++;
-                        }
-                    }
-                }
-
-                return _id;
-            }
-        }
-
+        /// <summary>
+        /// Called when ack disposal thread ticks
+        /// </summary>
         private void HandleAckDisposalTick(long currentTick)
         {
+            // TODO test with ordered queue, might be more performant
             ackTimeoutQueue.RemoveAll(a =>
             {
                 if (a[1] > currentTick)
@@ -565,6 +568,11 @@ namespace MasterServerToolkit.Networking
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ackId"></param>
+        /// <param name="responseCode"></param>
         private void CancelAck(int ackId, ResponseStatus responseCode)
         {
             ResponseCallback ackCallback;
@@ -585,6 +593,7 @@ namespace MasterServerToolkit.Networking
         #endregion
 
         #region IDisposable Support
+
         private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
@@ -593,7 +602,7 @@ namespace MasterServerToolkit.Networking
             {
                 if (disposing)
                 {
-                    MstTimer.Instance.OnTickEvent -= HandleAckDisposalTick;
+                    MstTimer.Singleton.OnTickEvent -= HandleAckDisposalTick;
                 }
 
                 disposedValue = true;
@@ -604,6 +613,7 @@ namespace MasterServerToolkit.Networking
         {
             Dispose(true);
         }
+
         #endregion
     }
 }

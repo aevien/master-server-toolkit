@@ -16,12 +16,13 @@ namespace MasterServerToolkit.Networking
     {
         private WebSocketServer server;
         private readonly Queue<Action> executeOnUpdate;
-        private readonly float initialSendMessageDelayTime = 0.2f;
+        private Logger logger;
 
         public bool UseSecure { get; set; }
         public string CertificatePath { get; set; }
         public string CertificatePassword { get; set; }
         public string ApplicationKey { get; set; }
+        public LogLevel LogLevel { get; set; } = LogLevel.Info;
 
         /// <summary>
         /// Invokes before server frame is updated
@@ -45,6 +46,8 @@ namespace MasterServerToolkit.Networking
 
         public WsServerSocket()
         {
+            logger = Mst.Create.Logger(GetType().Name);
+            logger.LogLevel = LogLevel;
             executeOnUpdate = new Queue<Action>();
         }
 
@@ -66,7 +69,7 @@ namespace MasterServerToolkit.Networking
             try
             {
                 // Stop listening when application closes
-                MstTimer.Instance.OnApplicationQuitEvent += Stop;
+                MstTimer.Singleton.OnApplicationQuitEvent += Stop;
 
                 if (server != null)
                 {
@@ -82,11 +85,42 @@ namespace MasterServerToolkit.Networking
                     server = new WebSocketServer(IPAddress.Parse(ip), port, UseSecure);
                 }
 
+                //server.KeepClean = true;
+
+                // Set log output
+                server.Log.Output = (logData, value) =>
+                {
+                    switch (logData.Level)
+                    {
+                        case WebSocketSharp.LogLevel.Error:
+                            logger.Error(logData.Message);
+                            break;
+                        case WebSocketSharp.LogLevel.Fatal:
+                            logger.Fatal(logData.Message);
+                            break;
+                        case WebSocketSharp.LogLevel.Info:
+                            logger.Info(logData.Message);
+                            break;
+                        case WebSocketSharp.LogLevel.Debug:
+                            logger.Debug(logData.Message);
+                            break;
+                        case WebSocketSharp.LogLevel.Warn:
+                            logger.Warn(logData.Message);
+                            break;
+                        case WebSocketSharp.LogLevel.Trace:
+                            logger.Trace(logData.Message);
+                            break;
+                        default:
+                            logger.Info(logData.Message);
+                            break;
+                    }
+                };
+
                 if (UseSecure)
                 {
                     if (string.IsNullOrEmpty(CertificatePath.Trim()))
                     {
-                        Logs.Error("You are using secure connection, but no path to certificate defined. Stop connection process.");
+                        logger.Error("You are using secure connection, but no path to certificate defined. Stop connection process.");
                         return;
                     }
 
@@ -111,15 +145,15 @@ namespace MasterServerToolkit.Networking
                 server.Start();
 
                 // Add this server to updater
-                MstUpdateRunner.Instance.Add(this);
+                MstUpdateRunner.Singleton.Add(this);
             }
             catch (CryptographicException e)
             {
-                Logs.Error(e.Message);
+                logger.Error(e.Message);
             }
             catch (PlatformNotSupportedException e)
             {
-                Logs.Error(e.Message);
+                logger.Error(e.Message);
             }
         }
 
@@ -128,7 +162,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public void Stop()
         {
-            MstUpdateRunner.Instance.Remove(this);
+            MstUpdateRunner.Singleton.Remove(this);
             server?.Stop();
         }
 
@@ -160,19 +194,19 @@ namespace MasterServerToolkit.Networking
 
                 serviceForPeer.OnOpenEvent += () =>
                 {
-                    Logs.Debug($"Connection for peer [{peer.Id}] is open");
+                    ExecuteOnUpdate(() =>
+                    {
+                        peer.SendDelayedMessages();
+                        OnPeerConnectedEvent?.Invoke(peer);
+                    });
+
+                    logger.Debug($"Connection for peer [{peer.Id}] is open");
                 };
 
                 serviceForPeer.OnMessageEvent += (data) =>
                 {
                     peer.HandleDataReceived(data);
                 };
-
-                ExecuteOnUpdate(() =>
-                {
-                    //MstTimer.Instance.StartCoroutine(peer.SendDelayedMessages(initialSendMessageDelayTime));
-                    OnPeerConnectedEvent?.Invoke(peer);
-                });
 
                 serviceForPeer.OnCloseEvent += reason =>
                 {
@@ -182,7 +216,7 @@ namespace MasterServerToolkit.Networking
 
                 serviceForPeer.OnErrorEvent += reason =>
                 {
-                    Logs.Error(reason);
+                    logger.Error(reason);
                     peer.NotifyDisconnectEvent();
                 };
             });

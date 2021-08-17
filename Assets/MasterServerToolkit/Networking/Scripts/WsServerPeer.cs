@@ -8,66 +8,77 @@ namespace MasterServerToolkit.Networking
     public class WsServerPeer : BasePeer
     {
         private readonly WsService serviceForPeer;
-        //private Queue<byte[]> _delayedMessages;
-        private bool _isConnected = false;
+        private Queue<byte[]> delayedMessages;
+        private readonly float delay = 0.2f;
+        private bool isConnected = false;
 
         public WsServerPeer(WsService session)
         {
             serviceForPeer = session;
 
-            serviceForPeer.OnOpenEvent += () => { _isConnected = true; };
-            serviceForPeer.OnCloseEvent += (msg) => { _isConnected = false; };
-            serviceForPeer.OnErrorEvent += (msg) => { _isConnected = false; };
+            serviceForPeer.OnOpenEvent += () => { isConnected = true; };
+            serviceForPeer.OnCloseEvent += (msg) => { isConnected = false; };
+            serviceForPeer.OnErrorEvent += (msg) => { isConnected = false; };
 
-            //_delayedMessages = new Queue<byte[]>();
+            delayedMessages = new Queue<byte[]>();
 
-            _isConnected = true;
+            isConnected = true;
         }
 
-        //public IEnumerator SendDelayedMessages(float delay)
-        //{
-        //    yield return new WaitForSecondsRealtime(delay);
+        public void SendDelayedMessages()
+        {
+            MstTimer.Singleton.StartCoroutine(SendDelayedMessagesCoroutine());
+        }
 
-        //    if (_delayedMessages == null)
-        //    {
-        //        Debug.LogError("Delayed messages are already sent");
-        //        yield break;
-        //    }
+        private IEnumerator SendDelayedMessagesCoroutine()
+        {
+            yield return new WaitForSecondsRealtime(delay);
 
-        //    lock (_delayedMessages)
-        //    {
-        //        if (_delayedMessages == null)
-        //        {
-        //            yield break;
-        //        }
+            if (delayedMessages == null)
+            {
+                Debug.LogError("Delayed messages are already sent");
+                yield break;
+            }
 
-        //        var copy = _delayedMessages;
-        //        _delayedMessages = null;
+            lock (delayedMessages)
+            {
+                if (delayedMessages == null)
+                {
+                    yield break;
+                }
 
-        //        foreach (var data in copy)
-        //        {
-        //            _session.SendMessage(data);
-        //        }
-        //    }
-        //}
+                var copy = delayedMessages;
+                delayedMessages = null;
 
-        public override bool IsConnected => _isConnected;
+                foreach (var data in copy)
+                {
+                    serviceForPeer.SendAsync(data);
+                }
+            }
+        }
+
+        public override bool IsConnected => isConnected;
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
             if(serviceForPeer.ConnectionState == WebSocketSharp.WebSocketState.Open)
             {
-                //if (_delayedMessages != null)
-                //{
-                //    lock (_delayedMessages)
-                //    {
-                //        if (_delayedMessages != null)
-                //        {
-                //            _delayedMessages.Enqueue(message.ToBytes());
-                //            return;
-                //        }
-                //    }
-                //}
+                // There's a bug in websockets
+                // When server sends a message to client right after client
+                // connects to it, the message is lost somewhere.
+                // Sending first few messages with a small delay fixes this issue.
+
+                if (delayedMessages != null)
+                {
+                    lock (delayedMessages)
+                    {
+                        if (delayedMessages != null)
+                        {
+                            delayedMessages.Enqueue(message.ToBytes());
+                            return;
+                        }
+                    }
+                }
 
                 serviceForPeer.SendAsync(message.ToBytes());
             }

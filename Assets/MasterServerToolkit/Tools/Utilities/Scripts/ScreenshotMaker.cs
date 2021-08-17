@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Utils
 {
-    public class ScreenshotMaker : Singleton<ScreenshotMaker>
+    public class ScreenshotMaker : SingletonBehaviour<ScreenshotMaker>
     {
         #region INSPECTOR
         [Header("Settings")]

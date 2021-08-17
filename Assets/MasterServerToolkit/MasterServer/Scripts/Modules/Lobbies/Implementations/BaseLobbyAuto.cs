@@ -20,7 +20,7 @@ namespace MasterServerToolkit.MasterServer
 
         public void StartAutomation()
         {
-            MstTimer.Instance.StartCoroutine(StartTimer());
+            MstTimer.Singleton.StartCoroutine(StartTimer());
         }
 
         protected IEnumerator StartTimer()

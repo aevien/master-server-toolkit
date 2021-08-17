@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MasterServerToolkit.Logging;
+using System;
 
 namespace MasterServerToolkit.Networking
 {
@@ -30,6 +31,11 @@ namespace MasterServerToolkit.Networking
         /// Applications key
         /// </summary>
         string ApplicationKey { get; set; }
+
+        /// <summary>
+        /// Log level of the server socket
+        /// </summary>
+        LogLevel LogLevel { get; set; }
 
         /// <summary>
         /// Invoked, when a client connects to this socket

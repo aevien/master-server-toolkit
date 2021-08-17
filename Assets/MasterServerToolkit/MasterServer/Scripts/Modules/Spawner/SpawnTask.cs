@@ -35,11 +35,6 @@ namespace MasterServerToolkit.MasterServer
         public MstProperties Options { get; private set; }
 
         /// <summary>
-        /// Custom options assigned to current task
-        /// </summary>
-        public MstProperties CustomOptions { get; private set; }
-
-        /// <summary>
         /// Packet that has finalization info for current task
         /// </summary>
         public SpawnFinalizationPacket FinalizationPacket { get; private set; }
@@ -96,13 +91,12 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event Action<SpawnStatus> OnStatusChangedEvent;
 
-        public SpawnTask(int spawnTaskId, RegisteredSpawner spawner, MstProperties options, MstProperties customOptions)
+        public SpawnTask(int spawnTaskId, RegisteredSpawner spawner, MstProperties options)
         {
             Id = spawnTaskId;
 
             Spawner = spawner;
             Options = options;
-            CustomOptions = customOptions;
 
             UniqueCode = Mst.Helper.CreateRandomAlphanumericString(6);
             whenDoneCallbacks = new List<Action<SpawnTask>>();

@@ -157,14 +157,14 @@ namespace MasterServerToolkit.Games
             MstTimer.WaitForSeconds(0.5f, () =>
             {
                 // Join default chat
-                Mst.Client.Chat.JoinChannel(defaultChannelName, (isSuccess, error) =>
+                Mst.Client.Chat.JoinChannel(defaultChannelName, (isSuccess, joinChannelError) =>
                 {
                     canvasGroup.interactable = true;
                     statusInfoText.gameObject.SetActive(false);
 
                     if (!isSuccess)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, () =>
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(joinChannelError, () =>
                         {
                             Hide();
                             ViewsManager.Show("UsernamePickView");
@@ -174,13 +174,13 @@ namespace MasterServerToolkit.Games
                     }
 
                     // Get my channels
-                    Mst.Client.Chat.GetMyChannels((channels, error) =>
+                    Mst.Client.Chat.GetMyChannels((channels, getChannelsError) =>
                     {
                         statusInfoText.gameObject.SetActive(false);
 
-                        if (!string.IsNullOrEmpty(error))
+                        if (!string.IsNullOrEmpty(getChannelsError))
                         {
-                            Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, () =>
+                            Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(getChannelsError, () =>
                             {
                                 Hide();
                                 ViewsManager.Show("UsernamePickView");

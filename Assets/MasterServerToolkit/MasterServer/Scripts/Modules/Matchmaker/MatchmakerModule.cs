@@ -76,7 +76,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (list.Count == 0)
                 {
-                    throw new MstMessageHandlerException("Not game found. Try to create your own game", ResponseStatus.Default);
+                    throw new MstMessageHandlerException("No game found. Try to create your own game", ResponseStatus.Default);
                 }
 
                 // Convert to generic list and serialize to bytes
@@ -86,7 +86,6 @@ namespace MasterServerToolkit.MasterServer
             // If we got system exception
             catch (MstMessageHandlerException e)
             {
-                logger.Error(e.Message);
                 message.Respond(e.Message, e.Status);
             }
             // If we got another exception
@@ -116,7 +115,10 @@ namespace MasterServerToolkit.MasterServer
             // If we got system exception
             catch (MstMessageHandlerException e)
             {
+<<<<<<< HEAD
+=======
                 logger.Error(e.Message);
+>>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
                 message.Respond(e.Message, e.Status);
             }
             // If we got another exception

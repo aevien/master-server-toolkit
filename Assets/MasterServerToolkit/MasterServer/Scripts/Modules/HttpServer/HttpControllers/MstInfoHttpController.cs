@@ -49,16 +49,16 @@ namespace MasterServerToolkit.MasterServer
 
             html.Links.Add(new HtmlLinkElement()
             {
-                Href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css",
+                Href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css",
                 Rel = "stylesheet",
-                Integrity = "sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl",
+                Integrity = "sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC",
                 Crossorigin = "anonymous"
             });
 
             html.Scripts.Add(new HtmlScriptElement()
             {
-                Src = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js",
-                Integrity = "sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0",
+                Src = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js",
+                Integrity = "sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM",
                 Crossorigin = "anonymous"
             });
 
@@ -129,10 +129,10 @@ namespace MasterServerToolkit.MasterServer
             serverInfo.Add("Initialized modules: ", MasterServer.GetInitializedModules().Count.ToString());
             serverInfo.Add("Unitialized modules: ", MasterServer.GetUninitializedModules().Count.ToString());
             serverInfo.Add("Total clients: ", MasterServer.TotalPeersCount.ToString());
-            serverInfo.Add("Use SSL: ", MstApplicationConfig.Instance.UseSecure.ToString());
-            serverInfo.Add("Certificate Path: ", MstApplicationConfig.Instance.CertificatePath.ToString());
-            serverInfo.Add("Certificate Password: ", MstApplicationConfig.Instance.CertificatePassword.ToString());
-            serverInfo.Add("Application Key: ", MstApplicationConfig.Instance.ApplicationKey.ToString());
+            serverInfo.Add("Use SSL: ", MstApplicationConfig.Singleton.UseSecure.ToString());
+            serverInfo.Add("Certificate Path: ", MstApplicationConfig.Singleton.CertificatePath.ToString());
+            serverInfo.Add("Certificate Password: ", MstApplicationConfig.Singleton.CertificatePassword.ToString());
+            serverInfo.Add("Application Key: ", MstApplicationConfig.Singleton.ApplicationKey.ToString());
 
             foreach (var property in serverInfo)
             {
@@ -255,7 +255,7 @@ namespace MasterServerToolkit.MasterServer
                 foreach(string info in infos)
                 {
                     var li = html.CreateElement("li");
-                    li.InnerText = info;
+                    li.InnerXml = info;
                     ul.AppendChild(li);
                 }
 

@@ -8,19 +8,21 @@ namespace MasterServerToolkit.Networking
     /// This is an object which gets spawned into game once.
     /// It's main purpose is to call update methods
     /// </summary>
-    public class MstUpdateRunner : DynamicSingleton<MstUpdateRunner>
+    public class MstUpdateRunner : DynamicSingletonBehaviour<MstUpdateRunner>
     {
         /// <summary>
         /// List of <see cref="IUpdatable"/>
         /// </summary>
-        private List<IUpdatable> _runnables = new List<IUpdatable>();
+        private List<IUpdatable> _updatebles = new List<IUpdatable>();
+
+        public int? Count => _updatebles?.Count;
 
         private void Update()
         {
-            for (int i = 0; i < _runnables.Count; i++)
+            for (int i = 0; i < _updatebles.Count; i++)
             {
-                IUpdatable runnable = _runnables[i];
-                runnable.Update();
+                IUpdatable runnable = _updatebles[i];
+                runnable?.Update();
             }
         }
 
@@ -30,9 +32,9 @@ namespace MasterServerToolkit.Networking
         /// <param name="updatable"></param>
         public void Add(IUpdatable updatable)
         {
-            if (!_runnables.Contains(updatable))
+            if (!_updatebles.Contains(updatable))
             {
-                _runnables.Add(updatable);
+                _updatebles.Add(updatable);
             }
         }
 
@@ -42,7 +44,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="updatable"></param>
         public void Remove(IUpdatable updatable)
         {
-            _runnables.Remove(updatable);
+            _updatebles.Remove(updatable);
         }
     }
 }

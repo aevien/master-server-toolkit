@@ -118,11 +118,6 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event UserAccountUpdatedEventHandlerDelegate OnUserAccountUpdatedEvent;
 
-        /// <summary>
-        /// Invoked, when user successfully changed his username
-        /// </summary>
-        public event UsernameChangedEventHandlerDelegate OnUsernameChangedEvent;
-
         protected override void Awake()
         {
             base.Awake();

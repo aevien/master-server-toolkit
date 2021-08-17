@@ -1,8 +1,14 @@
 ## Updates Log
 
+<<<<<<< HEAD
+### Msf 4.7.0
+
+[changelog here](https://aevien.itch.io/mst/devlog/284237/mst-v470-released)
+=======
 ### Msf 4.6.1
 
 [changelog here](https://aevien.itch.io/mst/devlog/269362/mst-v461-released)
+>>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
 
 ### Msf 4.6.0
 

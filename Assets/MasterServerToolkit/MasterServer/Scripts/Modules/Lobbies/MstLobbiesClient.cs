@@ -6,15 +6,16 @@ using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public delegate void JoinLobbyCallback(JoinedLobby lobby, string error);
-    public delegate void CreateLobbyCallback(int? lobbyId, string error);
+    public delegate void JoinLobbyCallbackHandler(JoinedLobby lobby, string error);
+    public delegate void JoinLobbyEventHandler(JoinedLobby lobby);
+    public delegate void CreateLobbyCallbackHandler(int? lobbyId, string error);
 
     public class MstLobbiesClient : MstBaseClient
     {
         /// <summary>
         /// Invoked, when user joins a lobby
         /// </summary>
-        public event Action<JoinedLobby> OnLobbyJoinedEvent;
+        public event JoinLobbyEventHandler OnJoinedLobbyEvent;
 
         /// <summary>
         /// Instance of a lobby that was joined the last
@@ -24,7 +25,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Check if client currently is in lobby
         /// </summary>
-        public bool IsInLobby => JoinedLobby != null;
+        public bool IsInLobby => JoinedLobby != null && !JoinedLobby.HasLeft;
 
         public MstLobbiesClient(IClientSocket connection) : base(connection) { }
 
@@ -34,7 +35,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="factory"></param>
         /// <param name="properties"></param>
         /// <param name="callback"></param>
-        public void CreateAndJoin(string factory, MstProperties options, JoinLobbyCallback callback)
+        public void CreateAndJoin(string factory, MstProperties options, JoinLobbyCallbackHandler callback)
         {
             CreateLobby(factory, options, (id, error) =>
             {
@@ -60,7 +61,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a request to create a lobby, using a specified factory
         /// </summary>
-        public void CreateLobby(string factory, MstProperties options, CreateLobbyCallback calback)
+        public void CreateLobby(string factory, MstProperties options, CreateLobbyCallbackHandler calback)
         {
             CreateLobby(factory, options, calback, Connection);
         }
@@ -68,7 +69,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a request to create a lobby, using a specified factory
         /// </summary>
-        public void CreateLobby(string factory, MstProperties options, CreateLobbyCallback calback, IClientSocket connection)
+        public void CreateLobby(string factory, MstProperties options, CreateLobbyCallbackHandler calback, IClientSocket connection)
         {
             if (!connection.IsConnected)
             {
@@ -97,7 +98,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="lobbyId"></param>
         /// <param name="callback"></param>
-        public void JoinLobby(int lobbyId, JoinLobbyCallback callback)
+        public void JoinLobby(int lobbyId, JoinLobbyCallbackHandler callback)
         {
             JoinLobby(lobbyId, callback, Connection);
         }
@@ -105,7 +106,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a request to join a lobby
         /// </summary>
-        public void JoinLobby(int lobbyId, JoinLobbyCallback callback, IClientSocket connection)
+        public void JoinLobby(int lobbyId, JoinLobbyCallbackHandler callback, IClientSocket connection)
         {
             // Send the message
             connection.SendMessage((short)MstMessageCodes.JoinLobby, lobbyId, (status, response) =>
@@ -123,8 +124,7 @@ namespace MasterServerToolkit.MasterServer
                 JoinedLobby = joinedLobby;
 
                 callback?.Invoke(joinedLobby, null);
-
-                OnLobbyJoinedEvent?.Invoke(joinedLobby);
+                OnJoinedLobbyEvent?.Invoke(joinedLobby);
             });
         }
 
@@ -155,8 +155,6 @@ namespace MasterServerToolkit.MasterServer
                 {
                     Logs.Error(response.AsString("Something went wrong when trying to leave a lobby"));
                 }
-
-                JoinedLobby = null;
 
                 callback?.Invoke();
             });

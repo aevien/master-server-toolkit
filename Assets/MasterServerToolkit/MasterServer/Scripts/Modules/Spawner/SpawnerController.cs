@@ -57,7 +57,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="options"></param>
         public SpawnerController(int spawnerId, IClientSocket connection, SpawnerOptions spawnerOptions)
         {
-            Logger = Mst.Create.Logger(typeof(SpawnerController).Name, LogLevel.Info);
+            Logger = Mst.Create.Logger(typeof(SpawnerController).Name, LogLevel.All);
 
             Connection = connection;
             SpawnerId = spawnerId;
@@ -82,9 +82,8 @@ namespace MasterServerToolkit.MasterServer
         private static void SpawnProcessRequestHandler(IIncomingMessage message)
         {
             var data = message.Deserialize(new SpawnRequestPacket());
-            var controller = Mst.Server.Spawners.GetSpawnerController(data.SpawnerId) as SpawnerController;
 
-            if (controller == null)
+            if (!(Mst.Server.Spawners.GetSpawnerController(data.SpawnerId) is SpawnerController controller))
             {
                 if (message.IsExpectingResponse)
                 {
@@ -160,11 +159,11 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         public virtual void SpawnRequestHandler(SpawnRequestPacket data, IIncomingMessage message)
         {
-            Logger.Debug($"Default spawn handler started handling a request to spawn process for spawn controller [{SpawnerId}]");
+            Logger.Info($"Default spawn handler started handling a request to spawn process for spawn controller [{SpawnerId}]");
 
             /************************************************************************/
             // Create process args string
-            var processArguments = new MstProperties();
+            var processArguments = data.Options;
 
             /************************************************************************/
             // Check if we're overriding an IP to master server
@@ -191,45 +190,12 @@ namespace MasterServerToolkit.MasterServer
             processArguments.Set(Mst.Args.Names.RoomPort, machinePortArgument);
 
             /************************************************************************/
-            // Room Name
-            //processArguments.Set(Mst.Args.Names.RoomName, $"\"{data.Options.AsString(MstDictKeys.roomName, "Room_" + Mst.Helper.CreateRandomString(6))}\"");
-
-            /************************************************************************/
-            // Room Region
-            //processArguments.Set(Mst.Args.Names.RoomRegion, $"\"{SpawnSettings.Region}\"");
-
-            /************************************************************************/
-            // Room Max Connections
-            //if (data.Options.Has(MstDictKeys.maxPlayers))
-            //{
-            //    processArguments.Set(Mst.Args.Names.RoomMaxConnections, data.Options.AsString(MstDictKeys.maxPlayers));
-            //}
-
-            /************************************************************************/
-            // Get the scene name
-            //if (data.Options.Has(MstDictKeys.sceneName))
-            //{
-            //    processArguments.Set(Mst.Args.Names.LoadScene, data.Options.AsString(MstDictKeys.sceneName));
-            //}
-
-            /************************************************************************/
-            // Create use websockets arg
-            //if (SpawnSettings.UseWebSockets)
-            //{
-            //    processArguments.Set(Mst.Args.Names.UseWebSockets, string.Empty);
-            //}
-
-            /************************************************************************/
             // Create spawn id arg
             processArguments.Set(Mst.Args.Names.SpawnTaskId, data.SpawnTaskId);
 
             /************************************************************************/
             // Create spawn code arg
             processArguments.Set(Mst.Args.Names.SpawnTaskUniqueCode, data.SpawnTaskUniqueCode);
-
-            /************************************************************************/
-            // Create custom args
-            processArguments.Append(data.CustomOptions);
 
             /************************************************************************/
             // Path to executable
@@ -261,7 +227,7 @@ namespace MasterServerToolkit.MasterServer
                 Arguments = processArguments.ToReadableString(" ", " ")
             };
 
-            Logger.Debug("Starting process with args: " + startProcessInfo.Arguments);
+            Logger.Info($"Starting process with args: {processArguments}");
 
             var processStarted = false;
 
@@ -273,7 +239,7 @@ namespace MasterServerToolkit.MasterServer
                     {
                         using (var process = Process.Start(startProcessInfo))
                         {
-                            Logger.Debug("Process started. Spawn Id: " + data.SpawnTaskId + ", pid: " + process.Id);
+                            Logger.Info($"Process started. Spawn Id: {data.SpawnTaskId}, pid: {process.Id}");
                             processStarted = true;
 
                             lock (processLock)

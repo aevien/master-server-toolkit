@@ -648,9 +648,10 @@ namespace MasterServerToolkit.MasterServer
 
             // Set room as private because this one is created for lobby
             propertiesList.Set(MstDictKeys.ROOM_IS_PUBLIC, false);
+            propertiesList.Append(GenerateOptions());
 
             // Create start task
-            var task = Module.SpawnersModule.Spawn(propertiesList, region, GenerateOptions());
+            var task = Module.SpawnersModule.Spawn(propertiesList, region);
 
             if (task == null)
             {
@@ -1079,14 +1080,21 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="state"></param>
         protected virtual void OnLobbyStateChange(LobbyState state)
         {
-            StatusText = state switch
+            switch (state)
             {
-                LobbyState.FailedToStart => "Failed to start server",
-                LobbyState.Preparations => "Failed to start server",
-                LobbyState.StartingGameServer => "Starting game server",
-                LobbyState.GameInProgress => "Game in progress",
-                LobbyState.GameOver => "Game is over",
-                _ => "Unknown lobby state",
+                case LobbyState.FailedToStart:
+                    StatusText = "Failed to start server";
+                    break;
+                case LobbyState.Preparations: StatusText = "Failed to start server";
+                    break;
+                case LobbyState.StartingGameServer: StatusText = "Starting game server";
+                    break;
+                case LobbyState.GameInProgress: StatusText = "Game in progress";
+                    break;
+                case LobbyState.GameOver: StatusText = "Game is over";
+                    break;
+                default: StatusText = "Unknown lobby state";
+                    break;
             };
 
             // Disable ready states

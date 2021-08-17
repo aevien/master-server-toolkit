@@ -77,9 +77,12 @@ namespace MasterServerToolkit.Games
             // if we are in lobby game
             if (Mst.Client.Lobbies.IsInLobby)
             {
+<<<<<<< HEAD
+                canvasGroup.interactable = true;
+=======
+>>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
                 players = Mst.Client.Lobbies.JoinedLobby.Members.Select(m => m.Value.Username).ToList();
                 DrawPlayersList(players);
-                canvasGroup.interactable = true;
                 return;
             }
 
@@ -94,11 +97,33 @@ namespace MasterServerToolkit.Games
 
             Mst.Client.Matchmaker.FindGames(filter, (games) =>
             {
+                canvasGroup.interactable = true;
+<<<<<<< HEAD
+
+=======
+                return;
+            }
+
+            // if we have room access
+            if (roomId < 0 && Mst.Client.Rooms.HasAccess)
+            {
+                roomId = Mst.Client.Rooms.ReceivedAccess.RoomId;
+            }
+
+            var filter = new MstProperties();
+            filter.Set(MstDictKeys.ROOM_ID, roomId);
+
+            Mst.Client.Matchmaker.FindGames(filter, (games) =>
+            {
+>>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
                 if (games.Count > 0)
                 {
                     var game = games.First();
                     DrawPlayersList(game.OnlinePlayersList);
+<<<<<<< HEAD
+=======
                     canvasGroup.interactable = true;
+>>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
                 }
             });
         }

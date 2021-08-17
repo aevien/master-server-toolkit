@@ -51,8 +51,8 @@ namespace MasterServerToolkit.MasterServer
             SpawnersModule = server.GetModule<SpawnersModule>();
             RoomsModule = server.GetModule<RoomsModule>();
 
-            factories ??= new Dictionary<string, ILobbyFactory>();
-            lobbies ??= new Dictionary<int, ILobby>();
+            factories = factories ?? new Dictionary<string, ILobbyFactory>();
+            lobbies = lobbies ?? new Dictionary<int, ILobby>();
 
             server.RegisterMessageHandler((short)MstMessageCodes.CreateLobby, CreateLobbyHandle);
             server.RegisterMessageHandler((short)MstMessageCodes.JoinLobby, JoinLobbyHandler);

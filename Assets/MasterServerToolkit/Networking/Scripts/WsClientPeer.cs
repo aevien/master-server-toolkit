@@ -21,7 +21,12 @@ namespace MasterServerToolkit.Networking
             get { return socket.IsConnected; }
         }
 
-        public IEnumerator SendDelayedMessages()
+        public void SendDelayedMessages()
+        {
+            MstTimer.Singleton.StartCoroutine(SendDelayedMessagesCoroutine());
+        }
+
+        public IEnumerator SendDelayedMessagesCoroutine()
         {
             yield return new WaitForSecondsRealtime(delay);
 

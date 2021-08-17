@@ -118,9 +118,9 @@ namespace MasterServerToolkit.MasterServer
         public override void Initialize(IServer server)
         {
             // Setup secure connection
-            UserSecure = MstApplicationConfig.Instance.UseSecure;
-            CertificatePath = MstApplicationConfig.Instance.CertificatePath;
-            CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
+            UserSecure = MstApplicationConfig.Singleton.UseSecure;
+            CertificatePath = MstApplicationConfig.Singleton.CertificatePath;
+            CertificatePassword = MstApplicationConfig.Singleton.CertificatePassword;
 
             // Set port
             httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);

@@ -7,7 +7,7 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public abstract class ConnectionHelper<T> : Singleton<T> where T : MonoBehaviour
+    public abstract class ConnectionHelper<T> : SingletonBehaviour<T> where T : MonoBehaviour
     {
         #region INSPECTOR
 
@@ -198,7 +198,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!Connection.IsConnected)
                 {
-                    Connection.UseSsl = MstApplicationConfig.Instance.UseSecure;
+                    Connection.UseSsl = MstApplicationConfig.Singleton.UseSecure;
                     Connection.Connect(serverIp, serverPort);
                 }
 

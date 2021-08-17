@@ -18,12 +18,12 @@ namespace MasterServerToolkit.Examples.BasicNetworking
 
         private void SendNetMessage(CommandArg[] args)
         {
-            CustomClient.Instance.SendNetMessage();
+            CustomClient.Singleton.SendNetMessage();
         }
 
         private void SendNetMessageWithResponse(CommandArg[] obj)
         {
-            CustomClient.Instance.SendNetMessageWithResponse();
+            CustomClient.Singleton.SendNetMessageWithResponse();
         }
     }
 }

@@ -4,8 +4,16 @@ using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public delegate void PlayerPropertyChangedHandler(LobbyMemberData member, string propertyKey, string propertyValue);
+    public delegate void MemberPropertyChangedHandler(LobbyMemberData member, string propertyKey, string propertyValue);
     public delegate void LobbyPropertyChangeHandler(string property, string key);
+    public delegate void ChatMessageReceivedHandler(LobbyChatPacket chatMessage);
+    public delegate void MemberLeftHandler(LobbyMemberData member);
+    public delegate void MemberJoinedHandler(LobbyMemberData member);
+    public delegate void MemberTeamChangedHandler(LobbyMemberData member, LobbyTeamData team);
+    public delegate void MemberReadyStatusChangedHandler(LobbyMemberData member, bool isReady);
+    public delegate void GameMasterChangedHandler(string username);
+    public delegate void LobbyStateChangeHandler(LobbyState state);
+    public delegate void LobbyStatusTextChangeHandler(string text);
 
     /// <summary>
     /// Represents a joined lobby. When player joins a lobby,
@@ -14,22 +22,88 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class JoinedLobby
     {
+        /// <summary>
+        /// Connection of this lobby
+        /// </summary>
         private readonly IClientSocket _connection;
 
+        /// <summary>
+        /// Data of this lobby
+        /// </summary>
         public LobbyDataPacket Data { get; private set; }
+        /// <summary>
+        /// List of the properties of this lobby
+        /// </summary>
         public Dictionary<string, string> Properties { get; private set; }
+        /// <summary>
+        /// List of all members joined this lobby
+        /// </summary>
         public Dictionary<string, LobbyMemberData> Members { get; private set; }
+        /// <summary>
+        /// List of teams joined this lobby
+        /// </summary>
         public Dictionary<string, LobbyTeamData> Teams { get; private set; }
-
-        public ILobbyListener Listener { get; private set; }
-
-        public string Name { get { return Data.LobbyName; } }
-
+        /// <summary>
+        /// Id of the lobby
+        /// </summary>
         public int Id { get { return Data.LobbyId; } }
-
+        /// <summary>
+        /// Name of the lobby
+        /// </summary>
+        public string Name { get { return Data.LobbyName; } }
+        /// <summary>
+        /// Current state of the lobby
+        /// </summary>
         public LobbyState State { get { return Data.LobbyState; } }
-
+        /// <summary>
+        /// Check if player left lobby or not
+        /// </summary>
         public bool HasLeft { get; private set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event Action OnLobbyLeftEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event MemberPropertyChangedHandler OnMemberPropertyChangedEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event ChatMessageReceivedHandler OnChatMessageReceivedEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event MemberLeftHandler OnMemberLeftEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event MemberJoinedHandler OnMemberJoinedEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event MemberTeamChangedHandler OnMemberTeamChangedEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event MemberReadyStatusChangedHandler OnMemberReadyStatusChangedEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event GameMasterChangedHandler OnGameMasterChangedEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event LobbyStateChangeHandler OnLobbyStateChangeEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event LobbyStatusTextChangeHandler OnLobbyStatusTextChangeEvent;
+        /// <summary>
+        /// 
+        /// </summary>
+        public event LobbyPropertyChangeHandler OnLobbyPropertyChangeEvent;
 
         public JoinedLobby(LobbyDataPacket data, IClientSocket connection)
         {
@@ -44,7 +118,7 @@ namespace MasterServerToolkit.MasterServer
             connection.SetHandler((short)MstMessageCodes.LobbyStatusTextChange, HandleLobbyStatusTextChangeMsg);
             connection.SetHandler((short)MstMessageCodes.LobbyMemberChangedTeam, HandlePlayerTeamChangeMsg);
             connection.SetHandler((short)MstMessageCodes.LobbyMemberReadyStatusChange, HandleLobbyMemberReadyStatusChangeMsg);
-            connection.SetHandler((short)MstMessageCodes.LobbyMasterChange, HandleLobbyMasterChangeMsg);
+            connection.SetHandler((short)MstMessageCodes.LobbyMasterChange, HandleGameMasterChangeMsg);
             connection.SetHandler((short)MstMessageCodes.LobbyPropertyChanged, HandleLobbyPropertyChanged);
 
             Properties = data.LobbyProperties;
@@ -67,7 +141,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Leave()
         {
-            Mst.Client.Lobbies.LeaveLobby(Id, () => { }, _connection);
+            Leave(null);
         }
 
         /// <summary>
@@ -159,16 +233,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Set's a lobby event listener
-        /// </summary>
-        /// <param name="listener"></param>
-        public void SetListener(ILobbyListener listener)
-        {
-            Listener = listener;
-            Listener?.Initialize(this);
-        }
-
-        /// <summary>
         /// Send's a lobby chat message
         /// </summary>
         /// <param name="message"></param>
@@ -233,7 +297,7 @@ namespace MasterServerToolkit.MasterServer
 
             member.Properties.Set(data.Property, data.Value);
 
-            Listener?.OnMemberPropertyChanged(member, data.Property, data.Value);
+            OnMemberPropertyChangedEvent?.Invoke(member, data.Property, data.Value);
         }
 
         private void HandleLeftLobbyMsg(IIncomingMessage message)
@@ -247,15 +311,13 @@ namespace MasterServerToolkit.MasterServer
             }
 
             HasLeft = true;
-
-            Listener?.OnLobbyLeft();
+            OnLobbyLeftEvent?.Invoke();
         }
 
         private void HandleLobbyChatMessageMsg(IIncomingMessage message)
         {
             var msg = message.Deserialize(new LobbyChatPacket());
-
-            Listener?.OnChatMessageReceived(msg);
+            OnChatMessageReceivedEvent?.Invoke(msg);
         }
 
         private void HandleLobbyMemberLeftMsg(IIncomingMessage message)
@@ -270,29 +332,26 @@ namespace MasterServerToolkit.MasterServer
             }
 
             Members.Remove(username);
-
-            Listener?.OnMemberLeft(member);
+            OnMemberLeftEvent?.Invoke(member);
         }
 
         private void HandleLobbyMemberJoinedMsg(IIncomingMessage message)
         {
-            var data = message.Deserialize(new LobbyMemberData());
-            Members[data.Username] = data;
-            Listener?.OnMemberJoined(data);
+            var member = message.Deserialize(new LobbyMemberData());
+            Members[member.Username] = member;
+            OnMemberJoinedEvent?.Invoke(member);
         }
 
-        private void HandleLobbyMasterChangeMsg(IIncomingMessage message)
+        private void HandleGameMasterChangeMsg(IIncomingMessage message)
         {
             var masterUsername = message.AsString();
-
             Data.GameMaster = masterUsername;
-            Listener?.OnMasterChanged(masterUsername);
+            OnGameMasterChangedEvent?.Invoke(masterUsername);
         }
 
         private void HandleLobbyMemberReadyStatusChangeMsg(IIncomingMessage message)
         {
             var data = message.Deserialize(new StringPairPacket());
-
             Members.TryGetValue(data.A, out LobbyMemberData member);
 
             if (member == null)
@@ -301,14 +360,12 @@ namespace MasterServerToolkit.MasterServer
             }
 
             member.IsReady = bool.Parse(data.B);
-
-            Listener?.OnMemberReadyStatusChanged(member, member.IsReady);
+            OnMemberReadyStatusChangedEvent?.Invoke(member, member.IsReady);
         }
 
         private void HandlePlayerTeamChangeMsg(IIncomingMessage message)
         {
             var data = message.Deserialize(new StringPairPacket());
-
             Members.TryGetValue(data.A, out LobbyMemberData member);
 
             if (member == null)
@@ -324,34 +381,27 @@ namespace MasterServerToolkit.MasterServer
             }
 
             member.Team = newTeam.Name;
-
-            Listener?.OnMemberTeamChanged(member, newTeam);
-        }
-
-        private void HandleLobbyStatusTextChangeMsg(IIncomingMessage message)
-        {
-            var text = message.AsString();
-
-            Data.StatusText = text;
-
-            Listener?.OnLobbyStatusTextChanged(text);
+            OnMemberTeamChangedEvent?.Invoke(member, newTeam);
         }
 
         private void HandleLobbyStateChangeMsg(IIncomingMessage message)
         {
             var newState = (LobbyState)message.AsInt();
-
             Data.LobbyState = newState;
-
-            Listener?.OnLobbyStateChange(newState);
+            OnLobbyStateChangeEvent?.Invoke(newState);
         }
 
         private void HandleLobbyPropertyChanged(IIncomingMessage message)
         {
             var data = message.Deserialize(new StringPairPacket());
             Properties[data.A] = data.B;
+            OnLobbyPropertyChangeEvent?.Invoke(data.A, data.B);
+        }
 
-            Listener?.OnLobbyPropertyChanged(data.A, data.B);
+        private void HandleLobbyStatusTextChangeMsg(IIncomingMessage message)
+        {
+            string msg = message.AsString();
+            OnLobbyStatusTextChangeEvent?.Invoke(msg);
         }
 
         #endregion

@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var key in options.Keys)
             {
-                AddToOptions(key.ToString(), options[key]?.ToString());
+                SetToOptions(key.ToString(), options[key]?.ToString());
             }
 
             return this;
@@ -472,6 +472,26 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return Convert.ToByte(properties[key]);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="keyFilter"></param>
+        /// <returns></returns>
+        public MstProperties FindByKey(string keyFilter)
+        {
+            return new MstProperties(properties.Where(kvp => kvp.Key.Contains(keyFilter)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="valFilter"></param>
+        /// <returns></returns>
+        public MstProperties FindByValue(string valFilter)
+        {
+            return new MstProperties(properties.Where(kvp => kvp.Value.Contains(valFilter)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
         }
 
         /// <summary>

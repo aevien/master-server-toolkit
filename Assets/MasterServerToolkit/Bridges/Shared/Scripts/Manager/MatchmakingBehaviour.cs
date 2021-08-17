@@ -2,6 +2,7 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -85,7 +86,13 @@ namespace MasterServerToolkit.Games
 
             // Custom options that will be given to room directly
             var customSpawnOptions = new MstProperties();
-            customSpawnOptions.Add(Mst.Args.Names.StartClientConnection);
+            customSpawnOptions.Add(Mst.Args.Names.StartClientConnection, true);
+
+            // Here is the example of using custom options. If your option name starts from "-room."
+            // then this option will be added to custom room options on server automatically
+            customSpawnOptions.Add("-room.CustomTextOption", "Here is room custom option");
+            customSpawnOptions.Add("-room.CustomIdOption", Mst.Helper.CreateID_10());
+            customSpawnOptions.Add("-room.CustomDateTimeOption", DateTime.Now.ToString());
 
             Mst.Client.Spawners.RequestSpawn(spawnOptions, customSpawnOptions, regionName, (controller, error) =>
             {

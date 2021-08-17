@@ -165,18 +165,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public SpawnTask Spawn(MstProperties options)
         {
-            return Spawn(options, string.Empty, new MstProperties());
-        }
-
-        /// <summary>
-        /// Start process on spawner side with given spawn <paramref name="options"/> and <paramref name="region"/>
-        /// </summary>
-        /// <param name="options"></param>
-        /// <param name="region"></param>
-        /// <returns></returns>
-        public SpawnTask Spawn(MstProperties options, string region)
-        {
-            return Spawn(options, region, new MstProperties());
+            return Spawn(options, string.Empty);
         }
 
         /// <summary>
@@ -186,10 +175,11 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="region"></param>
         /// <param name="customOptions"></param>
         /// <returns></returns>
-        public virtual SpawnTask Spawn(MstProperties options, string region, MstProperties customOptions)
+        public virtual SpawnTask Spawn(MstProperties options, string region)
         {
             // Get registered spawner by options and region
             var spawners = GetFilteredSpawners(options, region);
+
 
             if (spawners.Count == 0)
             {
@@ -207,7 +197,7 @@ namespace MasterServerToolkit.MasterServer
                 return null;
             }
 
-            return Spawn(options, customOptions, availableSpawner);
+            return Spawn(options, availableSpawner);
         }
 
         /// <summary>
@@ -217,10 +207,10 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="customOptions"></param>
         /// <param name="spawner"></param>
         /// <returns></returns>
-        public virtual SpawnTask Spawn(MstProperties options, MstProperties customOptions, RegisteredSpawner spawner)
+        public virtual SpawnTask Spawn(MstProperties options, RegisteredSpawner spawner)
         {
             // Create new spawn task
-            var task = new SpawnTask(GenerateSpawnTaskId(), spawner, options, customOptions);
+            var task = new SpawnTask(GenerateSpawnTaskId(), spawner, options);
 
             // List this task
             spawnTasksList[task.Id] = task;
@@ -313,7 +303,7 @@ namespace MasterServerToolkit.MasterServer
             return extension.PermissionLevel >= createSpawnerPermissionLevel;
         }
 
-        protected virtual bool CanClientSpawn(IPeer peer, ClientsSpawnRequestPacket data)
+        protected virtual bool CanClientSpawn(IPeer peer, MstProperties options)
         {
             return enableClientSpawnRequests;
         }
@@ -347,10 +337,10 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void ClientsSpawnRequestHandler(IIncomingMessage message)
         {
             // Parse data from message
-            var spawnRequestData = message.Deserialize(new ClientsSpawnRequestPacket());
+            var options = MstProperties.FromBytes(message.AsBytes());
             var peer = message.Peer;
 
-            logger.Info($"Client {peer.Id} requested to spawn room with options: {spawnRequestData}");
+            logger.Info($"Client {peer.Id} requested to spawn room with options: {options}");
 
             if (spawnersList.Count == 0)
             {
@@ -360,7 +350,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Check if current request is authorized
-            if (!CanClientSpawn(peer, spawnRequestData))
+            if (!CanClientSpawn(peer, options))
             {
                 logger.Error("Unauthorized request");
                 // Client can't spawn
@@ -380,7 +370,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Create a new spawn task
-            var task = Spawn(spawnRequestData.Options, spawnRequestData.Options.AsString(MstDictKeys.ROOM_REGION), spawnRequestData.CustomOptions);
+            var task = Spawn(options, options.AsString(MstDictKeys.ROOM_REGION));
 
             // If spawn task is not created
             if (task == null)

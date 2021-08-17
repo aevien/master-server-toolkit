@@ -96,7 +96,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            sendUpdatesCoroutine = MstTimer.Instance.StartCoroutine(KeepSendingUpdates(connection));
+            sendUpdatesCoroutine = MstTimer.Singleton.StartCoroutine(KeepSendingUpdates(connection));
         }
 
         private void OnProfileDisposed(ObservableServerProfile profile)

@@ -82,19 +82,10 @@ namespace MasterServerToolkit.MasterServer
 
             // Set region to room by filter. If region is empty the room will be international
             options.Set(MstDictKeys.ROOM_REGION, string.IsNullOrEmpty(region) ? string.Empty : region);
-
-            // Create spawn request message packet
-            var data = new ClientsSpawnRequestPacket()
-            {
-                // Options for spawners module
-                Options = options,
-
-                // Options that will be send to room
-                CustomOptions = customOptions
-            };
+            options.Append(customOptions);
 
             // Send request to Master Server SpawnerModule
-            connection.SendMessage((short)MstMessageCodes.ClientsSpawnRequest, data, (status, response) =>
+            connection.SendMessage((short)MstMessageCodes.ClientsSpawnRequest, options.ToBytes(), (status, response) =>
             {
                 // If spawn request failed
                 if (status != ResponseStatus.Success)
@@ -110,7 +101,7 @@ namespace MasterServerToolkit.MasterServer
                 // List controler by spawn task id
                 _localSpawnRequests[controller.SpawnTaskId] = controller;
 
-                Logs.Debug($"Room was successfuly started with client options: {data.Options.ToReadableString()}, {data.CustomOptions.ToReadableString()}");
+                Logs.Debug($"Room was successfuly started with client options: {options}");
 
                 callback?.Invoke(controller, null);
             });

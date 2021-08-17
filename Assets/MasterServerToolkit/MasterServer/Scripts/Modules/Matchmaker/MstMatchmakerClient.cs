@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer
                 if (status != ResponseStatus.Success)
                 {
                     Games = new List<GameInfoPacket>();
-                    Logs.Error(response.AsString("Unknown error while requesting a list of games"));
+                    Logs.Warn(response.AsString("Unknown error while requesting a list of games"));
                     callback?.Invoke(Games);
                     return;
                 }

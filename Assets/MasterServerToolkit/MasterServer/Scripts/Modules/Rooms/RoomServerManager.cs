@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -14,7 +15,7 @@ namespace MasterServerToolkit.MasterServer
     [Serializable]
     public class RoomPlayerEvent : UnityEvent<RoomPlayer> { }
 
-    public class RoomServerManager : BaseClientBehaviour, ITerminatableRoom
+    public class RoomServerManager : BaseClientBehaviour
     {
         #region INSPECTOR
 
@@ -29,6 +30,13 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         [SerializeField, Tooltip("Allows guest users to be connected to room")]
         protected bool allowGuestUsers = true;
+
+        [Header("Termination Settings"), SerializeField]
+        protected bool terminateRoomWhenDisconnected = true;
+        [SerializeField]
+        protected bool terminateRoomWhenLastPlayerQuits = true;
+        [SerializeField]
+        protected float terminateRoomDelay = 5f;
 
         /// <summary>
         /// Fires before server room registeration process
@@ -86,8 +94,6 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public SpawnTaskController SpawnTaskController { get; protected set; }
 
-        public event Action OnCheckTerminationConditionEvent;
-
         protected override void Awake()
         {
             base.Awake();
@@ -108,15 +114,20 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            // Set room options at start
-            RoomOptions = SetRoomOptions();
-
             // Listen to master server connection status
             Connection.AddConnectionListener(OnConnectedToMasterEventHandler);
+            Connection.AddDisconnectionListener(OnDisconnectedFromMasterEventHandler, false);
         }
 
         private void OnConnectedToMasterEventHandler()
         {
+            logger.Info("Room server connected to master server as client");
+
+            if (terminateRoomWhenDisconnected)
+            {
+                StopCoroutine(TerminateRoomAfterDelay());
+            }
+
             MstTimer.WaitForEndOfFrame(() =>
             {
                 // If this room was spawned
@@ -127,9 +138,31 @@ namespace MasterServerToolkit.MasterServer
                 }
                 else
                 {
+                    // 
+                    BeforeRoomRegistering();
+
+                    // Invoke notification
                     OnBeforeRoomRegisterEvent?.Invoke(RoomOptions);
                 }
             });
+        }
+
+        private void OnDisconnectedFromMasterEventHandler()
+        {
+            if (terminateRoomWhenDisconnected)
+            {
+                StartCoroutine(TerminateRoomAfterDelay());
+            }
+        }
+
+        /// <summary>
+        /// Terminates room if delay time is over
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator TerminateRoomAfterDelay()
+        {
+            yield return new WaitForSecondsRealtime(terminateRoomDelay);
+            Mst.Runtime.Quit();
         }
 
         /// <summary>
@@ -146,6 +179,10 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void OnServerStopped() { }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="roomPeerId"></param>
         public virtual void OnPeerDisconnected(int roomPeerId)
         {
             MstTimer.WaitForSeconds(0.2f, () =>
@@ -169,13 +206,16 @@ namespace MasterServerToolkit.MasterServer
 
                     // Inform subscribers about this bad guy
                     OnPlayerLeftRoomEvent?.Invoke(player);
-
-                    // Calling termination conditions check
-                    OnCheckTerminationConditionEvent?.Invoke();
                 }
                 else
                 {
                     logger.Debug($"Room server client {roomPeerId} left the room");
+                }
+
+                if(terminateRoomWhenLastPlayerQuits && playersByRoomPeerId.Count == 0)
+                {
+                    terminateRoomDelay = 0.1f;
+                    StartCoroutine(TerminateRoomAfterDelay());
                 }
             });
         }
@@ -263,45 +303,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Sets this room options. If you need your own options just override this method
-        /// </summary>
-        /// <returns></returns>
-        protected virtual RoomOptions SetRoomOptions()
-        {
-            // If room is public or provate
-            bool isPublic = !Mst.Args.RoomIsPrivate;
-
-            // If room using lobby
-            bool isUsingLobby = Mst.Args.IsProvided(Mst.Args.Names.LobbyId);
-
-            return new RoomOptions
-            {
-                IsPublic = isUsingLobby ? false : isPublic,
-
-                // This is for controlling max number of players that may be connected
-                MaxConnections = Mst.Args.RoomMaxConnections,
-
-                // Just the name of the room
-                Name = Mst.Args.RoomName,
-
-                // If room uses the password
-                Password = Mst.Args.RoomPassword,
-
-                // Room IP that will be used by players to connect to this room
-                RoomIp = Mst.Args.RoomIp,
-
-                // Room port that will be used by players to connect to this room
-                RoomPort = Mst.Args.RoomPort,
-
-                // Region that this room may use to filter it in games list
-                Region = Mst.Args.RoomRegion,
-
-                //// Allows access request or does not
-                //AllowUsersRequestAccess = !isUsingLobby
-            };
-        }
-
-        /// <summary>
         /// Before we register our room we need to register spawned process if required
         /// </summary>
         protected void RegisterSpawnedProcess()
@@ -334,6 +335,36 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void BeforeRoomRegistering()
         {
+            // If room is public or provate
+            bool isPublic = !Mst.Args.RoomIsPrivate;
+
+            // If room using lobby
+            bool isUsingLobby = Mst.Args.IsProvided(Mst.Args.Names.LobbyId);
+
+            RoomOptions = new RoomOptions
+            {
+                IsPublic = !isUsingLobby && isPublic,
+
+                // This is for controlling max number of players that may be connected
+                MaxConnections = Mst.Args.RoomMaxConnections,
+
+                // Just the name of the room
+                Name = Mst.Args.RoomName,
+
+                // If room uses the password
+                Password = Mst.Args.RoomPassword,
+
+                // Room IP that will be used by players to connect to this room
+                RoomIp = Mst.Args.RoomIp,
+
+                // Room port that will be used by players to connect to this room
+                RoomPort = Mst.Args.RoomPort,
+
+                // Region that this room may use to filter it in games list
+                Region = Mst.Args.RoomRegion
+            };
+
+            // If room was spawned by task
             if (SpawnTaskController != null)
             {
                 // If max players param was given from spawner task
@@ -353,6 +384,21 @@ namespace MasterServerToolkit.MasterServer
                 {
                     RoomOptions.Name = SpawnTaskController.Options.AsString(MstDictKeys.ROOM_NAME);
                 }
+
+                RoomOptions.CustomOptions = SpawnTaskController.Options.FindByKey("-room.");
+            }
+            else
+            {
+                string[] keys = Mst.Args.FindKeys("-room.");
+                var properties = new MstProperties();
+
+                foreach (string key in keys)
+                {
+                    if (Mst.Args.IsProvided(key))
+                        properties.Set(key, Mst.Args.AsString(key));
+                }
+
+                RoomOptions.CustomOptions = properties;
             }
         }
 
@@ -361,8 +407,6 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void RegisterRoom()
         {
-            OnBeforeRoomRegisterEvent?.Invoke(RoomOptions);
-
             logger.Info($"Registering room to list...");
 
             Mst.Server.Rooms.RegisterRoom(RoomOptions, (controller, error) =>
@@ -381,7 +425,7 @@ namespace MasterServerToolkit.MasterServer
                 RoomController.AccessProvider = CreateAccessProvider;
 
                 // And save them
-                controller.SaveOptions();
+                RoomController.SaveOptions();
 
                 logger.Info($"Room registered successfully. Room ID: {controller.RoomId}, {RoomOptions}");
 
@@ -475,15 +519,6 @@ namespace MasterServerToolkit.MasterServer
                     successCallback?.Invoke(true, string.Empty);
                 }, Connection);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public bool IsAllowedToBeTerminated()
-        {
-            return false;
         }
 
         /// <summary>

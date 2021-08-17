@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
-    public class MstTimer : DynamicSingleton<MstTimer>
+    public class MstTimer : DynamicSingletonBehaviour<MstTimer>
     {
         /// <summary>
         /// List of main thread actions
@@ -79,8 +79,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="timeoutSeconds"></param>
         public static void WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            if (Instance)
-                Instance.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
+            if (Singleton)
+                Singleton.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
         }
 
         /// <summary>
@@ -92,8 +92,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="timeoutSeconds"></param>
         public static void WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            if (Instance)
-                Instance.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
+            if (Singleton)
+                Singleton.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
         }
 
         /// <summary>
@@ -122,8 +122,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public static void WaitForSeconds(float time, Action callback)
         {
-            if (Instance)
-                Instance.StartCoroutine(Instance.StartWaitingForSeconds(time, callback));
+            if (Singleton)
+                Singleton.StartCoroutine(Singleton.StartWaitingForSeconds(time, callback));
         }
 
         /// <summary>
@@ -144,8 +144,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public static void WaitForEndOfFrame(Action callback)
         {
-            if (Instance)
-                Instance.StartCoroutine(Instance.StartWaitingForEndOfFrame(callback));
+            if (Singleton)
+                Singleton.StartCoroutine(Singleton.StartWaitingForEndOfFrame(callback));
         }
 
         /// <summary>
@@ -165,8 +165,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="action"></param>
         public static void RunInMainThread(Action action)
         {
-            if (Instance)
-                Instance.AddToMainThread(action);
+            if (Singleton)
+                Singleton.AddToMainThread(action);
         }
 
         /// <summary>

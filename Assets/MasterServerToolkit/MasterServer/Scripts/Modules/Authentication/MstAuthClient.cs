@@ -333,79 +333,76 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SignIn(MstProperties data, SignInCallback callback, IClientSocket connection)
         {
-            Task.Run(() => {
-                Logs.Debug("Signing in...");
+            if (!connection.IsConnected)
+            {
+                callback.Invoke(null, "Not connected to server");
+                return;
+            }
 
-                if (!connection.IsConnected)
+            IsNowSigningIn = true;
+
+            // We first need to get an aes key 
+            // so that we can encrypt our login data
+            Mst.Security.GetAesKey(aesKey =>
+            {
+                if (aesKey == null)
                 {
-                    callback.Invoke(null, "Not connected to server");
+                    IsNowSigningIn = false;
+                    callback.Invoke(null, "Failed to log in due to security issues");
+                    
                     return;
                 }
 
-                IsNowSigningIn = true;
+                var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                // We first need to get an aes key 
-                // so that we can encrypt our login data
-                Mst.Security.GetAesKey(aesKey =>
+                connection.SendMessage((short)MstMessageCodes.SignIn, encryptedData, (status, response) =>
                 {
-                    if (aesKey == null)
+                    IsNowSigningIn = false;
+
+                    if (status != ResponseStatus.Success)
                     {
-                        IsNowSigningIn = false;
-                        callback.Invoke(null, "Failed to log in due to security issues");
+                        ClearAuthToken();
+
+                        callback.Invoke(null, response.AsString("Unknown error"));
                         return;
                     }
 
-                    var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
+                    // Parse account info
+                    var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
 
-                    connection.SendMessage((short)MstMessageCodes.SignIn, encryptedData, (status, response) =>
+                    AccountInfo = new ClientAccountInfo()
                     {
-                        IsNowSigningIn = false;
+                        Id = accountInfoPacket.Id,
+                        Username = accountInfoPacket.Username,
+                        Email = accountInfoPacket.Email,
+                        PhoneNumber = accountInfoPacket.PhoneNumber,
+                        Facebook = accountInfoPacket.Facebook,
+                        Token = accountInfoPacket.Token,
+                        IsAdmin = accountInfoPacket.IsAdmin,
+                        IsGuest = accountInfoPacket.IsGuest,
+                        IsEmailConfirmed = accountInfoPacket.IsEmailConfirmed,
+                        Properties = accountInfoPacket.Properties,
+                    };
 
-                        if (status != ResponseStatus.Success)
-                        {
-                            ClearAuthToken();
+                    // If RememberMe is checked on and we are not guset, then save auth token
+                    if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
+                    {
+                        SaveAuthToken(AccountInfo.Token);
+                    }
+                    else
+                    {
+                        ClearAuthToken();
+                    }
 
-                            callback.Invoke(null, response.AsString("Unknown error"));
-                            return;
-                        }
+                    IsSignedIn = true;
 
-                        // Parse account info
-                        var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
-
-                        AccountInfo = new ClientAccountInfo()
-                        {
-                            Id = accountInfoPacket.Id,
-                            Username = accountInfoPacket.Username,
-                            Email = accountInfoPacket.Email,
-                            PhoneNumber = accountInfoPacket.PhoneNumber,
-                            Facebook = accountInfoPacket.Facebook,
-                            Token = accountInfoPacket.Token,
-                            IsAdmin = accountInfoPacket.IsAdmin,
-                            IsGuest = accountInfoPacket.IsGuest,
-                            IsEmailConfirmed = accountInfoPacket.IsEmailConfirmed,
-                            Properties = accountInfoPacket.Properties,
-                        };
-
-                        // If RememberMe is checked on and we are not guset, then save auth token
-                        if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
-                        {
-                            SaveAuthToken(AccountInfo.Token);
-                        }
-                        else
-                        {
-                            ClearAuthToken();
-                        }
-
-                        IsSignedIn = true;
-
-                        Mst.Concurrency.RunInMainThread(() =>
-                        {
-                            callback.Invoke(AccountInfo, null);
-                            OnSignedInEvent?.Invoke();
-                        });
+                    Mst.Concurrency.RunInMainThread(() =>
+                    {
+                        callback.Invoke(AccountInfo, null);
+                        OnSignedInEvent?.Invoke();
                     });
-                }, connection);
-            });
+                });
+            }, connection);
         }
 
         /// <summary>

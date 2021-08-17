@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicNetworking
 {
-    public class CustomClient : Singleton<CustomClient>
+    public class CustomClient : SingletonBehaviour<CustomClient>
     {
         // Start is called before the first frame update
         void Start()
@@ -31,8 +31,8 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         /// </summary>
         public void SendNetMessageWithResponse()
         {
-            string message = "Hello from client and waiting for response from server";
-            Mst.Client.Connection.SendMessage((short)MessageCodes.MessageWithResponse, message, (status, message) =>
+            string text = "Hello from client and waiting for response from server";
+            Mst.Client.Connection.SendMessage((short)MessageCodes.MessageWithResponse, text, (status, message) =>
             {
                 if (status == Networking.ResponseStatus.Error)
                 {

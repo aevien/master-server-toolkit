@@ -131,7 +131,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Awake()
         {
-            if (string.IsNullOrEmpty(MstApplicationConfig.Instance.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
+            if (string.IsNullOrEmpty(MstApplicationConfig.Singleton.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
 
             Application.targetFrameRate = Mst.Args.AsInt(Mst.Args.Names.TargetFrameRate, targetFrameRate);
 
@@ -146,12 +146,13 @@ namespace MasterServerToolkit.MasterServer
 
             // Create the server 
             socket = Mst.Create.ServerSocket();
+            socket.LogLevel = logLevel;
 
             // Setup secure connection
-            socket.UseSecure = MstApplicationConfig.Instance.UseSecure;
-            socket.CertificatePath = MstApplicationConfig.Instance.CertificatePath;
-            socket.CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
-            socket.ApplicationKey = MstApplicationConfig.Instance.ApplicationKey;
+            socket.UseSecure = MstApplicationConfig.Singleton.UseSecure;
+            socket.CertificatePath = MstApplicationConfig.Singleton.CertificatePath;
+            socket.CertificatePassword = MstApplicationConfig.Singleton.CertificatePassword;
+            socket.ApplicationKey = MstApplicationConfig.Singleton.ApplicationKey;
 
             socket.OnPeerConnectedEvent += OnPeerConnectedEventHandle;
             socket.OnPeerDisconnectedEvent += OnPeerDisconnectedEventHandler;

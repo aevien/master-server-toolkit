@@ -119,6 +119,9 @@ namespace MasterServerToolkit.Games
             spawnOptions.Add(MstDictKeys.ROOM_NAME, RoomName);
             spawnOptions.Add(MstDictKeys.ROOM_PASSWORD, Password);
 
+            // You can send scene name to load that one in online mode
+            spawnOptions.Add(MstDictKeys.ROOM_ONLINE_SCENE_NAME, "");
+
             MatchmakingBehaviour.Instance.CreateNewRoom(RegionName, spawnOptions);
         }
     }

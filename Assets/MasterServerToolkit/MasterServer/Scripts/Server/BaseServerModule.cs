@@ -103,6 +103,8 @@ namespace MasterServerToolkit.MasterServer
         {
             MstProperties info = new MstProperties();
 
+            info.Set("Description", GetType().Name);
+
             if (Dependencies.Count > 0)
             {
                 StringBuilder dep = new StringBuilder();

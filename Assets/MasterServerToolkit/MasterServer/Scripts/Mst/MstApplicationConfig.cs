@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class MstApplicationConfig : DynamicSingleton<MstApplicationConfig>
+    public class MstApplicationConfig : DynamicSingletonBehaviour<MstApplicationConfig>
     {
         [Header("Application Settings"), Tooltip("Unique application key. Must be the same both on client and on server."), SerializeField]
         private string applicationKey = "mst";

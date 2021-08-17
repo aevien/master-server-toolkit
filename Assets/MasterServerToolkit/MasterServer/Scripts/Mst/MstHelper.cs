@@ -145,7 +145,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         public void GetPublicIp(GetPublicIPResult callback)
         {
-            MstTimer.Instance.StartCoroutine(GetPublicIPCoroutine(callback));
+            MstTimer.Singleton.StartCoroutine(GetPublicIPCoroutine(callback));
         }
 
         /// <summary>
@@ -177,18 +177,31 @@ namespace MasterServerToolkit.MasterServer
             {
                 yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.ConnectionError
-                    || www.result == UnityWebRequest.Result.DataProcessingError
-                    || www.result == UnityWebRequest.Result.ProtocolError)
+#if UNITY_2019_1_OR_NEWER && !UNITY_2020_3_OR_NEWER
+                if (www.isHttpError || www.isNetworkError)
                 {
                     callback?.Invoke(null, www.error);
                     Debug.LogError(www.error);
                 }
-                else if (www.result == UnityWebRequest.Result.Success)
+                else
                 {
                     var ipInfo = www.downloadHandler.text;
                     callback?.Invoke(ipInfo, string.Empty);
                 }
+#elif UNITY_2020_3_OR_NEWER
+                if (www.result == UnityWebRequest.Result.ProtocolError
+                    || www.result == UnityWebRequest.Result.ProtocolError
+                     || www.result == UnityWebRequest.Result.DataProcessingError)
+                {
+                    callback?.Invoke(null, www.error);
+                    Debug.LogError(www.error);
+                }
+                else if(www.result == UnityWebRequest.Result.Success)
+                {
+                    var ipInfo = www.downloadHandler.text;
+                    callback?.Invoke(ipInfo, string.Empty);
+                }
+#endif
             }
         }
     }

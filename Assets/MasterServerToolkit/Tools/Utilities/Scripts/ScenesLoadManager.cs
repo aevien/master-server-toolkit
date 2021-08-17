@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.Utils
 {
-    public class ScenesLoadManager : Singleton<ScenesLoadManager>
+    public class ScenesLoadManager : SingletonBehaviour<ScenesLoadManager>
     {
         public void LoadSceneByName(string sceneName, UnityAction<float> onProgress, UnityAction onLoaded)
         {
@@ -29,21 +29,31 @@ namespace MasterServerToolkit.Utils
 
         IEnumerator LoadAsyncScene(string sceneName, bool isAdditive, UnityAction<float> onProgress, UnityAction onLoaded)
         {
-            AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
-            asyncOperation.completed += (op) => {
-                onLoaded?.Invoke();
-            };
+            var scene = SceneManager.GetSceneByName(sceneName);
 
-            while (!asyncOperation.isDone)
+            if (scene.isLoaded)
             {
-                onProgress?.Invoke(asyncOperation.progress);
-
-                if (asyncOperation.progress >= 0.9f)
-                {
-                    asyncOperation.allowSceneActivation = true;
-                }
-
+                onLoaded?.Invoke();
                 yield return null;
+            }
+            else
+            {
+                AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
+                asyncOperation.completed += (op) => {
+                    onLoaded?.Invoke();
+                };
+
+                while (!asyncOperation.isDone)
+                {
+                    onProgress?.Invoke(asyncOperation.progress);
+
+                    if (asyncOperation.progress >= 0.9f)
+                    {
+                        asyncOperation.allowSceneActivation = true;
+                    }
+
+                    yield return null;
+                }
             }
         }
     }

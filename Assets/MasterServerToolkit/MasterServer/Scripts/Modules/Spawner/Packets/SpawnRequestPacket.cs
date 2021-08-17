@@ -10,12 +10,10 @@ namespace MasterServerToolkit.MasterServer
         public string SpawnTaskUniqueCode { get; set; } = string.Empty;
         public string OverrideExePath { get; set; } = string.Empty;
         public MstProperties Options { get; set; }
-        public MstProperties CustomOptions { get; set; }
 
         public SpawnRequestPacket()
         {
             Options = new MstProperties();
-            CustomOptions = new MstProperties();
         }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
@@ -25,7 +23,6 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(SpawnTaskUniqueCode);
             writer.Write(OverrideExePath);
             writer.Write(Options.ToDictionary());
-            writer.Write(CustomOptions.ToDictionary());
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
@@ -35,7 +32,6 @@ namespace MasterServerToolkit.MasterServer
             SpawnTaskUniqueCode = reader.ReadString();
             OverrideExePath = reader.ReadString();
             Options = new MstProperties(reader.ReadDictionary());
-            CustomOptions = new MstProperties(reader.ReadDictionary());
         }
     }
 }

@@ -100,7 +100,6 @@ namespace MasterServerToolkit.MasterServer
             var data = new SpawnRequestPacket()
             {
                 SpawnerId = SpawnerId,
-                CustomOptions = task.CustomOptions,
                 Options = task.Options,
                 SpawnTaskId = task.Id,
                 SpawnTaskUniqueCode = task.UniqueCode

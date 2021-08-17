@@ -137,9 +137,21 @@ namespace MasterServerToolkit.Examples.BasicProfile
             {
                 yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.ConnectionError
-                || www.result == UnityWebRequest.Result.DataProcessingError
-                || www.result == UnityWebRequest.Result.ProtocolError)
+#if UNITY_2019_1_OR_NEWER && !UNITY_2020_3_OR_NEWER
+                if (www.isHttpError || www.isNetworkError)
+                {
+                    Debug.Log(www.error);
+                }
+                else
+                {
+                    var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+                    avatarImage.sprite = null;
+                    avatarImage.sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
+                }
+#elif UNITY_2020_3_OR_NEWER
+                if (www.result == UnityWebRequest.Result.ProtocolError
+                    || www.result == UnityWebRequest.Result.ProtocolError
+                     || www.result == UnityWebRequest.Result.DataProcessingError)
                 {
                     Debug.Log(www.error);
                 }
@@ -149,6 +161,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                     avatarImage.sprite = null;
                     avatarImage.sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
                 }
+#endif
             }
         }
     }

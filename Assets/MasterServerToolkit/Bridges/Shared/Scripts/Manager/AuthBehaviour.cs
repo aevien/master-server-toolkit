@@ -424,7 +424,11 @@ namespace MasterServerToolkit.Games
             logger.Debug("Sign out");
             Mst.Client.Auth.SignOut(true);
             ViewsManager.HideAllViews();
-            Mst.Events.Invoke(MstEventKeys.showSignInView);
+
+            MstTimer.WaitForSeconds(0.2f, () =>
+            {
+                Mst.Events.Invoke(MstEventKeys.showSignInView);
+            });
         }
 
         /// <summary>

@@ -60,6 +60,44 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
             }
         }
 
+        [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Master Server and Spawner")]
+        private static void BuildMasterAndSpawnerForWindows()
+        {
+            string buildFolder = Path.Combine("Builds", "BasicRoomsAndLobbies", "MasterAndSpawner");
+            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicRoomsAndLobbies", "Room", "Room.exe");
+
+            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
+            {
+                scenes = new[] { "Assets/MasterServerToolkit/Demos/BasicRoomsAndLobbies/Scenes/Master/Master.unity" },
+                locationPathName = Path.Combine(buildFolder, "MasterAndSpawner.exe"),
+                target = BuildTarget.StandaloneWindows64,
+                options = BuildOptions.EnableHeadlessMode | BuildOptions.ShowBuiltPlayer | BuildOptions.Development
+            };
+
+            BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+            BuildSummary summary = report.summary;
+
+            if (summary.result == BuildResult.Succeeded)
+            {
+                MstProperties properties = new MstProperties();
+                properties.Add(Mst.Args.Names.StartMaster, true);
+                properties.Add(Mst.Args.Names.StartSpawner, true);
+                properties.Add(Mst.Args.Names.StartClientConnection, true);
+                properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
+                properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
+                properties.Add(Mst.Args.Names.RoomExecutablePath, roomExePath);
+
+                File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
+
+                Debug.Log("Master Server build succeeded: " + (summary.totalSize / 1024) + " kb");
+            }
+
+            if (summary.result == BuildResult.Failed)
+            {
+                Debug.Log("Master Server build failed");
+            }
+        }
+
         [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Spawner")]
         private static void BuildSpawnerForWindows()
         {

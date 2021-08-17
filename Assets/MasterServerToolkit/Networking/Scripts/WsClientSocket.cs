@@ -69,7 +69,7 @@ namespace MasterServerToolkit.Networking
                     if (Status != ConnectionStatus.Connected)
                     {
                         Status = ConnectionStatus.Connected;
-                        MstTimer.Instance.StartCoroutine(_peer.SendDelayedMessages());
+                        _peer.SendDelayedMessages();
 
                         if (fireEvent)
                             OnConnectedEvent?.Invoke();
@@ -286,11 +286,11 @@ namespace MasterServerToolkit.Networking
 
             if (UseSsl)
             {
-                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{MstApplicationConfig.Instance.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{MstApplicationConfig.Singleton.ApplicationKey}"));
             }
             else
             {
-                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/app/{MstApplicationConfig.Instance.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/app/{MstApplicationConfig.Singleton.ApplicationKey}"));
             }
 
             _peer = new WsClientPeer(webSocket);
@@ -298,10 +298,10 @@ namespace MasterServerToolkit.Networking
 
             Peer = _peer;
 
-            MstUpdateRunner.Instance.Add(this);
+            MstUpdateRunner.Singleton.Add(this);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-            MstTimer.Instance.StartCoroutine(webSocket.Connect());
+            MstTimer.Singleton.StartCoroutine(webSocket.Connect());
 #else
             webSocket.Connect();
 #endif
@@ -310,7 +310,7 @@ namespace MasterServerToolkit.Networking
 
         public void Disconnect(bool fireEvent = true)
         {
-            MstUpdateRunner.Instance.Remove(this);
+            MstUpdateRunner.Singleton.Remove(this);
 
             if (webSocket != null)
             {
