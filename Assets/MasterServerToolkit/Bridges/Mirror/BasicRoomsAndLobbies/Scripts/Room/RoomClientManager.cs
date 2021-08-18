@@ -73,9 +73,14 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
             // Start client
             if (!NetworkClient.isConnected)
+            {
                 NetworkManager.singleton.StartClient();
+            }
             else
+            {
                 logger.Warn($"You have already joined a room at {access.RoomIp}:{access.RoomPort}");
+                NetworkManager.singleton.OnClientConnect(NetworkClient.connection);
+            }
         }
 
         /// <summary>
@@ -146,11 +151,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             },
             () =>
             {
-                if (!ClientScene.ready) ClientScene.Ready(NetworkClient.connection);
+                if (!NetworkClient.ready) NetworkClient.Ready();
 
                 if (RoomNetworkManager.autoCreatePlayer)
                 {
-                    ClientScene.AddPlayer(NetworkClient.connection);
+                    NetworkClient.AddPlayer();
                 }
             });
         }

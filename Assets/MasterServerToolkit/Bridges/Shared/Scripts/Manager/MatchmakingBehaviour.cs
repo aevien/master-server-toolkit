@@ -62,9 +62,10 @@ namespace MasterServerToolkit.Games
         /// Tries to get access to room
         /// </summary>
         /// <param name="gameInfo"></param>
-        protected virtual void GetAccess(GameInfoPacket gameInfo)
+        /// <param name="password"></param>
+        protected virtual void GetAccess(GameInfoPacket gameInfo, string password = "")
         {
-            Mst.Client.Rooms.GetAccess(gameInfo.Id, (access, error) =>
+            Mst.Client.Rooms.GetAccess(gameInfo.Id, password, (access, error) =>
             {
                 if (!string.IsNullOrEmpty(error))
                 {
@@ -159,7 +160,11 @@ namespace MasterServerToolkit.Games
                 Mst.Events.Invoke(MstEventKeys.showPasswordDialogBox,
                     new PasswordInputDialoxBoxEventMessage("Room is required the password. Please enter room password below", () =>
                     {
-                        GetAccess(gameInfo);
+                        // Get password if was set
+                        string password = Mst.Options.AsString(MstDictKeys.ROOM_PASSWORD, "");
+
+                        // Get access with password
+                        GetAccess(gameInfo, password);
                     }));
             }
             else

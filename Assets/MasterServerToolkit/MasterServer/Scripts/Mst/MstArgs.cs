@@ -242,7 +242,6 @@ namespace MasterServerToolkit.MasterServer
                         newArgs.Add(kvp[1]);
                     }
                 }
-<<<<<<< HEAD
             }
 
             _args = newArgs.ToArray();
@@ -283,46 +282,11 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return path;
-=======
-            }
-
-            _args = newArgs.ToArray();
->>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
         }
 
         /// <summary>
         /// 
         /// </summary>
-<<<<<<< HEAD
-=======
-        /// <param name="rootPath"></param>
-        /// <returns></returns>
-        public string AppConfigFile(string rootPath = "")
-        {
-            string path;
-
-            if (string.IsNullOrEmpty(rootPath))
-            {
-                path = Path.Combine(Directory.GetCurrentDirectory(), "application.cfg");
-            }
-            else
-            {
-                path = Path.Combine(rootPath, "application.cfg");
-            }
-
-            if (!File.Exists(path))
-            {
-                using var file = File.Create(path);
-                file.Close();
-            }
-
-            return path;
-        } 
-
-        /// <summary>
-        /// 
-        /// </summary>
->>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
         /// <returns></returns>
         public override string ToString()
         {

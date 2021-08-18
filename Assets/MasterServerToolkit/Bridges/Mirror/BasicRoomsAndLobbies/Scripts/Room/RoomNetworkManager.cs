@@ -113,7 +113,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
             logger.Info($"Starting Room Server: {networkAddress}:{roomServerManager.RoomOptions.RoomPort}");
 
-            StartServer();
+            StartHost();
         }
 
         public void StopRoomServer()
@@ -196,8 +196,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
         public override void OnClientConnect(NetworkConnection conn)
         {
-            logger.Info($"You have joined a room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
-            OnConnectedEvent?.Invoke(conn);
+            if (Mst.Client.Rooms.HasAccess)
+            {
+                logger.Info($"You have joined a room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
+                OnConnectedEvent?.Invoke(conn);
+            }
         }
 
         public override void OnClientDisconnect(NetworkConnection conn)

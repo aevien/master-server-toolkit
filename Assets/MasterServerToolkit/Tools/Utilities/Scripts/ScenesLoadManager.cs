@@ -39,6 +39,9 @@ namespace MasterServerToolkit.Utils
             else
             {
                 AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
+
+                if(asyncOperation == null) yield return null;
+
                 asyncOperation.completed += (op) => {
                     onLoaded?.Invoke();
                 };

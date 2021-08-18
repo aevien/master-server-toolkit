@@ -274,9 +274,12 @@ namespace MasterServerToolkit.UI
 
         private void SetCanvasActive(bool active)
         {
-            canvasGroup.interactable = active;
-            canvasGroup.blocksRaycasts = active;
-            canvasGroup.alpha = active ? 1f : 0f;
+            if (canvasGroup)
+            {
+                canvasGroup.interactable = active;
+                canvasGroup.blocksRaycasts = active;
+                canvasGroup.alpha = active ? 1f : 0f;
+            }
         }
 
         private void NotifyComponentsOnShow(bool show)

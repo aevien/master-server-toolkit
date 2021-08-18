@@ -115,10 +115,6 @@ namespace MasterServerToolkit.MasterServer
             // If we got system exception
             catch (MstMessageHandlerException e)
             {
-<<<<<<< HEAD
-=======
-                logger.Error(e.Message);
->>>>>>> 186835a1d7ace0ad03adfd05a27888e21c6c371f
                 message.Respond(e.Message, e.Status);
             }
             // If we got another exception
