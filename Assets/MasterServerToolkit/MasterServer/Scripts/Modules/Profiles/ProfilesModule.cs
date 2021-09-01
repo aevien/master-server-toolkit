@@ -150,8 +150,8 @@ namespace MasterServerToolkit.MasterServer
 
             // Games dependency setup
             server.RegisterMessageHandler((short)MstMessageCodes.ServerProfileRequest, GameServerProfileRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.UpdateServerProfile, ProfileUpdateHandler);
             server.RegisterMessageHandler((short)MstMessageCodes.ClientProfileRequest, ClientProfileRequestHandler);
+            server.RegisterMessageHandler((short)MstMessageCodes.UpdateServerProfile, ProfileUpdateHandler);
         }
 
         public override MstProperties Info()

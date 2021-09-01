@@ -31,6 +31,13 @@ namespace MasterServerToolkit.Bridges.LiteDB
             }
         }
 
+        private void OnDestroy()
+        {
+#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
+            accountsAccessor?.Dispose();
+#endif
+        }
+
         public override void CreateAccessors()
         {
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR

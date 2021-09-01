@@ -123,7 +123,7 @@ namespace MasterServerToolkit.MasterServer
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, stream))
                 {
                     // Write count
-                    writer.Write(Properties.Count);
+                    writer.Write(PropertyCount);
 
                     foreach (var value in Properties)
                     {

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 namespace MasterServerToolkit.Bridges.LiteDB
 {
-    public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor
+    public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor, IDisposable
     {
         private ILiteCollection<AccountInfoLiteDb> accountsCollection;
         private ILiteCollection<PasswordResetDataLiteDb> resetCodesCollection;
@@ -18,11 +18,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
         {
             Logs.Info($"Create {database} database accessor");
             this.database = new LiteDatabase($"{database}.db");
-        }
-
-        ~AccountsDatabaseAccessor()
-        {
-            database?.Dispose();
         }
 
         public void InitCollections()
@@ -251,6 +246,11 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public Task<IAccountInfoData> GetAccountByPhoneNumberAsync(string phoneNumber)
         {
             throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            database?.Dispose();
         }
     }
 }

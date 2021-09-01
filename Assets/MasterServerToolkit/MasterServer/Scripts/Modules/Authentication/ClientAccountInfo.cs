@@ -13,6 +13,9 @@ namespace MasterServerToolkit.MasterServer
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string Facebook { get; set; }
+        public string Google { get; set; }
+        public string Apple { get; set; }
+        public DateTime LastLogin { get; set; }
         public string Token { get; set; }
         public bool IsAdmin { get; set; }
         public bool IsGuest { get; set; }
@@ -20,7 +23,8 @@ namespace MasterServerToolkit.MasterServer
         public MstProperties Properties { get; set; }
         public bool IsDirty { get; private set; }
 
-        event Action<ClientAccountInfo> OnChangedEvent;
+        public event Action<ClientAccountInfo> OnChangedEvent;
+
         public ClientAccountInfo()
         {
             Id = string.Empty;
@@ -29,6 +33,9 @@ namespace MasterServerToolkit.MasterServer
             Email = string.Empty;
             PhoneNumber = string.Empty;
             Facebook = string.Empty;
+            Google = string.Empty;
+            Apple = string.Empty;
+            LastLogin = DateTime.Now;
             Token = string.Empty;
             IsAdmin = false;
             IsGuest = true;
@@ -50,6 +57,9 @@ namespace MasterServerToolkit.MasterServer
             options.Add("Email", Email);
             options.Add("PhoneNumber", PhoneNumber);
             options.Add("Facebook", Facebook);
+            options.Add("Google", Google);
+            options.Add("Apple", Apple);
+            options.Add("LastLogin", LastLogin.ToString());
             options.Add("Token", Token);
             options.Add("IsAdmin", IsAdmin);
             options.Add("IsGuest", IsGuest);

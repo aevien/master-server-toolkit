@@ -133,7 +133,8 @@ namespace MasterServerToolkit.MasterServer
         {
             if (string.IsNullOrEmpty(MstApplicationConfig.Singleton.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
 
-            Application.targetFrameRate = Mst.Args.AsInt(Mst.Args.Names.TargetFrameRate, targetFrameRate);
+            if (!Mst.Runtime.IsEditor)
+                Application.targetFrameRate = Mst.Args.AsInt(Mst.Args.Names.TargetFrameRate, targetFrameRate);
 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;

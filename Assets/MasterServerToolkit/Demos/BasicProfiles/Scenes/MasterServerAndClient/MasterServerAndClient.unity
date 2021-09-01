@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -3274,9 +3274,21 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1829793491}
     m_Modifications:
+    - target: {fileID: 1057911088694721084, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1619059023968774698, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Name
       value: silverUIProperty
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useValue
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useProgress
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1619059023968774701, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Pivot.x
@@ -3392,7 +3404,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_text
-      value: 100
+      value: Lable
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_fontSize
@@ -3404,7 +3416,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textAlignment
-      value: 514
+      value: 65535
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_enableAutoSizing
@@ -3423,6 +3435,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_HorizontalAlignment
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textInfo.spaceCount
       value: 0
       objectReference: {fileID: 0}
@@ -3437,6 +3453,10 @@ PrefabInstance:
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Pivot.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3456,6 +3476,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4545558867564930610, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8546331197268698031, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -4440,9 +4468,21 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1829793491}
     m_Modifications:
+    - target: {fileID: 1057911088694721084, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1619059023968774698, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Name
       value: goldUIProperty
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useValue
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useProgress
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1619059023968774701, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Pivot.x
@@ -4558,7 +4598,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_text
-      value: 100
+      value: Lable
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_fontSize
@@ -4570,7 +4610,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textAlignment
-      value: 514
+      value: 65535
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_enableAutoSizing
@@ -4589,6 +4629,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_HorizontalAlignment
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textInfo.spaceCount
       value: 0
       objectReference: {fileID: 0}
@@ -4603,6 +4647,10 @@ PrefabInstance:
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Pivot.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4622,6 +4670,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4545558867564930610, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8546331197268698031, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -6037,9 +6093,21 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1829793491}
     m_Modifications:
+    - target: {fileID: 1057911088694721084, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1619059023968774698, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Name
       value: bronzeUIProperty
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useValue
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useProgress
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1619059023968774701, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Pivot.x
@@ -6155,7 +6223,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_text
-      value: 100
+      value: Lable
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_fontSize
@@ -6167,7 +6235,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textAlignment
-      value: 514
+      value: 65535
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_enableAutoSizing
@@ -6186,6 +6254,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_HorizontalAlignment
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textInfo.spaceCount
       value: 0
       objectReference: {fileID: 0}
@@ -6200,6 +6272,10 @@ PrefabInstance:
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Pivot.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_AnchorMax.y
@@ -6219,6 +6295,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274847, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4545558867564930610, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8546331197268698031, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -7297,6 +7381,18 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useValue
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: useProgress
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059023968774700, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: currentValue
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1619059023968774701, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -7399,7 +7495,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_text
-      value: Player Name
+      value: Lable
+      objectReference: {fileID: 0}
+    - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_fontSize
+      value: 31.3
       objectReference: {fileID: 0}
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textInfo.lineCount
@@ -7420,6 +7520,18 @@ PrefabInstance:
     - target: {fileID: 1619059024217274846, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
       propertyPath: m_textInfo.characterCount
       value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 3516627525603313573, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_fontSize
+      value: 31.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4545558867564930610, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8546331197268698031, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6bf2a0fbdb981454caa89e47939f7d32, type: 3}

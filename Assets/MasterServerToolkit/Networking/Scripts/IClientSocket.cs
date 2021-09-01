@@ -32,7 +32,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Whether or not to use secure connection
         /// </summary>
-        bool UseSsl { get; set; }
+        bool UseSecure { get; set; }
 
         /// <summary>
         /// Event, which is invoked when we successfully 

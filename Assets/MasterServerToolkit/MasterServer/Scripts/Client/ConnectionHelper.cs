@@ -198,7 +198,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!Connection.IsConnected)
                 {
-                    Connection.UseSsl = MstApplicationConfig.Singleton.UseSecure;
+                    Connection.UseSecure = MstApplicationConfig.Singleton.UseSecure;
                     Connection.Connect(serverIp, serverPort);
                 }
 

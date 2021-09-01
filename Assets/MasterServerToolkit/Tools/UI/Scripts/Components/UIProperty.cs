@@ -8,7 +8,7 @@ namespace Aevien.UI
 {
     public class UIProperty : MonoBehaviour
     {
-        enum UIPropertyValueFormat { F0, F1, F2, F3, F4, F5}
+        public enum UIPropertyValueFormat { F0, F1, F2, F3, F4, F5}
 
         #region INSPECTOR
 
@@ -26,20 +26,23 @@ namespace Aevien.UI
         protected Color maxColor = Color.green;
 
         [Header("Settings"), SerializeField]
-        private float startValue = 0f;
+        protected float startValue = 0f;
         [SerializeField]
-        private float currentValue = 50f;
+        protected float currentValue = 50f;
         [SerializeField]
-        private float maxValue = 100f;
+        protected float maxValue = 100f;
         [SerializeField, Range(1f, 10f)]
-        private float progressSpeed = 1f;
+        protected float progressSpeed = 1f;
         [SerializeField]
-        private bool smoothValue = true;
+        protected bool smoothValue = true;
         [SerializeField]
-        private string lable = "";
+        protected string lable = "";
         [SerializeField]
-        private UIPropertyValueFormat formatValue = UIPropertyValueFormat.F1;
-
+        protected UIPropertyValueFormat formatValue = UIPropertyValueFormat.F1;
+        [SerializeField]
+        protected bool useValue = true;
+        [SerializeField]
+        protected bool useProgress = true;
 
         #endregion
 
@@ -89,18 +92,30 @@ namespace Aevien.UI
             {
                 Lable = lable;
             }
+
+            if (valueText)
+            {
+                valueText.gameObject.SetActive(useValue);
+            }
+
+            if (progressBar)
+            {
+                progressBar.gameObject.SetActive(useProgress);
+                SetValues(startValue, currentValue, maxValue);
+                Update();
+            }
         }
 
         private void Update()
         {
             if (startValue < maxValue)
             {
-                if (smoothValue)
+                if (smoothValue && Application.isPlaying)
                     currentProgressValue = Mathf.Lerp(currentProgressValue, targetProgressValue, Time.deltaTime * progressSpeed);
                 else
                     currentProgressValue = targetProgressValue;
 
-                if (progressBar)
+                if (progressBar && progressBar.isActiveAndEnabled)
                 {
                     progressBar.fillAmount = currentProgressValue;
                     progressBar.color = Color.Lerp(startColor, maxColor, currentProgressValue);

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.LiteDB
 {
-    public class ProfilesDatabaseAccessor : IProfilesDatabaseAccessor
+    public class ProfilesDatabaseAccessor : IProfilesDatabaseAccessor, IDisposable
     {
         private ILiteCollection<ProfileInfoData> profiles;
         private readonly ILiteDatabase database;
@@ -15,11 +15,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public ProfilesDatabaseAccessor(string database)
         {
             this.database = new LiteDatabase($"{database}.db");
-        }
-
-        ~ProfilesDatabaseAccessor()
-        {
-            database?.Dispose();
         }
 
         public void InitCollections()
@@ -43,6 +38,11 @@ namespace MasterServerToolkit.Bridges.LiteDB
             {
                 UnityEngine.Debug.LogError(e);
             }
+        }
+
+        public void Dispose()
+        {
+            database?.Dispose();
         }
 
         /// <summary>

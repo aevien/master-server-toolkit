@@ -28,20 +28,8 @@ namespace MasterServerToolkit.Networking
         /// Invokes before server frame is updated
         /// </summary>
         public event Action OnUpdateEvent;
-
-        /// <summary>
-        /// Invoked, when a client connects to this socket
-        /// </summary>
         public event PeerActionHandler OnPeerConnectedEvent;
-
-        /// <summary>
-        /// Invoked, when client disconnects from this socket
-        /// </summary>
         public event PeerActionHandler OnPeerDisconnectedEvent;
-
-        /// <summary>
-        /// Invokes before server starts
-        /// </summary>
         public event Action<IServerSocket> OnBeforeServerStart;
 
         public WsServerSocket()

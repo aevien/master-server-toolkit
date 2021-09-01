@@ -55,7 +55,7 @@ namespace MasterServerToolkit.MasterServer
         protected Mailer mailer;
 
         [SerializeField, TextArea(3, 10)]
-        public string emailAddressValidationTemplate = @"^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$";
+        protected string emailAddressValidationTemplate = @"^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$";
 
         [Header("Generic"), SerializeField, Tooltip("Min number of characters the service code must contain")]
         protected int serviceCodeMinChars = 6;
@@ -189,7 +189,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual string GenerateGuestUsername()
         {
             string prefix = string.IsNullOrEmpty(guestPrefix) ? "user_" : guestPrefix;
-            return $"{prefix}{Mst.Helper.CreateID_16()}";
+            return $"{prefix}{Mst.Helper.CreateFriendlyId()}";
         }
 
         /// <summary>

@@ -141,6 +141,29 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="time"></param>
+        /// <param name="callback"></param>
+        public static void WaitForRealtimeSeconds(float time, Action callback)
+        {
+            if (Singleton)
+                Singleton.StartCoroutine(Singleton.StartWaitingForRealtimeSeconds(time, callback));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        private IEnumerator StartWaitingForRealtimeSeconds(float time, Action callback)
+        {
+            yield return new WaitForSecondsRealtime(time);
+            callback.Invoke();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="callback"></param>
         public static void WaitForEndOfFrame(Action callback)
         {

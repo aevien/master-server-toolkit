@@ -18,6 +18,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string Facebook { get; set; }
+        public string Google { get; set; }
+        public string Apple { get; set; }
         public string Token { get; set; }
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
@@ -25,6 +27,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public bool IsGuest { get; set; }
         public bool IsEmailConfirmed { get; set; }
         public Dictionary<string, string> Properties { get; set; }
+        public DateTime LastLogin { get; set; }
 
         public event Action<IAccountInfoData> OnChangedEvent;
 
@@ -35,6 +38,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
             Email = string.Empty;
             PhoneNumber = string.Empty;
             Facebook = string.Empty;
+            Google = string.Empty;
+            Apple = string.Empty;
             Token = string.Empty;
             IsAdmin = false;
             IsGuest = true;
@@ -81,7 +86,9 @@ namespace MasterServerToolkit.Bridges.MongoDB
             properties.Set("Password", Password);
             properties.Set("Email", Email);
             properties.Set("PhoneNumber", PhoneNumber);
-            properties.Set("FacebookId", Facebook);
+            properties.Set("Facebook", Facebook);
+            properties.Set("Google", Google);
+            properties.Set("Apple", Apple);
             properties.Set("IsAdmin", IsAdmin);
             properties.Set("IsGuest", IsGuest);
             properties.Set("IsEmailConfirmed", IsEmailConfirmed);

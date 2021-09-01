@@ -193,8 +193,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
         {
-            var rooms = filters != null && filters.Has(MstDictKeys.ROOM_ID) 
-                ? roomsList.Values.Where(r => (r.Players.ContainsKey(peer.Id) || r.Options.IsPublic) && r.RoomId == filters.AsInt(MstDictKeys.ROOM_ID)) 
+            var rooms = filters != null && filters.Has(MstDictKeys.ROOM_ID)
+                ? roomsList.Values.Where(r => (r.Players.ContainsKey(peer.Id) || r.Options.IsPublic) && r.RoomId == filters.AsInt(MstDictKeys.ROOM_ID))
                 : roomsList.Values.Where(r => r.Options.IsPublic);
             var games = new List<GameInfoPacket>();
 
@@ -240,7 +240,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public RegisteredRoom GetRoom(int roomId)
         {
-            return roomsList[roomId];
+            roomsList.TryGetValue(roomId, out RegisteredRoom r);
+            return r;
         }
 
         /// <summary>
@@ -258,7 +259,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomId"></param>
         public IEnumerable<IPeer> GetPlayersOfRoom(int roomId)
         {
-            return roomsList[roomId].Players.Values;
+            var r = GetRoom(roomId);
+            return r?.Players.Values;
         }
 
         #region Message Handlers

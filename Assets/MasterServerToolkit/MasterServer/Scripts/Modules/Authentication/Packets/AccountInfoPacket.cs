@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Networking;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -12,6 +13,9 @@ namespace MasterServerToolkit.MasterServer
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string Facebook { get; set; }
+        public string Google { get; set; }
+        public string Apple { get; set; }
+        public DateTime LastLogin { get; set; }
         public string Token { get; set; }
         public bool IsAdmin { get; set; }
         public bool IsGuest { get; set; }
@@ -27,6 +31,10 @@ namespace MasterServerToolkit.MasterServer
             Email = account.Email ?? string.Empty;
             PhoneNumber = account.PhoneNumber ?? string.Empty;
             Facebook = account.Facebook ?? string.Empty;
+            Google = account.Google ?? string.Empty;
+            Apple = account.Apple ?? string.Empty;
+            Facebook = account.Facebook ?? string.Empty;
+            LastLogin = account.LastLogin;
             Token = account.Token ?? string.Empty;
             IsAdmin = account.IsAdmin;
             IsGuest = account.IsGuest;
@@ -41,6 +49,9 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(Email);
             writer.Write(PhoneNumber);
             writer.Write(Facebook);
+            writer.Write(Google);
+            writer.Write(Apple);
+            writer.Write(LastLogin);
             writer.Write(Token);
             writer.Write(IsAdmin);
             writer.Write(IsGuest);
@@ -55,6 +66,9 @@ namespace MasterServerToolkit.MasterServer
             Email = reader.ReadString();
             PhoneNumber = reader.ReadString();
             Facebook = reader.ReadString();
+            Google = reader.ReadString();
+            Apple = reader.ReadString();
+            LastLogin = reader.ReadDateTime();
             Token = reader.ReadString();
             IsAdmin = reader.ReadBoolean();
             IsGuest = reader.ReadBoolean();
@@ -70,6 +84,9 @@ namespace MasterServerToolkit.MasterServer
             options.Add("Email", Email);
             options.Add("PhoneNumber", PhoneNumber);
             options.Add("Facebook", Facebook);
+            options.Add("Google", Google);
+            options.Add("Apple", Apple);
+            options.Add("LastAuth", LastLogin.ToString());
             options.Add("Token", Token);
             options.Add("IsAdmin", IsAdmin);
             options.Add("IsGuest", IsGuest);

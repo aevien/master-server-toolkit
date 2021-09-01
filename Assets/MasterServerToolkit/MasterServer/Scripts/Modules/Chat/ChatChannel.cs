@@ -63,7 +63,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (user.Username != newUser.Username)
                 {
-                    user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
+                    user.Peer.SendMessage(msg, DeliveryMethod.ReliableFragmented);
                 }
             }
         }
@@ -81,7 +81,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (user.Username != removedUser.Username)
                 {
-                    user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
+                    user.Peer.SendMessage(msg, DeliveryMethod.ReliableFragmented);
                 }
             }
         }
@@ -148,7 +148,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var user in channelUsers.Values)
             {
-                user.Peer.SendMessage(msg, DeliveryMethod.Reliable);
+                user.Peer.SendMessage(msg, DeliveryMethod.ReliableFragmentedSequenced);
             }
         }
     }

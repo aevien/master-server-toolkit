@@ -119,6 +119,16 @@ namespace MasterServerToolkit.MasterServer
             Connection.AddDisconnectionListener(OnDisconnectedFromMasterEventHandler, false);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        protected virtual ObservableServerProfile ProfileFactory(string userId)
+        {
+            return new ObservableServerProfile(userId);
+        }
+
         private void OnConnectedToMasterEventHandler()
         {
             logger.Info("Room server connected to master server as client");
@@ -203,6 +213,8 @@ namespace MasterServerToolkit.MasterServer
 
                     // Dispose profile
                     player.Profile?.Dispose();
+
+                    OnPlayerLeftRoom(player);
 
                     // Inform subscribers about this bad guy
                     OnPlayerLeftRoomEvent?.Invoke(player);
@@ -472,16 +484,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// This will create room server player profile with all its properties
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        protected virtual ObservableServerProfile ProfileFactory(string userId)
-        {
-            return new ObservableServerProfile(userId);
-        }
-
-        /// <summary>
         /// Finalize player joining to server room
         /// </summary>
         /// <param name="conn"></param>
@@ -492,10 +494,24 @@ namespace MasterServerToolkit.MasterServer
                 RoomPlayer player = playersByRoomPeerId[roomPeerId];
                 logger.Debug($"Client {roomPeerId} has become a player of this room. Congratulations to {player.Username}");
 
+                OnPlayerJoinedRoom(player);
+
                 // Inform subscribers about this player
                 OnPlayerJoinedRoomEvent?.Invoke(player);
             }
         }
+
+        /// <summary>
+        /// Invoked when player joins a room
+        /// </summary>
+        /// <param name="player"></param>
+        protected virtual void OnPlayerJoinedRoom(RoomPlayer player) { }
+
+        /// <summary>
+        /// Invoked when player leaves a room
+        /// </summary>
+        /// <param name="player"></param>
+        protected virtual void OnPlayerLeftRoom(RoomPlayer player) { }
 
         /// <summary>
         /// Loads player profile

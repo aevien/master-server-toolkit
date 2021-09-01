@@ -36,7 +36,7 @@ namespace MasterServerToolkit.Networking
             }
         }
 
-        public bool UseSsl { get; set; }
+        public bool UseSecure { get; set; }
 
         public event Action OnConnectedEvent;
         public event Action OnDisconnectedEvent;
@@ -284,7 +284,7 @@ namespace MasterServerToolkit.Networking
 
             SetStatus(ConnectionStatus.Connecting);
 
-            if (UseSsl)
+            if (UseSecure)
             {
                 webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{MstApplicationConfig.Singleton.ApplicationKey}"));
             }

@@ -1,7 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -333,6 +332,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SignIn(MstProperties data, SignInCallback callback, IClientSocket connection)
         {
+            Logs.Debug("Signing in...");
+
             if (!connection.IsConnected)
             {
                 callback.Invoke(null, "Not connected to server");
@@ -349,7 +350,6 @@ namespace MasterServerToolkit.MasterServer
                 {
                     IsNowSigningIn = false;
                     callback.Invoke(null, "Failed to log in due to security issues");
-                    
                     return;
                 }
 
@@ -369,7 +369,7 @@ namespace MasterServerToolkit.MasterServer
 
                     // Parse account info
                     var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
-
+            
                     AccountInfo = new ClientAccountInfo()
                     {
                         Id = accountInfoPacket.Id,
@@ -377,6 +377,8 @@ namespace MasterServerToolkit.MasterServer
                         Email = accountInfoPacket.Email,
                         PhoneNumber = accountInfoPacket.PhoneNumber,
                         Facebook = accountInfoPacket.Facebook,
+                        Google = accountInfoPacket.Google,
+                        Apple = accountInfoPacket.Apple,
                         Token = accountInfoPacket.Token,
                         IsAdmin = accountInfoPacket.IsAdmin,
                         IsGuest = accountInfoPacket.IsGuest,
@@ -396,11 +398,8 @@ namespace MasterServerToolkit.MasterServer
 
                     IsSignedIn = true;
 
-                    Mst.Concurrency.RunInMainThread(() =>
-                    {
-                        callback.Invoke(AccountInfo, null);
-                        OnSignedInEvent?.Invoke();
-                    });
+                    callback.Invoke(AccountInfo, null);
+                    OnSignedInEvent?.Invoke();
                 });
             }, connection);
         }

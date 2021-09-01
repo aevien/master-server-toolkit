@@ -42,7 +42,7 @@ namespace MasterServerToolkit.Networking
 
             MstTimer.Singleton.OnTickEvent += HandleAckDisposalTick;
 
-            timeoutMessage = new IncomingMessage(-1, 0, "Time out".ToBytes(), DeliveryMethod.Reliable, this)
+            timeoutMessage = new IncomingMessage(-1, 0, "Time out".ToBytes(), DeliveryMethod.ReliableFragmentedSequenced, this)
             {
                 Status = ResponseStatus.Timeout
             };
@@ -87,7 +87,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         public void SendMessage(short opCode)
         {
-            SendMessage(MessageHelper.Create(opCode), DeliveryMethod.Reliable);
+            SendMessage(MessageHelper.Create(opCode), DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="packet"></param>
         public void SendMessage(short opCode, ISerializablePacket packet)
         {
-            SendMessage(MessageHelper.Create(opCode, packet), DeliveryMethod.Reliable);
+            SendMessage(MessageHelper.Create(opCode, packet), DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace MasterServerToolkit.Networking
         public void SendMessage(short opCode, ISerializablePacket packet, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, packet.ToBytes());
-            SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.Reliable);
+            SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         public void SendMessage(short opCode, byte[] data)
         {
-            SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.Reliable);
+            SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         public void SendMessage(short opCode, string data)
         {
-            SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.Reliable);
+            SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         public void SendMessage(short opCode, int data)
         {
-            SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.Reliable);
+            SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -257,7 +257,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="message"></param>
         public void SendMessage(IOutgoingMessage message)
         {
-            SendMessage(message, DeliveryMethod.Reliable);
+            SendMessage(message, DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -280,7 +280,7 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public int SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
         {
-            return SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.Reliable);
+            return SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>

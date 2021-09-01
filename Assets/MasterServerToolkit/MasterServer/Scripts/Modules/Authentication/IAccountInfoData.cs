@@ -14,7 +14,10 @@ namespace MasterServerToolkit.MasterServer
         string Email { get; set; }
         string PhoneNumber { get; set; }
         string Facebook { get; set; }
+        string Google { get; set; }
+        string Apple { get; set; }
         string Token { get; set; }
+        DateTime LastLogin { get; set; }
         bool IsAdmin { get; set; }
         bool IsGuest { get; set; }
         string DeviceId { get; set; }

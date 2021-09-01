@@ -74,6 +74,16 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// Creates friendly unique string. There may be duplicates of the identifier
+        /// </summary>
+        /// <returns></returns>
+        public string CreateFriendlyId()
+        {
+            string id = Guid.NewGuid().ToString("N").Substring(0, 10);
+            return $"{id.Substring(0, 3)}-{id.Substring(3, 3)}-{id.Substring(6, 4)}";
+        }
+
+        /// <summary>
         /// Creates unique ID
         /// </summary>
         /// <returns></returns>
@@ -122,8 +132,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string ColorToHex(Color32 color)
         {
-            string hex = color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2") + color.a.ToString("X2");
-            return hex;
+            return color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2") + color.a.ToString("X2");
         }
 
         /// <summary>
