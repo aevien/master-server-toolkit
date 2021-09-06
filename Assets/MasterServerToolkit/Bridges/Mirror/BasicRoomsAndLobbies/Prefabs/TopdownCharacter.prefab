@@ -105,7 +105,7 @@ MonoBehaviour:
   resetCameraAfterDestroy: 1
   rotationSencitivity: 3
   collisionDstanceSmoothTime: 5
-  useCollisionDetection: 1
+  useCollisionDetection: 0
   lookAtPoint: {x: 0, y: 0, z: 0}
   followSmoothTime: 3
   minDistance: 5

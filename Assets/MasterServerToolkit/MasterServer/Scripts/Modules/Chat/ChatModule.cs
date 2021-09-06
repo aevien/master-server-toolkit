@@ -12,6 +12,8 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ChatModule : BaseServerModule
     {
+        #region INSPECTOR
+
         /// <summary>
         /// If true, chat module will subscribe to auth module, and automatically setup chat users when they log in
         /// </summary>
@@ -51,6 +53,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         [SerializeField, Tooltip("Max number of character a channel name must consist of")]
         public int maxChannelNameLength = 25;
+
+        #endregion
 
         /// <summary>
         /// Censor module for bad words checking :)
@@ -110,7 +114,7 @@ namespace MasterServerToolkit.MasterServer
             }
             else if (useAuthModule && !authModule)
             {
-                logger.Error("Chat module was set to use Auth module, but Auth module was not found");
+                logger.Error($"{GetType().Name} was set to use {nameof(AuthModule)}, but {nameof(AuthModule)} was not found");
             }
         }
 

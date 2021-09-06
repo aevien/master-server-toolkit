@@ -86,7 +86,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     foreach (var handler in handlers.Values)
                     {
-                        Connection.RemoveHandler(handler);
+                        Connection.RemoveMessageHandler(handler);
                     }
 
                     handlers.Clear();
@@ -104,7 +104,7 @@ namespace MasterServerToolkit.MasterServer
         public void SetHandler(IPacketHandler handler)
         {
             handlers[handler.OpCode] = handler;
-            Connection?.SetHandler(handler);
+            Connection?.RegisterMessageHandler(handler);
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void RemoveHandler(IPacketHandler handler)
         {
-            Connection?.RemoveHandler(handler);
+            Connection?.RemoveMessageHandler(handler);
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace MasterServerToolkit.MasterServer
             // Override packet handlers
             foreach (var packetHandler in handlers.Values)
             {
-                socket.SetHandler(packetHandler);
+                socket.RegisterMessageHandler(packetHandler);
             }
 
             Connection.OnStatusChangedEvent += OnConnectionStatusChanged;

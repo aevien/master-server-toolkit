@@ -68,10 +68,15 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler((short)MstMessageCodes.GetLobbyInfo, GetLobbyInfoMessageHandler);
         }
 
-        protected virtual bool CheckIfHasPermissionToCreate(IPeer peer)
+        /// <summary>
+        /// Checks if peer has permission to create lobby
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <returns></returns>
+        protected virtual bool HasPermissionToCreate(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-            return extension.PermissionLevel >= createLobbiesPermissionLevel;
+            return extension != null && extension.PermissionLevel >= createLobbiesPermissionLevel;
         }
 
         /// <summary>
@@ -159,7 +164,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void CreateLobbyHandle(IIncomingMessage message)
         {
             // We may need to check permission of requester
-            if (!CheckIfHasPermissionToCreate(message.Peer))
+            if (!HasPermissionToCreate(message.Peer))
             {
                 message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
                 return;

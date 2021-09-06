@@ -64,7 +64,7 @@ namespace MasterServerToolkit.Networking
                     server.Stop();
                 }
 
-                if (ip == "127.0.0.1" | ip == "localhost")
+                if (ip == "127.0.0.1".Trim() || ip == "localhost".Trim())
                 {
                     server = new WebSocketServer(port, UseSecure);
                 }

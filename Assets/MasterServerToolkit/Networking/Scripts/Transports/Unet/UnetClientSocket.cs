@@ -236,7 +236,7 @@ namespace MasterServerToolkit.Networking.Unet
         /// Adds a packet handler, which will be invoked when a message of
         /// specific operation code is received
         /// </summary>
-        public IPacketHandler SetHandler(IPacketHandler handler)
+        public IPacketHandler RegisterMessageHandler(IPacketHandler handler)
         {
             _handlers[handler.OpCode] = handler;
             return handler;
@@ -246,10 +246,10 @@ namespace MasterServerToolkit.Networking.Unet
         /// Adds a packet handler, which will be invoked when a message of
         /// specific operation code is received
         /// </summary>
-        public IPacketHandler SetHandler(short opCode, IncommingMessageHandler handlerMethod)
+        public IPacketHandler RegisterMessageHandler(short opCode, IncommingMessageHandler handlerMethod)
         {
             var handler = new PacketHandler(opCode, handlerMethod);
-            SetHandler(handler);
+            RegisterMessageHandler(handler);
             return handler;
         }
 
@@ -258,7 +258,7 @@ namespace MasterServerToolkit.Networking.Unet
         /// was used
         /// </summary>
         /// <param name="handler"></param>
-        public void RemoveHandler(IPacketHandler handler)
+        public void RemoveMessageHandler(IPacketHandler handler)
         {
             IPacketHandler previousHandler;
             _handlers.TryGetValue(handler.OpCode, out previousHandler);

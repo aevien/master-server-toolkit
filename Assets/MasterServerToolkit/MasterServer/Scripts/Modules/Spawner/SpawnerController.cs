@@ -71,8 +71,8 @@ namespace MasterServerToolkit.MasterServer
             };
 
             // Add static handlers to listen one message for all controllers
-            connection.SetHandler((short)MstMessageCodes.SpawnProcessRequest, SpawnProcessRequestHandler);
-            connection.SetHandler((short)MstMessageCodes.KillProcessRequest, KillProcessRequestHandler);
+            connection.RegisterMessageHandler((short)MstMessageCodes.SpawnProcessRequest, SpawnProcessRequestHandler);
+            connection.RegisterMessageHandler((short)MstMessageCodes.KillProcessRequest, KillProcessRequestHandler);
         }
 
         /// <summary>

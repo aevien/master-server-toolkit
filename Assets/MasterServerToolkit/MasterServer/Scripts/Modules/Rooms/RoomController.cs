@@ -79,7 +79,7 @@ namespace MasterServerToolkit.MasterServer
             Options = options;
 
             // Add handlers
-            connection.SetHandler((short)MstMessageCodes.ProvideRoomAccessCheck, ProvideRoomAccessCheckHandler);
+            connection.RegisterMessageHandler((short)MstMessageCodes.ProvideRoomAccessCheck, ProvideRoomAccessCheckHandler);
         }
 
         /// <summary>
@@ -199,6 +199,7 @@ namespace MasterServerToolkit.MasterServer
                 RoomId = RoomId,
                 RoomIp = Options.RoomIp,
                 RoomPort = Options.RoomPort,
+                RoomMaxConnections = Options.MaxConnections,
                 CustomOptions = Options.CustomOptions,
                 Token = Mst.Helper.CreateGuidString(),
                 SceneName = SceneManager.GetActiveScene().name

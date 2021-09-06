@@ -18,6 +18,8 @@ namespace MasterServerToolkit.MasterServer
 
         public MstProfilesClient Profiles { get; private set; }
 
+        public MstNotificationClient Notifications { get; private set; }
+
         public MstClient(IClientSocket connection) : base(connection)
         {
             Rooms = new MstRoomsClient(connection);
@@ -27,6 +29,7 @@ namespace MasterServerToolkit.MasterServer
             Chat = new MstChatClient(connection);
             Lobbies = new MstLobbiesClient(connection);
             Profiles = new MstProfilesClient(connection);
+            Notifications = new MstNotificationClient(connection);
         }
     }
 }

@@ -224,7 +224,7 @@ namespace MasterServerToolkit.MasterServer
                     logger.Debug($"Room server client {roomPeerId} left the room");
                 }
 
-                if(terminateRoomWhenLastPlayerQuits && playersByRoomPeerId.Count == 0)
+                if (terminateRoomWhenLastPlayerQuits && playersByRoomPeerId.Count == 0)
                 {
                     terminateRoomDelay = 0.1f;
                     StartCoroutine(TerminateRoomAfterDelay());
@@ -471,12 +471,12 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void CreateAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallback giveAccess)
         {
             // Use accessCheckOptions to check user that requested access to room
-
             giveAccess.Invoke(new RoomAccessPacket()
             {
                 RoomId = RoomController.RoomId,
                 RoomIp = RoomController.Options.RoomIp,
                 RoomPort = RoomController.Options.RoomPort,
+                RoomMaxConnections = RoomController.Options.MaxConnections,
                 CustomOptions = RoomController.Options.CustomOptions,
                 Token = Mst.Helper.CreateGuidString(),
                 SceneName = SceneManager.GetActiveScene().name
@@ -505,13 +505,31 @@ namespace MasterServerToolkit.MasterServer
         /// Invoked when player joins a room
         /// </summary>
         /// <param name="player"></param>
-        protected virtual void OnPlayerJoinedRoom(RoomPlayer player) { }
+        protected virtual void OnPlayerJoinedRoom(RoomPlayer player)
+        {
+            MstTimer.WaitForSeconds(2f, () =>
+            {
+                Mst.Server.Notifications.NotifyRecipients(player.MasterPeerId,
+                            $"Hi, <color=#B7E117FF>{player.Username}!</color>\nWelcome to \"{RoomOptions.Name}\" server", null);
+            });
+
+            Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
+                    new int[] { player.MasterPeerId },
+                    $"Player {player.Username} has just joined the room",
+                    null);
+        }
 
         /// <summary>
         /// Invoked when player leaves a room
         /// </summary>
         /// <param name="player"></param>
-        protected virtual void OnPlayerLeftRoom(RoomPlayer player) { }
+        protected virtual void OnPlayerLeftRoom(RoomPlayer player)
+        {
+            Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
+                    new int[] { player.MasterPeerId },
+                    $"Player {player.Username} has just left the room",
+                    null);
+        }
 
         /// <summary>
         /// Loads player profile

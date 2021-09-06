@@ -275,14 +275,18 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <returns></returns>
-        public List<string> GetRegions()
+        public List<RegionInfo> GetRegions()
         {
-            var list = new List<string>();
-            var regions = spawnersList.Values.Select(i => i.Options.Region);
-
-            foreach(string region in regions)
+            var list = new List<RegionInfo>();
+            var regions = spawnersList.Values.Select(i => new RegionInfo()
             {
-                if (!string.IsNullOrEmpty(region) && !list.Contains(region))
+                Name = i.Options.Region,
+                Ip = i.Options.MachineIp
+            });
+
+            foreach (var region in regions)
+            {
+                if (!list.Contains(region))
                 {
                     list.Add(region);
                 }
@@ -299,8 +303,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool HasCreationPermissions(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-
-            return extension.PermissionLevel >= createSpawnerPermissionLevel;
+            return extension != null && extension.PermissionLevel >= createSpawnerPermissionLevel;
         }
 
         protected virtual bool CanClientSpawn(IPeer peer, MstProperties options)

@@ -311,6 +311,10 @@ namespace MasterServerToolkit.MasterServer
             return lastPortTaken++;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="port"></param>
         public void ReleasePort(int port)
         {
             freePorts.Enqueue(port);

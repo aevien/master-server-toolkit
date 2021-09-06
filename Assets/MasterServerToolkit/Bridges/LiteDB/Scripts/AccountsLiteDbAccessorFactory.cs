@@ -4,16 +4,13 @@ using MasterServerToolkit.Utils;
 using System;
 using UnityEngine;
 
-#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
-#endif
-
 namespace MasterServerToolkit.Bridges.LiteDB
 {
     public class AccountsLiteDbAccessorFactory : DatabaseAccessorFactory
     {
         public HelpBox _header = new HelpBox()
         {
-            Text = "This script is a custom module, which sets up database accessors for the game"
+            Text = "This script is a factory, which sets up database accessors for the game"
         };
 
         [Header("Accounts DB Settings"), SerializeField]

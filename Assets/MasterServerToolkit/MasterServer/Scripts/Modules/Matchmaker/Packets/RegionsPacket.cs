@@ -5,15 +5,19 @@ namespace MasterServerToolkit.MasterServer
 {
     public class RegionsPacket : SerializablePacket
     {
-        public List<string> Regions = new List<string>();
+        public List<RegionInfo> Regions = new List<RegionInfo>();
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
             byte count = reader.ReadByte();
 
-            for(byte i = 0; i < count; i++)
+            for (byte i = 0; i < count; i++)
             {
-                Regions.Add(reader.ReadString());
+                Regions.Add(new RegionInfo()
+                {
+                    Name = reader.ReadString(),
+                    Ip = reader.ReadString(),
+                });
             }
         }
 
@@ -21,9 +25,10 @@ namespace MasterServerToolkit.MasterServer
         {
             writer.Write((byte)Regions.Count);
 
-            foreach(var region in Regions)
+            foreach (var region in Regions)
             {
-                writer.Write(region);
+                writer.Write(region.Name);
+                writer.Write(region.Ip);
             }
         }
     }

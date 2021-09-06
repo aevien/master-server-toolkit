@@ -4,6 +4,7 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -110,6 +111,9 @@ namespace MasterServerToolkit.Games
                 var gameRegionCol = Instantiate(uiColLablePrefab, listContainer, false);
                 gameRegionCol.Lable = "Region";
 
+                var pingRegionCol = Instantiate(uiColLablePrefab, listContainer, false);
+                pingRegionCol.Lable = "Ping";
+
                 var gamePlayersCol = Instantiate(uiColLablePrefab, listContainer, false);
                 gamePlayersCol.Lable = "Players";
 
@@ -130,6 +134,18 @@ namespace MasterServerToolkit.Games
                     string region = string.IsNullOrEmpty(gameInfo.Region) ? "International" : gameInfo.Region;
                     gameRegionLable.Lable = region;
                     gameRegionLable.name = $"gameRegionLable_{index}";
+
+                    var pingRegionLable = Instantiate(uiLablePrefab, listContainer, false);
+                    pingRegionLable.Lable = $"...";
+
+                    var rx = new Regex(@":\d+");
+                    string ip = rx.Replace(gameInfo.Address.Trim(), "");
+
+                    MstTimer.WaitPing(ip, (time) => {
+                        pingRegionLable.Lable = $"{time} ms.";
+                    });
+
+                    pingRegionLable.name = $"pingRegionLable_{index}";
 
                     var gamePlayersBtn = Instantiate(uiButtonPrefab, listContainer, false);
                     string maxPleyers = gameInfo.MaxPlayers <= 0 ? "∞" : gameInfo.MaxPlayers.ToString();

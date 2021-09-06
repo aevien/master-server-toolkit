@@ -85,6 +85,8 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
                 properties.Add(Mst.Args.Names.RoomExecutablePath, roomExePath);
+                properties.Add(Mst.Args.Names.RoomIp, Mst.Args.RoomIp);
+                properties.Add(Mst.Args.Names.RoomRegion, Mst.Args.RoomRegion);
 
                 File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
 
@@ -126,6 +128,8 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
                 properties.Add(Mst.Args.Names.RoomExecutablePath, roomExePath);
+                properties.Add(Mst.Args.Names.RoomIp, Mst.Args.RoomIp);
+                properties.Add(Mst.Args.Names.RoomRegion, Mst.Args.RoomRegion);
 
                 File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 

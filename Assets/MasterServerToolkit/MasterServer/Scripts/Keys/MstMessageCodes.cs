@@ -101,6 +101,11 @@
         ServerProfileRequest,
         UpdateServerProfile,
         UpdateClientProfile,
-        UpdateDisplayNameRequest
+        UpdateDisplayNameRequest,
+
+        // Notifications
+        SubscribeToNotifications,
+        UnsubscribeFromNotifications,
+        Notification
     }
 }

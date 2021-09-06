@@ -116,20 +116,20 @@ namespace MasterServerToolkit.Networking
         /// Adds a packet handler, which will be invoked when a message of
         /// specific operation code is received
         /// </summary>
-        IPacketHandler SetHandler(IPacketHandler handler);
+        IPacketHandler RegisterMessageHandler(IPacketHandler handler);
 
         /// <summary>
         /// Adds a packet handler, which will be invoked when a message of
         /// specific operation code is received
         /// </summary>
-        IPacketHandler SetHandler(short opCode, IncommingMessageHandler handlerMethod);
+        IPacketHandler RegisterMessageHandler(short opCode, IncommingMessageHandler handlerMethod);
 
         /// <summary>
         /// Removes the packet handler, but only if this exact handler
         /// was used
         /// </summary>
         /// <param name="handler"></param>
-        void RemoveHandler(IPacketHandler handler);
+        void RemoveMessageHandler(IPacketHandler handler);
 
         /// <summary>
         /// Disconnects and connects again

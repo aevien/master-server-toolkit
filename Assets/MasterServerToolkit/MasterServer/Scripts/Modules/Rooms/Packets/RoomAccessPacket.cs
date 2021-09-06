@@ -7,6 +7,7 @@ namespace MasterServerToolkit.MasterServer
     {
         public string RoomIp { get; set; }
         public int RoomPort { get; set; }
+        public int RoomMaxConnections { get; set; }
         public string Token { get; set; }
         public int RoomId { get; set; }
         public string SceneName { get; set; } = string.Empty;
@@ -17,6 +18,7 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(Token);
             writer.Write(RoomIp);
             writer.Write(RoomPort);
+            writer.Write(RoomMaxConnections);
             writer.Write(RoomId);
             writer.Write(SceneName);
             writer.Write(CustomOptions.ToDictionary());
@@ -27,6 +29,7 @@ namespace MasterServerToolkit.MasterServer
             Token = reader.ReadString();
             RoomIp = reader.ReadString();
             RoomPort = reader.ReadInt32();
+            RoomMaxConnections = reader.ReadInt32();
             RoomId = reader.ReadInt32();
             SceneName = reader.ReadString();
             CustomOptions = new MstProperties(reader.ReadDictionary());
@@ -37,6 +40,7 @@ namespace MasterServerToolkit.MasterServer
             var options = new MstProperties();
             options.Add("RoomIp", RoomIp);
             options.Add("RoomPort", RoomPort);
+            options.Add("RoomMaxConnections", RoomMaxConnections);
             options.Add("RoomId", RoomId);
             options.Add("Token", Token);
             options.Add("SceneName", SceneName);

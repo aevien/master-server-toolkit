@@ -213,20 +213,20 @@ namespace MasterServerToolkit.Networking
             OnDisconnectedEvent -= callback;
         }
 
-        public IPacketHandler SetHandler(IPacketHandler handler)
+        public IPacketHandler RegisterMessageHandler(IPacketHandler handler)
         {
             handlers[handler.OpCode] = handler;
             return handler;
         }
 
-        public IPacketHandler SetHandler(short opCode, IncommingMessageHandler handlerMethod)
+        public IPacketHandler RegisterMessageHandler(short opCode, IncommingMessageHandler handlerMethod)
         {
             var handler = new PacketHandler(opCode, handlerMethod);
-            SetHandler(handler);
+            RegisterMessageHandler(handler);
             return handler;
         }
 
-        public void RemoveHandler(IPacketHandler handler)
+        public void RemoveMessageHandler(IPacketHandler handler)
         {
             // But only if this exact handler
             if (handlers.TryGetValue(handler.OpCode, out IPacketHandler previousHandler) && previousHandler != handler)

@@ -7,6 +7,17 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
+    /// <summary>
+    /// Done handler delegate
+    /// </summary>
+    /// <param name="isSuccessful"></param>
+    public delegate void TimerActionCompleteHandler(bool isSuccessful);
+
+    /// <summary>
+    /// Pink wait handler delegate
+    /// </summary>
+    public delegate void WaitPingCallback(int time);
+
     public class MstTimer : DynamicSingletonBehaviour<MstTimer>
     {
         /// <summary>
@@ -18,12 +29,6 @@ namespace MasterServerToolkit.Networking
         /// Main thread lockobject
         /// </summary>
         private readonly object _mainThreadLock = new object();
-
-        /// <summary>
-        /// Done handler delegate
-        /// </summary>
-        /// <param name="isSuccessful"></param>
-        public delegate void TimerActionCompleteHandler(bool isSuccessful);
 
         /// <summary>
         /// Current tick of scaled time
@@ -68,6 +73,55 @@ namespace MasterServerToolkit.Networking
                     _mainThreadActions.Clear();
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void OnApplicationQuit()
+        {
+            OnApplicationQuitEvent?.Invoke();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="callback"></param>
+        public static void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
+        {
+            if (Singleton)
+                Singleton.StartCoroutine(WaitPingCoroutine(address, callback, timeout));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        private static IEnumerator WaitPingCoroutine(string address, WaitPingCallback callback, float timeout)
+        {
+            DateTime startTime = DateTime.Now;
+            DateTime endTime = startTime.AddSeconds(timeout);
+            var ping = new Ping(address);
+
+            while (!ping.isDone)
+            {
+                if (endTime <= DateTime.Now)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+
+            bool success = ping.isDone;
+
+            if (success)
+                callback?.Invoke(ping.time);
+            else
+                callback?.Invoke((int)(DateTime.Now - startTime).TotalMilliseconds);
         }
 
         /// <summary>
@@ -227,14 +281,6 @@ namespace MasterServerToolkit.Networking
                     Logs.Error(e);
                 }
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void OnApplicationQuit()
-        {
-            OnApplicationQuitEvent?.Invoke();
         }
     }
 }

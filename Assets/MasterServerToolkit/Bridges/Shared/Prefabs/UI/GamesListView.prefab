@@ -622,6 +622,7 @@ MonoBehaviour:
   - width: 0
   - width: 250
   - width: 250
+  - width: 100
   - width: 200
   - width: 100
   cellSpacing: 5

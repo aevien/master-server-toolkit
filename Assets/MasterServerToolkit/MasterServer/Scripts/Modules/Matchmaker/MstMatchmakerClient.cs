@@ -6,7 +6,7 @@ using System.Linq;
 namespace MasterServerToolkit.MasterServer
 {
     public delegate void FindGamesCallback(List<GameInfoPacket> games);
-    public delegate void GetRegionsCallback(List<string> regions);
+    public delegate void GetRegionsCallback(List<RegionInfo> regions);
     public delegate void GetPlayersCallback(List<string> players);
 
     public class MstMatchmakerClient : MstBaseClient
@@ -18,7 +18,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of regions at which all the rooms are registered
         /// </summary>
-        public List<string> Regions { get; private set; }
+        public List<RegionInfo> Regions { get; private set; }
 
         public MstMatchmakerClient(IClientSocket connection) : base(connection) { }
 
@@ -40,7 +40,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                Regions = new List<string>();
+                Regions = new List<RegionInfo>();
                 Logs.Error("Not connected");
                 callback?.Invoke(Regions);
                 return;
@@ -50,14 +50,30 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    Regions = new List<string>();
+                    Regions = new List<RegionInfo>();
                     Logs.Error(response.AsString("Unknown error while requesting a list of regions"));
                     callback?.Invoke(Regions);
                     return;
                 }
 
                 Regions = response.Deserialize(new RegionsPacket()).Regions;
-                callback?.Invoke(Regions);
+
+                int totalRegions = Regions.Count;
+
+                foreach (var region in Regions)
+                {
+                    MstTimer.WaitPing(region.Ip, (time) =>
+                    {
+                        totalRegions--;
+
+                        region.PingTime = time;
+
+                        if (totalRegions <= 0)
+                        {
+                            callback?.Invoke(Regions);
+                        }
+                    }, 1f);
+                }
             });
         }
 
@@ -89,9 +105,8 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                Games = new List<GameInfoPacket>();
                 Logs.Error("Not connected");
-                callback?.Invoke(Games);
+                callback?.Invoke(new List<GameInfoPacket>());
                 return;
             }
 
@@ -99,9 +114,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    Games = new List<GameInfoPacket>();
-                    Logs.Warn(response.AsString("Unknown error while requesting a list of games"));
-                    callback?.Invoke(Games);
+                    Logs.Warn(response.AsString("Unknown error occured while requesting a list of games"));
+                    callback?.Invoke(new List<GameInfoPacket>());
                     return;
                 }
 

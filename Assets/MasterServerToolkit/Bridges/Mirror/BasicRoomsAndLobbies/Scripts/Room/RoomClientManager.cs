@@ -3,6 +3,7 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using Mirror;
+using Mirror.SimpleWeb;
 using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking
@@ -61,6 +62,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             // Set room IP
             NetworkManager.singleton.networkAddress = access.RoomIp;
 
+            logger.Info($"Custom info: {access.CustomOptions}");
+
+            // Set max connections(This is for Unet and Mirror only
+            NetworkManager.singleton.maxConnections = access.RoomMaxConnections;
+
             // Set room port
             if (Transport.activeTransport is KcpTransport kcpTransport)
             {
@@ -69,6 +75,10 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             else if (Transport.activeTransport is TelepathyTransport telepathyTransport)
             {
                 telepathyTransport.port = (ushort)access.RoomPort;
+            }
+            else if (Transport.activeTransport is SimpleWebTransport swTransport)
+            {
+                swTransport.port = (ushort)access.RoomPort;
             }
 
             // Start client

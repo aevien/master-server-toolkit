@@ -10,6 +10,7 @@ namespace MasterServerToolkit.MasterServer
         public MstRoomsServer Rooms { get; private set; }
         public MstSpawnersServer Spawners { get; private set; }
         public MstDbAccessor DbAccessors { get; private set; }
+        public MstNotificationServer Notifications { get; private set; }
 
         public MstServer(IClientSocket connection) : base(connection)
         {
@@ -19,6 +20,7 @@ namespace MasterServerToolkit.MasterServer
             Auth = new MstAuthServer(connection);
             Lobbies = new MstLobbiesServer(connection);
             Profiles = new MstProfilesServer(connection);
+            Notifications = new MstNotificationServer(connection);
         }
     }
 }

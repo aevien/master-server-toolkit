@@ -171,7 +171,5 @@ namespace MasterServerToolkit.Games
                 GetAccess(gameInfo);
             }
         }
-
-
     }
 }

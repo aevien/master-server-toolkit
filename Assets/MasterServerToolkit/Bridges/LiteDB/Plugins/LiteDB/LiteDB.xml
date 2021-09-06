@@ -972,11 +972,13 @@
             Starts LiteDB database using a connection string for file system database
             </summary>
         </member>
-        <member name="M:LiteDB.LiteDatabase.#ctor(System.IO.Stream,LiteDB.BsonMapper)">
+        <member name="M:LiteDB.LiteDatabase.#ctor(System.IO.Stream,LiteDB.BsonMapper,System.IO.Stream)">
             <summary>
-            Starts LiteDB database using a generic Stream implementation (mostly MemoryStrem).
-            Use another MemoryStrem as LOG file.
+            Starts LiteDB database using a generic Stream implementation (mostly MemoryStream).
             </summary>
+            <param name="stream">DataStream reference </param>
+            <param name="mapper">BsonMapper mapper reference</param>
+            <param name="logStream">LogStream reference </param>
         </member>
         <member name="M:LiteDB.LiteDatabase.#ctor(LiteDB.Engine.ILiteEngine,LiteDB.BsonMapper,System.Boolean)">
             <summary>
@@ -1309,7 +1311,7 @@
             Starts LiteDB database using a connection string for file system database
             </summary>
         </member>
-        <member name="M:LiteDB.LiteRepository.#ctor(System.IO.Stream,LiteDB.BsonMapper)">
+        <member name="M:LiteDB.LiteRepository.#ctor(System.IO.Stream,LiteDB.BsonMapper,System.IO.Stream)">
             <summary>
             Starts LiteDB database using a Stream disk
             </summary>
@@ -1590,6 +1592,11 @@
             Resolve LINQ expression into BsonExpression
             </summary>
         </member>
+        <member name="M:LiteDB.BsonMapper.GetIndexExpression``2(System.Linq.Expressions.Expression{System.Func{``0,``1}})">
+            <summary>
+            Resolve LINQ expression into BsonExpression (for index only)
+            </summary>
+        </member>
         <member name="M:LiteDB.BsonMapper.UseCamelCase">
             <summary>
             Use lower camel case resolution for convert property names to field names
@@ -1752,6 +1759,11 @@
         <member name="M:LiteDB.LinqExpressionVisitor.VisitLambda``1(System.Linq.Expressions.Expression{``0})">
             <summary>
             Visit :: `x => x.Customer.Name`
+            </summary>
+        </member>
+        <member name="M:LiteDB.LinqExpressionVisitor.VisitInvocation(System.Linq.Expressions.InvocationExpression)">
+            <summary>
+            Visit lambda invocation
             </summary>
         </member>
         <member name="M:LiteDB.LinqExpressionVisitor.VisitParameter(System.Linq.Expressions.ParameterExpression)">
@@ -4110,7 +4122,7 @@
         </member>
         <member name="T:LiteDB.Engine.BufferReader">
             <summary>
-            Read multiple array segment as a single linear segment - Fordward Only
+            Read multiple array segment as a single linear segment - Forward Only
             </summary>
         </member>
         <member name="P:LiteDB.Engine.BufferReader.Position">
@@ -4123,10 +4135,10 @@
             Indicate position are at end of last source array segment
             </summary>
         </member>
-        <member name="M:LiteDB.Engine.BufferReader.MoveFordward(System.Int32)">
+        <member name="M:LiteDB.Engine.BufferReader.MoveForward(System.Int32)">
             <summary>
-            Move fordward in current segment. If array segment finish, open next segment
-            Returns true if move to another segment - returns false if continue in same segment
+            Move forward in current segment. If array segment finishes, open next segment
+            Returns true if moved to another segment - returns false if continues in the same segment
             </summary>
         </member>
         <member name="M:LiteDB.Engine.BufferReader.Read(System.Byte[],System.Int32,System.Int32)">
@@ -4216,7 +4228,7 @@
         </member>
         <member name="T:LiteDB.Engine.BufferWriter">
             <summary>
-            Write data types/BSON data into byte[]. It's fordward only and support multi buffer slice as source
+            Write data types/BSON data into byte[]. It's forward only and support multi buffer slice as source
             </summary>
         </member>
         <member name="P:LiteDB.Engine.BufferWriter.Position">
@@ -4229,9 +4241,9 @@
             Indicate position are at end of last source array segment
             </summary>
         </member>
-        <member name="M:LiteDB.Engine.BufferWriter.MoveFordward(System.Int32)">
+        <member name="M:LiteDB.Engine.BufferWriter.MoveForward(System.Int32)">
             <summary>
-            Move fordward in current segment. If array segment finish, open next segment
+            Move forward in current segment. If array segment finish, open next segment
             Returns true if move to another segment - returns false if continue in same segment
             </summary>
         </member>
@@ -4552,12 +4564,12 @@
         </member>
         <member name="P:LiteDB.Engine.EngineSettings.DataStream">
             <summary>
-            Get/Set custom stream to be used as datafile (can be MemoryStrem or TempStream). Do not use FileStream - to use physical file, use "filename" attribute (and keep DataStrem/WalStream null)
+            Get/Set custom stream to be used as datafile (can be MemoryStream or TempStream). Do not use FileStream - to use physical file, use "filename" attribute (and keep DataStream/WalStream null)
             </summary>
         </member>
         <member name="P:LiteDB.Engine.EngineSettings.LogStream">
             <summary>
-            Get/Set custom stream to be used as log file. If is null, use a new TempStream (for TempStrem datafile) or MemoryStream (for MemoryStream datafile)
+            Get/Set custom stream to be used as log file. If is null, use a new TempStream (for TempStream datafile) or MemoryStream (for MemoryStream datafile)
             </summary>
         </member>
         <member name="P:LiteDB.Engine.EngineSettings.TempStream">
@@ -4757,7 +4769,7 @@
             Implement internal update document
             </summary>
         </member>
-        <member name="M:LiteDB.Engine.LiteEngine.Upgrade(System.String,System.String)">
+        <member name="M:LiteDB.Engine.LiteEngine.Upgrade(System.String,System.String,LiteDB.Collation)">
             <summary>
             Upgrade old version of LiteDB into new LiteDB file structure. Returns true if database was completed converted
             If database already in current version just return false
@@ -5237,9 +5249,9 @@
             </summary>
         </member>
         <member name="P:LiteDB.Engine.HeaderPage.Pragmas">
-            <summary>	
+            <summary>
             Get database pragmas instance class
-            </summary>	
+            </summary>
         </member>
         <member name="F:LiteDB.Engine.HeaderPage._collections">
             <summary>
@@ -5301,9 +5313,9 @@
             Rename collection with new name
             </summary>
         </member>
-        <member name="M:LiteDB.Engine.HeaderPage.GetAvaiableCollectionSpace">
+        <member name="M:LiteDB.Engine.HeaderPage.GetAvailableCollectionSpace">
             <summary>
-            Get how many bytes are avaiable in collection to store new collections
+            Get how many bytes are available in collection to store new collections
             </summary>
         </member>
         <member name="T:LiteDB.Engine.IndexPage">
@@ -5796,7 +5808,7 @@
         </member>
         <member name="M:LiteDB.Engine.IndexService.GetNodeList(LiteDB.Engine.PageAddress)">
             <summary>
-            Gets all node list from passed nodeAddress (fordward only)
+            Gets all node list from passed nodeAddress (forward only)
             </summary>
         </member>
         <member name="M:LiteDB.Engine.IndexService.DeleteAll(LiteDB.Engine.PageAddress)">
@@ -6022,6 +6034,11 @@
             Get/Set if this transaction was opened by BeginTrans() method (not by AutoTransaction/Cursor)
             </summary>
         </member>
+        <member name="M:LiteDB.Engine.TransactionService.Finalize">
+            <summary>
+            Finalizer: Will be called once a thread is closed. The TransactionMonitor._slot releases the used TransactionService.
+            </summary>
+        </member>
         <member name="M:LiteDB.Engine.TransactionService.CreateSnapshot(LiteDB.Engine.LockMode,System.String,System.Boolean)">
             <summary>
             Create (or get from transaction-cache) snapshot and return
@@ -6057,7 +6074,7 @@
         </member>
         <member name="M:LiteDB.Engine.TransactionService.Dispose">
             <summary>
-            Dispose
+            Public implementation of Dispose pattern.
             </summary>
         </member>
         <member name="T:LiteDB.Engine.WalIndexService">
@@ -6843,7 +6860,7 @@
         <member name="F:LiteDB.Constants.MEMORY_SEGMENT_SIZES">
             <summary>
             Size, in PAGES, for each buffer array (used in MemoryStore)
-            It's an array to increase after each extend - limited in heighest value
+            It's an array to increase after each extend - limited in highest value
             Each byte array will be created with this size * PAGE_SIZE
             Use minimal 12 to allocate at least 85Kb per segment (will use LOH)
             </summary>
@@ -6870,12 +6887,17 @@
         </member>
         <member name="M:LiteDB.Constants.ENSURE(System.Boolean,System.String)">
             <summary>
-            Ensure condition is true, otherwise stop execution (for Debug proposes only)
+            Ensure condition is true, otherwise throw exception (check contract)
             </summary>
         </member>
         <member name="M:LiteDB.Constants.ENSURE(System.Boolean,System.Boolean,System.String)">
             <summary>
-            If ifTest are true, ensure condition is true, otherwise stop execution (for Debug proposes only)
+            If ifTest are true, ensure condition is true, otherwise throw ensure exception (check contract)
+            </summary>
+        </member>
+        <member name="M:LiteDB.Constants.DEBUG(System.Boolean,System.String)">
+            <summary>
+            Ensure condition is true, otherwise throw exception (runs only in DEBUG mode)
             </summary>
         </member>
         <member name="T:LiteDB.ExtendedLengthHelper">

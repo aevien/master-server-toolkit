@@ -4,6 +4,7 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using Mirror;
+using Mirror.SimpleWeb;
 using System;
 using UnityEngine;
 
@@ -98,7 +99,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             // Set the max number of connections
             maxConnections = (ushort)roomServerManager.RoomOptions.MaxConnections;
 
-            // Set room IP
+            // Set room IP just for information purpose only
             networkAddress = roomServerManager.RoomOptions.RoomIp;
 
             // Set room port
@@ -110,10 +111,18 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             {
                 telepathyTransport.port = (ushort)roomServerManager.RoomOptions.RoomPort;
             }
+            else if (Transport.activeTransport is SimpleWebTransport swTransport)
+            {
+                swTransport.port = (ushort)roomServerManager.RoomOptions.RoomPort;
+            }
 
             logger.Info($"Starting Room Server: {networkAddress}:{roomServerManager.RoomOptions.RoomPort}");
 
+#if UNITY_EDITOR
             StartHost();
+#else
+            StartServer();
+#endif
         }
 
         public void StopRoomServer()

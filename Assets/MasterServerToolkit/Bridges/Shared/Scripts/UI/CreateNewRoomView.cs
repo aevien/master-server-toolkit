@@ -4,6 +4,7 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -50,7 +51,10 @@ namespace MasterServerToolkit.Games
 
                 if (regions.Count > 0)
                 {
-                    roomRegionNameInputDropdown.AddOptions(regions);
+                    roomRegionNameInputDropdown.AddOptions(regions.Select(i =>
+                    {
+                        return $"<b>{i.Name}</b>, <color=#FF0000FF>Ping: {i.PingTime} ms.</color>";
+                    }).ToList());
                 }
             });
         }
@@ -87,7 +91,7 @@ namespace MasterServerToolkit.Games
         {
             get
             {
-                return roomRegionNameInputDropdown != null && roomRegionNameInputDropdown.options.Count > 0 ? roomRegionNameInputDropdown.options[roomRegionNameInputDropdown.value].text : string.Empty;
+                return roomRegionNameInputDropdown != null && roomRegionNameInputDropdown.options.Count > 0 ? Mst.Client.Matchmaker.Regions[roomRegionNameInputDropdown.value].Name : string.Empty;
             }
         }
 
