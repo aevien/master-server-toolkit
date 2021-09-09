@@ -64,9 +64,9 @@ namespace MasterServerToolkit.CommandTerminal
         private GUIStyle input_style;
 
         public static CommandLog Buffer { get; private set; }
-        public static CommandShell Shell { get; private set; }
-        public static CommandHistory History { get; private set; }
-        public static CommandAutocomplete Autocomplete { get; private set; }
+        public static CommandShell Shell { get; private set; } = new CommandShell();
+        public static CommandHistory History { get; private set; } = new CommandHistory();
+        public static CommandAutocomplete Autocomplete { get; private set; } = new CommandAutocomplete();
 
         public static bool IssuedError
         {
@@ -140,20 +140,12 @@ namespace MasterServerToolkit.CommandTerminal
             }
         }
 
-        void OnEnable()
+        private void Awake()
         {
             Buffer = new CommandLog(bufferSize);
-            Shell = new CommandShell();
-            History = new CommandHistory();
-            Autocomplete = new CommandAutocomplete();
 
             // Hook Unity log events
             Application.logMessageReceived += HandleUnityLog;
-        }
-
-        void OnDisable()
-        {
-            Application.logMessageReceived -= HandleUnityLog;
         }
 
         void Start()
@@ -183,6 +175,11 @@ namespace MasterServerToolkit.CommandTerminal
             {
                 Autocomplete.Register(command.Key);
             }
+        }
+
+        private void OnDestroy()
+        {
+            Application.logMessageReceived -= HandleUnityLog;
         }
 
         void OnGUI()

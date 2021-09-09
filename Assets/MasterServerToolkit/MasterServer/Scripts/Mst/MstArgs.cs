@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -158,6 +159,11 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public string WebRootDir { get; private set; }
 
+        /// <summary>
+        /// Log file path
+        /// </summary>
+        public string LogFileDir { get; private set; }
+
         public MstArgNames Names { get; set; }
 
         public MstArgs()
@@ -204,6 +210,8 @@ namespace MasterServerToolkit.MasterServer
             UseDevMode = AsBool(Names.UseDevMode, false);
 
             TargetFrameRate = AsInt(Names.TargetFrameRate, 60);
+
+            LogFileDir = AsString(Names.LogFileDir, Path.Combine(Directory.GetCurrentDirectory(), "logs"));
         }
 
         private void ParseArguments()
@@ -282,6 +290,23 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return path;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public string LogFile()
+        {
+            var dt = DateTime.Now;
+
+            if (!Directory.Exists(LogFileDir))
+                Directory.CreateDirectory(LogFileDir);
+
+            string filePrefix = AsString("-processLogFilePrefix", $"mst_log_{dt:MM_dd_yyyy_hh}_00");
+            string logFile = $"{filePrefix}.log";
+
+            return Path.Combine(LogFileDir, logFile); ;
         }
 
         /// <summary>

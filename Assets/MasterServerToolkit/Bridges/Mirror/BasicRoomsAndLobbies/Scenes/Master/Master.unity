@@ -881,8 +881,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13df84eab619a384498b917fbdc7b87f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logLevel: 3
-  spawnerLogLevel: 4
+  logLevel: 0
+  spawnerLogLevel: 0
   machineIp: 127.0.0.1
   executableFilePath: 
   maxProcesses: 5

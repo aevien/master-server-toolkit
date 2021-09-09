@@ -197,6 +197,9 @@ namespace MasterServerToolkit.MasterServer
             // Create spawn code arg
             processArguments.Set(Mst.Args.Names.SpawnTaskUniqueCode, data.SpawnTaskUniqueCode);
 
+            // 
+            processArguments.Set("-processLogFilePrefix", $"room_{DateTime.Now:MM_dd_yyyy_hh_mm}");
+
             /************************************************************************/
             // Path to executable
             var executablePath = SpawnSettings.ExecutablePath;

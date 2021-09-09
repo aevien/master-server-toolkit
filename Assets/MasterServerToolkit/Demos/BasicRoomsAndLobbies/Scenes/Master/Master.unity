@@ -328,6 +328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6b7e631567d90041b21347ebbfcf587, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  logLevel: 3
   useAccountDb: 1
   accountDbName: accounts
 --- !u!1 &778244820
@@ -481,6 +482,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 148bfe057370f264eaf655c830b76dac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  logLevel: 3
   useProfilesDb: 1
   profilesDbName: profiles1
 --- !u!1 &1005001215

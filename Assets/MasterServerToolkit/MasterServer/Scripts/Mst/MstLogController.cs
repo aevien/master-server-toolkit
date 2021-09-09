@@ -13,7 +13,7 @@ namespace MasterServerToolkit.MasterServer
             // Add default appender
             var appenders = new List<LogHandler>()
                 {
-                    LogAppenders.UnityConsoleAppenderWithNames
+                    LogAppenders.UnityConsoleAppender
                 };
 
             // Initialize the log manager

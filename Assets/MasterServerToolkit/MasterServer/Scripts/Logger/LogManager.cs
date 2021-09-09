@@ -45,7 +45,7 @@ namespace MasterServerToolkit.Logging
             // Disable pre-initialization pooling
             foreach (var logger in _loggers.Values)
             {
-                logger.OnLog -= OnPooledLoggerLog;
+                logger.OnLogEvent -= OnPooledLoggerLog;
             }
 
             // Push logger messages from pool to loggers
@@ -63,7 +63,7 @@ namespace MasterServerToolkit.Logging
             _appenders += appender;
             foreach (var logger in _loggers.Values)
             {
-                logger.OnLog += appender;
+                logger.OnLogEvent += appender;
             }
         }
 
@@ -72,7 +72,7 @@ namespace MasterServerToolkit.Logging
             _appenders -= appender;
             foreach (var logger in _loggers.Values)
             {
-                logger.OnLog -= appender;
+                logger.OnLogEvent -= appender;
             }
         }
 
@@ -106,7 +106,7 @@ namespace MasterServerToolkit.Logging
             if (!IsInitialized && poolUntilInitialized)
             {
                 // Register to pre-initialization pooling
-                logger.OnLog += OnPooledLoggerLog;
+                logger.OnLogEvent += OnPooledLoggerLog;
             }
 
             return logger;
@@ -136,7 +136,7 @@ namespace MasterServerToolkit.Logging
             {
                 LogLevel = GlobalLogLevel
             };
-            logger.OnLog += _appenders;
+            logger.OnLogEvent += _appenders;
             return logger;
         }
 

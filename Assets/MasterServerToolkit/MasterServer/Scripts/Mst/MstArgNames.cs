@@ -152,5 +152,10 @@
         /// Use this cmd to setup web server root directory
         /// </summary>
         public string WebRootDir { get { return "-mstWebRootDir"; } }
+
+        /// <summary>
+        /// Path to log file directory
+        /// </summary>
+        public string LogFileDir { get { return "-mstLogFileDir"; } }
     }
 }

@@ -82,14 +82,9 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void Start()
         {
             if (connectOnStart)
-            { 
+            {
                 StartConnection();
             }
-        }
-
-        protected virtual void OnApplicationQuit()
-        {
-            Connection?.Disconnect();
         }
 
         protected virtual void OnDestroy()
@@ -137,17 +132,20 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void StartConnection()
         {
-            StartCoroutine(StartConnectionProcess(serverIP, serverPort, maxAttemptsToConnect));
+            if (gameObject && gameObject.activeSelf && gameObject.activeInHierarchy)
+                StartCoroutine(StartConnectionProcess(serverIP, serverPort, maxAttemptsToConnect));
         }
 
         public void StartConnection(int numberOfAttempts)
         {
-            StartCoroutine(StartConnectionProcess(serverIP, serverPort, numberOfAttempts));
+            if (gameObject && gameObject.activeSelf && gameObject.activeInHierarchy)
+                StartCoroutine(StartConnectionProcess(serverIP, serverPort, numberOfAttempts));
         }
 
         public void StartConnection(string serverIp, int serverPort, int numberOfAttempts = 5)
         {
-            StartCoroutine(StartConnectionProcess(serverIp, serverPort, numberOfAttempts));
+            if (gameObject && gameObject.activeSelf && gameObject.activeInHierarchy)
+                StartCoroutine(StartConnectionProcess(serverIp, serverPort, numberOfAttempts));
         }
 
         protected virtual IEnumerator StartConnectionProcess(string serverIp, int serverPort, int numberOfAttempts)

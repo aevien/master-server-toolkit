@@ -4,12 +4,25 @@
 
     public class Logger
     {
-        public event LogHandler OnLog;
+        /// <summary>
+        /// Invoked when log to console
+        /// </summary>
+        public event LogHandler OnLogEvent;
 
+        /// <summary>
+        /// Log level of current logger
+        /// </summary>
         public LogLevel LogLevel { get; set; }
 
+        /// <summary>
+        /// Name of current logger
+        /// </summary>
         public string Name { get; private set; }
 
+        /// <summary>
+        /// Creates new instance of logger
+        /// </summary>
+        /// <param name="name"></param>
         public Logger(string name)
         {
             Name = name;
@@ -115,21 +128,21 @@
         public void Log(LogLevel logLvl, object message)
         {
             // If nothing listens to logs,
-            if (OnLog == null)
+            if (OnLogEvent == null)
             {
                 return;
             }
 
             if (LogManager.ForceLogLevel != LogLevel.Off && logLvl >= LogManager.ForceLogLevel)
             {
-                OnLog(this, logLvl, message);
+                OnLogEvent(this, logLvl, message);
                 return;
             }
 
             // If logging level is lower than what we're logging (including global)
             if (LogLevel <= logLvl || (LogLevel == LogLevel.Global && logLvl >= LogManager.GlobalLogLevel))
             {
-                OnLog(this, logLvl, message);
+                OnLogEvent(this, logLvl, message);
             }
         }
     }
