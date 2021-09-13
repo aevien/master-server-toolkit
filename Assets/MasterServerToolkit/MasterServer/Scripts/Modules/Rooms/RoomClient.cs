@@ -213,8 +213,11 @@ namespace MasterServerToolkit.MasterServer
             // Save the access data
             AccessData = access;
 
+            var client = Singleton as RoomClient<T>;
+
             // Start connection
-            (Singleton as RoomClient<T>).StartConnection(access);
+            if (client)
+                client.StartConnection(access);
         }
 
         /// <summary>
@@ -222,7 +225,11 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static void Disconnect()
         {
-            (Singleton as RoomClient<T>).StartDisconnection();
+            var client = Singleton as RoomClient<T>;
+
+            // Start disconnection
+            if (client)
+                client.StartDisconnection();
         }
     }
 }

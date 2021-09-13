@@ -12,12 +12,17 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "4.8.1";
+        public static string Version => "4.8.2";
 
         /// <summary>
         /// Just name of the framework
         /// </summary>
         public static string Name => "MASTER SERVER TOOLKIT";
+
+        /// <summary>
+        /// Root menu of framework
+        /// </summary>
+        public const string ToolMenu = "Tools/Master Server Toolkit/";
 
         /// <summary>
         /// Check if MST in dev mode
@@ -87,11 +92,6 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static MstProperties Options { get; private set; }
 
-        /// <summary>
-        /// Config info from startup.cfg
-        /// </summary>
-        public static MstConfig Config { get; private set; }
-
         static Mst()
         {
             // Initialize helpers to work with MSF
@@ -99,7 +99,6 @@ namespace MasterServerToolkit.MasterServer
 
             // Initialize advanced settings
             Advanced = new MstAdvancedSettings();
-            Config = new MstConfig();
 
             // Initialize runtime data
             Runtime = new MstRuntime();

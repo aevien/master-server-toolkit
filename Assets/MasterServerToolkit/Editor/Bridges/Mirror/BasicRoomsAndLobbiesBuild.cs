@@ -8,13 +8,13 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
 {
     public class BasicRoomsAndLobbiesBuild
     {
-        [MenuItem("Master Server Toolkit/Build/Demos for Mirror/Basic Rooms And Lobbies/Room(Headless)")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Room(Headless)")]
         private static void BuildRoomForWindowsHeadless()
         {
             BuildRoomForWindows(true);
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos for Mirror/Basic Rooms And Lobbies/Room(Normal)")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Room(Normal)")]
         private static void BuildRoomForWindowsNormal()
         {
             BuildRoomForWindows(false);
@@ -59,7 +59,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos for Mirror/Basic Rooms And Lobbies/Master Server and Spawner")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Master Server and Spawner")]
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicMirrorRoomsAndLobbies", "MasterAndSpawner");
@@ -99,7 +99,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos for Mirror/Basic Rooms And Lobbies/Spawner")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Spawner")]
         private static void BuildSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicMirrorRoomsAndLobbies", "Spawner");
@@ -142,7 +142,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos for Mirror/Basic Rooms And Lobbies/Client")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicMirrorRoomsAndLobbies", "Client");

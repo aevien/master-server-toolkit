@@ -7,14 +7,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicAuthorization
 {
     public class BasicProfilesBuild
     {
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Profiles/All")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Profiles/All")]
         private static void BuildBoth()
         {
             BuildMasterForWindows();
             BuildClientForWindows();
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Profiles/Master Server")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Profiles/Master Server")]
         private static void BuildMasterForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicProfiles", "MasterServer");
@@ -50,7 +50,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicAuthorization
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Profiles/Client")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Profiles/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicProfiles", "Client");

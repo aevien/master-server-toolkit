@@ -7,14 +7,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicAuthorization
 {
     public class BasicAuthorizationPlayerBuild
     {
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Authorization/All")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Authorization/All")]
         private static void BuildBoth()
         {
             BuildMaster();
             BuildClient();
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Authorization/Master Server")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Authorization/Master Server")]
         private static void BuildMaster()
         {
             string buildFolder = Path.Combine("Builds", "BasicAuthorization", "MasterServer");
@@ -50,7 +50,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicAuthorization
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Authorization/Client")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Authorization/Client")]
         private static void BuildClient()
         {
             string buildFolder = Path.Combine("Builds", "BasicAuthorization", "Client");

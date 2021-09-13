@@ -9,14 +9,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicChat
 {
     public class BasicChatPlayerBuild
     {
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Chat/All")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Chat/All")]
         private static void BuildBoth()
         {
             BuildMaster();
             BuildClient();
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Chat/Master Server")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Chat/Master Server")]
         private static void BuildMaster()
         {
             string buildFolder = Path.Combine("Builds", "BasicChat", "MasterServer");
@@ -52,7 +52,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicChat
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Chat/Client")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Chat/Client")]
         private static void BuildClient()
         {
             string buildFolder = Path.Combine("Builds", "BasicChat", "Client");

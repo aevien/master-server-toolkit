@@ -1,30 +1,30 @@
 ﻿using MasterServerToolkit.MasterServer;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.Logging
 {
     public class LogAppenders
     {
-        private static bool isListeningLog = false;
-
         public delegate string LogFormatter(Logger logger, LogLevel level, object message);
+
+        /// <summary>
+        /// Log lines
+        /// </summary>
+        private static List<string> logLines;
+
+        static LogAppenders()
+        {
+            logLines = new List<string>();
+            Application.logMessageReceivedThreaded += Application_logMessageReceived;
+        }
 
         public static void UnityConsoleAppender(Logger logger, LogLevel logLevel, object message)
         {
-
-            if (!isListeningLog)
-            {
-                Application.logMessageReceived += Application_logMessageReceived;
-                Application.logMessageReceivedThreaded += Application_logMessageReceived;
-                TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-                isListeningLog = true;
-            }
-
-            string logString = $"[{DateTime.Now:hh:mm:ss} | {logLevel} | {logger.Name}] {message}";
+            string logString = $"[{logLevel} | {logger.Name}] {message}";
 
             if (logLevel <= LogLevel.Info)
             {
@@ -40,11 +40,6 @@ namespace MasterServerToolkit.Logging
             }
         }
 
-        private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
-        {
-            WriteLogToFile(e.Exception.Message, e.Exception.StackTrace, LogType.Exception);
-        }
-
         private static void Application_logMessageReceived(string condition, string stackTrace, LogType type)
         {
             WriteLogToFile(condition, stackTrace, type);
@@ -53,21 +48,11 @@ namespace MasterServerToolkit.Logging
         private static void WriteLogToFile(string condition, string stackTrace, LogType type)
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
-            StreamWriter log;
 
-            if (!File.Exists(Mst.Args.LogFile()))
-            {
-                log = new StreamWriter(Mst.Args.LogFile());
-            }
-            else
-            {
-                log = File.AppendText(Mst.Args.LogFile());
-            }
-
-            var regex = new Regex(@"\[(\d{2}:)+(\d+)(\s+[|]\s+\w+)+\]");
+            var regex = new Regex(@"\[\w+\s+[|]\s+\w+\]");
 
             string bracketBlock;
-            string time = DateTime.Now.ToString("hh:mm:ss");
+            string time = $"{DateTime.Now:hh:mm:ss:fff} [{Mst.Advanced.Logging.Time:F2}]";
             string logLevel = type.ToString();
             string logName = "Unity Debug";
             string message = regex.Replace(condition, "").Trim();
@@ -80,13 +65,41 @@ namespace MasterServerToolkit.Logging
 
                 bracketBlock = match[0].Value;
                 bracketBlock = bracketBlock.Replace("[", "").Replace("]", "");
-                time = bracketBlock.Split('|')[0].Trim();
-                logLevel = bracketBlock.Split('|')[1].Trim();
-                logName = bracketBlock.Split('|')[2].Trim();
+                string[] parts = bracketBlock.Split('|');
+                logLevel = parts[0].Trim();
+                logName = parts[1].Trim();
             }
 
-            log.WriteLine($"--------\nTime:{time}\nLevel:{logLevel}\nName:{logName}\nMessage:{message}\nTrace:{trace}\n");
-            log.Close();
+            regex = new Regex(@"\t+|\s+|\n+");
+
+            string line = $"{time} | {logLevel.ToUpper()} | {logName} | {regex.Replace(message, " ")} | {regex.Replace(trace, " ")}";
+
+            logLines.Add(line);
+
+            if (logLevel.ToLower() == "error" || logLevel.ToLower() == "fatal" || logLines.Count > 100)
+            {
+                lock (logLines)
+                {
+                    StreamWriter log;
+
+                    if (!File.Exists(Mst.Advanced.Logging.LogFile))
+                    {
+                        log = new StreamWriter(Mst.Advanced.Logging.LogFile);
+                    }
+                    else
+                    {
+                        log = File.AppendText(Mst.Advanced.Logging.LogFile);
+                    }
+
+                    foreach(string logLine in logLines)
+                    {
+                        log.WriteLine(logLine);
+                    }
+
+                    logLines.Clear();
+                    log.Close();
+                }
+            }
 #endif
         }
     }

@@ -9,13 +9,13 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
 {
     public class BasicRoomsAndLobbiesBuild : MonoBehaviour
     {
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Room(Headless)")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Rooms And Lobbies/Room(Headless)")]
         private static void BuildRoomForWindowsHeadless()
         {
             BuildRoomForWindows(true);
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Room(Normal)")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Rooms And Lobbies/Room(Normal)")]
         private static void BuildRoomForWindowsNormal()
         {
             BuildRoomForWindows(false);
@@ -60,7 +60,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Master Server and Spawner")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Rooms And Lobbies/Master Server and Spawner")]
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicRoomsAndLobbies", "MasterAndSpawner");
@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Spawner")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Rooms And Lobbies/Spawner")]
         private static void BuildSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicRoomsAndLobbies", "Spawner");
@@ -143,7 +143,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Rooms And Lobbies/Client")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Rooms And Lobbies/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicRoomsAndLobbies", "Client");

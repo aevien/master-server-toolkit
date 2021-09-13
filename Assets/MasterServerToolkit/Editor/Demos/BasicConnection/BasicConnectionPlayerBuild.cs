@@ -7,14 +7,14 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicConnection
 {
     public class BasicConnectionPlayerBuild
     {
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Connection/All")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Connection/All")]
         private static void BuildBoth()
         {
             BuildMasterForWindows();
             BuildClientForWindows();
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Connection/Master Server")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Connection/Master Server")]
         private static void BuildMasterForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicConnection", "MasterServer");
@@ -50,7 +50,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicConnection
             }
         }
 
-        [MenuItem("Master Server Toolkit/Build/Demos/Basic Connection/Client")]
+        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Connection/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicConnection", "Client");

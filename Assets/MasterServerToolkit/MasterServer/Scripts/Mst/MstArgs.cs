@@ -296,23 +296,6 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <returns></returns>
-        public string LogFile()
-        {
-            var dt = DateTime.Now;
-
-            if (!Directory.Exists(LogFileDir))
-                Directory.CreateDirectory(LogFileDir);
-
-            string filePrefix = AsString("-processLogFilePrefix", $"mst_log_{dt:MM_dd_yyyy_hh}_00");
-            string logFile = $"{filePrefix}.log";
-
-            return Path.Combine(LogFileDir, logFile); ;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             return string.Join(" ", _args);
