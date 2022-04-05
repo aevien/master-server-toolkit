@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -170,6 +170,7 @@ MonoBehaviour:
   useAuthModule: 1
   useRoomsModule: 1
   notifyPermissionLevel: 0
+  maxPromisedMessages: 10
 --- !u!1 &190502433
 GameObject:
   m_ObjectHideFlags: 0
@@ -251,6 +252,7 @@ Transform:
   m_Children:
   - {fileID: 674311274}
   - {fileID: 978456419}
+  - {fileID: 1971871410}
   m_Father: {fileID: 1005001217}
   m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -329,7 +331,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  useAccountDb: 1
   accountDbName: accounts
 --- !u!1 &778244820
 GameObject:
@@ -483,7 +484,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  useProfilesDb: 1
   profilesDbName: profiles1
 --- !u!1 &1005001215
 GameObject:
@@ -544,6 +544,7 @@ Transform:
   - {fileID: 1971139660}
   - {fileID: 505681164}
   - {fileID: 135600769}
+  - {fileID: 1579907633}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -593,7 +594,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   httpAddress: 127.0.0.1
-  httpPort: 8080
+  httpPort: 5056
   defaultIndexPage:
   - index
   - home
@@ -623,7 +624,7 @@ MonoBehaviour:
   - name: .tif
     type: image/tiff
   rootDirectory: wwwroot
-  authenticationSchemes: 1
+  authenticationSchemes: 32768
   realm: adminusers@masterservertoolkit.com
   username: admin
   password: admin
@@ -674,7 +675,7 @@ MonoBehaviour:
   usernameMinChars: 4
   usernameMaxChars: 12
   userPasswordMinChars: 8
-  useEmailConfirmation: 1
+  emailConfirmRequired: 1
   enableGuestLogin: 1
   guestPrefix: Guest
   saveGuestInfo: 1
@@ -738,6 +739,51 @@ MonoBehaviour:
   silver: 20
   gold: 50
   avatarUrl: https://i.imgur.com/JQ9pRoD.png
+--- !u!1 &1579907632
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1579907633}
+  - component: {fileID: 1579907634}
+  m_Layer: 0
+  m_Name: FriendsModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1579907633
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579907632}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1005001217}
+  m_RootOrder: 10
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1579907634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579907632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e9f1a0709ebbd743bf59a196388b450, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 0
+  friendsAccessorFactory: {fileID: 1971871409}
 --- !u!1 &1584503552
 GameObject:
   m_ObjectHideFlags: 0
@@ -957,6 +1003,51 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   registerRoomPermissionLevel: 0
+--- !u!1 &1971871408
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1971871410}
+  - component: {fileID: 1971871409}
+  m_Layer: 0
+  m_Name: FriendsLiteDbAccessorFactory
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1971871409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1971871408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a19f6d3ab5e8d3439979704b219add4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 0
+  friendsDbName: friends
+--- !u!4 &1971871410
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1971871408}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 505681164}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1977181801
 GameObject:
   m_ObjectHideFlags: 0

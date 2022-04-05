@@ -5,7 +5,6 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.Games
 {
-    [AddComponentMenu("MSF/Shared/ProfilesBehaviour")]
     public class ProfilesBehaviour : BaseClientBehaviour
     {
         #region INSPECTOR
@@ -29,6 +28,8 @@ namespace MasterServerToolkit.Games
 
         protected override void OnInitialize()
         {
+            base.OnInitialize();
+
             Profile = new ObservableProfile();
         }
 
@@ -56,7 +57,7 @@ namespace MasterServerToolkit.Games
                     }
                     else
                     {
-                        logger.Error("Could not load user profile");
+                        logger.Error($"Could not load user profile. Error: {error}");
                         OnProfileLoadFailedEvent?.Invoke();
                     }
                 });

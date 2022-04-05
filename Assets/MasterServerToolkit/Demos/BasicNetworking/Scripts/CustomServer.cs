@@ -14,8 +14,8 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         {
             base.OnStartedServer();
 
-            RegisterMessageHandler((short)MessageCodes.Message, OnMessageReceivedHandler);
-            RegisterMessageHandler((short)MessageCodes.MessageWithResponse, OnMessageWithResponseReceivedHandler);
+            RegisterMessageHandler((ushort)MessageCodes.Message, OnMessageReceivedHandler);
+            RegisterMessageHandler((ushort)MessageCodes.MessageWithResponse, OnMessageWithResponseReceivedHandler);
         }
 
         private void OnMessageWithResponseReceivedHandler(IIncomingMessage message)

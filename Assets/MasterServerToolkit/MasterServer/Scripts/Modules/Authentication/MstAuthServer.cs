@@ -31,7 +31,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.GetPeerAccountInfo, peerId, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetPeerAccountInfo, peerId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

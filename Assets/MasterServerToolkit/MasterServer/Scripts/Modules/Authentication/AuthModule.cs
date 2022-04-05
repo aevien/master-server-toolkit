@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Networking;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace MasterServerToolkit.MasterServer
         protected int userPasswordMinChars = 8;
 
         [SerializeField, Tooltip("Whether or not to use email confirmation when sign up")]
-        protected bool useEmailConfirmation = true;
+        protected bool emailConfirmRequired = true;
 
         [Header("Guest Settings")]
         [SerializeField, Tooltip("If true, players will be able to log in as guests")]
@@ -63,8 +64,8 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Database accessor factory that helps to create integration with accounts db
         /// </summary>
-        [Tooltip("Database accessor factory that helps to create integration with accounts db")]
-        public DatabaseAccessorFactory databaseAccessorFactory;
+        [Tooltip("Database accessor factory that helps to create integration with accounts db"), SerializeField]
+        protected DatabaseAccessorFactory databaseAccessorFactory;
 
         #endregion
 
@@ -144,27 +145,41 @@ namespace MasterServerToolkit.MasterServer
             databaseAccessorFactory?.CreateAccessors();
 
             censorModule = server.GetModule<CensorModule>();
-            mailer = mailer ?? FindObjectOfType<Mailer>();
+            mailer ??= FindObjectOfType<Mailer>();
 
             // Init logged in users list by id
             LoggedInUsersById = new Dictionary<string, IUserPeerExtension>();
             LoggedInUsersByUsername = new Dictionary<string, IUserPeerExtension>();
 
             // Set handlers
-            server.RegisterMessageHandler((short)MstMessageCodes.SignIn, SignInMessageHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.SignUp, SignUpMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.SignIn, SignInMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.SignUp, SignUpMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.SignOut, SignOutMessageHandler);
 
-            server.RegisterMessageHandler((short)MstMessageCodes.GetPasswordResetCode, GetPasswordResetCodeMessageHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.ChangePassword, ChangePasswordMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.GetPasswordResetCode, GetPasswordResetCodeMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ChangePassword, ChangePasswordMessageHandler);
 
-            server.RegisterMessageHandler((short)MstMessageCodes.GetEmailConfirmationCode, GetEmailConfirmationCodeMessageHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.ConfirmEmail, ConfirmEmailMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.GetEmailConfirmationCode, GetEmailConfirmationCodeMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ConfirmEmail, ConfirmEmailMessageHandler);
 
-            server.RegisterMessageHandler((short)MstMessageCodes.GetLoggedInUsersCount, GetLoggedInUsersCountMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.GetLoggedInUsersCount, GetLoggedInUsersCountMessageHandler);
 
-            server.RegisterMessageHandler((short)MstMessageCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
 
-            server.RegisterMessageHandler((short)MstMessageCodes.UpdateAccountInfo, UpdateAccountInfoMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateAccountInfo, UpdateAccountInfoMessageHandler);
+        }
+
+        public override JObject JsonInfo()
+        {
+            var data = base.JsonInfo();
+            data.Add("loggedInUsers", LoggedInUsers.Count());
+            data.Add("allowGuests", enableGuestLogin);
+            data.Add("saveGuests", saveGuestInfo);
+            data.Add("guestNamePrefix", guestPrefix);
+            data.Add("emailConfirmRequired", emailConfirmRequired);
+            data.Add("minUsernameLength", usernameMinChars);
+            data.Add("minPasswordLength", userPasswordMinChars);
+            return data;
         }
 
         public override MstProperties Info()
@@ -174,10 +189,10 @@ namespace MasterServerToolkit.MasterServer
             info.Add("Users", LoggedInUsers.Count());
             info.Add("Allow Guests", enableGuestLogin);
             info.Add("Save Guests", saveGuestInfo);
-            info.Add("Guest name prefix", guestPrefix);
-            info.Add("Email Confirm", useEmailConfirmation);
-            info.Add("Min username length", usernameMinChars);
-            info.Add("Min password length", userPasswordMinChars);
+            info.Add("Guest Name Prefix", guestPrefix);
+            info.Add("Email Confirm", emailConfirmRequired);
+            info.Add("Min Username Length", usernameMinChars);
+            info.Add("Min Password Length", userPasswordMinChars);
 
             return info;
         }
@@ -199,6 +214,15 @@ namespace MasterServerToolkit.MasterServer
         public virtual void NotifyOnUserLoggedInEvent(IUserPeerExtension user)
         {
             OnUserLoggedInEvent?.Invoke(user);
+        }
+
+        /// <summary>
+        /// Notify when user logged out
+        /// </summary>
+        /// <param name="user"></param>
+        public virtual void NotifyOnUserLoggedOutEvent(IUserPeerExtension user)
+        {
+            OnUserLoggedOutEvent?.Invoke(user);
         }
 
         /// <summary>
@@ -236,6 +260,39 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// Get logged in user by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool TryGetLoggedInUserById(string id, out IUserPeerExtension user)
+        {
+            user = GetLoggedInUserById(id);
+            return user != null;
+        }
+
+        /// <summary>
+        /// Get logged in users by their ids
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public IEnumerable<IUserPeerExtension> GetLoggedInUsersByIds(string[] ids)
+        {
+            List<IUserPeerExtension> list = new List<IUserPeerExtension>();
+
+            foreach (string id in ids)
+            {
+                if (LoggedInUsersById.TryGetValue(id, out IUserPeerExtension user))
+                {
+                    if (user != null)
+                        list.Add(user);
+                }
+            }
+
+            return list;
+        }
+
+        /// <summary>
         /// Check if given user is logged in
         /// </summary>
         /// <param name="username"></param>
@@ -252,7 +309,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool IsUserLoggedInById(string id)
         {
-            return LoggedInUsersById.ContainsKey(id);
+            return !string.IsNullOrEmpty(id) && LoggedInUsersById.ContainsKey(id);
         }
 
         /// <summary>
@@ -606,7 +663,7 @@ namespace MasterServerToolkit.MasterServer
                 // Set new email
                 userAccount.Email = userUpdatePropertiesInfo.Email;
                 // Set email confirmation status
-                userAccount.IsEmailConfirmed = !useEmailConfirmation;
+                userAccount.IsEmailConfirmed = !emailConfirmRequired;
             }
 
             // If username and password are set so we are not a guest user!
@@ -753,7 +810,7 @@ namespace MasterServerToolkit.MasterServer
                 userAccount.Password = Mst.Security.CreateHash(userPassword);
 
                 // Let's set user email as confirmed if confirmation is not required by default
-                if (!useEmailConfirmation)
+                if (!emailConfirmRequired)
                 {
                     userAccount.IsEmailConfirmed = true;
                 }
@@ -772,6 +829,39 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
+        private void SignOutMessageHandler(IIncomingMessage message)
+        {
+            try
+            {
+                string userId = message.AsString();
+
+                // Trying to get user extension from peer
+                var userExtension = GetLoggedInUserById(userId);
+
+                if (userExtension == null)
+                {
+                    return;
+                }
+
+                LoggedInUsersByUsername.Remove(userExtension.Username.ToLower());
+                LoggedInUsersById.Remove(userExtension.UserId);
+
+                NotifyOnUserLoggedOutEvent(userExtension);
+            }
+            // If we got system exception
+            catch (MstMessageHandlerException e)
+            {
+                logger.Error(e.Message);
+                message.Respond(e.Message, e.Status);
+            }
+            // If we got another exception
+            catch (Exception e)
+            {
+                logger.Error(e.Message);
+                message.Respond(e.Message, ResponseStatus.Error);
+            }
+        }
+
         /// <summary>
         /// Handles a request to log in
         /// </summary>
@@ -780,7 +870,7 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                logger.Debug($"Signing in user {message.Peer.Id}...");
+                logger.Debug($"Signing in client {message.Peer.Id}...");
 
                 // Get security extension of a peer
                 var securityExt = message.Peer.GetExtension<SecurityInfoPeerExtension>();

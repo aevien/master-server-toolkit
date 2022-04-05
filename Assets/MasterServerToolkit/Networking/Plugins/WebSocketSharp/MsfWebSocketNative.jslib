@@ -1,13 +1,14 @@
 var LibraryWebSockets = {
     $webSocketInstances: [],
 
-    MsfSocketCreate: function (url) {
+    MstSocketCreate: function (url) {
         var str = Pointer_stringify(url);
 
         var socket = {
             socket: new WebSocket(str),
             buffer: new Uint8Array(0),
             error: null,
+			code:-1,
             messages: []
         }
 
@@ -30,30 +31,31 @@ var LibraryWebSockets = {
 
         socket.socket.onclose = function (e) {
             if (e.code != 1000) {
+				socket.code = e.code;
                 if (e.reason != null && e.reason.length > 0)
                     socket.error = e.reason;
                 else {
                     switch (e.code) {
-                    case 1001:
-                        socket.error = "Endpoint going away.";
-                        break;
-                    case 1002:
-                        socket.error = "Protocol error.";
-                        break;
-                    case 1003:
-                        socket.error = "Unsupported message.";
-                        break;
-                    case 1005:
-                        socket.error = "No status.";
-                        break;
-                    case 1006:
-                        socket.error = "Abnormal disconnection.";
-                        break;
-                    case 1009:
-                        socket.error = "Data frame too large.";
-                        break;
-                    default:
-                        socket.error = "Error " + e.code;
+						case 1001:
+							socket.error = "Endpoint going away.";
+							break;
+						case 1002:
+							socket.error = "Protocol error.";
+							break;
+						case 1003:
+							socket.error = "Unsupported message.";
+							break;
+						case 1005:
+							socket.error = "No status.";
+							break;
+						case 1006:
+							socket.error = "Abnormal disconnection.";
+							break;
+						case 1009:
+							socket.error = "Data frame too large.";
+							break;
+						default:
+							socket.error = "Error " + e.code;
                     }
                 }
             }
@@ -62,12 +64,17 @@ var LibraryWebSockets = {
         return instance;
     },
 
-    MsfSocketState: function (socketInstance) {
+    MstSocketState: function (socketInstance) {
         var socket = webSocketInstances[socketInstance];
         return socket.socket.readyState;
     },
 
-    MsfSocketError: function (socketInstance, ptr, bufsize) {
+    MstSocketCode: function (socketInstance) {
+        var socket = webSocketInstances[socketInstance];
+        return socket.socket.code;
+    },
+
+    MstSocketError: function (socketInstance, ptr, bufsize) {
         var socket = webSocketInstances[socketInstance];
         if (socket.error == null)
             return 0;
@@ -76,19 +83,19 @@ var LibraryWebSockets = {
         return 1;
     },
 
-    MsfSocketSend: function (socketInstance, ptr, length) {
+    MstSocketSend: function (socketInstance, ptr, length) {
         var socket = webSocketInstances[socketInstance];
         socket.socket.send(HEAPU8.buffer.slice(ptr, ptr + length));
     },
 
-    MsfSocketRecvLength: function (socketInstance) {
+    MstSocketRecvLength: function (socketInstance) {
         var socket = webSocketInstances[socketInstance];
         if (socket.messages.length == 0)
             return 0;
         return socket.messages[0].length;
     },
 
-    MsfSocketRecv: function (socketInstance, ptr, length) {
+    MstSocketRecv: function (socketInstance, ptr, length) {
         var socket = webSocketInstances[socketInstance];
         if (socket.messages.length == 0)
             return 0;
@@ -98,13 +105,13 @@ var LibraryWebSockets = {
         socket.messages = socket.messages.slice(1);
     },
 
-    MsfSocketClose: function (socketInstance, reason) {
+    MstSocketClose: function (socketInstance, reason) {
         var socket = webSocketInstances[socketInstance];
         socket.socket.close();
 		console.log('Client closed connection by reason: ' + reason); 
     },
 	
-	MsfAlert:function(msg){
+	MstAlert:function(msg){
 		alert(msg);
 	}
 };

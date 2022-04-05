@@ -8,7 +8,7 @@
         /// <summary>
         /// Operation code, a.k.a message type
         /// </summary>
-        short OpCode { get; }
+        ushort OpCode { get; }
 
         /// <summary>
         /// Content of the message

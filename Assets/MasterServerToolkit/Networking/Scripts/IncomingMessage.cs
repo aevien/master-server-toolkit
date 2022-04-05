@@ -11,7 +11,7 @@ namespace MasterServerToolkit.Networking
     {
         private readonly byte[] _data;
 
-        public IncomingMessage(short opCode, byte flags, byte[] data, DeliveryMethod deliveryMethod, IPeer peer)
+        public IncomingMessage(ushort opCode, byte flags, byte[] data, DeliveryMethod deliveryMethod, IPeer peer)
         {
             _data = data;
 
@@ -28,7 +28,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Operation code (message type)
         /// </summary>
-        public short OpCode { get; private set; }
+        public ushort OpCode { get; private set; }
 
         /// <summary>
         /// Sender

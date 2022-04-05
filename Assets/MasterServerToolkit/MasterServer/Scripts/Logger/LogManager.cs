@@ -9,28 +9,43 @@ namespace MasterServerToolkit.Logging
         private static LogHandler _appenders;
         private static readonly Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
         private static readonly Queue<PooledLog> _pooledLogs;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static bool EnableCurrentClassLogger = true;
 
         /// <summary>
-        /// Overrides logging sett
+        /// Overrides logging set
         /// </summary>
         public static LogLevel GlobalLogLevel { get; set; }
 
         /// <summary>
         /// This overrides all logging settings
         /// </summary>
-        public static LogLevel ForceLogLevel { get; set; }
+        public static LogLevel LogLevel { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static bool IsInitialized { get; private set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static int InitializationPoolSize = 100;
 
         static LogManager()
         {
-            ForceLogLevel = LogLevel.Off;
+            LogLevel = LogLevel.Off;
             _pooledLogs = new Queue<PooledLog>();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appenders"></param>
+        /// <param name="globalLogLevel"></param>
         public static void Initialize(IEnumerable<LogHandler> appenders, LogLevel globalLogLevel)
         {
             GlobalLogLevel = globalLogLevel;
@@ -52,12 +67,16 @@ namespace MasterServerToolkit.Logging
             while (_pooledLogs.Count > 0)
             {
                 var log = _pooledLogs.Dequeue();
-                log.BmLogger.Log(log.LogLevel, log.Message);
+                log.Logger.Log(log.LogLevel, log.Message);
             }
 
             _pooledLogs.Clear();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appender"></param>
         public static void AddAppender(LogHandler appender)
         {
             _appenders += appender;
@@ -67,6 +86,10 @@ namespace MasterServerToolkit.Logging
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appender"></param>
         public static void RemoveAppender(LogHandler appender)
         {
             _appenders -= appender;
@@ -76,11 +99,20 @@ namespace MasterServerToolkit.Logging
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static Logger GetLogger(string name)
         {
             return GetLogger(name, true);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public static Logger GetCurrentClassLogger()
         {
             if (EnableCurrentClassLogger)
@@ -92,9 +124,14 @@ namespace MasterServerToolkit.Logging
             {
                 return Logs.Logger;
             }
-
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="poolUntilInitialized"></param>
+        /// <returns></returns>
         public static Logger GetLogger(string name, bool poolUntilInitialized)
         {
             if (!_loggers.TryGetValue(name, out Logger logger))
@@ -117,7 +154,7 @@ namespace MasterServerToolkit.Logging
             var log = _pooledLogs.Count >= InitializationPoolSize ? _pooledLogs.Dequeue() : new PooledLog();
 
             log.LogLevel = level;
-            log.BmLogger = logger;
+            log.Logger = logger;
             log.Message = message;
             log.Date = DateTime.Now;
 
@@ -136,6 +173,7 @@ namespace MasterServerToolkit.Logging
             {
                 LogLevel = GlobalLogLevel
             };
+
             logger.OnLogEvent += _appenders;
             return logger;
         }
@@ -144,7 +182,7 @@ namespace MasterServerToolkit.Logging
         {
             public DateTime Date;
             public LogLevel LogLevel;
-            public Logger BmLogger;
+            public Logger Logger;
             public object Message;
         }
     }

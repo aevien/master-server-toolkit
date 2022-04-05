@@ -24,7 +24,7 @@ namespace MasterServerToolkit.MasterServer
         /// to communicate with server
         /// </summary>
         /// <param name="handler"></param>
-        void SetHandler(IPacketHandler handler);
+        void RegisterMessageHandler(IPacketHandler handler);
 
         /// <summary>
         /// Sets a message handler to connection, which is used by this this object
@@ -32,14 +32,14 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="handler"></param>
-        void SetHandler(short opCode, IncommingMessageHandler handler);
+        void RegisterMessageHandler(ushort opCode, IncommingMessageHandler handler);
 
         /// <summary>
         /// Removes the packet handler, but only if this exact handler
         /// was used
         /// </summary>
         /// <param name="handler"></param>
-        void RemoveHandler(IPacketHandler handler);
+        void UnregisterMessageHandler(IPacketHandler handler);
 
         /// <summary>
         /// Changes the connection object, and sets all of the message handlers of this object

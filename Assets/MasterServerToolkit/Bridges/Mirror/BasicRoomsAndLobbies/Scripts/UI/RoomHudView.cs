@@ -9,7 +9,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
     {
         public void Disconnect()
         {
+#if MIRROR
             RoomClientManager.Disconnect();
+#endif
         }
     }
 }

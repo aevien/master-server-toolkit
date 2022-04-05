@@ -16,7 +16,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// If set to true, game server will never be started
         /// </summary>
-        public bool ForceClientMode { get; set; } = false;
+        public bool IsClientMode { get; set; } = false;
 
         public MstRoomsClient(IClientSocket connection) : base(connection) { }
 
@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer
                 Password = password
             };
 
-            connection.SendMessage((short)MstMessageCodes.GetRoomAccessRequest, roomAccessRequestPacket, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetRoomAccessRequest, roomAccessRequestPacket, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

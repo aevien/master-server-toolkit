@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -95,6 +96,28 @@ namespace MasterServerToolkit.MasterServer
             OptionalDependencies.Add(typeof(T));
         }
 
+        public virtual JObject JsonInfo()
+        {
+            var json = new JObject() {
+                { "name", GetType().Name },
+                { "description", GetType().Name },
+            };
+
+            if (Dependencies.Count > 0)
+            {
+                var dependencieArray = new JArray();
+
+                for (int i = 0; i < Dependencies.Count; i++)
+                {
+                    dependencieArray.Add(Dependencies[i].Name);
+                }
+
+                json.Add("dependencies", dependencieArray);
+            }
+
+            return json;
+        }
+
         /// <summary>
         /// Gets base module info
         /// </summary>
@@ -102,7 +125,6 @@ namespace MasterServerToolkit.MasterServer
         public virtual MstProperties Info()
         {
             MstProperties info = new MstProperties();
-
             info.Set("Description", GetType().Name);
 
             if (Dependencies.Count > 0)

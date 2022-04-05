@@ -2,7 +2,6 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using Newtonsoft.Json.Linq;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -68,9 +67,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 string message = $"<color=#B7E117FF>{task["title"]}</color>\n".ToUpper() +
                     $"Status: {(task.Value<bool>("completed") ? "Completed" : "In progress")}\nPlayer: {task["userId"]}";
 
-                Mst.Server.Notifications.NotifyRoom(roomServerManager.RoomController.RoomId, message, null);
-
-                StartTaskNotices();
+                if (roomServerManager.HasPlayers)
+                {
+                    Mst.Server.Notifications.NotifyRoom(roomServerManager.RoomController.RoomId, message, null);
+                    StartTaskNotices();
+                }
             });
         }
     }

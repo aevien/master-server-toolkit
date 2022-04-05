@@ -1,13 +1,13 @@
 using MasterServerToolkit.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class WsControllerService : WebSocketBehavior
+    public class WsControllerService : WebSocketServiceBehavior
     {
         private Queue<string> messageQueueData = new Queue<string>();
         private Dictionary<string, WsControllerMessageHandler> messageHandlers = new Dictionary<string, WsControllerMessageHandler>();
@@ -32,19 +32,15 @@ namespace MasterServerToolkit.MasterServer
                 {
                     try
                     {
-                        var msg = WsControllerMessage.FromJson(messageQueueData.Dequeue());
+                        WsControllerMessage msg = JsonConvert.DeserializeObject<WsControllerMessage>(messageQueueData.Dequeue());
 
-                        if (messageHandlers.ContainsKey(msg.OpCode))
-                        {
-                            messageHandlers[msg.OpCode].Handle(msg, this);
-                        }
-                        else
-                        {
-                            msg.Error = $"No handler with opcode [{msg.OpCode}] found";
-                            msg.Data = null;
+                        if (!msg.HasOpCode())
+                            throw new ArgumentNullException("This message has no opcode");
 
-                            Send(msg.ToString());
-                        }
+                        if (!messageHandlers.ContainsKey(msg.OpCode))
+                            throw new ArgumentNullException("No handler with opcode [{msg.OpCode}] found");
+
+                        messageHandlers[msg.OpCode].Handle(msg, this);
                     }
                     catch (Exception e)
                     {

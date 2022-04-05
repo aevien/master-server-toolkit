@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.Games
 {
-    public class PasswordInputDialoxBoxEventMessage : MonoBehaviour
+    public class PasswordInputDialoxBoxEventMessage
     {
         public PasswordInputDialoxBoxEventMessage() { }
 

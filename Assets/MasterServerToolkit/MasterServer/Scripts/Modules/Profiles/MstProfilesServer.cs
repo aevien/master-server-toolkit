@@ -56,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ServerProfileRequest, profile.UserId, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.ServerProfileRequest, profile.UserId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -96,7 +96,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            sendUpdatesCoroutine = MstTimer.Singleton.StartCoroutine(KeepSendingUpdates(connection));
+            sendUpdatesCoroutine = MstTimer.Instance.StartCoroutine(KeepSendingUpdates(connection));
         }
 
         private void OnProfileDisposed(ObservableServerProfile profile)
@@ -139,7 +139,7 @@ namespace MasterServerToolkit.MasterServer
                             profile.ClearUpdates();
                         }
 
-                        connection.SendMessage((short)MstMessageCodes.UpdateServerProfile, ms.ToArray());
+                        connection.SendMessage((ushort)MstOpCodes.UpdateServerProfile, ms.ToArray());
                     }
                 }
 

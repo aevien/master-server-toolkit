@@ -1,4 +1,8 @@
-﻿namespace MasterServerToolkit.Logging
+﻿using MasterServerToolkit.MasterServer;
+using System.Threading;
+using UnityEngine.Assertions;
+
+namespace MasterServerToolkit.Logging
 {
     public delegate void LogHandler(Logger logger, LogLevel logLevel, object message);
 
@@ -127,13 +131,9 @@
 
         public void Log(LogLevel logLvl, object message)
         {
-            // If nothing listens to logs,
-            if (OnLogEvent == null)
-            {
-                return;
-            }
+            if (OnLogEvent == null) return;
 
-            if (LogManager.ForceLogLevel != LogLevel.Off && logLvl >= LogManager.ForceLogLevel)
+            if (LogManager.LogLevel != LogLevel.Off && logLvl >= LogManager.LogLevel)
             {
                 OnLogEvent(this, logLvl, message);
                 return;

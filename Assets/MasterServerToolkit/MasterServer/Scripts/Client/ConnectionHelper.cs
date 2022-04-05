@@ -40,12 +40,17 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Triggers when connected to server
         /// </summary>
-        public UnityEvent OnConnectedEvent;
+        public UnityEvent OnConnectionOpenEvent;
 
         /// <summary>
         /// triggers when disconnected from server
         /// </summary>
-        public UnityEvent OnDisconnectedEvent;
+        public UnityEvent OnConnectionCloseEvent;
+
+        /// <summary>
+        /// triggers when connection to server failed
+        /// </summary>
+        public UnityEvent OnConnectionFailedEvent;
         #endregion
 
         protected int currentAttemptToConnect = 0;
@@ -89,7 +94,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnDestroy()
         {
-            Connection?.Disconnect();
+            Connection?.Close();
         }
 
         protected virtual void OnValidate()
@@ -132,26 +137,46 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void StartConnection()
         {
-            if (gameObject && gameObject.activeSelf && gameObject.activeInHierarchy)
-                StartCoroutine(StartConnectionProcess(serverIP, serverPort, maxAttemptsToConnect));
+            StartConnection(serverIP, serverPort, maxAttemptsToConnect);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="numberOfAttempts"></param>
         public void StartConnection(int numberOfAttempts)
         {
-            if (gameObject && gameObject.activeSelf && gameObject.activeInHierarchy)
-                StartCoroutine(StartConnectionProcess(serverIP, serverPort, numberOfAttempts));
+            StartConnection(serverIP, serverPort, numberOfAttempts);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serverIp"></param>
+        /// <param name="serverPort"></param>
+        /// <param name="numberOfAttempts"></param>
         public void StartConnection(string serverIp, int serverPort, int numberOfAttempts = 5)
         {
             if (gameObject && gameObject.activeSelf && gameObject.activeInHierarchy)
                 StartCoroutine(StartConnectionProcess(serverIp, serverPort, numberOfAttempts));
         }
 
+        public void StopConnectionProcess()
+        {
+            StopAllCoroutines();
+            Connection?.Close();
+        }
+
         protected virtual IEnumerator StartConnectionProcess(string serverIp, int serverPort, int numberOfAttempts)
         {
             currentAttemptToConnect = 0;
             maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
+
+            Connection.RemoveConnectionOpenListener(OnConnectedEventHandler);
+            Connection.RemoveConnectionCloseListener(OnDisconnectedEventHandler);
+
+            Connection.AddConnectionOpenListener(OnConnectedEventHandler);
+            Connection.AddConnectionCloseListener(OnDisconnectedEventHandler, false);
 
             // Wait a fraction of a second, in case we're also starting a master server at the same time
             yield return new WaitForSeconds(waitAndConnect);
@@ -161,13 +186,6 @@ namespace MasterServerToolkit.MasterServer
                 logger.Info($"Starting MASTER Connection Helper... {Mst.Version}");
                 logger.Info($"Connecting to MASTER server at: {serverIp}:{serverPort}");
             }
-
-            yield return new WaitForSeconds(0.1f);
-
-            Connection.RemoveConnectionListener(OnConnectedEventHandler);
-            Connection.RemoveDisconnectionListener(OnDisconnectedEventHandler);
-            Connection.AddConnectionListener(OnConnectedEventHandler);
-            Connection.AddDisconnectionListener(OnDisconnectedEventHandler, false);
 
             while (true)
             {
@@ -180,8 +198,10 @@ namespace MasterServerToolkit.MasterServer
                 // If currentAttemptToConnect of attempts is equals maxAttemptsToConnect stop connection
                 if (currentAttemptToConnect == maxAttemptsToConnect)
                 {
-                    logger.Info($"Client cannot to connect to MASTER server at: {serverIp}:{serverPort}");
-                    Connection.Disconnect();
+                    logger.Error($"Client cannot to connect to MASTER server at: {serverIp}:{serverPort}");
+                    Connection.Close(false);
+                    OnConnectionFailedHandler();
+                    OnConnectionFailedEvent?.Invoke();
                     yield break;
                 }
 
@@ -196,7 +216,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!Connection.IsConnected)
                 {
-                    Connection.UseSecure = MstApplicationConfig.Singleton.UseSecure;
+                    Connection.UseSecure = MstApplicationConfig.Instance.UseSecure;
                     Connection.Connect(serverIp, serverPort);
                 }
 
@@ -211,18 +231,25 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
+        protected virtual void OnConnectedEventHandler()
+        {
+            logger.Info($"Connected to MASTER server at {serverIP}:{serverPort}");
+            timeToConnect = minTimeToConnect;
+            OnConnectionOpenEvent?.Invoke();
+        }
+
+        protected virtual void OnConnectionFailedHandler()
+        {
+            logger.Info($"Connection to MASTER server at {serverIP}:{serverPort} failed");
+            timeToConnect = minTimeToConnect;
+            OnConnectionFailedEvent?.Invoke();
+        }
+
         protected virtual void OnDisconnectedEventHandler()
         {
             logger.Info($"Disconnected from MASTER server");
             timeToConnect = minTimeToConnect;
-            OnDisconnectedEvent?.Invoke();
-        }
-
-        protected virtual void OnConnectedEventHandler()
-        {
-            logger.Info($"Connected to MASTER server at: {serverIP}:{serverPort}");
-            timeToConnect = minTimeToConnect;
-            OnConnectedEvent?.Invoke();
+            OnConnectionCloseEvent?.Invoke();
         }
     }
 }

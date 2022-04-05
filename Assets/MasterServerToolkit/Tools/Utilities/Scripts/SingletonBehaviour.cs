@@ -27,18 +27,18 @@ namespace MasterServerToolkit.Utils
         /// </summary>
         protected bool isNowDestroying = false;
 
-        public static T Singleton { get; protected set; }
+        public static T Instance { get; protected set; }
 
         protected virtual void Awake()
         {
-            if (Singleton != null)
+            if (Instance != null)
             {
                 isNowDestroying = true;
                 Destroy(gameObject);
                 return;
             }
 
-            Singleton = this as T;
+            Instance = this as T;
 
             DontDestroyOnLoad(gameObject);
 

@@ -20,7 +20,7 @@ namespace MasterServerToolkit.MasterServer
                 var channel = new ChatChannelInfo()
                 {
                     Name = reader.ReadString(),
-                    OnlineCount = reader.ReadUInt16()
+                    OnlineCount = reader.ReadInt32()
                 };
 
                 Channels.Add(channel);

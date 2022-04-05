@@ -1,6 +1,6 @@
 ﻿namespace MasterServerToolkit.Networking
 {
-    public enum DeliveryMethod
+    public enum DeliveryMethod : byte
     {
         Unreliable = 0,
         // There is no guarantee of delivery or ordering, but allowing fragmented messages

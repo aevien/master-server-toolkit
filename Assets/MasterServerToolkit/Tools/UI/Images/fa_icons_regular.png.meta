@@ -479,6 +479,8 @@ TextureImporter:
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMasterTextureLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -487,9 +489,9 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: -1
-    aniso: -1
-    mipBias: -100
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -510,9 +512,12 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
+  ignorePngGamma: 0
   applyGammaDecoding: 0
   platformSettings:
   - serializedVersion: 3
@@ -3732,6 +3737,159 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      window-minimize: 8107872794959981099
+      hand-scissors: -1936180017652661109
+      circle: 4635883900927747720
+      laugh-beam: -7360795227921763270
+      map: -399840562033327265
+      star-half: 1588985766225488049
+      flag: 4372971727497871311
+      credit-card: -331370407312021779
+      thumbs-up: 935164777126842598
+      play-circle: -6313161605132035065
+      sad-cry: 4735950149425885804
+      hand-paper: 4036311820141051175
+      stop-circle: 3016961608250166996
+      building: -907845745824006705
+      file-powerpoint: -4246595878953145358
+      share-square: 4480927254637196502
+      surprise: 9165422066092459781
+      hdd: -5930661822690863892
+      snowflake: 7611937502267990400
+      calendar-times: -6162301037355986427
+      user: -5841255510044930599
+      file-audio: -6760017588292357931
+      closed-captioning: -6841530359628594142
+      comment: 6554607671855833799
+      clipboard: -3440704145356744868
+      eye: 9037331016498906902
+      images: -8981207468879790968
+      sticky-note: 3096878675058918518
+      file-word: 1180529676752738595
+      sun: 1074095854791272569
+      window-close: -7454546420514748501
+      file-video: 2238026661688992403
+      grin-wink: -8843406398088341828
+      thumbs-down: 3897131329830444810
+      calendar-minus: 3243832867904689666
+      file-pdf: -733698266119745262
+      comments: 8676946343663186958
+      grin-beam: 7658317047015714465
+      id-card: 3016053747414824229
+      grin-squint: -3241898726820107057
+      eye-slash: -7017114341565763786
+      handshake: 4060022857750891952
+      arrow-alt-circle-up: -2771855038743502731
+      lightbulb: 635632224636298040
+      arrow-alt-circle-down: -628391108455913077
+      grin-tongue: -205831749013988010
+      hand-peace: -27980561729843839
+      hand-point-left: 8161057781408042866
+      grin-squint-tears: 6783165214773503033
+      newspaper: -5390596636173870920
+      pause-circle: 2835085942757483198
+      file: -1474746688885771747
+      window-restore: -9006570826577287115
+      file-code: -3810246262498998811
+      user-circle: -4697863032696091823
+      star: 3802091392676919337
+      edit: 1293222870303939291
+      flushed: 7091715560320204961
+      meh: 193743489970642993
+      hand-pointer: -2975396684074125277
+      grin-stars: 6511489476998571250
+      object-group: -1125364198748418539
+      id-badge: 6823145112025043735
+      file-excel: 3740684330990487540
+      arrow-alt-circle-right: -8875425097977762992
+      bell-slash: 5330148439538494877
+      laugh-squint: -8418724222627640810
+      font-awesome-logo-full: -8452504169420938979
+      file-archive: 5264022029910444716
+      smile-beam: -1934057651646314194
+      hand-point-right: 2588766494709551593
+      save: -8317778102323377313
+      gem: -7618352362377138236
+      hand-point-up: 5595930282161596599
+      arrow-alt-circle-left: 3881335432912231801
+      grin-tears: -6729058696698038106
+      heart: -3574820651616021983
+      address-book: -3381989965269249811
+      square: 2213731607469278391
+      lemon: 6264233599618148188
+      compass: -5625412844209256805
+      grin-hearts: 1663895492337006721
+      money-bill-alt: 785002969146817452
+      calendar: -6637194965175804933
+      bell: 1210468120907054213
+      caret-square-left: -788244349046718393
+      hand-lizard: 2546728423078129771
+      hospital: 7092786493233693112
+      check-circle: 4815987216475664407
+      copyright: 5107106033713644983
+      meh-blank: 3907893214999051400
+      kiss-beam: -9196297050372822134
+      grimace: -2505130677647444794
+      smile: 1670379394159869417
+      frown-open: -7833955304869944202
+      life-ring: 4858416393635298351
+      paper-plane: 3051462424259029007
+      meh-rolling-eyes: -3058718768886861464
+      question-circle: 1207515019802468462
+      comment-alt: 262706748064169826
+      folder: 3598705322189695406
+      caret-square-up: 108367073169010585
+      hand-spock: -164251541176002752
+      envelope: 690084562649704981
+      registered: 4046591714219435232
+      laugh-wink: 1373541178026350047
+      folder-open: -2516775464268178092
+      clock: 8755254813954124445
+      kiss-wink-heart: 8326436313426952354
+      plus-square: 2916704671110153792
+      minus-square: 5950658723575376176
+      frown: 6833858408159681956
+      file-image: 2134542639957695554
+      hand-point-down: 72255450585936050
+      caret-square-down: 3684030629801446234
+      clone: -3955115628637818971
+      bookmark: -6531453688181002298
+      grin-alt: -8340988779500619007
+      object-ungroup: -6378437361977742683
+      grin: 6074922063037849071
+      envelope-open: 3060157924644178739
+      calendar-plus: 1619308192638453396
+      sad-tear: -4886074999288749956
+      futbol: -396269765006381515
+      grin-tongue-wink: 7591932458738927428
+      comment-dots: -9136024241656792809
+      hand-rock: 6577932007625504046
+      moon: 32877268603518796
+      laugh: 3060506648114871056
+      address-card: 3608912563628543553
+      tired: -4769686217707152476
+      check-square: -604863201171346765
+      caret-square-right: 3460421471290475010
+      grin-beam-sweat: 882146840425890861
+      file-alt: -8926530455663466337
+      image: 5976272461515576160
+      window-maximize: -9205852699366759940
+      list-alt: 463706523638243596
+      smile-wink: 8208166519121252855
+      dizzy: -3581166481464837462
+      grin-tongue-squint: 5820450075732073990
+      dot-circle: 5810990823924037540
+      angry: 3481594797983888776
+      calendar-check: -8623118861390214152
+      chart-bar: -7701738958709701749
+      copy: 6510963828285966235
+      keyboard: -3364489811545169772
+      kiss: -7528184767219385768
+      trash-alt: 7274657601236455944
+      hourglass: -4952036676348144157
+      times-circle: 6243131976888181025
+      calendar-alt: -8026472147764899432
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

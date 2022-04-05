@@ -1,5 +1,4 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.MasterServer;
+﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Collections;
 using UnityEngine;
@@ -102,27 +101,27 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
         }
 
-        private void ProfilesManager_OnPropertyUpdatedEvent(short key, IObservableProperty property)
+        private void ProfilesManager_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
         {
-            if (key == (short)ObservablePropertiyCodes.DisplayName)
+            if (key == (short)ObservablePropertyCodes.DisplayName)
             {
-                DisplayName = property.CastTo<ObservableString>().GetValue();
+                DisplayName = property.As<ObservableString>().Value();
             }
-            else if (key == (short)ObservablePropertiyCodes.Avatar)
+            else if (key == (short)ObservablePropertyCodes.Avatar)
             {
                 LoadAvatarImage(property.Serialize());
             }
-            else if (key == (short)ObservablePropertiyCodes.Bronze)
+            else if (key == (short)ObservablePropertyCodes.Bronze)
             {
-                Bronze = property.CastTo<ObservableFloat>().GetValue().ToString("F2");
+                Bronze = property.As<ObservableFloat>().Value().ToString("F2");
             }
-            else if (key == (short)ObservablePropertiyCodes.Silver)
+            else if (key == (short)ObservablePropertyCodes.Silver)
             {
-                Silver = property.CastTo<ObservableFloat>().GetValue().ToString("F2");
+                Silver = property.As<ObservableFloat>().Value().ToString("F2");
             }
-            else if (key == (short)ObservablePropertiyCodes.Gold)
+            else if (key == (short)ObservablePropertyCodes.Gold)
             {
-                Gold = property.CastTo<ObservableFloat>().GetValue().ToString("F2");
+                Gold = property.As<ObservableFloat>().Value().ToString("F2");
             }
         }
 

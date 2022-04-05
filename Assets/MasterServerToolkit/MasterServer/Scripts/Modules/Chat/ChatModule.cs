@@ -93,13 +93,13 @@ namespace MasterServerToolkit.MasterServer
         public override void Initialize(IServer server)
         {
             // Set handlers
-            server.RegisterMessageHandler((short)MstMessageCodes.PickUsername, OnPickUsernameRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.JoinChannel, OnJoinChannelRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.LeaveChannel, OnLeaveChannelRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.GetCurrentChannels, OnGetCurrentChannelsRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.ChatMessage, OnChatMessageHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.GetUsersInChannel, OnGetUsersInChannelRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.SetDefaultChannel, OnSetDefaultChannelRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.PickUsername, OnPickUsernameRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.JoinChannel, OnJoinChannelRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.LeaveChannel, OnLeaveChannelRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.GetCurrentChannels, OnGetCurrentChannelsRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ChatMessage, OnChatMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.GetUsersInChannel, OnGetUsersInChannelRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.SetDefaultChannel, OnSetDefaultChannelRequestHandler);
 
             // Setup authModule dependencies
             authModule = server.GetModule<AuthModule>();
@@ -107,14 +107,17 @@ namespace MasterServerToolkit.MasterServer
             // Setup censorModule
             censorModule = server.GetModule<CensorModule>();
 
-            if (useAuthModule && authModule)
+            if (useAuthModule)
             {
-                authModule.OnUserLoggedInEvent += OnUserLoggedInEventHandler;
-                authModule.OnUserLoggedOutEvent += OnUserLoggedOutEventHandler;
-            }
-            else if (useAuthModule && !authModule)
-            {
-                logger.Error($"{GetType().Name} was set to use {nameof(AuthModule)}, but {nameof(AuthModule)} was not found");
+                if (authModule)
+                {
+                    authModule.OnUserLoggedInEvent += OnUserLoggedInEventHandler;
+                    authModule.OnUserLoggedOutEvent += OnUserLoggedOutEventHandler;
+                }
+                else
+                {
+                    logger.Error($"{GetType().Name} was set to use {nameof(AuthModule)}, but {nameof(AuthModule)} was not found");
+                }
             }
         }
 
@@ -337,7 +340,7 @@ namespace MasterServerToolkit.MasterServer
                             throw new MstMessageHandlerException($"User '{message.Receiver}' is not online", ResponseStatus.Failed);
                         }
 
-                        receiver.Peer.SendMessage((short)MstMessageCodes.ChatMessage, message);
+                        receiver.Peer.SendMessage((ushort)MstOpCodes.ChatMessage, message);
                         rawMessage.Respond(ResponseStatus.Success);
                         return true;
                 }

@@ -1,5 +1,4 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
@@ -92,8 +91,8 @@ namespace MasterServerToolkit.Games
             base.OnDestroy();
 
             // unregister from connection events
-            Connection?.RemoveConnectionListener(OnClientConnectedToServer);
-            Connection?.RemoveDisconnectionListener(OnClientDisconnectedFromServer);
+            Connection?.RemoveConnectionOpenListener(OnClientConnectedToServer);
+            Connection?.RemoveConnectionCloseListener(OnClientDisconnectedFromServer);
 
             // Unregister from listening to auth events
             Mst.Client.Auth.OnSignedInEvent -= Auth_OnSignedInEvent;
@@ -124,8 +123,8 @@ namespace MasterServerToolkit.Games
             MstTimer.WaitForSeconds(0.5f, () =>
             {
                 // Listen to connection events
-                Connection.AddConnectionListener(OnClientConnectedToServer);
-                Connection.AddDisconnectionListener(OnClientDisconnectedFromServer, false);
+                Connection.AddConnectionOpenListener(OnClientConnectedToServer);
+                Connection.AddConnectionCloseListener(OnClientDisconnectedFromServer, false);
 
                 if (!Connection.IsConnected && !Connection.IsConnecting)
                 {
@@ -166,8 +165,8 @@ namespace MasterServerToolkit.Games
         /// </summary>
         protected virtual void OnClientDisconnectedFromServer()
         {
-            Connection.RemoveConnectionListener(OnClientConnectedToServer);
-            Connection.RemoveDisconnectionListener(OnClientDisconnectedFromServer);
+            Connection.RemoveConnectionOpenListener(OnClientConnectedToServer);
+            Connection.RemoveConnectionCloseListener(OnClientDisconnectedFromServer);
 
             Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
             Mst.Events.Invoke(MstEventKeys.showOkDialogBox,
@@ -255,7 +254,7 @@ namespace MasterServerToolkit.Games
                     Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
                     logger.Error(outputMessage);
                 }
-            });
+            }, Connection);
         }
 
         /// <summary>
@@ -423,10 +422,10 @@ namespace MasterServerToolkit.Games
         {
             logger.Debug("Sign out");
             Mst.Client.Auth.SignOut(true);
-            ViewsManager.HideAllViews();
 
             MstTimer.WaitForSeconds(0.2f, () =>
             {
+                ViewsManager.HideAllViews();
                 Mst.Events.Invoke(MstEventKeys.showSignInView);
             });
         }

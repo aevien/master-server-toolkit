@@ -7,26 +7,39 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ObservableFloat : ObservableBase<float>
     {
-        public ObservableFloat(short key, float defaultValue = 0) : base(key)
+        public ObservableFloat(ushort key, float defaultValue = 0) : base(key)
         {
             _value = defaultValue;
         }
 
-        public void Add(float val)
+        /// <summary>
+        /// Increments current value by <paramref name="value"/>
+        /// </summary>
+        /// <param name="value"></param>
+        public void Add(float value)
         {
-            _value += val;
+            _value += value;
             MarkDirty();
         }
 
-        public void Set(float val)
+        /// <summary>
+        /// Just sets current value
+        /// </summary>
+        /// <param name="value"></param>
+        public void Set(float value)
         {
-            if(_value != val)
+            if (_value != value)
             {
-                _value = val;
+                _value = value;
                 MarkDirty();
             }
         }
 
+        /// <summary>
+        /// Tries to take given <paramref name="amount"/> away from current value
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <returns></returns>
         public bool TryTake(float amount)
         {
             if (_value >= amount)

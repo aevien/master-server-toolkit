@@ -10,7 +10,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Gets current property value
         /// </summary>
-        T GetValue();
+        T Value();
     }
 
     public interface IObservableProperty
@@ -18,7 +18,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Property key
         /// </summary>
-        short Key { get; }
+        ushort Key { get; }
 
         /// <summary>
         /// Invoked, when value gets dirty
@@ -70,10 +70,10 @@ namespace MasterServerToolkit.MasterServer
         void ClearUpdates();
 
         /// <summary>
-        /// Cast property to property of given type
+        /// Cast this property to property of given type
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        TCast CastTo<TCast>() where TCast : class, IObservableProperty;
+        TCast As<TCast>() where TCast : class, IObservableProperty;
     }
 }

@@ -79,7 +79,7 @@ namespace MasterServerToolkit.MasterServer
             Options = options;
 
             // Add handlers
-            connection.RegisterMessageHandler((short)MstMessageCodes.ProvideRoomAccessCheck, ProvideRoomAccessCheckHandler);
+            connection.RegisterMessageHandler((ushort)MstOpCodes.ProvideRoomAccessCheck, ProvideRoomAccessCheckHandler);
         }
 
         /// <summary>
@@ -277,14 +277,14 @@ namespace MasterServerToolkit.MasterServer
             });
 
             // Timeout the access provider
-            MstTimer.WaitForSeconds(Mst.Server.Rooms.AccessProviderTimeout, () =>
+            MstTimer.WaitForRealtimeSeconds(Mst.Server.Rooms.AccessProviderTimeout, () =>
             {
                 if (!isProviderDone)
                 {
                     isProviderDone = true;
                     message.Respond("Timed out", ResponseStatus.Timeout);
                     Logger.Error($"Access provider took longer than {Mst.Server.Rooms.AccessProviderTimeout} seconds to provide access. " +
-                               "If it's intended, increase the threshold at Msf.Server.Rooms.AccessProviderTimeout");
+                               "If it's intended, increase the threshold at Mst.Server.Rooms.AccessProviderTimeout");
                 }
             });
         }

@@ -230,5 +230,5 @@ MonoBehaviour:
       m_Calls: []
   maxNotices: 5
   messagesContainer: {fileID: 4465368498838903730}
-  noticeItemPrefab: {fileID: 6506104944718174263, guid: 9adea27aec4f8cf4f916e76a9885b7fc, type: 3}
+  noticeItemPrefab: {fileID: 6506104944718174263, guid: bcfaaa174cec88747bdab00b1e08dc93, type: 3}
   destroyAfter: 10

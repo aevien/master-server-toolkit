@@ -85,7 +85,7 @@ namespace MasterServerToolkit.MasterServer
             options.Append(customOptions);
 
             // Send request to Master Server SpawnerModule
-            connection.SendMessage((short)MstMessageCodes.ClientsSpawnRequest, options.ToBytes(), (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.ClientsSpawnRequest, options.ToBytes(), (status, response) =>
             {
                 // If spawn request failed
                 if (status != ResponseStatus.Success)
@@ -140,7 +140,7 @@ namespace MasterServerToolkit.MasterServer
 
             Logs.Debug($"Aborting process [{spawnTaskId}]");
 
-            connection.SendMessage((short)MstMessageCodes.AbortSpawnRequest, spawnTaskId, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.AbortSpawnRequest, spawnTaskId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -178,7 +178,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.GetSpawnFinalizationData, spawnId, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetSpawnFinalizationData, spawnId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

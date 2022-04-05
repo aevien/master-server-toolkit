@@ -13,8 +13,8 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         // Start is called before the first frame update
         void Start()
         {
-            Mst.Client.Connection.AddConnectionListener(Connection_OnConnectedEvent);
-            Mst.Client.Connection.AddDisconnectionListener(Connection_OnDisconnectedEvent);
+            Mst.Client.Connection.AddConnectionOpenListener(Connection_OnConnectedEvent);
+            Mst.Client.Connection.AddConnectionCloseListener(Connection_OnDisconnectedEvent);
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         public void SendNetMessage()
         {
             string message = "Hello from client";
-            Mst.Client.Connection.SendMessage((short)MessageCodes.Message, message);
+            Mst.Client.Connection.SendMessage((ushort)MessageCodes.Message, message);
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         public void SendNetMessageWithResponse()
         {
             string text = "Hello from client and waiting for response from server";
-            Mst.Client.Connection.SendMessage((short)MessageCodes.MessageWithResponse, text, (status, message) =>
+            Mst.Client.Connection.SendMessage((ushort)MessageCodes.MessageWithResponse, text, (status, message) =>
             {
                 if (status == Networking.ResponseStatus.Error)
                 {

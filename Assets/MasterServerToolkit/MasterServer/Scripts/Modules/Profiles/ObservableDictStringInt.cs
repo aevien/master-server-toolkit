@@ -7,8 +7,8 @@ namespace MasterServerToolkit.MasterServer
 {
     public class ObservableDictStringInt : ObservableBaseDictionary<string, int>
     {
-        public ObservableDictStringInt(short key) : base(key) { }
-        public ObservableDictStringInt(short key, Dictionary<string, int> defaultValues) : base(key, defaultValues) { }
+        public ObservableDictStringInt(ushort key) : base(key) { }
+        public ObservableDictStringInt(ushort key, Dictionary<string, int> defaultValues) : base(key, defaultValues) { }
 
         public override string Serialize()
         {

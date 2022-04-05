@@ -12,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected Logging.Logger logger;
 
-        [Header("Base Module Settings"), SerializeField]
+        [Header("Base Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
 
         #endregion

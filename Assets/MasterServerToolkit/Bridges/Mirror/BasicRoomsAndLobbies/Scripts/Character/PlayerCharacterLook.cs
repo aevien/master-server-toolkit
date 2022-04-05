@@ -59,7 +59,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
         public override bool IsReady => base.IsReady
             && inputController
             && movementController
-            && ClientScene.ready;
+            && NetworkClient.ready;
 
         protected virtual void Update() { }
 

@@ -69,7 +69,8 @@ namespace MasterServerToolkit.Games
         {
             Show();
 
-            var noticeItem = noticeItems.First();
+            var noticeItem = noticeItems.FirstOrDefault();
+
             noticeItem.SetLable(message);
             noticeItem.transform.SetAsLastSibling();
             noticeItem.gameObject.SetActive(true);

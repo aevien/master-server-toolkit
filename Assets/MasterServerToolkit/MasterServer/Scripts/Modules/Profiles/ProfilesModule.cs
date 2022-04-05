@@ -22,6 +22,10 @@ namespace MasterServerToolkit.MasterServer
     {
         #region INSPECTOR
 
+        [Header("General Settings")]
+        [SerializeField, Tooltip("If true, chat module will subscribe to auth module, and automatically setup chat users when they log in")]
+        protected bool useAuthModule = true;
+
         /// <summary>
         /// Time to pass after logging out, until profile
         /// will be removed from the lookup. Should be enough for game
@@ -136,22 +140,27 @@ namespace MasterServerToolkit.MasterServer
             profileDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IProfilesDatabaseAccessor>();
 
             if (profileDatabaseAccessor == null)
-            {
                 logger.Error("Profiles database implementation was not found");
-            }
 
             // Auth dependency setup
             authModule = server.GetModule<AuthModule>();
 
-            if (authModule != null)
+            if (useAuthModule)
             {
-                authModule.OnUserLoggedInEvent += AuthModule_OnUserLoggedInEvent;
+                if (authModule)
+                {
+                    authModule.OnUserLoggedInEvent += OnUserLoggedInEventHandler;
+                }
+                else
+                {
+                    logger.Error($"{GetType().Name} was set to use {nameof(AuthModule)}, but {nameof(AuthModule)} was not found");
+                }
             }
 
             // Games dependency setup
-            server.RegisterMessageHandler((short)MstMessageCodes.ServerProfileRequest, GameServerProfileRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.ClientProfileRequest, ClientProfileRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.UpdateServerProfile, ProfileUpdateHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ServerProfileRequest, GameServerProfileRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ClientProfileRequest, ClientProfileRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateServerProfile, ProfileUpdateHandler);
         }
 
         public override MstProperties Info()
@@ -169,7 +178,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="session"></param>
         /// <param name="accountData"></param>
-        protected virtual async void AuthModule_OnUserLoggedInEvent(IUserPeerExtension user)
+        protected virtual async void OnUserLoggedInEventHandler(IUserPeerExtension user)
         {
             user.Peer.OnPeerDisconnectedEvent += OnPeerPlayerDisconnectedEventHandler;
 
@@ -191,6 +200,9 @@ namespace MasterServerToolkit.MasterServer
 
             // Restore profile data from database
             await profileDatabaseAccessor.RestoreProfileAsync(profile);
+
+            // 
+            profile.ClearUpdates();
 
             // Save profile property
             user.Peer.AddExtension(new ProfilePeerExtension(profile, user.Peer));
@@ -224,13 +236,13 @@ namespace MasterServerToolkit.MasterServer
         {
             var user = profile.ClientPeer.GetExtension<IUserPeerExtension>();
 
-            if(!user.Account.IsGuest || (user.Account.IsGuest && authModule.SaveGuestInfo))
+            if (!user.Account.IsGuest || (user.Account.IsGuest && authModule.SaveGuestInfo))
             {
                 if (!profilesToBeSaved.Contains(profile.UserId) && profile.ShouldBeSavedToDatabase)
                 {
                     // If profile is not already waiting to be saved
                     profilesToBeSaved.Add(profile.UserId);
-                    _ = SaveProfile(profile, saveProfileInterval);
+                    SaveProfile(profile, saveProfileInterval);
                 }
             }
 
@@ -238,7 +250,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 // If it's a master server
                 profilesToBeSentToClients.Add(profile.UserId);
-                _ = SendUpdatesToClient(profile, clientUpdateInterval);
+                SendUpdatesToClient(profile, clientUpdateInterval);
             }
         }
 
@@ -246,19 +258,17 @@ namespace MasterServerToolkit.MasterServer
         /// Invoked, when user logs out (disconnects from master)
         /// </summary>
         /// <param name="session"></param>
-        private void OnPeerPlayerDisconnectedEventHandler(IPeer peer)
+        protected virtual void OnPeerPlayerDisconnectedEventHandler(IPeer peer)
         {
             peer.OnPeerDisconnectedEvent -= OnPeerPlayerDisconnectedEventHandler;
 
             var profileExtension = peer.GetExtension<ProfilePeerExtension>();
 
-            if (profileExtension == null)
+            if (profileExtension != null)
             {
-                return;
+                // Unload profile
+                _ = UnloadProfile(profileExtension.UserId, unloadProfileAfter);
             }
-
-            // Unload profile
-            _ = UnloadProfile(profileExtension.UserId, unloadProfileAfter);
         }
 
         /// <summary>
@@ -267,7 +277,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="profile"></param>
         /// <param name="delay"></param>
         /// <returns></returns>
-        private async Task SaveProfile(ObservableServerProfile profile, float delay)
+        protected async void SaveProfile(ObservableServerProfile profile, float delay)
         {
             // Wait for the delay
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f * 1000 : delay * 1000));
@@ -284,7 +294,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="profile"></param>
         /// <param name="delay"></param>
         /// <returns></returns>
-        private async Task SendUpdatesToClient(ObservableServerProfile profile, float delay)
+        protected async void SendUpdatesToClient(ObservableServerProfile profile, float delay)
         {
             // Wait for the delay
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f * 1000 : delay * 1000));
@@ -307,7 +317,7 @@ namespace MasterServerToolkit.MasterServer
             profile.ClearUpdates();
 
             // Send these data to client
-            profile.ClientPeer.SendMessage(MessageHelper.Create((short)MstMessageCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
+            profile.ClientPeer.SendMessage(MessageHelper.Create((ushort)MstOpCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
 
             // Remove value from debounced updates
             profilesToBeSentToClients.Remove(profile.UserId);
@@ -319,7 +329,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="userId"></param>
         /// <param name="delay"></param>
         /// <returns></returns>
-        private async Task UnloadProfile(string userId, float delay)
+        protected async Task UnloadProfile(string userId, float delay)
         {
             // Wait for the delay
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f * 1000 : delay * 1000));
@@ -473,6 +483,18 @@ namespace MasterServerToolkit.MasterServer
         {
             profilesList.TryGetValue(userId, out ObservableServerProfile profile);
             return profile;
+        }
+
+        /// <summary>
+        /// Gets user profile by peer
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public ObservableServerProfile GetProfileByPeer(IPeer peer)
+        {
+            var user = peer.GetExtension<IUserPeerExtension>();
+            if (user == null) return null;
+            return GetProfileByUserId(user.UserId);
         }
     }
 }

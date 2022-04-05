@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using MasterServerToolkit.Extensions;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -7,6 +9,8 @@ namespace MasterServerToolkit.Utils
 {
     public class ScenesLoadManager : SingletonBehaviour<ScenesLoadManager>
     {
+        private List<string> loadedScenes = new List<string>();
+
         public void LoadSceneByName(string sceneName, UnityAction<float> onProgress, UnityAction onLoaded)
         {
             StartCoroutine(LoadAsyncScene(sceneName, false, onProgress, onLoaded));
@@ -29,6 +33,12 @@ namespace MasterServerToolkit.Utils
 
         IEnumerator LoadAsyncScene(string sceneName, bool isAdditive, UnityAction<float> onProgress, UnityAction onLoaded)
         {
+            if (loadedScenes.Contains(sceneName))
+            {
+                logger.Info($"Scene {sceneName} is already loading".ToRed());
+                yield return null;
+            }
+
             var scene = SceneManager.GetSceneByName(sceneName);
 
             if (scene.isLoaded)
@@ -38,11 +48,15 @@ namespace MasterServerToolkit.Utils
             }
             else
             {
+                loadedScenes.Add(sceneName);
+
                 AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
 
-                if(asyncOperation == null) yield return null;
+                if (asyncOperation == null) yield return null;
 
-                asyncOperation.completed += (op) => {
+                asyncOperation.completed += (op) =>
+                {
+                    loadedScenes.Remove(sceneName);
                     onLoaded?.Invoke();
                 };
 

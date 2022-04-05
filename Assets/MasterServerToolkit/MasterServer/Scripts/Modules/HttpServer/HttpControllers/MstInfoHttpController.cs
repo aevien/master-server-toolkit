@@ -1,4 +1,6 @@
 ﻿using MasterServerToolkit.MasterServer.Web;
+using MasterServerToolkit.Networking;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,21 +11,17 @@ using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
-    [Serializable]
-    public class MasterServerInfo
-    {
-        public string Name;
-        public int ModulesQty;
-    }
-
     public class MstInfoHttpController : HttpController
     {
-        Dictionary<string, string> systemInfo;
+        private Dictionary<string, string> systemInfo;
+        private string publicIp = "";
 
         public override void Initialize(HttpServerModule server)
         {
             base.Initialize(server);
-            server.RegisterHttpRequestHandler("info", OnGetMstInfoJsonHttpRequestHandler);
+
+            server.RegisterHttpRequestHandler("info", OnGetMstInfoHttpRequestHandler);
+            server.RegisterHttpRequestHandler("info.json", OnGetMstInfoJsonHttpRequestHandler);
 
             systemInfo = new Dictionary<string, string>
             {
@@ -31,13 +29,44 @@ namespace MasterServerToolkit.MasterServer
                 { "Device Model", SystemInfo.deviceModel },
                 { "Device Name", SystemInfo.deviceName },
                 { "Graphics Device Name", SystemInfo.graphicsDeviceName },
-                { "Graphics Device Version", SystemInfo.graphicsDeviceVersion },
-                { "...", "etc." },
+                { "Graphics Device Version", SystemInfo.graphicsDeviceVersion }
             };
+
+            Mst.Helper.GetPublicIp((ip, error) =>
+            {
+                publicIp = !string.IsNullOrEmpty(ip) ? ip.Trim() : MasterServer.Address;
+            });
         }
 
         private void OnGetMstInfoJsonHttpRequestHandler(HttpRequestEventArgs eventArgs)
         {
+            var response = eventArgs.Response;
+
+            JObject json = new JObject();
+            JArray modulesJson = new JArray();
+
+            foreach (var module in MasterServer.GetInitializedModules())
+            {
+                modulesJson.Add(module.JsonInfo());
+            }
+
+            json.Add("modules", modulesJson);
+
+            byte[] contents = Encoding.UTF8.GetBytes(json.ToString());
+
+            response.SetHeader("Access-Control-Allow-Origin", "*");
+            response.SetHeader("Access-Control-Allow-Methods", "*");
+            response.ContentType = "application/json";
+            response.ContentEncoding = Encoding.UTF8;
+            response.ContentLength64 = contents.LongLength;
+            response.Close(contents, true);
+        }
+
+        private void OnGetMstInfoHttpRequestHandler(HttpRequestEventArgs eventArgs)
+        {
+            if (!HttpServer.TryGetQueryValue(eventArgs.Request, "ignoreLog", out string value))
+                logger.Debug($"Лог если нет игнора");
+
             var response = eventArgs.Response;
 
             HtmlDocument html = new HtmlDocument
@@ -49,16 +78,16 @@ namespace MasterServerToolkit.MasterServer
 
             html.Links.Add(new HtmlLinkElement()
             {
-                Href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css",
+                Href = HtmlLibs.BOOTSTRAP_CSS_SRC,
                 Rel = "stylesheet",
-                Integrity = "sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC",
+                Integrity = HtmlLibs.BOOTSTRAP_CSS_INTEGRITY,
                 Crossorigin = "anonymous"
             });
 
             html.Scripts.Add(new HtmlScriptElement()
             {
-                Src = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js",
-                Integrity = "sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM",
+                Src = HtmlLibs.BOOTSTRAP_JS_SRC,
+                Integrity = HtmlLibs.BOOTSTRAP_JS_INTEGRITY,
                 Crossorigin = "anonymous"
             });
 
@@ -125,16 +154,10 @@ namespace MasterServerToolkit.MasterServer
             thr2.InnerText = "Value";
             thr.AppendChild(thr2);
 
-            Dictionary<string, string> serverInfo = new Dictionary<string, string>();
-            serverInfo.Add("Initialized modules: ", MasterServer.GetInitializedModules().Count.ToString());
-            serverInfo.Add("Unitialized modules: ", MasterServer.GetUninitializedModules().Count.ToString());
-            serverInfo.Add("Total clients: ", MasterServer.TotalPeersCount.ToString());
-            serverInfo.Add("Use SSL: ", MstApplicationConfig.Singleton.UseSecure.ToString());
-            serverInfo.Add("Certificate Path: ", MstApplicationConfig.Singleton.CertificatePath.ToString());
-            serverInfo.Add("Certificate Password: ", MstApplicationConfig.Singleton.CertificatePassword.ToString());
-            serverInfo.Add("Application Key: ", MstApplicationConfig.Singleton.ApplicationKey.ToString());
+            var properties = MasterServer.Info();
+            properties.Set("Public Ip", publicIp);
 
-            foreach (var property in serverInfo)
+            foreach (var property in properties.ToDictionary())
             {
                 var tr = html.CreateElement("tr");
                 tbody.AppendChild(tr);
@@ -232,31 +255,58 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var module in MasterServer.GetInitializedModules())
             {
+                // Row
                 var tr = html.CreateElement("tr");
                 tbody.AppendChild(tr);
 
+                // First cell
                 var th = html.CreateElement("th");
                 th.InnerText = index.ToString();
                 th.SetAttribute("scope", "row");
                 tr.AppendChild(th);
 
+                // Second cell
                 var td = html.CreateElement("td");
                 td.InnerText = module.GetType().Name;
                 tr.AppendChild(td);
 
+                // Third cell
                 var td1 = html.CreateElement("td");
                 tr.AppendChild(td1);
 
-                var ul = html.CreateElement("ul");
-                td1.AppendChild(ul);
+                // Subtable
+                var table2 = html.CreateElement("table");
+                table2.AddClass("table table-bordered table-striped table-hover table-sm");
 
-                string[] infos = module.Info().ToReadableString("\n", ": ").Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                td1.AppendChild(table2);
 
-                foreach(string info in infos)
+                // Subtable body
+                var tbody2 = html.CreateElement("tbody");
+                table2.AppendChild(tbody2);
+
+                var infos = module.Info().ToDictionary();
+
+                foreach (string key in infos.Keys)
                 {
-                    var li = html.CreateElement("li");
-                    li.InnerXml = info;
-                    ul.AppendChild(li);
+                    // Subtable row
+                    tr = html.CreateElement("tr");
+                    tbody2.AppendChild(tr);
+
+                    // First cell
+                    th = html.CreateElement("th");
+                    th.InnerText = key;
+                    th.SetAttribute("scope", "row");
+                    th.SetAttribute("width", "30%");
+                    tr.AppendChild(th);
+
+                    td = html.CreateElement("td");
+                    td.InnerText = infos[key];
+                    tr.AppendChild(td);
+
+                    //var li = html.CreateElement("li");
+                    //li.AddClass("list-group-item");
+                    //li.InnerXml = info;
+                    //ul.AppendChild(li);
                 }
 
                 index++;

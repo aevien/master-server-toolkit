@@ -168,7 +168,7 @@ namespace MasterServerToolkit.MasterServer
             requestsInProgress.Add(peer.Id);
 
             // Send request to owner of the room to get access token
-            Peer.SendMessage((short)MstMessageCodes.ProvideRoomAccessCheck, provideRoomAccessCheckPacket, (status, response) =>
+            Peer.SendMessage((ushort)MstOpCodes.ProvideRoomAccessCheck, provideRoomAccessCheckPacket, (status, response) =>
             {
                 // Remove requester peer id from pending list
                 requestsInProgress.Remove(peer.Id);
@@ -228,6 +228,7 @@ namespace MasterServerToolkit.MasterServer
             accessesInUse.Add(data.Peer.Id, data.Access);
 
             peer = data.Peer;
+            peer.GetExtension<IUserPeerExtension>().JoinedRoomID = RoomId;
 
             // Save player in room
             Players[peer.Id] = peer;
@@ -247,13 +248,12 @@ namespace MasterServerToolkit.MasterServer
             accessesInUse.Remove(peerId);
 
             if (!Players.TryGetValue(peerId, out IPeer playerPeer))
-            {
                 return;
-            }
 
+            playerPeer.GetExtension<IUserPeerExtension>().JoinedRoomID = -1;
             Players.Remove(peerId);
             OnPlayerLeftEvent?.Invoke(playerPeer);
-        }
+        }  
 
         /// <summary>
         /// Clears all of the accesses that have not been confirmed in time

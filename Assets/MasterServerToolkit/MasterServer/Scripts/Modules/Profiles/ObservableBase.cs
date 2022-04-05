@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MasterServerToolkit.Logging;
+using System;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -9,21 +10,24 @@ namespace MasterServerToolkit.MasterServer
     {
         protected T _value;
 
-        protected ObservableBase(short key)
+        protected ObservableBase(ushort key)
         {
             Key = key;
         }
 
-        public short Key { get; private set; }
-
+        public ushort Key { get; private set; }
         public event Action<IObservableProperty> OnDirtyEvent;
 
+        /// <summary>
+        /// Converts property value to readable string
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
-            return _value.ToString();
+            return Serialize();
         }
 
-        public T GetValue()
+        public T Value()
         {
             return _value;
         }
@@ -31,6 +35,16 @@ namespace MasterServerToolkit.MasterServer
         public virtual void MarkDirty()
         {
             OnDirtyEvent?.Invoke(this);
+        }
+
+        public TCast As<TCast>() where TCast : class, IObservableProperty
+        {
+            return this as TCast;
+        }
+
+        public bool Equals(IObservableProperty<T> other)
+        {
+            return Key == other.Key;
         }
 
         public abstract byte[] ToBytes();
@@ -46,15 +60,5 @@ namespace MasterServerToolkit.MasterServer
         public abstract void ApplyUpdates(byte[] data);
 
         public abstract void ClearUpdates();
-
-        public TCast CastTo<TCast>() where TCast : class, IObservableProperty
-        {
-            return this as TCast;
-        }
-
-        public bool Equals(IObservableProperty<T> other)
-        {
-            return Key == other.Key;
-        }
     }
 }

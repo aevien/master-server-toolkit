@@ -28,9 +28,9 @@ namespace MasterServerToolkit.MasterServer
 
         public MstChatClient(IClientSocket connection) : base(connection)
         {
-            SetHandler((short)MstMessageCodes.UserJoinedChannel, OnUserJoinedChannelHandler);
-            SetHandler((short)MstMessageCodes.UserLeftChannel, OnUserLeftChannelHandler);
-            SetHandler((short)MstMessageCodes.ChatMessage, OnChatMessageHandler);
+            RegisterMessageHandler((ushort)MstOpCodes.UserJoinedChannel, OnUserJoinedChannelHandler);
+            RegisterMessageHandler((ushort)MstOpCodes.UserLeftChannel, OnUserLeftChannelHandler);
+            RegisterMessageHandler((ushort)MstOpCodes.ChatMessage, OnChatMessageHandler);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.PickUsername, username, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.PickUsername, username, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -87,7 +87,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.JoinChannel, channel, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.JoinChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -118,7 +118,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.LeaveChannel, channel, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.LeaveChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -151,7 +151,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.SetDefaultChannel, channel, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.SetDefaultChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -183,7 +183,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.GetCurrentChannels, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetCurrentChannels, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -215,7 +215,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.GetUsersInChannel, channel, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetUsersInChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -291,7 +291,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SendMessage(ChatMessagePacket packet, SuccessCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((short)MstMessageCodes.ChatMessage, packet, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.ChatMessage, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -310,18 +310,13 @@ namespace MasterServerToolkit.MasterServer
             var packet = message.Deserialize(new ChatMessagePacket());
 
             if (OnMessageReceivedEvent != null)
-            {
-                OnMessageReceivedEvent.Invoke(packet);
-            }
+                OnMessageReceivedEvent?.Invoke(packet);
         }
 
         private void OnUserLeftChannelHandler(IIncomingMessage message)
         {
             var data = new List<string>().FromBytes(message.AsBytes());
-            if (OnUserLeftChannelEvent != null)
-            {
-                OnUserLeftChannelEvent.Invoke(data[0], data[1]);
-            }
+            OnUserLeftChannelEvent?.Invoke(data[0], data[1]);
         }
 
         private void OnUserJoinedChannelHandler(IIncomingMessage message)

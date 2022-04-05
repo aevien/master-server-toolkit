@@ -9,8 +9,10 @@ namespace MasterServerToolkit.MasterServer
     {
         public delegate void KillRequestCallback(bool isKilled);
 
-        private readonly SpawnersModule _module;
-        public static int MaxConcurrentRequests = 8;
+        /// <summary>
+        /// 
+        /// </summary>
+        public static int MaxConcurrentRequests { get; set; } = 8;
 
         /// <summary>
         /// 
@@ -105,7 +107,7 @@ namespace MasterServerToolkit.MasterServer
                 SpawnTaskUniqueCode = task.UniqueCode
             };
 
-            var msg = Mst.Create.Message((short)MstMessageCodes.SpawnProcessRequest, data);
+            var msg = Mst.Create.Message((ushort)MstOpCodes.SpawnProcessRequest, data);
 
             Peer.SendMessage(msg, (status, response) =>
             {
@@ -131,7 +133,7 @@ namespace MasterServerToolkit.MasterServer
                 SpawnId = spawnId
             };
 
-            Peer.SendMessage((short)MstMessageCodes.KillProcessRequest, packet, (status, response) =>
+            Peer.SendMessage((ushort)MstOpCodes.KillProcessRequest, packet, (status, response) =>
             {
                 callback.Invoke(status == ResponseStatus.Success);
             });

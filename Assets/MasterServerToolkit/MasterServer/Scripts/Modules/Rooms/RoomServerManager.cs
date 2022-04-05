@@ -1,7 +1,9 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -24,6 +26,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         [Header("Room Settings"), SerializeField, Tooltip("Loads player profile after he joined the room")]
         protected bool autoLoadUserProfile = true;
+        [SerializeField]
+        protected bool forceClientMode = false;
 
         /// <summary>
         /// Allows guest users to be connected to room
@@ -94,29 +98,51 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public SpawnTaskController SpawnTaskController { get; protected set; }
 
+        /// <summary>
+        /// List of all players
+        /// </summary>
+        public IEnumerable<RoomPlayer> Players => playersByRoomPeerId.Values;
+
+        /// <summary>
+        /// Check if room has players
+        /// </summary>
+        public bool HasPlayers => Players != null && Players.Count() > 0;
+
         protected override void Awake()
         {
             base.Awake();
+
+            Mst.Client.Rooms.IsClientMode = forceClientMode;
 
             playersByUsername = new Dictionary<string, RoomPlayer>();
             playersByMasterPeerId = new Dictionary<int, RoomPlayer>();
             playersByRoomPeerId = new Dictionary<int, RoomPlayer>();
         }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            StopAllCoroutines();
+            CancelInvoke();
+            Connection?.RemoveConnectionOpenListener(OnConnectedToMasterEventHandler);
+            Connection?.RemoveConnectionCloseListener(OnDisconnectedFromMasterEventHandler);
+            Connection?.Close();
+        }
+
         protected override void OnInitialize()
         {
             base.OnInitialize();
 
-            // If we are on client room side
-            if (Mst.Client.Rooms.ForceClientMode)
+            // If we are on client side. It can be main menu, etc.
+            if (Mst.Client.Rooms.IsClientMode)
             {
                 logger.Debug("Server cannot be started in client mode...");
                 return;
             }
 
             // Listen to master server connection status
-            Connection.AddConnectionListener(OnConnectedToMasterEventHandler);
-            Connection.AddDisconnectionListener(OnDisconnectedFromMasterEventHandler, false);
+            Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
+            Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
         }
 
         /// <summary>
@@ -510,7 +536,7 @@ namespace MasterServerToolkit.MasterServer
             MstTimer.WaitForSeconds(2f, () =>
             {
                 Mst.Server.Notifications.NotifyRecipients(player.MasterPeerId,
-                            $"Hi, <color=#B7E117FF>{player.Username}!</color>\nWelcome to \"{RoomOptions.Name}\" server", null);
+                            $"Hi, {player.Username.ToRed()}!\nWelcome to \"{RoomOptions.Name}\" server", null);
             });
 
             Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
@@ -586,6 +612,18 @@ namespace MasterServerToolkit.MasterServer
         {
             playersByUsername.TryGetValue(username, out RoomPlayer player);
             return player;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="roomPlayer"></param>
+        /// <returns></returns>
+        public bool TryGetRoomPlayerByUsername(string username, out RoomPlayer roomPlayer)
+        {
+            roomPlayer = GetRoomPlayerByUsername(username);
+            return roomPlayer != null;
         }
     }
 }

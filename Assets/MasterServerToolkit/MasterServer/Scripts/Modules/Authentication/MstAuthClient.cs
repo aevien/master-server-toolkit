@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
 using UnityEngine;
@@ -142,7 +143,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                connection.SendMessage((short)MstMessageCodes.SignUp, encryptedData, (status, response) =>
+                connection.SendMessage((ushort)MstOpCodes.SignUp, encryptedData, (status, response) =>
                 {
                     if (status != ResponseStatus.Success)
                     {
@@ -332,7 +333,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SignIn(MstProperties data, SignInCallback callback, IClientSocket connection)
         {
-            Logs.Debug("Signing in...");
+            Logs.Debug("Signing in...".ToGreen());
 
             if (!connection.IsConnected)
             {
@@ -346,6 +347,8 @@ namespace MasterServerToolkit.MasterServer
             // so that we can encrypt our login data
             Mst.Security.GetAesKey(aesKey =>
             {
+                Logs.Debug("Getting AES key...");
+
                 if (aesKey == null)
                 {
                     IsNowSigningIn = false;
@@ -355,7 +358,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                connection.SendMessage((short)MstMessageCodes.SignIn, encryptedData, (status, response) =>
+                connection.SendMessage((ushort)MstOpCodes.SignIn, encryptedData, (status, response) =>
                 {
                     IsNowSigningIn = false;
 
@@ -366,6 +369,8 @@ namespace MasterServerToolkit.MasterServer
                         callback.Invoke(null, response.AsString("Unknown error"));
                         return;
                     }
+
+                    Logs.Debug("Successfully signed in!".ToGreen());
 
                     // Parse account info
                     var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
@@ -431,7 +436,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ConfirmEmail, code, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.ConfirmEmail, code, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -471,7 +476,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.GetEmailConfirmationCode, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetEmailConfirmationCode, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -502,7 +507,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.GetPasswordResetCode, email, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetPasswordResetCode, email, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -542,7 +547,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ChangePassword, data.ToBytes(), (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.ChangePassword, data.ToBytes(), (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -602,7 +607,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var encryptedData = Mst.Security.EncryptAES(updateAccountPropertiesPacket.ToBytes(), aesKey);
 
-                connection.SendMessage((short)MstMessageCodes.UpdateAccountInfo, encryptedData, (status, response) =>
+                connection.SendMessage((ushort)MstOpCodes.UpdateAccountInfo, encryptedData, (status, response) =>
                 {
                     IsNowSigningIn = false;
 

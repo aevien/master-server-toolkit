@@ -55,7 +55,7 @@ namespace MasterServerToolkit.MasterServer
                 Message = message
             };
 
-            connection.SendMessage((short)MstMessageCodes.Notification, data, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.Notification, data, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -115,7 +115,7 @@ namespace MasterServerToolkit.MasterServer
                 IgnoreRecipients = ignoreRecipients.ToList()
             };
 
-            connection.SendMessage((short)MstMessageCodes.Notification, data, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.Notification, data, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

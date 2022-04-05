@@ -15,7 +15,7 @@ namespace MasterServerToolkit.MasterServer
         {
             base.Awake();
             autoStartInEditor = false;
-            RegisterMessageHandler((short)MstMessageCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
+            RegisterMessageHandler((ushort)MstOpCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
         }
 
         public override void StartServer()

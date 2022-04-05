@@ -74,7 +74,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <returns></returns>
-        public static IOutgoingMessage Create(short opCode)
+        public static IOutgoingMessage Create(ushort opCode)
         {
             return _factory.Create(opCode);
         }
@@ -85,7 +85,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static IOutgoingMessage Create(short opCode, byte[] data)
+        public static IOutgoingMessage Create(ushort opCode, byte[] data)
         {
             return _factory.Create(opCode, data);
         }
@@ -96,7 +96,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public static IOutgoingMessage Create(short opCode, string message)
+        public static IOutgoingMessage Create(ushort opCode, string message)
         {
             return _factory.Create(opCode, Encoding.UTF8.GetBytes(message));
         }
@@ -107,7 +107,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static IOutgoingMessage Create(short opCode, int value)
+        public static IOutgoingMessage Create(ushort opCode, int value)
         {
             var bytes = new byte[4];
             _converter.CopyBytes(value, bytes, 0);
@@ -120,7 +120,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="packet"></param>
         /// <returns></returns>
-        public static IOutgoingMessage Create(short opCode, ISerializablePacket packet)
+        public static IOutgoingMessage Create(ushort opCode, ISerializablePacket packet)
         {
             return Create(opCode, packet.ToBytes());
         }

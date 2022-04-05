@@ -63,7 +63,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            Connection.SendMessage((short)MstMessageCodes.RegisterRoomRequest, options, (status, response) =>
+            Connection.SendMessage((ushort)MstOpCodes.RegisterRoomRequest, options, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -105,7 +105,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.DestroyRoomRequest, roomId, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.DestroyRoomRequest, roomId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -154,7 +154,7 @@ namespace MasterServerToolkit.MasterServer
                 Token = token
             };
 
-            connection.SendMessage((short)MstMessageCodes.ValidateRoomAccessRequest, accessValidationData, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.ValidateRoomAccessRequest, accessValidationData, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -194,7 +194,7 @@ namespace MasterServerToolkit.MasterServer
                 RoomId = roomId
             };
 
-            connection.SendMessage((short)MstMessageCodes.SaveRoomOptionsRequest, changePacket, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.SaveRoomOptionsRequest, changePacket, (status, response) =>
            {
                if (status != ResponseStatus.Success)
                {
@@ -234,7 +234,7 @@ namespace MasterServerToolkit.MasterServer
                 RoomId = roomId
             };
 
-            connection.SendMessage((short)MstMessageCodes.PlayerLeftRoomRequest, packet, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.PlayerLeftRoomRequest, packet, (status, response) =>
             {
                 callback.Invoke(status == ResponseStatus.Success, null);
             });

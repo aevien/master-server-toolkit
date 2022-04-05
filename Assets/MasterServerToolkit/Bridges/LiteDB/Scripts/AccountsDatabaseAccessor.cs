@@ -9,32 +9,31 @@ namespace MasterServerToolkit.Bridges.LiteDB
 {
     public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor, IDisposable
     {
-        private ILiteCollection<AccountInfoLiteDb> accountsCollection;
-        private ILiteCollection<PasswordResetDataLiteDb> resetCodesCollection;
-        private ILiteCollection<EmailConfirmationDataLiteDb> emailConfirmationCodesCollection;
+        private ILiteCollection<AccountInfoData> accountsCollection;
+        private ILiteCollection<PasswordResetData> resetCodesCollection;
+        private ILiteCollection<EmailConfirmationData> emailConfirmationCodesCollection;
         private readonly LiteDatabase database;
 
-        public AccountsDatabaseAccessor(string database)
+        public AccountsDatabaseAccessor(string databaseName)
         {
-            Logs.Info($"Create {database} database accessor");
-            this.database = new LiteDatabase($"{database}.db");
+            database = new LiteDatabase($"{databaseName}.db");
         }
 
         public void InitCollections()
         {
-            accountsCollection = database.GetCollection<AccountInfoLiteDb>("accounts");
+            accountsCollection = database.GetCollection<AccountInfoData>("accounts");
             accountsCollection.EnsureIndex(a => a.Id, true);
 
-            resetCodesCollection = database.GetCollection<PasswordResetDataLiteDb>("resetCodes");
+            resetCodesCollection = database.GetCollection<PasswordResetData>("resetCodes");
             resetCodesCollection.EnsureIndex(a => a.Email, true);
 
-            emailConfirmationCodesCollection = database.GetCollection<EmailConfirmationDataLiteDb>("emailConfirmationCodes");
+            emailConfirmationCodesCollection = database.GetCollection<EmailConfirmationData>("emailConfirmationCodes");
             emailConfirmationCodesCollection.EnsureIndex(a => a.Email, true);
         }
 
         public IAccountInfoData CreateAccountInstance()
         {
-            return new AccountInfoLiteDb();
+            return new AccountInfoData();
         }
 
         public async Task<IAccountInfoData> GetAccountByUsernameAsync(string username)
@@ -114,7 +113,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             await Task.Run(() =>
             {
                 resetCodesCollection.DeleteMany(i => i.Email == account.Email.ToLower());
-                resetCodesCollection.Insert(new PasswordResetDataLiteDb()
+                resetCodesCollection.Insert(new PasswordResetData()
                 {
                     Email = account.Email,
                     Code = code
@@ -139,7 +138,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             await Task.Run(() =>
             {
                 emailConfirmationCodesCollection.DeleteMany(i => i.Email == email.ToLower());
-                emailConfirmationCodesCollection.Insert(new EmailConfirmationDataLiteDb()
+                emailConfirmationCodesCollection.Insert(new EmailConfirmationData()
                 {
                     Code = code,
                     Email = email
@@ -189,7 +188,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
                 }
             }
 
-            return await Task.Run(() => accountsCollection.Update(account as AccountInfoLiteDb));
+            return await Task.Run(() => accountsCollection.Update(account as AccountInfoData));
         }
 
         public async Task<string> InsertNewAccountAsync(IAccountInfoData account)
@@ -221,7 +220,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
                 }
             }
 
-            return await Task.Run(() => accountsCollection.Insert(account as AccountInfoLiteDb).AsString);
+            return await Task.Run(() => accountsCollection.Insert(account as AccountInfoData).AsString);
         }
 
         public async Task<bool> InsertTokenAsync(IAccountInfoData account, string token)
@@ -229,7 +228,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             return await Task.Run(() =>
             {
                 account.Token = token;
-                return accountsCollection.Update(account as AccountInfoLiteDb);
+                return accountsCollection.Update(account as AccountInfoData);
             });
         }
 

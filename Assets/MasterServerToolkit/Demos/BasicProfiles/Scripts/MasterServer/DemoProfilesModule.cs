@@ -1,13 +1,14 @@
 ﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
-    public enum ObservablePropertiyCodes { DisplayName, Avatar, Bronze, Silver, Gold }
+    public enum ObservablePropertyCodes { DisplayName, Avatar, Bronze, Silver, Gold }
 
     public class DemoProfilesModule : ProfilesModule
     {
@@ -32,10 +33,17 @@ namespace MasterServerToolkit.Examples.BasicProfile
             // Set the new factory in ProfilesModule
             ProfileFactory = CreateProfileInServer;
 
-            server.RegisterMessageHandler((short)MstMessageCodes.UpdateDisplayNameRequest, UpdateDisplayNameRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateDisplayNameRequest, UpdateDisplayNameRequestHandler);
 
             //Update profile resources each 5 sec
             InvokeRepeating(nameof(IncreaseResources), 1f, 1f);
+        }
+
+        public override JObject JsonInfo()
+        {
+            var json = base.JsonInfo();
+            json["name"] = "ProfilesModule";
+            return json;
         }
 
         /// <summary>
@@ -48,11 +56,11 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             return new ObservableServerProfile(userId, clientPeer)
             {
-                new ObservableString((short)ObservablePropertiyCodes.DisplayName, SimpleNameGenerator.Generate(Gender.Male)),
-                new ObservableString((short)ObservablePropertiyCodes.Avatar, avatarUrl),
-                new ObservableFloat((short)ObservablePropertiyCodes.Bronze, bronze),
-                new ObservableFloat((short)ObservablePropertiyCodes.Silver, silver),
-                new ObservableFloat((short)ObservablePropertiyCodes.Gold, gold)
+                new ObservableString((ushort)ObservablePropertyCodes.DisplayName, SimpleNameGenerator.Generate(Gender.Male)),
+                new ObservableString((ushort)ObservablePropertyCodes.Avatar, avatarUrl),
+                new ObservableFloat((ushort)ObservablePropertyCodes.Bronze, bronze),
+                new ObservableFloat((ushort)ObservablePropertyCodes.Silver, silver),
+                new ObservableFloat((ushort)ObservablePropertyCodes.Gold, gold)
             };
         }
 
@@ -60,9 +68,9 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             foreach (var profile in Profiles)
             {
-                var bronzeProperty = profile.GetProperty<ObservableFloat>((short)ObservablePropertiyCodes.Bronze);
-                var silverProperty = profile.GetProperty<ObservableFloat>((short)ObservablePropertiyCodes.Silver);
-                var goldProperty = profile.GetProperty<ObservableFloat>((short)ObservablePropertiyCodes.Gold);
+                var bronzeProperty = profile.Get<ObservableFloat>((ushort)ObservablePropertyCodes.Bronze);
+                var silverProperty = profile.Get<ObservableFloat>((ushort)ObservablePropertyCodes.Silver);
+                var goldProperty = profile.Get<ObservableFloat>((ushort)ObservablePropertyCodes.Gold);
 
                 bronzeProperty.Add(1f);
                 silverProperty.Add(0.1f);
@@ -86,8 +94,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
             {
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile))
                 {
-                    profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.DisplayName).Set(newProfileData["displayName"]);
-                    profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.Avatar).Set(newProfileData["avatarUrl"]);
+                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Set(newProfileData["displayName"]);
+                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Set(newProfileData["avatarUrl"]);
 
                     message.Respond(ResponseStatus.Success);
                 }

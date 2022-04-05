@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.Networking;
 using System;
 
 namespace MasterServerToolkit.MasterServer
@@ -80,6 +81,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="property"></param>
         protected override void OnDirtyPropertyEventHandler(IObservableProperty property)
         {
+            //Logs.Info($"<color=#FF0000>{GetType().Name} OnDirtyPropertyEventHandler for {property.Key}</color>");
             base.OnDirtyPropertyEventHandler(property);
             OnModifiedInServerEvent?.Invoke(this);
         }

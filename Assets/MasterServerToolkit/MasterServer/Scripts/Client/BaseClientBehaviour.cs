@@ -10,7 +10,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Client handlers list. Requires for connection changing process. <seealso cref="ChangeConnection(IClientSocket)"/>
         /// </summary>
-        protected Dictionary<short, IPacketHandler> handlers;
+        protected Dictionary<ushort, IPacketHandler> handlers;
 
         /// <summary>
         /// Logger assigned to this module
@@ -37,7 +37,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Awake()
         {
-            handlers = new Dictionary<short, IPacketHandler>();
+            handlers = new Dictionary<ushort, IPacketHandler>();
 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
@@ -56,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
         {
             foreach (IBaseClientModule module in GetComponentsInChildren<IBaseClientModule>())
             {
-                module.ClientBehaviour = this;
+                module.ParentBehaviour = this;
                 module.OnInitialize(this);
             }
         }
@@ -101,7 +101,7 @@ namespace MasterServerToolkit.MasterServer
         /// to communicate with server
         /// </summary>
         /// <param name="handler"></param>
-        public void SetHandler(IPacketHandler handler)
+        public void RegisterMessageHandler(IPacketHandler handler)
         {
             handlers[handler.OpCode] = handler;
             Connection?.RegisterMessageHandler(handler);
@@ -113,9 +113,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="handler"></param>
-        public void SetHandler(short opCode, IncommingMessageHandler handler)
+        public void RegisterMessageHandler(ushort opCode, IncommingMessageHandler handler)
         {
-            SetHandler(new PacketHandler(opCode, handler));
+            RegisterMessageHandler(new PacketHandler(opCode, handler));
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace MasterServerToolkit.MasterServer
         /// was used
         /// </summary>
         /// <param name="handler"></param>
-        public void RemoveHandler(IPacketHandler handler)
+        public void UnregisterMessageHandler(IPacketHandler handler)
         {
             Connection?.RemoveMessageHandler(handler);
         }

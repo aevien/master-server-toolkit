@@ -16,7 +16,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="access"></param>
-        public void SetAccessor<T>(object access)
+        public void AddAccessor<T>(object access)
         {
             if (_accessors.ContainsKey(typeof(T)))
             {

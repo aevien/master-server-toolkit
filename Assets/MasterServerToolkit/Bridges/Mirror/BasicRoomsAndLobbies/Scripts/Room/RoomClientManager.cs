@@ -1,3 +1,4 @@
+#if MIRROR
 using kcp2k;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
@@ -10,7 +11,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class RoomClientManager : RoomClient<RoomClientManager>
     {
-        #region INSPECTOR
+#region INSPECTOR
 
         /// <summary>
         /// Name of the room that will be loaded after a match is successfully created
@@ -18,7 +19,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         [Header("Settings"), SerializeField, Tooltip("The name of the room that will be loaded after the client leaves the room")]
         private string offlineRoomScene = "Client";
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Mirror network manager
@@ -88,8 +89,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             }
             else
             {
-                logger.Warn($"You have already joined a room at {access.RoomIp}:{access.RoomPort}");
-                NetworkManager.singleton.OnClientConnect(NetworkClient.connection);
+                NetworkManager.singleton.OnClientConnect();
             }
         }
 
@@ -185,3 +185,4 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         }
     }
 }
+#endif

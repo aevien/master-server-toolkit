@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Text;
@@ -79,8 +80,14 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string CreateFriendlyId()
         {
-            string id = Guid.NewGuid().ToString("N").Substring(0, 10);
-            return $"{id.Substring(0, 3)}-{id.Substring(3, 3)}-{id.Substring(6, 4)}";
+            string id = string.Empty;
+
+            for (int i = 0; i < 6; i++)
+            {
+                id = $"{id}{Random.Next(0, 16):X}";
+            }
+
+            return id.Insert(3, "-");
         }
 
         /// <summary>
@@ -119,33 +126,30 @@ namespace MasterServerToolkit.MasterServer
 
             for (int i = 0; i < totalRemained; i++)
             {
-                result += Random.Next(0, 9).ToString();
+                result += Random.Next(0, 10).ToString();
             }
 
             return result.ToLower();
         }
 
         /// <summary>
-        /// Converts color to hex
+        /// 
         /// </summary>
-        /// <param name="color"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public string ColorToHex(Color32 color)
+        public ushort CreateUInt16Hash(string value)
         {
-            return color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2") + color.a.ToString("X2");
+            return value.ToUint16Hash();
         }
 
         /// <summary>
-        /// Converts hex to color
+        /// 
         /// </summary>
-        /// <param name="hex"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public Color HexToColor(string hex)
+        public uint CreateUInt32Hash(string value)
         {
-            byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
-            byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
-            byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
-            return new Color32(r, g, b, 255);
+            return value.ToUint32Hash();
         }
 
         /// <summary>
@@ -154,7 +158,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         public void GetPublicIp(GetPublicIPResult callback)
         {
-            MstTimer.Singleton.StartCoroutine(GetPublicIPCoroutine(callback));
+            MstTimer.Instance.StartCoroutine(GetPublicIPCoroutine(callback));
         }
 
         /// <summary>
@@ -205,7 +209,7 @@ namespace MasterServerToolkit.MasterServer
                     callback?.Invoke(null, www.error);
                     Debug.LogError(www.error);
                 }
-                else if(www.result == UnityWebRequest.Result.Success)
+                else if (www.result == UnityWebRequest.Result.Success)
                 {
                     var ipInfo = www.downloadHandler.text;
                     callback?.Invoke(ipInfo, string.Empty);

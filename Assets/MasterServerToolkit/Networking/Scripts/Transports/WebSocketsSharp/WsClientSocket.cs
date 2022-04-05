@@ -2,6 +2,7 @@
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
+using WebSocketSharp;
 
 namespace MasterServerToolkit.Networking
 {
@@ -13,8 +14,9 @@ namespace MasterServerToolkit.Networking
         private WsClientPeer _peer;
         private WebSocket webSocket;
         private ConnectionStatus status;
-        private readonly Dictionary<short, IPacketHandler> handlers;
+        private readonly Dictionary<ushort, IPacketHandler> handlers;
         private float connectionTimeout = 10f;
+        private bool wasConnected = false;
 
         public bool IsConnected { get; private set; } = false;
         public bool IsConnecting { get { return status == ConnectionStatus.Connecting; } }
@@ -35,17 +37,16 @@ namespace MasterServerToolkit.Networking
                 }
             }
         }
-
         public bool UseSecure { get; set; }
 
-        public event Action OnConnectedEvent;
-        public event Action OnDisconnectedEvent;
+        public event Action OnConnectionOpenEvent;
+        public event Action OnConnectionCloseEvent;
         public event Action<ConnectionStatus> OnStatusChangedEvent;
 
         public WsClientSocket()
         {
             SetStatus(ConnectionStatus.Disconnected, false);
-            handlers = new Dictionary<short, IPacketHandler>();
+            handlers = new Dictionary<ushort, IPacketHandler>();
         }
 
         /// <summary>
@@ -59,9 +60,7 @@ namespace MasterServerToolkit.Networking
                 case ConnectionStatus.Connecting:
 
                     if (Status != ConnectionStatus.Connecting)
-                    {
                         Status = ConnectionStatus.Connecting;
-                    }
 
                     break;
                 case ConnectionStatus.Connected:
@@ -72,7 +71,7 @@ namespace MasterServerToolkit.Networking
                         _peer.SendDelayedMessages();
 
                         if (fireEvent)
-                            OnConnectedEvent?.Invoke();
+                            OnConnectionOpenEvent?.Invoke();
                     }
 
                     break;
@@ -83,7 +82,7 @@ namespace MasterServerToolkit.Networking
                         Status = ConnectionStatus.Disconnected;
 
                         if (fireEvent)
-                            OnDisconnectedEvent?.Invoke();
+                            OnConnectionCloseEvent?.Invoke();
                     }
 
                     break;
@@ -149,7 +148,7 @@ namespace MasterServerToolkit.Networking
             // Make local function
             void onConnected()
             {
-                OnConnectedEvent -= onConnected;
+                OnConnectionOpenEvent -= onConnected;
                 isConnected = true;
 
                 if (!timedOut)
@@ -159,7 +158,7 @@ namespace MasterServerToolkit.Networking
             }
 
             // Listen to connection event
-            OnConnectedEvent += onConnected;
+            OnConnectionOpenEvent += onConnected;
 
             // Wait for some seconds
             MstTimer.WaitForSeconds(timeoutSeconds, () =>
@@ -167,7 +166,7 @@ namespace MasterServerToolkit.Networking
                 if (!isConnected)
                 {
                     timedOut = true;
-                    OnConnectedEvent -= onConnected;
+                    OnConnectionOpenEvent -= onConnected;
                     connectionCallback.Invoke(this);
                 }
             });
@@ -178,10 +177,13 @@ namespace MasterServerToolkit.Networking
             WaitForConnection(connectionCallback, connectionTimeout);
         }
 
-        public void AddConnectionListener(Action callback, bool invokeInstantlyIfConnected = true)
+        public void AddConnectionOpenListener(Action callback, bool invokeInstantlyIfConnected = true)
         {
+            // Remove copy of the callback method to prevent double invocation
+            RemoveConnectionOpenListener(callback);
+
             // Asign callback method again
-            OnConnectedEvent += callback;
+            OnConnectionOpenEvent += callback;
 
             if (IsConnected && invokeInstantlyIfConnected)
             {
@@ -189,18 +191,18 @@ namespace MasterServerToolkit.Networking
             }
         }
 
-        public void RemoveConnectionListener(Action callback)
+        public void RemoveConnectionOpenListener(Action callback)
         {
-            OnConnectedEvent -= callback;
+            OnConnectionOpenEvent -= callback;
         }
 
-        public void AddDisconnectionListener(Action callback, bool invokeInstantlyIfDisconnected = true)
+        public void AddConnectionCloseListener(Action callback, bool invokeInstantlyIfDisconnected = true)
         {
             // Remove copy of the callback method to prevent double invocation
-            OnDisconnectedEvent -= callback;
+            RemoveConnectionCloseListener(callback);
 
             // Asign callback method again
-            OnDisconnectedEvent += callback;
+            OnConnectionCloseEvent += callback;
 
             if (!IsConnected && invokeInstantlyIfDisconnected)
             {
@@ -208,9 +210,9 @@ namespace MasterServerToolkit.Networking
             }
         }
 
-        public void RemoveDisconnectionListener(Action callback)
+        public void RemoveConnectionCloseListener(Action callback)
         {
-            OnDisconnectedEvent -= callback;
+            OnConnectionCloseEvent -= callback;
         }
 
         public IPacketHandler RegisterMessageHandler(IPacketHandler handler)
@@ -219,7 +221,7 @@ namespace MasterServerToolkit.Networking
             return handler;
         }
 
-        public IPacketHandler RegisterMessageHandler(short opCode, IncommingMessageHandler handlerMethod)
+        public IPacketHandler RegisterMessageHandler(ushort opCode, IncommingMessageHandler handlerMethod)
         {
             var handler = new PacketHandler(opCode, handlerMethod);
             RegisterMessageHandler(handler);
@@ -237,9 +239,9 @@ namespace MasterServerToolkit.Networking
             handlers.Remove(handler.OpCode);
         }
 
-        public void Reconnect()
+        public void Reconnect(bool fireEvent = true)
         {
-            Disconnect();
+            Close(fireEvent);
             Connect(ConnectionIp, ConnectionPort);
         }
 
@@ -250,6 +252,7 @@ namespace MasterServerToolkit.Networking
                 return;
             }
 
+            // Get all received bytes
             byte[] data = webSocket.Recv();
 
             while (data != null)
@@ -258,7 +261,7 @@ namespace MasterServerToolkit.Networking
                 data = webSocket.Recv();
             }
 
-            bool wasConnected = IsConnected;
+            wasConnected = IsConnected;
             IsConnected = webSocket.IsConnected;
 
             // Check if status changed
@@ -275,7 +278,7 @@ namespace MasterServerToolkit.Networking
 
         public IClientSocket Connect(string ip, int port, float timeoutSeconds)
         {
-            Disconnect(false);
+            Close(false);
 
             connectionTimeout = timeoutSeconds;
 
@@ -286,11 +289,11 @@ namespace MasterServerToolkit.Networking
 
             if (UseSecure)
             {
-                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{MstApplicationConfig.Singleton.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{MstApplicationConfig.Instance.ApplicationKey}"));
             }
             else
             {
-                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/app/{MstApplicationConfig.Singleton.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/app/{MstApplicationConfig.Instance.ApplicationKey}"));
             }
 
             _peer = new WsClientPeer(webSocket);
@@ -298,7 +301,7 @@ namespace MasterServerToolkit.Networking
 
             Peer = _peer;
 
-            MstUpdateRunner.Singleton.Add(this);
+            MstUpdateRunner.Instance.Add(this);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
             MstTimer.Singleton.StartCoroutine(webSocket.Connect());
@@ -308,14 +311,12 @@ namespace MasterServerToolkit.Networking
             return this;
         }
 
-        public void Disconnect(bool fireEvent = true)
+        public void Close(bool fireEvent = true)
         {
-            MstUpdateRunner.Singleton.Remove(this);
+            MstUpdateRunner.Instance.Remove(this);
 
             if (webSocket != null)
-            {
                 webSocket.Close();
-            }
 
             if (_peer != null)
             {

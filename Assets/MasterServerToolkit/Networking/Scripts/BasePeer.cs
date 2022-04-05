@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
@@ -40,9 +41,9 @@ namespace MasterServerToolkit.Networking
             ackTimeoutQueue = new List<long[]>();
             extensionsList = new Dictionary<Type, IPeerExtension>();
 
-            MstTimer.Singleton.OnTickEvent += HandleAckDisposalTick;
+            MstTimer.Instance.OnTickEvent += HandleAckDisposalTick;
 
-            timeoutMessage = new IncomingMessage(-1, 0, "Time out".ToBytes(), DeliveryMethod.ReliableFragmentedSequenced, this)
+            timeoutMessage = new IncomingMessage("-1".ToUint16Hash(), 0, "Time out".ToBytes(), DeliveryMethod.ReliableFragmentedSequenced, this)
             {
                 Status = ResponseStatus.Timeout
             };
@@ -85,7 +86,7 @@ namespace MasterServerToolkit.Networking
         /// Sends a message to peer
         /// </summary>
         /// <param name="opCode"></param>
-        public void SendMessage(short opCode)
+        public void SendMessage(ushort opCode)
         {
             SendMessage(MessageHelper.Create(opCode), DeliveryMethod.ReliableFragmentedSequenced);
         }
@@ -95,7 +96,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="packet"></param>
-        public void SendMessage(short opCode, ISerializablePacket packet)
+        public void SendMessage(ushort opCode, ISerializablePacket packet)
         {
             SendMessage(MessageHelper.Create(opCode, packet), DeliveryMethod.ReliableFragmentedSequenced);
         }
@@ -106,7 +107,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="packet"></param>
         /// <param name="method"></param>
-        public void SendMessage(short opCode, ISerializablePacket packet, DeliveryMethod method)
+        public void SendMessage(ushort opCode, ISerializablePacket packet, DeliveryMethod method)
         {
             SendMessage(MessageHelper.Create(opCode, packet), method);
         }
@@ -117,7 +118,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="packet"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(short opCode, ISerializablePacket packet, ResponseCallback responseCallback)
+        public void SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback)
         {
             var message = MessageHelper.Create(opCode, packet.ToBytes());
             SendMessage(message, responseCallback);
@@ -130,7 +131,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="packet"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(short opCode, ISerializablePacket packet, ResponseCallback responseCallback, int timeoutSecs)
+        public void SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, packet.ToBytes());
             SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.ReliableFragmentedSequenced);
@@ -141,7 +142,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(short opCode, ResponseCallback responseCallback)
+        public void SendMessage(ushort opCode, ResponseCallback responseCallback)
         {
             SendMessage(MessageHelper.Create(opCode), responseCallback);
         }
@@ -151,7 +152,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="data"></param>
-        public void SendMessage(short opCode, byte[] data)
+        public void SendMessage(ushort opCode, byte[] data)
         {
             SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.ReliableFragmentedSequenced);
         }
@@ -162,7 +163,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <param name="ackCallback"></param>
-        public void SendMessage(short opCode, byte[] data, ResponseCallback ackCallback)
+        public void SendMessage(ushort opCode, byte[] data, ResponseCallback ackCallback)
         {
             var message = MessageHelper.Create(opCode, data);
             SendMessage(message, ackCallback);
@@ -175,7 +176,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(short opCode, byte[] data, ResponseCallback responseCallback, int timeoutSecs)
+        public void SendMessage(ushort opCode, byte[] data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, data);
             SendMessage(message, responseCallback, timeoutSecs);
@@ -186,7 +187,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="data"></param>
-        public void SendMessage(short opCode, string data)
+        public void SendMessage(ushort opCode, string data)
         {
             SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.ReliableFragmentedSequenced);
         }
@@ -197,7 +198,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(short opCode, string data, ResponseCallback responseCallback)
+        public void SendMessage(ushort opCode, string data, ResponseCallback responseCallback)
         {
             var message = MessageHelper.Create(opCode, data);
             SendMessage(message, responseCallback);
@@ -210,7 +211,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(short opCode, string data, ResponseCallback responseCallback, int timeoutSecs)
+        public void SendMessage(ushort opCode, string data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, data);
             SendMessage(message, responseCallback, timeoutSecs);
@@ -221,7 +222,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="data"></param>
-        public void SendMessage(short opCode, int data)
+        public void SendMessage(ushort opCode, int data)
         {
             SendMessage(MessageHelper.Create(opCode, data), DeliveryMethod.ReliableFragmentedSequenced);
         }
@@ -232,7 +233,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(short opCode, int data, ResponseCallback responseCallback)
+        public void SendMessage(ushort opCode, int data, ResponseCallback responseCallback)
         {
             var message = MessageHelper.Create(opCode, data);
             SendMessage(message, responseCallback);
@@ -245,7 +246,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(short opCode, int data, ResponseCallback responseCallback, int timeoutSecs)
+        public void SendMessage(ushort opCode, int data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, data);
             SendMessage(message, responseCallback, timeoutSecs);
@@ -489,7 +490,7 @@ namespace MasterServerToolkit.Networking
         private void StartAckTimeout(int ackId, int timeoutSecs)
         {
             // +1, because it might be about to tick in a few miliseconds
-            ackTimeoutQueue.Add(new[] { ackId, MstTimer.Singleton.CurrentTick + timeoutSecs + 1 });
+            ackTimeoutQueue.Add(new[] { ackId, MstTimer.Instance.CurrentTick + timeoutSecs + 1 });
         }
 
         /// <summary>
@@ -602,7 +603,7 @@ namespace MasterServerToolkit.Networking
             {
                 if (disposing)
                 {
-                    MstTimer.Singleton.OnTickEvent -= HandleAckDisposalTick;
+                    MstTimer.Instance.OnTickEvent -= HandleAckDisposalTick;
                 }
 
                 disposedValue = true;

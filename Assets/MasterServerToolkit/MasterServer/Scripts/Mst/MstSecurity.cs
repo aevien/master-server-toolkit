@@ -76,7 +76,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="connection"></param>
         public void RequestPermissionLevel(string key, PermissionLevelCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((short)MstMessageCodes.PermissionLevelRequest, key, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.PermissionLevelRequest, key, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -117,7 +117,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 data = new EncryptionData();
                 _encryptionData[connection] = data;
-                connection.OnDisconnectedEvent += OnEncryptableConnectionDisconnected;
+                connection.OnConnectionCloseEvent += OnEncryptableConnectionDisconnected;
 
                 data.ClientsCsp = new RSACryptoServiceProvider(RsaKeySize);
 
@@ -138,7 +138,7 @@ namespace MasterServerToolkit.MasterServer
             xs.Serialize(sw, data.ClientsPublicKey);
 
             // Send the request
-            connection.SendMessage((short)MstMessageCodes.AesKeyRequest, sw.ToString(), (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.AesKeyRequest, sw.ToString(), (status, response) =>
             {
                 if (data.ClientAesKey != null)
                 {
@@ -174,7 +174,7 @@ namespace MasterServerToolkit.MasterServer
                 _encryptionData.Remove(connection);
 
                 // Unsubscribe from event
-                connection.OnDisconnectedEvent -= OnEncryptableConnectionDisconnected;
+                connection.OnConnectionCloseEvent -= OnEncryptableConnectionDisconnected;
             }
         }
 

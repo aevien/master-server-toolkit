@@ -15,7 +15,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         public static void Serialize(this NetworkWriter writer, ValidateRoomAccessResultMessage value)
         {
             writer.WriteString(value.Error);
-            writer.WriteUInt16((ushort)value.Status);
+            writer.WriteInt((int)value.Status);
         }
 
         public static ValidateRoomAccessResultMessage Deserialize(this NetworkReader reader)
@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             ValidateRoomAccessResultMessage value = new ValidateRoomAccessResultMessage()
             {
                 Error = reader.ReadString(),
-                Status = (ResponseStatus)reader.ReadUInt16()
+                Status = (ResponseStatus)reader.ReadInt()
             };
 
             return value;

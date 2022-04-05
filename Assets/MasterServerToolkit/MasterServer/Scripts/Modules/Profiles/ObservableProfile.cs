@@ -1,9 +1,11 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -14,7 +16,7 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ObservableProfile : IEnumerable<IObservableProperty>, IDisposable
     {
-        public delegate void PropertyUpdateHandler(short propertyCode, IObservableProperty property);
+        public delegate void OnPropertyUpdateHandler(ushort propertyCode, IObservableProperty property);
 
         /// <summary>
         /// Check if object is disposed
@@ -29,16 +31,16 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Profile properties list
         /// </summary>
-        public Dictionary<short, IObservableProperty> Properties { get; protected set; }
+        public Dictionary<ushort, IObservableProperty> Properties { get; protected set; }
 
         /// <summary>
         /// Invoked, when one of the values changes
         /// </summary>
-        public event Action<short, IObservableProperty> OnPropertyUpdatedEvent;
+        public event OnPropertyUpdateHandler OnPropertyUpdatedEvent;
 
         public ObservableProfile()
         {
-            Properties = new Dictionary<short, IObservableProperty>();
+            Properties = new Dictionary<ushort, IObservableProperty>();
             propertiesToBeSent = new HashSet<IObservableProperty>();
         }
 
@@ -58,7 +60,7 @@ namespace MasterServerToolkit.MasterServer
         /// <typeparam name="T"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        public T GetProperty<T>(short key) where T : class, IObservableProperty
+        public T Get<T>(ushort key) where T : class, IObservableProperty
         {
             if (!Properties.ContainsKey(key))
             {
@@ -66,13 +68,24 @@ namespace MasterServerToolkit.MasterServer
                 return null;
             }
 
-            return Properties[key].CastTo<T>();
+            return Properties[key].As<T>();
+        }
+
+        /// <summary>
+        /// Returns an observable value of given type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public T Get<T>(string key) where T : class, IObservableProperty
+        {
+            return Get<T>(key.ToUint16Hash());
         }
 
         /// <summary>
         /// Returns an observable value
         /// </summary>
-        public IObservableProperty GetProperty(short key)
+        public IObservableProperty Get(ushort key)
         {
             return Properties[key];
         }
@@ -84,7 +97,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="key"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public bool TryGetProperty<T>(short key, out T result) where T : class, IObservableProperty
+        public bool TryGet<T>(ushort key, out T result) where T : class, IObservableProperty
         {
             bool getResult = Properties.TryGetValue(key, out IObservableProperty val);
             result = val as T;
@@ -92,15 +105,15 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Adds property to current profile
+        /// Tries get propfile property
         /// </summary>
-        /// <param name="property"></param>
-        public void AddProperty(IObservableProperty property)
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public bool TryGet<T>(string key, out T result) where T : class, IObservableProperty
         {
-            if (Properties.ContainsKey(property.Key)) return;
-
-            Properties.Add(property.Key, property);
-            property.OnDirtyEvent += OnDirtyPropertyEventHandler;
+            return TryGet(key.ToUint16Hash(), out result);
         }
 
         /// <summary>
@@ -109,7 +122,12 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="property"></param>
         public void Add(IObservableProperty property)
         {
-            AddProperty(property);
+            if (Properties.ContainsKey(property.Key)) return;
+
+            //Logs.Debug($"{GetType().Name} adds property with key {property.Key}".ToGreen());
+
+            Properties.Add(property.Key, property);
+            property.OnDirtyEvent += OnDirtyPropertyEventHandler;
         }
 
         /// <summary>
@@ -127,6 +145,8 @@ namespace MasterServerToolkit.MasterServer
 
                     foreach (var value in Properties)
                     {
+                        //Logs.Debug($"{GetType().Name} to bytes property with key {value.Key}".ToGreen());
+
                         // Write key
                         writer.Write(value.Key);
 
@@ -156,12 +176,13 @@ namespace MasterServerToolkit.MasterServer
 
                     for (int i = 0; i < count; i++)
                     {
-                        var key = reader.ReadInt16();
+                        var key = reader.ReadUInt16();
                         var length = reader.ReadInt32();
                         var valueData = reader.ReadBytes(length);
 
                         if (Properties.ContainsKey(key))
                         {
+                            //Logs.Debug($"{GetType().Name} from bytes property with key {key}".ToGreen());
                             Properties[key].FromBytes(valueData);
                         }
                     }
@@ -173,7 +194,7 @@ namespace MasterServerToolkit.MasterServer
         /// Restores profile from dictionary of strings
         /// </summary>
         /// <param name="dataData"></param>
-        public void FromStrings(Dictionary<short, string> dataData)
+        public void FromStrings(Dictionary<ushort, string> dataData)
         {
             foreach (var pair in dataData)
             {
@@ -264,7 +285,7 @@ namespace MasterServerToolkit.MasterServer
             // Read count
             var count = reader.ReadInt32();
 
-            var dataRead = new Dictionary<short, byte[]>(count);
+            var dataRead = new Dictionary<ushort, byte[]>(count);
 
             // Read data first, because, in case of an exception
             // we want the pointer of reader to be at the right place 
@@ -272,20 +293,13 @@ namespace MasterServerToolkit.MasterServer
             for (var i = 0; i < count; i++)
             {
                 // Read key
-                var key = reader.ReadInt16();
+                var key = reader.ReadUInt16();
 
                 // Read length
                 var dataLength = reader.ReadInt32();
 
                 // Read update data
-                var data = reader.ReadBytes(dataLength);
-
-                if (!dataRead.ContainsKey(key))
-                {
-                    //UnityEngine.Debug.LogError($"Property {key} updated");
-
-                    dataRead.Add(key, data);
-                }
+                dataRead[key] = reader.ReadBytes(dataLength);
             }
 
             // Update observables
@@ -312,6 +326,18 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return dict;
+        }
+
+        public override string ToString()
+        {
+            StringBuilder result = new StringBuilder();
+
+            foreach (var i in ToStringsDictionary())
+            {
+                result.Append($"{i.Key}:{i.Value};");
+            }
+
+            return result.ToString();
         }
 
         /// <summary>
@@ -349,6 +375,8 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!propertiesToBeSent.Contains(property))
                 propertiesToBeSent.Add(property);
+
+            //Logs.Info($"<color=#FF0000>{GetType().Name} OnDirtyPropertyEventHandler for {property.Key}</color>");
 
             OnPropertyUpdatedEvent?.Invoke(property.Key, property);
         }

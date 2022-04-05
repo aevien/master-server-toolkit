@@ -7,26 +7,39 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ObservableInt : ObservableBase<int>
     {
-        public ObservableInt(short key, int defaultValue = 0) : base(key)
+        public ObservableInt(ushort key, int defaultValue = 0) : base(key)
         {
             _value = defaultValue;
         }
 
-        public void Add(int val)
+        /// <summary>
+        /// Increments current value by <paramref name="value"/>
+        /// </summary>
+        /// <param name="value"></param>
+        public void Add(int value)
         {
-            _value += val;
+            _value += value;
             MarkDirty();
         }
 
-        public void Set(int val)
+        /// <summary>
+        /// Just sets current value
+        /// </summary>
+        /// <param name="value"></param>
+        public void Set(int value)
         {
-            if (_value != val)
+            if (_value != value)
             {
-                _value = val;
+                _value = value;
                 MarkDirty();
             }
         }
 
+        /// <summary>
+        /// Tries to take given <paramref name="amount"/> away from current value
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <returns></returns>
         public bool TryTake(int amount)
         {
             if (_value >= amount)
@@ -41,7 +54,6 @@ namespace MasterServerToolkit.MasterServer
         {
             var data = new byte[4];
             EndianBitConverter.Big.CopyBytes(_value, data, 0);
-
             return data;
         }
 
@@ -69,7 +81,6 @@ namespace MasterServerToolkit.MasterServer
         public override void ApplyUpdates(byte[] data)
         {
             FromBytes(data);
-            MarkDirty();
         }
 
         public override void ClearUpdates() { }

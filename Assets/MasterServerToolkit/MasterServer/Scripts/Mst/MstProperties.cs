@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var key in options.Keys)
             {
-                SetToOptions(key.ToString(), options[key]?.ToString());
+                SetToOptions(key.ToString(), options[key]);
             }
 
             return this;

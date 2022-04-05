@@ -46,7 +46,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.GetRegionsRequest, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetRegionsRequest, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -110,7 +110,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.FindGamesRequest, filter.ToBytes(), (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.FindGamesRequest, filter.ToBytes(), (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

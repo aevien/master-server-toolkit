@@ -8,13 +8,13 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public class OutgoingMessage : IOutgoingMessage
     {
-        public OutgoingMessage(short opCode) : this(opCode, new byte[0])
+        public OutgoingMessage(ushort opCode) : this(opCode, new byte[0])
         {
             OpCode = opCode;
             Status = 0;
         }
 
-        public OutgoingMessage(short opCode, byte[] data)
+        public OutgoingMessage(ushort opCode, byte[] data)
         {
             OpCode = opCode;
             Status = 0;
@@ -29,7 +29,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Operation code, a.k.a message type
         /// </summary>
-        public short OpCode { get; private set; }
+        public ushort OpCode { get; private set; }
 
         /// <summary>
         /// Content of the message
@@ -91,7 +91,7 @@ namespace MasterServerToolkit.Networking
 
             var packetSize = 1 // Flags
                              + 2 // OpCode
-                             + 4 // Data Length
+                             + 4 // Data length number
                              + dataLength // Data
                              + (isAckRequest ? 4 : 0) // Ack Request id
                              + (isAckResponse ? 5 : 0); // Ack Response id (int + byte);

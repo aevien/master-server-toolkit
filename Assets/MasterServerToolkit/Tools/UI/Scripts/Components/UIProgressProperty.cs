@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public class UIProgressProperty : UIProperty
     {

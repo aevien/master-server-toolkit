@@ -188,14 +188,14 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             OnClientStoppedEvent?.Invoke();
         }
 
-        public override void OnServerConnect(NetworkConnection conn)
+        public override void OnServerConnect(NetworkConnectionToClient conn)
         {
             logger.Info($"Client {conn.connectionId} has just joined the room");
             base.OnServerConnect(conn);
             OnClientConnectedEvent?.Invoke(conn);
         }
 
-        public override void OnServerDisconnect(NetworkConnection conn)
+        public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
             logger.Info($"Client {conn.connectionId} has just left the room");
             base.OnServerDisconnect(conn);
@@ -203,19 +203,19 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             OnClientDisconnectedEvent?.Invoke(conn);
         }
 
-        public override void OnClientConnect(NetworkConnection conn)
+        public override void OnClientConnect()
         {
             if (Mst.Client.Rooms.HasAccess)
             {
                 logger.Info($"You have joined a room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
-                OnConnectedEvent?.Invoke(conn);
+                OnConnectedEvent?.Invoke(NetworkClient.connection);
             }
         }
 
-        public override void OnClientDisconnect(NetworkConnection conn)
+        public override void OnClientDisconnect()
         {
-            base.OnClientDisconnect(conn);
-            OnDisconnectedEvent?.Invoke(conn);
+            base.OnClientDisconnect();
+            OnDisconnectedEvent?.Invoke(NetworkClient.connection);
         }
 
         #endregion

@@ -12,15 +12,15 @@ namespace MasterServerToolkit.Bridges.LiteDB
         private ILiteCollection<ProfileInfoData> profiles;
         private readonly ILiteDatabase database;
 
-        public ProfilesDatabaseAccessor(string database)
+        public ProfilesDatabaseAccessor(string databaseName)
         {
-            this.database = new LiteDatabase($"{database}.db");
+            database = new LiteDatabase($"{databaseName}.db");
         }
 
         public void InitCollections()
         {
             profiles = database.GetCollection<ProfileInfoData>("profiles");
-            profiles.EnsureIndex(a => a.UserId, true);
+            profiles?.EnsureIndex(a => a.UserId, true);
         }
 
         /// <summary>
@@ -43,6 +43,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public void Dispose()
         {
             database?.Dispose();
+            profiles = null;
         }
 
         /// <summary>
@@ -56,7 +57,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
 
             await Task.Run(() =>
             {
-                profiles.Update(data);
+                profiles?.Update(data);
             });
         }
 
@@ -70,7 +71,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             string userId = profile.UserId;
 
             var data = await Task.Run(() => {
-                return profiles.FindOne(a => a.UserId == userId);
+                return profiles?.FindOne(a => a.UserId == userId);
             });
 
             if (data == null)
@@ -82,7 +83,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
                 };
 
                 await Task.Run(() => {
-                    profiles.Insert(data);
+                    profiles?.Insert(data);
                 });
             }
 

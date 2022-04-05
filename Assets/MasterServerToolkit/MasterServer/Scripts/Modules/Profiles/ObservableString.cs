@@ -7,16 +7,20 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ObservableString : ObservableBase<string>
     {
-        public ObservableString(short key, string defaultVal = "") : base(key)
+        public ObservableString(ushort key, string defaultVal = "") : base(key)
         {
             _value = defaultVal;
         }
 
-        public void Set(string val)
+        /// <summary>
+        /// Just sets current value
+        /// </summary>
+        /// <param name="value"></param>
+        public void Set(string value)
         {
-            if (_value != val)
+            if (_value != value)
             {
-                _value = val;
+                _value = value;
                 MarkDirty();
             }
         }

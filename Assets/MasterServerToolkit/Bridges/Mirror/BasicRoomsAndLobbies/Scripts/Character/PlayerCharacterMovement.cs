@@ -74,7 +74,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
         /// <summary>
         /// Check if this behaviour is ready
         /// </summary>
-        public override bool IsReady => inputController && characterController && lookController && ClientScene.ready;
+        public override bool IsReady => inputController && characterController && lookController && NetworkClient.ready;
 
         /// <summary>
         /// Speed of the character

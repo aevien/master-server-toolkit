@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -210,8 +210,6 @@ namespace MasterServerToolkit.MasterServer
             UseDevMode = AsBool(Names.UseDevMode, false);
 
             TargetFrameRate = AsInt(Names.TargetFrameRate, 60);
-
-            LogFileDir = AsString(Names.LogFileDir, Path.Combine(Directory.GetCurrentDirectory(), "logs"));
         }
 
         private void ParseArguments()
@@ -237,6 +235,13 @@ namespace MasterServerToolkit.MasterServer
             char[] splitters = new char[] { '=' };
             List<string> newArgs = new List<string>();
             newArgs.AddRange(_args);
+
+            //Load from .env
+            foreach (DictionaryEntry env in Environment.GetEnvironmentVariables())
+            {
+                newArgs.Add("-" + (string)env.Key);
+                newArgs.Add((string)env.Value);
+            }
 
             if (lines != null && lines.Length > 0)
             {

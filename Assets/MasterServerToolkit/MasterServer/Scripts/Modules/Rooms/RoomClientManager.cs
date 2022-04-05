@@ -27,15 +27,15 @@ namespace MasterServerToolkit.MasterServer
         {
             AccessData = access;
             roomConnection = Mst.Create.ClientSocket();
-            roomConnection.AddConnectionListener(OnConnectedToRoomEventHandler);
-            roomConnection.AddDisconnectionListener(OnDisconnectedFromRoomEventHandler, false);
+            roomConnection.AddConnectionOpenListener(OnConnectedToRoomEventHandler);
+            roomConnection.AddConnectionCloseListener(OnDisconnectedFromRoomEventHandler, false);
             roomConnection.Connect(access.RoomIp, access.RoomPort, roomConnectionTimeout);
 
             roomConnection.WaitForConnection((socket) =>
             {
                 if(socket == null)
                 {
-                    roomConnection.Disconnect();
+                    roomConnection.Close();
                     logger.Error($"Connection timeout has expired");
                 }
             });
@@ -47,12 +47,12 @@ namespace MasterServerToolkit.MasterServer
         protected override void StartDisconnection()
         {
             // Stop client
-            roomConnection.Disconnect();
+            roomConnection.Close();
         }
 
         private void OnConnectedToRoomEventHandler()
         {
-            roomConnection.SendMessage((short)MstMessageCodes.ValidateRoomAccessRequest, AccessData.Token, (status, response) =>
+            roomConnection.SendMessage((ushort)MstOpCodes.ValidateRoomAccessRequest, AccessData.Token, (status, response) =>
             {
                 if (status == ResponseStatus.Success)
                 {

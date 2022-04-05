@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using MasterServerToolkit.MasterServer;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,9 +22,10 @@ namespace MasterServerToolkit.Networking
             get { return socket.IsConnected; }
         }
 
+
         public void SendDelayedMessages()
         {
-            MstTimer.Singleton.StartCoroutine(SendDelayedMessagesCoroutine());
+            MstTimer.Instance.StartCoroutine(SendDelayedMessagesCoroutine());
         }
 
         public IEnumerator SendDelayedMessagesCoroutine()
@@ -66,6 +68,7 @@ namespace MasterServerToolkit.Networking
                 }
             }
 
+            Mst.Client.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
             socket.Send(message.ToBytes());
         }
 

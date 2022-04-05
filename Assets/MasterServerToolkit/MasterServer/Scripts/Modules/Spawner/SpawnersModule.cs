@@ -1,9 +1,12 @@
 ﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.MasterServer.Web;
 using MasterServerToolkit.Networking;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -12,11 +15,7 @@ namespace MasterServerToolkit.MasterServer
     {
         public delegate void SpawnedProcessRegistrationHandler(SpawnTask task, IPeer peer);
 
-        private int _spawnerId = 0;
-        private int _spawnTaskId = 0;
-
-        protected Dictionary<int, RegisteredSpawner> spawnersList;
-        protected Dictionary<int, SpawnTask> spawnTasksList;
+        #region INSPECTOR
 
         [Header("Permissions"), SerializeField, Tooltip("Minimal permission level, necessary to register a spanwer")]
         protected int createSpawnerPermissionLevel = 0;
@@ -26,6 +25,14 @@ namespace MasterServerToolkit.MasterServer
 
         [Tooltip("If true, clients will be able to request spawns"), SerializeField]
         protected bool enableClientSpawnRequests = true;
+
+        #endregion
+
+        private int nextSpawnerId = 0;
+        private int nextSpawnTaskId = 0;
+
+        protected Dictionary<int, RegisteredSpawner> spawnersList;
+        protected Dictionary<int, SpawnTask> spawnTasksList;
 
         public event Action<RegisteredSpawner> OnSpawnerRegisteredEvent;
         public event Action<RegisteredSpawner> OnSpawnerDestroyedEvent;
@@ -37,18 +44,90 @@ namespace MasterServerToolkit.MasterServer
             spawnTasksList = new Dictionary<int, SpawnTask>();
 
             // Add handlers
-            server.RegisterMessageHandler((short)MstMessageCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.RegisterSpawnedProcess, RegisterSpawnedProcessRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.CompleteSpawnProcess, CompleteSpawnProcessRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.ProcessStarted, SetProcessStartedRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.ProcessKilled, SetProcessKilledRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.AbortSpawnRequest, AbortSpawnRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.GetSpawnFinalizationData, GetCompletionDataRequestHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.UpdateSpawnerProcessesCount, SetSpawnedProcessesCountRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.RegisterSpawnedProcess, RegisterSpawnedProcessRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.CompleteSpawnProcess, CompleteSpawnProcessRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ProcessStarted, SetProcessStartedRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.ProcessKilled, SetProcessKilledRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.AbortSpawnRequest, AbortSpawnRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.GetSpawnFinalizationData, GetCompletionDataRequestHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateSpawnerProcessesCount, SetSpawnedProcessesCountRequestHandler);
 
             // Coroutines
             StartCoroutine(StartQueueUpdater());
+        }
+
+        public override JObject JsonInfo()
+        {
+            var data = base.JsonInfo();
+            data["description"] = "This module manages the processes of running rooms.";
+            data.Add("totalSpawners", spawnersList.Count);
+
+            int totalRooms = 0;
+
+            JArray spawners = new JArray();
+
+            foreach (var spawner in spawnersList.Values)
+            {
+                totalRooms += spawner.ProcessesRunning;
+
+                var spawnerJson = new JObject
+                {
+                    { "id", spawner.SpawnerId },
+                    { "processes", spawner.ProcessesRunning },
+                    { "options", JObject.FromObject(spawner.Options) }
+                };
+
+                spawners.Add(spawnerJson);
+            }
+
+            data.Add("totalStartedRooms", totalRooms);
+            data.Add("totalRegions", new JArray(GetRegions().Select(i => i.Name).ToArray()));
+            data.Add("maxConcurrentRequests", RegisteredSpawner.MaxConcurrentRequests);
+            data.Add("spawners", spawners);
+
+            return data;
+        }
+
+        public override MstProperties Info()
+        {
+            int totalRooms = 0;
+
+            var info = base.Info();
+            info.Set("Description", "This module manages the processes of running rooms.");
+            info.Set("Total spawners", spawnersList.Count);
+
+            StringBuilder html = new StringBuilder();
+
+            html.Append("<ol class=\"list-group list-group-numbered\">");
+
+            foreach (var spawner in spawnersList.Values)
+            {
+                totalRooms += spawner.ProcessesRunning;
+
+                var options = spawner.Options;
+
+                html.Append("<li class=\"list-group-item\">");
+
+                html.Append($"<b>SpawnerId:</b> {spawner.SpawnerId}, ");
+                html.Append($"<b>Processes:</b> {spawner.ProcessesRunning}, ");
+                html.Append($"<b>MachineIp:</b> {options.MachineIp}, ");
+                html.Append($"<b>MaxProcesses:</b> {options.MaxProcesses}, ");
+                html.Append($"<b>Region:</b> {options.Region}, ");
+                html.Append($"<b>CustomOptions:</b> {options.CustomOptions}");
+
+                html.Append("</li>");
+            }
+
+            html.Append("</ol>");
+
+            info.Set("Total processes (Rooms)", totalRooms);
+            info.Set("Total regions", string.Join(",", GetRegions().Select(i => i.Name)));
+            info.Set("MaxConcurrentRequests", RegisteredSpawner.MaxConcurrentRequests);
+            info.Set("Spawners Info", html.ToString());
+
+            return info;
         }
 
         /// <summary>
@@ -146,7 +225,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public int GenerateSpawnerId()
         {
-            return _spawnerId++;
+            return nextSpawnerId++;
         }
 
         /// <summary>
@@ -155,7 +234,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public int GenerateSpawnTaskId()
         {
-            return _spawnTaskId++;
+            return nextSpawnTaskId++;
         }
 
         /// <summary>
@@ -183,7 +262,7 @@ namespace MasterServerToolkit.MasterServer
 
             if (spawners.Count == 0)
             {
-                logger.Warn($"No spawner was returned after filtering. Region: {options.AsString(MstDictKeys.ROOM_REGION, "International")}");
+                logger.Warn($"No spawner was returned after filtering. Region: {options.AsString(MstDictKeys.ROOM_REGION, string.IsNullOrEmpty(region) ? "International" : region)}");
                 return null;
             }
 
@@ -384,7 +463,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Save spawn task requester
-            task.Requester = message.Peer;
+            task.Requester = peer;
 
             // Save the task as peer property
             peer.SetProperty((int)MstPeerPropertyCodes.ClientSpawnRequest, task);
@@ -393,7 +472,7 @@ namespace MasterServerToolkit.MasterServer
             task.OnStatusChangedEvent += (status) =>
             {
                 // Send status update
-                var msg = Mst.Create.Message((short)MstMessageCodes.SpawnRequestStatusChange, new SpawnStatusUpdatePacket()
+                var msg = Mst.Create.Message((ushort)MstOpCodes.SpawnRequestStatusChange, new SpawnStatusUpdatePacket()
                 {
                     SpawnId = task.Id,
                     Status = status
@@ -401,7 +480,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (task.Requester != null && task.Requester.IsConnected)
                 {
-                    message.Peer.SendMessage(msg);
+                    peer.SendMessage(msg);
                 }
             };
 

@@ -1,9 +1,12 @@
 ﻿using MasterServerToolkit.Networking;
+using System;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MstProfilesClient : MstBaseClient
     {
+        public event Action<ObservableProfile> OnProfileLoadedEvent;
+
         public MstProfilesClient(IClientSocket connection) : base(connection) { }
 
         /// <summary>
@@ -31,7 +34,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ClientProfileRequest, profile.PropertyCount, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.ClientProfileRequest, profile.PropertyCount, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -42,10 +45,12 @@ namespace MasterServerToolkit.MasterServer
                 // Use the bytes received, to replicate the profile
                 profile.FromBytes(response.AsBytes());
 
+                //
+                OnProfileLoadedEvent?.Invoke(profile);
+
                 // Listen to profile updates, and apply them
-                connection.RegisterMessageHandler((short)MstMessageCodes.UpdateClientProfile, message =>
+                connection.RegisterMessageHandler((ushort)MstOpCodes.UpdateClientProfile, message =>
                 {
-                    // UnityEngine.Debug.LogError($"Profile Updated from server");
                     profile.ApplyUpdates(message.AsBytes());
                 });
 

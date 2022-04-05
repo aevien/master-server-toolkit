@@ -1,34 +1,48 @@
 ﻿#if MIRROR
 using MasterServerToolkit.MasterServer;
+using Mirror;
+using System;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     public class PlayerCharacter : PlayerCharacterBehaviour
     {
-        protected override void Awake()
-        {
-            base.Awake();
+        public static event Action<PlayerCharacter> OnServerCharacterSpawnedEvent;
+        public static event Action<PlayerCharacter> OnClientCharacterSpawnedEvent;
+        public static event Action<PlayerCharacter> OnLocalCharacterSpawnedEvent;
 
-            tag = "Client";
-        }
-
-        public override void OnStartLocalPlayer()
-        {
-            tag = "Player";
-
-            base.OnStartLocalPlayer();
-
-            // Notify listeners about that player character is in game
-            Mst.Events.Invoke(MstEventKeys.playerStartedGame, this);
-        }
+        public static event Action<PlayerCharacter> OnCharacterDestroyedEvent;
 
         private void OnDestroy()
         {
-            if (isLocalPlayer)
-            {
-                Mst.Events.Invoke(MstEventKeys.playerFinishedGame);
-            }
+            OnCharacterDestroyedEvent?.Invoke(this);
         }
+
+        #region SERVER
+
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            OnServerCharacterSpawnedEvent?.Invoke(this);
+        }
+
+        #endregion
+
+        #region CLIENT
+
+        public override void OnStartLocalPlayer()
+        {
+            base.OnStartLocalPlayer();
+            OnLocalCharacterSpawnedEvent?.Invoke(this);
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            OnClientCharacterSpawnedEvent?.Invoke(this);
+        }
+
+        #endregion
     }
 }
 #endif

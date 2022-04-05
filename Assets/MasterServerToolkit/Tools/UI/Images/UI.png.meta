@@ -104,6 +104,12 @@ TextureImporter:
   - first:
       213: -2729415941221293220
     second: msf_logo_512
+  - first:
+      213: 309054333361620999
+    second: gradient_bg_2
+  - first:
+      213: 1061102728927809257
+    second: bg_07
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -125,6 +131,7 @@ TextureImporter:
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
+  vTOnly: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -133,9 +140,9 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: -1
-    aniso: -1
-    mipBias: -100
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -156,9 +163,12 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
+  ignorePngGamma: 0
   applyGammaDecoding: 1
   platformSettings:
   - serializedVersion: 3
@@ -180,7 +190,7 @@ TextureImporter:
       name: backpack
       rect:
         serializedVersion: 2
-        x: 1804
+        x: 1742
         y: 1580
         width: 128
         height: 132
@@ -243,8 +253,8 @@ TextureImporter:
       name: bg_03
       rect:
         serializedVersion: 2
-        x: 1711
-        y: 1725
+        x: 1975
+        y: 1799
         width: 50
         height: 50
       alignment: 0
@@ -264,8 +274,8 @@ TextureImporter:
       name: bg_04
       rect:
         serializedVersion: 2
-        x: 1706
-        y: 1663
+        x: 1975
+        y: 1737
         width: 50
         height: 50
       alignment: 0
@@ -285,8 +295,8 @@ TextureImporter:
       name: bg_05
       rect:
         serializedVersion: 2
-        x: 1947
-        y: 1799
+        x: 1975
+        y: 1675
         width: 50
         height: 50
       alignment: 0
@@ -306,8 +316,8 @@ TextureImporter:
       name: bg_06
       rect:
         serializedVersion: 2
-        x: 1947
-        y: 1737
+        x: 1711
+        y: 1725
         width: 50
         height: 50
       alignment: 0
@@ -324,11 +334,32 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
+      name: bg_07
+      rect:
+        serializedVersion: 2
+        x: 1773
+        y: 1725
+        width: 50
+        height: 50
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 1, y: 1, z: 1, w: 1}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ee80fb5f4bc9be00800000000000000
+      internalID: 1061102728927809257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
       name: bronze_coins
       rect:
         serializedVersion: 2
-        x: 1047
-        y: 1481
+        x: 1882
+        y: 1535
         width: 128
         height: 128
       alignment: 0
@@ -348,7 +379,7 @@ TextureImporter:
       name: config
       rect:
         serializedVersion: 2
-        x: 1187
+        x: 1047
         y: 1481
         width: 128
         height: 128
@@ -369,7 +400,7 @@ TextureImporter:
       name: connection
       rect:
         serializedVersion: 2
-        x: 1327
+        x: 1187
         y: 1481
         width: 128
         height: 128
@@ -411,7 +442,7 @@ TextureImporter:
       name: frame_02
       rect:
         serializedVersion: 2
-        x: 1768
+        x: 1706
         y: 1689
         width: 24
         height: 24
@@ -432,8 +463,8 @@ TextureImporter:
       name: globe
       rect:
         serializedVersion: 2
-        x: 1467
-        y: 1471
+        x: 1327
+        y: 1481
         width: 128
         height: 128
       alignment: 0
@@ -453,7 +484,7 @@ TextureImporter:
       name: gold_coins
       rect:
         serializedVersion: 2
-        x: 1607
+        x: 1467
         y: 1471
         width: 128
         height: 128
@@ -487,6 +518,27 @@ TextureImporter:
       bones: []
       spriteID: ade274ff012d43e10800000000000000
       internalID: 2176595490370957018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: gradient_bg_2
+      rect:
+        serializedVersion: 2
+        x: 1807
+        y: 1871
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 708805c574bf94400800000000000000
+      internalID: 309054333361620999
       vertices: []
       indices: 
       edges: []
@@ -537,8 +589,8 @@ TextureImporter:
       name: menu
       rect:
         serializedVersion: 2
-        x: 1887
-        y: 1473
+        x: 1747
+        y: 1428
         width: 128
         height: 95
       alignment: 0
@@ -663,7 +715,7 @@ TextureImporter:
       name: silver_coins
       rect:
         serializedVersion: 2
-        x: 1747
+        x: 1607
         y: 1440
         width: 128
         height: 128
@@ -705,7 +757,7 @@ TextureImporter:
       name: unlock
       rect:
         serializedVersion: 2
-        x: 1807
+        x: 1835
         y: 1724
         width: 128
         height: 146

@@ -57,7 +57,7 @@ namespace MasterServerToolkit.Networking
             try
             {
                 // Stop listening when application closes
-                MstTimer.Singleton.OnApplicationQuitEvent += Stop;
+                MstTimer.Instance.OnApplicationQuitEvent += Stop;
 
                 if (server != null)
                 {
@@ -73,7 +73,7 @@ namespace MasterServerToolkit.Networking
                     server = new WebSocketServer(IPAddress.Parse(ip), port, UseSecure);
                 }
 
-                //server.KeepClean = true;
+                server.KeepClean = true;
 
                 // Set log output
                 server.Log.Output = (logData, value) =>
@@ -126,14 +126,14 @@ namespace MasterServerToolkit.Networking
                 // Setup all services used by server
                 SetupService(server);
 
-                // Setup something else if needed
+                // Setup something else if required
                 OnBeforeServerStart?.Invoke(this);
 
                 // Start server
                 server.Start();
 
                 // Add this server to updater
-                MstUpdateRunner.Singleton.Add(this);
+                MstUpdateRunner.Instance.Add(this);
             }
             catch (CryptographicException e)
             {
@@ -150,7 +150,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public void Stop()
         {
-            MstUpdateRunner.Singleton.Remove(this);
+            MstUpdateRunner.Instance.Remove(this);
             server?.Stop();
         }
 

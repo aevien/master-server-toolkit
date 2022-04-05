@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.MasterServer;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,8 +16,10 @@ namespace MasterServerToolkit.Networking
         public WsServerPeer(WsService session)
         {
             serviceForPeer = session;
-
-            serviceForPeer.OnOpenEvent += () => { isConnected = true; };
+            serviceForPeer.OnOpenEvent += () =>
+            {
+                isConnected = true;
+            };
             serviceForPeer.OnCloseEvent += (msg) => { isConnected = false; };
             serviceForPeer.OnErrorEvent += (msg) => { isConnected = false; };
 
@@ -27,7 +30,7 @@ namespace MasterServerToolkit.Networking
 
         public void SendDelayedMessages()
         {
-            MstTimer.Singleton.StartCoroutine(SendDelayedMessagesCoroutine());
+            MstTimer.Instance.StartCoroutine(SendDelayedMessagesCoroutine());
         }
 
         private IEnumerator SendDelayedMessagesCoroutine()
@@ -61,7 +64,7 @@ namespace MasterServerToolkit.Networking
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
-            if(serviceForPeer.ConnectionState == WebSocketSharp.WebSocketState.Open)
+            if (serviceForPeer.ConnectionState == WebSocketSharp.WebSocketState.Open)
             {
                 // There's a bug in websockets
                 // When server sends a message to client right after client
@@ -80,6 +83,7 @@ namespace MasterServerToolkit.Networking
                     }
                 }
 
+                Mst.Client.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
                 serviceForPeer.SendAsync(message.ToBytes());
             }
             else

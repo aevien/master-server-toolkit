@@ -1,9 +1,6 @@
-﻿using Aevien.UI;
-using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
-using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -126,7 +123,10 @@ namespace MasterServerToolkit.Games
             // You can send scene name to load that one in online mode
             spawnOptions.Add(MstDictKeys.ROOM_ONLINE_SCENE_NAME, "");
 
-            MatchmakingBehaviour.Instance.CreateNewRoom(RegionName, spawnOptions);
+            MatchmakingBehaviour.Instance.CreateNewRoom(RegionName, spawnOptions, () =>
+            {
+                Show();
+            });
         }
     }
 }

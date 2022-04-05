@@ -605,7 +605,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 207.50002, y: -15.000001}
-  m_SizeDelta: {x: -445, y: 80}
+  m_SizeDelta: {x: -445, y: 64}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &1468717570
 CanvasRenderer:
@@ -929,8 +929,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 430, y: -17.50005}
-  m_SizeDelta: {x: -445, y: -175.00009}
+  m_AnchoredPosition: {x: 430, y: -9.499973}
+  m_SizeDelta: {x: -445, y: -159.00006}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &1285436268012313877
 CanvasRenderer:
@@ -1259,7 +1259,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &1285436268532706580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1739,7 +1739,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3936946716723079508, guid: c1bc28df95da0e543899f3908616e0a5, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument
-      value: SendMessage
+      value: TrySendMessage
       objectReference: {fileID: 0}
     - target: {fileID: 3936946716723079508, guid: c1bc28df95da0e543899f3908616e0a5, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -1839,7 +1839,7 @@ PrefabInstance:
       objectReference: {fileID: 209629827860365397, guid: 041ee6d92b0409840ab12c6eca56f221, type: 3}
     - target: {fileID: 5339709273305292216, guid: c1bc28df95da0e543899f3908616e0a5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -0.17993164
+      value: -0.1796875
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c1bc28df95da0e543899f3908616e0a5, type: 3}
@@ -1954,10 +1954,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 304329943454920672, guid: b3ff119a0a79b054e9bfd921468db02c, type: 3}
-      propertyPath: m_fontSize
-      value: 20
-      objectReference: {fileID: 0}
     - target: {fileID: 304329943454920687, guid: b3ff119a0a79b054e9bfd921468db02c, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2019,10 +2015,6 @@ PrefabInstance:
     - target: {fileID: 2925874838367869352, guid: fbd21e382383ae44fb03475c1e66056e, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2925874838367869355, guid: fbd21e382383ae44fb03475c1e66056e, type: 3}
-      propertyPath: m_fontSize
-      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 2925874838593562612, guid: fbd21e382383ae44fb03475c1e66056e, type: 3}
       propertyPath: m_Pivot.x

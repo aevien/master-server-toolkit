@@ -51,10 +51,9 @@ namespace MasterServerToolkit.Networking
         public string RecvString()
         {
             byte[] retval = Recv();
+
             if (retval == null)
-            {
                 return null;
-            }
 
             return Encoding.UTF8.GetString(retval);
         }
@@ -63,49 +62,54 @@ namespace MasterServerToolkit.Networking
 
         int m_NativeRef = 0;
 
-        public bool IsConnected { get { return MsfSocketState(m_NativeRef) == 1; } }
+        [DllImport("__Internal")]
+        private static extern int MstSocketCreate(string url);
 
         [DllImport("__Internal")]
-        private static extern int MsfSocketCreate(string url);
+        private static extern int MstSocketState(int socketInstance);
 
         [DllImport("__Internal")]
-        private static extern int MsfSocketState(int socketInstance);
+        private static extern int MstSocketCode(int socketInstance);
 
         [DllImport("__Internal")]
-        private static extern void MsfSocketSend(int socketInstance, byte[] ptr, int length);
+        private static extern void MstSocketSend(int socketInstance, byte[] ptr, int length);
 
         [DllImport("__Internal")]
-        private static extern void MsfSocketRecv(int socketInstance, byte[] ptr, int length);
+        private static extern void MstSocketRecv(int socketInstance, byte[] ptr, int length);
 
         [DllImport("__Internal")]
-        private static extern int MsfSocketRecvLength(int socketInstance);
+        private static extern int MstSocketRecvLength(int socketInstance);
 
         [DllImport("__Internal")]
-        private static extern void MsfSocketClose(int socketInstance, string reason);
+        private static extern void MstSocketClose(int socketInstance, string reason);
 
         [DllImport("__Internal")]
-        private static extern int MsfSocketError(int socketInstance, byte[] ptr, int length);
+        private static extern int MstSocketError(int socketInstance, byte[] ptr, int length);
+
+        public bool IsConnected => return MstSocketState(m_NativeRef) == 1;
+
+        public int CloseCode => MstSocketCode(m_NativeRef);
 
         public void Send(byte[] buffer)
         {
-            MsfSocketSend(m_NativeRef, buffer, buffer.Length);
+            MstSocketSend(m_NativeRef, buffer, buffer.Length);
         }
 
         public byte[] Recv()
         {
-            int length = MsfSocketRecvLength(m_NativeRef);
+            int length = MstSocketRecvLength(m_NativeRef);
             if (length == 0)
                 return null;
             byte[] buffer = new byte[length];
-            MsfSocketRecv(m_NativeRef, buffer, length);
+            MstSocketRecv(m_NativeRef, buffer, length);
             return buffer;
         }
 
         public IEnumerator Connect()
         {
-            m_NativeRef = MsfSocketCreate(url.ToString());
+            m_NativeRef = MstSocketCreate(url.ToString());
             IsConnecting = true;
-            while (MsfSocketState(m_NativeRef) == 0)
+            while (MstSocketState(m_NativeRef) == 0)
                 yield return 0;
             IsConnecting = false;
         }
@@ -115,7 +119,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public void Close(string reason = "")
         {
-            MsfSocketClose(m_NativeRef, reason);
+            MstSocketClose(m_NativeRef, reason);
         }
 
         /// <summary>
@@ -127,7 +131,7 @@ namespace MasterServerToolkit.Networking
             {
                 const int bufsize = 1024;
                 byte[] buffer = new byte[bufsize];
-                int result = MsfSocketError(m_NativeRef, buffer, bufsize);
+                int result = MstSocketError(m_NativeRef, buffer, bufsize);
 
                 if (result == 0)
                     return null;
@@ -151,6 +155,11 @@ namespace MasterServerToolkit.Networking
         /// Connection status Connected/Disconnected
         /// </summary>
         public bool IsConnected { get; private set; } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ushort CloseCode { get; private set; }
 
         /// <summary>
         /// Current socket error
@@ -197,7 +206,9 @@ namespace MasterServerToolkit.Networking
             // Listen to connection close
             socket.OnClose += (sender, args) =>
             {
-                logger.Debug($"WebSocket closed connection with code [{args.Code}:{Enum.Parse(typeof(CloseStatusCode), args.Code.ToString())}]. Reason: [{args.Reason}]");
+                logger.Debug($"WebSocket closed connection with code [{args.Code}:{(CloseStatusCode)args.Code}]. Reason: [{args.Reason}]");
+
+                CloseCode = args.Code;
                 IsConnected = false;
                 IsConnecting = false;
             };

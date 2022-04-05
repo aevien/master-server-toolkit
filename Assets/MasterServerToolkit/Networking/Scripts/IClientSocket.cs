@@ -38,13 +38,13 @@ namespace MasterServerToolkit.Networking
         /// Event, which is invoked when we successfully 
         /// connect to another socket
         /// </summary>
-        event Action OnConnectedEvent;
+        event Action OnConnectionOpenEvent;
 
         /// <summary>
         /// Event, which is invoked when we are
-        /// disconnected from another socket
+        /// disconnected from another socket with normal code
         /// </summary>
-        event Action OnDisconnectedEvent;
+        event Action OnConnectionCloseEvent;
 
         /// <summary>
         /// Event, invoked when connection status changes
@@ -90,13 +90,13 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="callback"></param>
         /// <param name="invokeInstantlyIfConnected"></param>
-        void AddConnectionListener(Action callback, bool invokeInstantlyIfConnected = true);
+        void AddConnectionOpenListener(Action callback, bool invokeInstantlyIfConnected = true);
 
         /// <summary>
         /// Removes connection listener
         /// </summary>
         /// <param name="callback"></param>
-        void RemoveConnectionListener(Action callback);
+        void RemoveConnectionOpenListener(Action callback);
 
         /// <summary>
         /// Adds listener, which is invoked when connection is closed,
@@ -104,13 +104,13 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="callback"></param>
         /// <param name="invokeInstantlyIfDisconnected"></param>
-        void AddDisconnectionListener(Action callback, bool invokeInstantlyIfDisconnected = true);
+        void AddConnectionCloseListener(Action callback, bool invokeInstantlyIfDisconnected = true);
 
         /// <summary>
         /// Removes disconnection listener
         /// </summary>
         /// <param name="callback"></param>
-        void RemoveDisconnectionListener(Action callback);
+        void RemoveConnectionCloseListener(Action callback);
 
         /// <summary>
         /// Adds a packet handler, which will be invoked when a message of
@@ -122,7 +122,7 @@ namespace MasterServerToolkit.Networking
         /// Adds a packet handler, which will be invoked when a message of
         /// specific operation code is received
         /// </summary>
-        IPacketHandler RegisterMessageHandler(short opCode, IncommingMessageHandler handlerMethod);
+        IPacketHandler RegisterMessageHandler(ushort opCode, IncommingMessageHandler handlerMethod);
 
         /// <summary>
         /// Removes the packet handler, but only if this exact handler
@@ -134,11 +134,11 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Disconnects and connects again
         /// </summary>
-        void Reconnect();
+        void Reconnect(bool fireEvent = true);
 
         /// <summary>
         /// Closes socket connection
         /// </summary>
-        void Disconnect(bool fireEvent = true);
+        void Close(bool fireEvent = true);
     }
 }

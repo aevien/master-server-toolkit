@@ -38,6 +38,11 @@
         public string SpawnTaskUniqueCode { get { return "-mstSpawnTaskUniqueCode"; } }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string RoomCpuLimit { get { return "-mstRoomCpuLimit"; } }
+
+        /// <summary>
         /// Use this cmd to setup IP address of the spawned room server
         /// </summary>
         public string RoomIp { get { return "-mstRoomIp"; } }
@@ -152,10 +157,5 @@
         /// Use this cmd to setup web server root directory
         /// </summary>
         public string WebRootDir { get { return "-mstWebRootDir"; } }
-
-        /// <summary>
-        /// Path to log file directory
-        /// </summary>
-        public string LogFileDir { get { return "-mstLogFileDir"; } }
     }
 }

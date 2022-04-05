@@ -46,7 +46,7 @@ namespace MasterServerToolkit.MasterServer
             SpawnOptions = spawnOptions;
 
             // Set handlers
-            connection.RegisterMessageHandler((short)MstMessageCodes.SpawnRequestStatusChange, StatusUpdateHandler);
+            connection.RegisterMessageHandler((ushort)MstOpCodes.SpawnRequestStatusChange, StatusUpdateHandler);
         }
 
         /// <summary>

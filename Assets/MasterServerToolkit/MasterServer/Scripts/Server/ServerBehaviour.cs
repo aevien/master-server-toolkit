@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using System;
@@ -67,7 +68,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Server messages handlers list
         /// </summary>
-        private Dictionary<short, IPacketHandler> handlers;
+        private Dictionary<ushort, IPacketHandler> handlers;
 
         /// <summary>
         /// Server modules handlers
@@ -105,9 +106,29 @@ namespace MasterServerToolkit.MasterServer
         public bool IsRunning { get; protected set; } = false;
 
         /// <summary>
-        /// Gets total peers connected to server
+        /// Gets peers count currently connected to server
         /// </summary>
-        public int TotalPeersCount => connectedPeers != null ? connectedPeers.Count : 0;
+        public int CurrentPeersCount => connectedPeers != null ? connectedPeers.Count : 0;
+
+        /// <summary>
+        /// Gets the total number of clients connected to the server during the entire session
+        /// </summary>
+        public int TotalPeersCount { get; protected set; }
+
+        /// <summary>
+        /// Gets the highest number of clients connected to the server during the entire session
+        /// </summary>
+        public int HighestPeersCount { get; protected set; }
+
+        /// <summary>
+        /// Server local IP address
+        /// </summary>
+        public string Address => serverIP;
+
+        /// <summary>
+        /// Server port
+        /// </summary>
+        public int Port => serverPort;
 
         /// <summary>
         /// Fires when any client connected to server
@@ -131,7 +152,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Awake()
         {
-            if (string.IsNullOrEmpty(MstApplicationConfig.Singleton.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
+            if (string.IsNullOrEmpty(MstApplicationConfig.Instance.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
 
             if (!Mst.Runtime.IsEditor)
                 Application.targetFrameRate = Mst.Args.AsInt(Mst.Args.Names.TargetFrameRate, targetFrameRate);
@@ -142,7 +163,7 @@ namespace MasterServerToolkit.MasterServer
             connectedPeers = new Dictionary<int, IPeer>();
             modules = new Dictionary<Type, IBaseServerModule>();
             initializedModules = new HashSet<Type>();
-            handlers = new Dictionary<short, IPacketHandler>();
+            handlers = new Dictionary<ushort, IPacketHandler>();
             peersByGuidLookup = new Dictionary<Guid, IPeer>();
 
             // Create the server 
@@ -150,18 +171,18 @@ namespace MasterServerToolkit.MasterServer
             socket.LogLevel = logLevel;
 
             // Setup secure connection
-            socket.UseSecure = MstApplicationConfig.Singleton.UseSecure;
-            socket.CertificatePath = MstApplicationConfig.Singleton.CertificatePath;
-            socket.CertificatePassword = MstApplicationConfig.Singleton.CertificatePassword;
-            socket.ApplicationKey = MstApplicationConfig.Singleton.ApplicationKey;
+            socket.UseSecure = MstApplicationConfig.Instance.UseSecure;
+            socket.CertificatePath = MstApplicationConfig.Instance.CertificatePath;
+            socket.CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
+            socket.ApplicationKey = MstApplicationConfig.Instance.ApplicationKey;
 
             socket.OnPeerConnectedEvent += OnPeerConnectedEventHandle;
             socket.OnPeerDisconnectedEvent += OnPeerDisconnectedEventHandler;
 
             // AesKey handler
-            RegisterMessageHandler((short)MstMessageCodes.AesKeyRequest, GetAesKeyRequestHandler);
-            RegisterMessageHandler((short)MstMessageCodes.PermissionLevelRequest, PermissionLevelRequestHandler);
-            RegisterMessageHandler((short)MstMessageCodes.PeerGuidRequest, GetPeerGuidRequestHandler);
+            RegisterMessageHandler((ushort)MstOpCodes.AesKeyRequest, GetAesKeyRequestHandler);
+            RegisterMessageHandler((ushort)MstOpCodes.PermissionLevelRequest, PermissionLevelRequestHandler);
+            RegisterMessageHandler((ushort)MstOpCodes.PeerGuidRequest, GetPeerGuidRequestHandler);
         }
 
         protected virtual void Start()
@@ -181,6 +202,15 @@ namespace MasterServerToolkit.MasterServer
             maxConnections = (ushort)Mathf.Clamp(maxConnections, 0, ushort.MaxValue);
         }
 
+        protected virtual void OnDestroy()
+        {
+            if (socket != null)
+            {
+                socket.OnPeerConnectedEvent -= OnPeerConnectedEventHandle;
+                socket.OnPeerDisconnectedEvent -= OnPeerDisconnectedEventHandler;
+            }
+        }
+
         /// <summary>
         /// Check if server is allowed to be started in editor. This feature is for testing purpose only
         /// </summary>
@@ -188,6 +218,28 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool IsAllowedToBeStartedInEditor()
         {
             return Mst.Runtime.IsEditor && autoStartInEditor;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public virtual MstProperties Info()
+        {
+            MstProperties info = new MstProperties();
+            info.Set("Initialized modules", GetInitializedModules().Count);
+            info.Set("Unitialized modules", GetUninitializedModules().Count);
+            info.Set("Current clients", CurrentPeersCount);
+            info.Set("Total clients", TotalPeersCount);
+            info.Set("Highest clients", HighestPeersCount);
+            info.Set("Use SSL", MstApplicationConfig.Instance.UseSecure);
+            info.Set("Certificate Path", MstApplicationConfig.Instance.CertificatePath);
+            info.Set("Certificate Password", MstApplicationConfig.Instance.CertificatePassword);
+            info.Set("Application Key", MstApplicationConfig.Instance.ApplicationKey);
+            info.Set("Local Ip", Address);
+            info.Set("Public Ip", Address);
+            info.Set("Port", Port);
+            return info;
         }
 
         /// <summary>
@@ -308,6 +360,12 @@ namespace MasterServerToolkit.MasterServer
             // Save the peer
             connectedPeers[peer.Id] = peer;
 
+            // Add total clients
+            TotalPeersCount++;
+
+            if (connectedPeers.Count > HighestPeersCount)
+                HighestPeersCount++;
+
             // Create the security extension
             var extension = peer.AddExtension(new SecurityInfoPeerExtension());
 
@@ -347,113 +405,6 @@ namespace MasterServerToolkit.MasterServer
 
             logger.Debug($"Client {peer.Id} disconnected from server. Total clients are: {connectedPeers.Count}");
         }
-
-        protected virtual void OnDestroy()
-        {
-            if (socket != null)
-            {
-                socket.OnPeerConnectedEvent -= OnPeerConnectedEventHandle;
-                socket.OnPeerDisconnectedEvent -= OnPeerDisconnectedEventHandler;
-            }
-        }
-
-        #region MESSAGE HANDLERS
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void GetPeerGuidRequestHandler(IIncomingMessage message)
-        {
-            var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
-            message.Respond(extension.UniqueGuid.ToByteArray(), ResponseStatus.Success);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void PermissionLevelRequestHandler(IIncomingMessage message)
-        {
-            var key = message.AsString();
-
-            var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
-
-            var currentLevel = extension.PermissionLevel;
-            var newLevel = currentLevel;
-
-            var permissionClaimed = false;
-
-            foreach (var entry in permissions)
-            {
-                if (entry.key == key)
-                {
-                    newLevel = entry.permissionLevel;
-                    permissionClaimed = true;
-                }
-            }
-
-            extension.PermissionLevel = newLevel;
-
-            if (!permissionClaimed && !string.IsNullOrEmpty(key))
-            {
-                // If we didn't claim a permission
-                message.Respond("Invalid permission key", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            message.Respond(newLevel, ResponseStatus.Success);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual async void GetAesKeyRequestHandler(IIncomingMessage message)
-        {
-            var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
-            var encryptedKey = extension.AesKeyEncrypted;
-
-            if (encryptedKey != null)
-            {
-                logger.Debug("There's already a key generated");
-
-                // There's already a key generated
-                message.Respond(encryptedKey, ResponseStatus.Success);
-                return;
-            }
-
-            // Generate a random key
-            var aesKey = Mst.Helper.CreateRandomAlphanumericString(8);
-
-            var clientsPublicKeyXml = message.AsString();
-
-            // Deserialize public key
-            var sr = new System.IO.StringReader(clientsPublicKeyXml);
-            var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-            var clientsPublicKey = (RSAParameters)xs.Deserialize(sr);
-
-            byte[] encryptedAes = await Task.Run(() =>
-            {
-                using (var csp = new RSACryptoServiceProvider())
-                {
-                    csp.ImportParameters(clientsPublicKey);
-                    encryptedAes = csp.Encrypt(Encoding.Unicode.GetBytes(aesKey), false);
-
-                    // Save keys for later use
-                    extension.AesKeyEncrypted = encryptedAes;
-                    extension.AesKey = aesKey;
-
-                    return encryptedAes;
-                }
-            });
-
-            message.Respond(encryptedAes, ResponseStatus.Success);
-        }
-
-        #endregion
-
-        #region VIRTUAL METHODS
 
         /// <summary>
         /// Invokes when new <see cref="IPeer"/> connected
@@ -542,8 +493,6 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        #endregion
-
         #region IServer
 
         /// <summary>
@@ -619,7 +568,6 @@ namespace MasterServerToolkit.MasterServer
 
                     // Keep checking optional if something new was initialized
                     checkOptional = true;
-
                     changed = true;
                 }
 
@@ -688,7 +636,10 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void RegisterMessageHandler(IPacketHandler handler)
         {
-            handlers[handler.OpCode] = handler;
+            if (!handlers.ContainsKey(handler.OpCode))
+                handlers[handler.OpCode] = handler;
+            else
+                logger.Error($"Handler with opcode {handler.OpCode} is already registered");
         }
 
         /// <summary>
@@ -696,9 +647,20 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="handler"></param>
-        public void RegisterMessageHandler(short opCode, IncommingMessageHandler handler)
+        public void RegisterMessageHandler(ushort opCode, IncommingMessageHandler handler)
         {
             RegisterMessageHandler(new PacketHandler(opCode, handler));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="opCode"></param>
+        /// <param name="handler"></param>
+        public void RegisterMessageHandler(string opCode, IncommingMessageHandler handler)
+        {
+            ushort code = opCode.ToUint16Hash();
+            RegisterMessageHandler(code, handler);
         }
 
         /// <summary>
@@ -710,6 +672,99 @@ namespace MasterServerToolkit.MasterServer
         {
             connectedPeers.TryGetValue(peerId, out IPeer peer);
             return peer;
+        }
+
+        #endregion
+
+        #region MESSAGE HANDLERS
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void GetPeerGuidRequestHandler(IIncomingMessage message)
+        {
+            var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
+            message.Respond(extension.UniqueGuid.ToByteArray(), ResponseStatus.Success);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual void PermissionLevelRequestHandler(IIncomingMessage message)
+        {
+            var key = message.AsString();
+            var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
+            var currentLevel = extension.PermissionLevel;
+            var newLevel = currentLevel;
+            var permissionClaimed = false;
+
+            foreach (var entry in permissions)
+            {
+                if (entry.key == key)
+                {
+                    newLevel = entry.permissionLevel;
+                    permissionClaimed = true;
+                }
+            }
+
+            extension.PermissionLevel = newLevel;
+
+            if (!permissionClaimed && !string.IsNullOrEmpty(key))
+            {
+                // If we didn't claim a permission
+                message.Respond("Invalid permission key", ResponseStatus.Unauthorized);
+                return;
+            }
+
+            message.Respond(newLevel, ResponseStatus.Success);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        protected virtual async void GetAesKeyRequestHandler(IIncomingMessage message)
+        {
+            var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
+            var encryptedKey = extension.AesKeyEncrypted;
+
+            if (encryptedKey != null)
+            {
+                logger.Debug("There's already a key generated");
+
+                // There's already a key generated
+                message.Respond(encryptedKey, ResponseStatus.Success);
+                return;
+            }
+
+            // Generate a random key
+            var aesKey = Mst.Helper.CreateRandomAlphanumericString(8);
+
+            var clientsPublicKeyXml = message.AsString();
+
+            // Deserialize public key
+            var sr = new System.IO.StringReader(clientsPublicKeyXml);
+            var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
+            var clientsPublicKey = (RSAParameters)xs.Deserialize(sr);
+
+            byte[] encryptedAes = await Task.Run(() =>
+            {
+                using (var csp = new RSACryptoServiceProvider())
+                {
+                    csp.ImportParameters(clientsPublicKey);
+                    encryptedAes = csp.Encrypt(Encoding.Unicode.GetBytes(aesKey), false);
+
+                    // Save keys for later use
+                    extension.AesKeyEncrypted = encryptedAes;
+                    extension.AesKey = aesKey;
+
+                    return encryptedAes;
+                }
+            });
+
+            message.Respond(encryptedAes, ResponseStatus.Success);
         }
 
         #endregion

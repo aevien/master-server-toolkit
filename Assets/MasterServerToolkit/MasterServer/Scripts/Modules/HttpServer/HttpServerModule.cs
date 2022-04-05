@@ -4,6 +4,7 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
@@ -118,9 +119,9 @@ namespace MasterServerToolkit.MasterServer
         public override void Initialize(IServer server)
         {
             // Setup secure connection
-            UserSecure = MstApplicationConfig.Singleton.UseSecure;
-            CertificatePath = MstApplicationConfig.Singleton.CertificatePath;
-            CertificatePassword = MstApplicationConfig.Singleton.CertificatePassword;
+            UserSecure = MstApplicationConfig.Instance.UseSecure;
+            CertificatePath = MstApplicationConfig.Instance.CertificatePath;
+            CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
 
             // Set port
             httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);
@@ -293,16 +294,16 @@ namespace MasterServerToolkit.MasterServer
 
             html.Links.Add(new HtmlLinkElement()
             {
-                Href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css",
+                Href = HtmlLibs.BOOTSTRAP_CSS_SRC,
                 Rel = "stylesheet",
-                Integrity = "sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl",
+                Integrity = HtmlLibs.BOOTSTRAP_CSS_INTEGRITY,
                 Crossorigin = "anonymous"
             });
 
             html.Scripts.Add(new HtmlScriptElement()
             {
-                Src = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js",
-                Integrity = "sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0",
+                Src = HtmlLibs.BOOTSTRAP_JS_SRC,
+                Integrity = HtmlLibs.BOOTSTRAP_JS_INTEGRITY,
                 Crossorigin = "anonymous"
             });
 
@@ -336,10 +337,25 @@ namespace MasterServerToolkit.MasterServer
             var p2 = html.CreateElement("p");
             col.AppendChild(p2);
 
+            var ul = html.CreateElement("ul");
+            ul.AddClass("list-unstyled");
+            col.AppendChild(ul);
+
+            var li1 = html.CreateElement("li");
+            ul.AppendChild(li1);
+
             var href1 = html.CreateElement("a");
-            href1.InnerText = "Open Home page...";
-            href1.SetAttribute("href", "/");
-            p2.AppendChild(href1);
+            href1.InnerText = "Open master server info page";
+            href1.SetAttribute("href", "info");
+            li1.AppendChild(href1);
+
+            var li2 = html.CreateElement("li");
+            ul.AppendChild(li2);
+
+            var href2 = html.CreateElement("a");
+            href2.InnerText = "Open home page";
+            href2.SetAttribute("href", "/");
+            li2.AppendChild(href2);
 
             return html.ToString();
         }
@@ -362,16 +378,16 @@ namespace MasterServerToolkit.MasterServer
 
             html.Links.Add(new HtmlLinkElement()
             {
-                Href = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css",
+                Href = HtmlLibs.BOOTSTRAP_CSS_SRC,
                 Rel = "stylesheet",
-                Integrity = "sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl",
+                Integrity = HtmlLibs.BOOTSTRAP_CSS_INTEGRITY,
                 Crossorigin = "anonymous"
             });
 
             html.Scripts.Add(new HtmlScriptElement()
             {
-                Src = "https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js",
-                Integrity = "sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0",
+                Src = HtmlLibs.BOOTSTRAP_JS_SRC,
+                Integrity = HtmlLibs.BOOTSTRAP_JS_INTEGRITY,
                 Crossorigin = "anonymous"
             });
 
@@ -405,10 +421,25 @@ namespace MasterServerToolkit.MasterServer
             var p2 = html.CreateElement("p");
             col.AppendChild(p2);
 
+            var ul = html.CreateElement("ul");
+            ul.AddClass("list-unstyled");
+            col.AppendChild(ul);
+
+            var li1 = html.CreateElement("li");
+            ul.AppendChild(li1);
+
             var href1 = html.CreateElement("a");
-            href1.InnerText = "Open 404 page...";
-            href1.SetAttribute("href", "somewhere");
-            p2.AppendChild(href1);
+            href1.InnerText = "Open master server info page";
+            href1.SetAttribute("href", "info");
+            li1.AppendChild(href1);
+
+            var li2 = html.CreateElement("li");
+            ul.AppendChild(li2);
+
+            var href2 = html.CreateElement("a");
+            href2.InnerText = "Open 404 page";
+            href2.SetAttribute("href", "somwhere");
+            li2.AppendChild(href2);
 
             return html.ToString();
         }
@@ -468,6 +499,19 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="request"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetQueryValue(HttpListenerRequest request, string key, out string value)
+        {
+            value = string.Empty;
+            return request != null && request.QueryString != null && !string.IsNullOrEmpty(request.QueryString[key]);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="rawUrl"></param>
         /// <returns></returns>
         public string UrlToPath(HttpListenerRequest request)
@@ -511,7 +555,8 @@ namespace MasterServerToolkit.MasterServer
             // Let's parse user
             string parsedUrl = UrlToPath(request);
 
-            logger.Debug($"HTTP Get Request: [{parsedUrl}]");
+            if (!TryGetQueryValue(e.Request, "ignoreLog", out string value))
+                logger.Debug($"HTTP Get Request: [{parsedUrl}], Params: [{e.Request.QueryString}]");
 
             // Let's ceate url key
             string urlKey = CreateUrlKey(parsedUrl, HttpMethod.GET);
@@ -731,6 +776,18 @@ namespace MasterServerToolkit.MasterServer
             }
 
             httpRequestHandlers[url] = handler;
+        }
+
+        public override MstProperties Info()
+        {
+            MstProperties info = base.Info();
+            info.Add("Local Ip", httpAddress);
+            info.Add("Port", httpPort);
+            info.Add("WebSocket Service Path", wsServicePath);
+            info.Add("Root Web Directory", rootDirectory);
+            info.Add("Surface Controllers", string.Join(", ", SurfaceControllers.Keys));
+            info.Add("WebSocket Controllers", string.Join(", ", WsControllers.Keys));
+            return info;
         }
     }
 }

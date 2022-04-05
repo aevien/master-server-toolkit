@@ -204,7 +204,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="access"></param>
         public static void Connect(RoomAccessPacket access)
         {
-            if (Singleton == null)
+            if (Instance == null)
             {
                 Logs.Error("Failed to connect to game server. No Game Connector was found in the scene");
                 return;
@@ -213,7 +213,7 @@ namespace MasterServerToolkit.MasterServer
             // Save the access data
             AccessData = access;
 
-            var client = Singleton as RoomClient<T>;
+            var client = Instance as RoomClient<T>;
 
             // Start connection
             if (client)
@@ -225,7 +225,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static void Disconnect()
         {
-            var client = Singleton as RoomClient<T>;
+            var client = Instance as RoomClient<T>;
 
             // Start disconnection
             if (client)

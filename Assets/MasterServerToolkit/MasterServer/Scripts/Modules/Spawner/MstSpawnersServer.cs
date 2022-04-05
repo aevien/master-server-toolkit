@@ -68,7 +68,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.RegisterSpawner, options, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.RegisterSpawner, options, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -127,7 +127,7 @@ namespace MasterServerToolkit.MasterServer
                 FinalizationData = finalizationData
             };
 
-            connection.SendMessage((short)MstMessageCodes.CompleteSpawnProcess, packet, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.CompleteSpawnProcess, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -173,7 +173,7 @@ namespace MasterServerToolkit.MasterServer
                 SpawnId = spawnId
             };
 
-            connection.SendMessage((short)MstMessageCodes.RegisterSpawnedProcess, packet, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.RegisterSpawnedProcess, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -210,7 +210,7 @@ namespace MasterServerToolkit.MasterServer
                 B = count
             };
 
-            connection.SendMessage((short)MstMessageCodes.UpdateSpawnerProcessesCount, packet);
+            connection.SendMessage((ushort)MstOpCodes.UpdateSpawnerProcessesCount, packet);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ProcessStarted, new SpawnedProcessStartedPacket()
+            connection.SendMessage((ushort)MstOpCodes.ProcessStarted, new SpawnedProcessStartedPacket()
             {
                 CmdArgs = cmdArgs,
                 ProcessId = processId,
@@ -267,7 +267,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((short)MstMessageCodes.ProcessKilled, spawnId);
+            connection.SendMessage((ushort)MstOpCodes.ProcessKilled, spawnId);
         }
 
         /// <summary>

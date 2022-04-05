@@ -360,7 +360,7 @@ namespace MasterServerToolkit.MasterServer
 
             // Notify player himself that he's removed
             if (lobbyUser.Peer.IsConnected)
-                lobbyUser.Peer.SendMessage((short)MstMessageCodes.LeftLobby, Id);
+                lobbyUser.Peer.SendMessage((ushort)MstOpCodes.LeftLobby, Id);
 
             OnPlayerRemoved(member);
             OnPlayerRemovedEvent?.Invoke(member);
@@ -864,7 +864,7 @@ namespace MasterServerToolkit.MasterServer
                 Sender = member.Username
             };
 
-            var msg = MessageHelper.Create((short)MstMessageCodes.LobbyChatMessage, messagePacket.ToBytes());
+            var msg = MessageHelper.Create((ushort)MstOpCodes.LobbyChatMessage, messagePacket.ToBytes());
 
             Broadcast(msg);
         }
@@ -1016,7 +1016,7 @@ namespace MasterServerToolkit.MasterServer
                 IsError = isError
             };
 
-            Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyChatMessage, msg.ToBytes()));
+            Broadcast(MessageHelper.Create((ushort)MstOpCodes.LobbyChatMessage, msg.ToBytes()));
         }
 
         /// <summary>
@@ -1035,7 +1035,7 @@ namespace MasterServerToolkit.MasterServer
                 IsError = isError
             };
 
-            var msg = MessageHelper.Create((short)MstMessageCodes.LobbyChatMessage, packet.ToBytes());
+            var msg = MessageHelper.Create((ushort)MstOpCodes.LobbyChatMessage, packet.ToBytes());
 
             member.Extension.Peer.SendMessage(msg, DeliveryMethod.Reliable);
         }
@@ -1051,7 +1051,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void OnPlayerAdded(LobbyMember member)
         {
             // Notify others about the new user
-            var msg = MessageHelper.Create((short)MstMessageCodes.LobbyMemberJoined, member.GenerateDataPacket().ToBytes());
+            var msg = MessageHelper.Create((ushort)MstOpCodes.LobbyMemberJoined, member.GenerateDataPacket().ToBytes());
 
             // Don't send to the person who just joined
             Broadcast(msg, p => p != member.Extension.Peer);
@@ -1071,7 +1071,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Notify others about the user who left
-            Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyMemberLeft, member.Username));
+            Broadcast(MessageHelper.Create((ushort)MstOpCodes.LobbyMemberLeft, member.Username));
         }
 
         /// <summary>
@@ -1103,7 +1103,7 @@ namespace MasterServerToolkit.MasterServer
                 SetReadyState(lobbyMember, false);
             }
 
-            var msg = MessageHelper.Create((short)MstMessageCodes.LobbyStateChange, (int)state);
+            var msg = MessageHelper.Create((ushort)MstOpCodes.LobbyStateChange, (int)state);
             Broadcast(msg);
         }
 
@@ -1113,7 +1113,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="text"></param>
         private void OnStatusTextChange(string text)
         {
-            var msg = MessageHelper.Create((short)MstMessageCodes.LobbyStatusTextChange, text);
+            var msg = MessageHelper.Create((ushort)MstOpCodes.LobbyStatusTextChange, text);
             Broadcast(msg);
         }
 
@@ -1130,7 +1130,7 @@ namespace MasterServerToolkit.MasterServer
             };
 
             // Broadcast new properties
-            Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyPropertyChanged, packet.ToBytes()));
+            Broadcast(MessageHelper.Create((ushort)MstOpCodes.LobbyPropertyChanged, packet.ToBytes()));
         }
 
         /// <summary>
@@ -1149,7 +1149,7 @@ namespace MasterServerToolkit.MasterServer
                 Value = member.GetProperty(propertyKey)
             };
 
-            Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyMemberPropertyChanged, changesPacket.ToBytes()));
+            Broadcast(MessageHelper.Create((ushort)MstOpCodes.LobbyMemberPropertyChanged, changesPacket.ToBytes()));
         }
 
         /// <summary>
@@ -1166,7 +1166,7 @@ namespace MasterServerToolkit.MasterServer
             };
 
             // Broadcast the change
-            var msg = MessageHelper.Create((short)MstMessageCodes.LobbyMemberChangedTeam, packet.ToBytes());
+            var msg = MessageHelper.Create((ushort)MstOpCodes.LobbyMemberChangedTeam, packet.ToBytes());
             Broadcast(msg);
         }
 
@@ -1192,7 +1192,7 @@ namespace MasterServerToolkit.MasterServer
                 B = member.IsReady.ToString()
             };
 
-            Broadcast(MessageHelper.Create((short)MstMessageCodes.LobbyMemberReadyStatusChange, packet.ToBytes()));
+            Broadcast(MessageHelper.Create((ushort)MstOpCodes.LobbyMemberReadyStatusChange, packet.ToBytes()));
         }
 
         /// <summary>
@@ -1201,7 +1201,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void OnGameMasterChange()
         {
             var masterUsername = GameMaster != null ? GameMaster.Username : "";
-            var msg = MessageHelper.Create((short)MstMessageCodes.LobbyMasterChange, masterUsername);
+            var msg = MessageHelper.Create((ushort)MstOpCodes.LobbyMasterChange, masterUsername);
             Broadcast(msg);
         }
 

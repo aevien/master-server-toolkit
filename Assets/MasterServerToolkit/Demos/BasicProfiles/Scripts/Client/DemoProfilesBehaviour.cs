@@ -13,7 +13,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         private ProfileView profileView;
         private ProfileSettingsView profileSettingsView;
 
-        public event Action<short, IObservableProperty> OnPropertyUpdatedEvent;
+        public event Action<ushort, IObservableProperty> OnPropertyUpdatedEvent;
         public UnityEvent OnProfileSavedEvent;
 
         protected override void OnInitialize()
@@ -23,11 +23,11 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
             Profile = new ObservableProfile
             {
-                new ObservableString((short)ObservablePropertiyCodes.DisplayName),
-                new ObservableString((short)ObservablePropertiyCodes.Avatar),
-                new ObservableFloat((short)ObservablePropertiyCodes.Bronze),
-                new ObservableFloat((short)ObservablePropertiyCodes.Silver),
-                new ObservableFloat((short)ObservablePropertiyCodes.Gold)
+                new ObservableString((ushort)ObservablePropertyCodes.DisplayName),
+                new ObservableString((ushort)ObservablePropertyCodes.Avatar),
+                new ObservableFloat((ushort)ObservablePropertyCodes.Bronze),
+                new ObservableFloat((ushort)ObservablePropertyCodes.Silver),
+                new ObservableFloat((ushort)ObservablePropertyCodes.Gold)
             };
 
             Profile.OnPropertyUpdatedEvent += OnPropertyUpdatedEventHandler;
@@ -40,7 +40,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
             Profile.OnPropertyUpdatedEvent -= OnPropertyUpdatedEventHandler;
         }
 
-        private void OnPropertyUpdatedEventHandler(short key, IObservableProperty property)
+        private void OnPropertyUpdatedEventHandler(ushort key, IObservableProperty property)
         {
             OnPropertyUpdatedEvent?.Invoke(key, property);
         }
@@ -57,7 +57,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                     { "avatarUrl", profileSettingsView.AvatarUrl }
                 };
 
-                Connection.SendMessage((short)MstMessageCodes.UpdateDisplayNameRequest, data.ToBytes(), OnSaveProfileResponseCallback);
+                Connection.SendMessage((ushort)MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), OnSaveProfileResponseCallback);
             });
         }
 

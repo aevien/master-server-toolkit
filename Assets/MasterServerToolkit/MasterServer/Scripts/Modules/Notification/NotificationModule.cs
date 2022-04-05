@@ -2,6 +2,7 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -18,11 +19,18 @@ namespace MasterServerToolkit.MasterServer
         protected bool useRoomsModule = true;
         [SerializeField, Tooltip("Permission level to be able to send notifications")]
         protected int notifyPermissionLevel = 1;
+        [SerializeField]
+        private int maxPromisedMessages = 10;
 
         /// <summary>
         /// List of recipients
         /// </summary>
         protected Dictionary<string, NotificationRecipient> registeredRecipients = new Dictionary<string, NotificationRecipient>();
+
+        /// <summary>
+        /// List of messages to be sent to newly logged in users
+        /// </summary>
+        private List<string> promisedMessages = new List<string>();
 
         /// <summary>
         /// 
@@ -64,9 +72,9 @@ namespace MasterServerToolkit.MasterServer
                 logger.Error($"{GetType().Name} was set to use {nameof(RoomsModule)}, but {nameof(RoomsModule)} was not found. It means that room players cannot receive notifications");
             }
 
-            server.RegisterMessageHandler((short)MstMessageCodes.SubscribeToNotifications, OnSubscribeToNotificationsMessageHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.UnsubscribeFromNotifications, OnUnsubscribeToNotificationsMessageHandler);
-            server.RegisterMessageHandler((short)MstMessageCodes.Notification, OnNotificationMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.SubscribeToNotifications, OnSubscribeToNotificationsMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.UnsubscribeFromNotifications, OnUnsubscribeToNotificationsMessageHandler);
+            server.RegisterMessageHandler((ushort)MstOpCodes.Notification, OnNotificationMessageHandler);
         }
 
         /// <summary>
@@ -86,7 +94,10 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="user"></param>
         protected virtual void OnUserLoggedInEventHandler(IUserPeerExtension user)
         {
-            AddRecipient(user);
+            var r = AddRecipient(user);
+
+            foreach (var message in promisedMessages)
+                r.Notify(message);
         }
 
         /// <summary>
@@ -128,14 +139,32 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="recipient"></param>
+        /// <returns></returns>
+        public bool TryGetRecipient(string userId, out NotificationRecipient recipient)
+        {
+            recipient = GetRecipient(userId);
+            return recipient != null;
+        }
+
+        /// <summary>
         /// Adds new authorized user to list of recipients
         /// </summary>
         /// <param name="user"></param>
-        public void AddRecipient(IUserPeerExtension user)
+        public NotificationRecipient AddRecipient(IUserPeerExtension user)
         {
             if (!HasRecipient(user.UserId))
             {
-                registeredRecipients.Add(user.UserId, new NotificationRecipient(user.UserId, user.Peer));
+                var r = new NotificationRecipient(user.UserId, user.Peer);
+                registeredRecipients.Add(user.UserId, r);
+                return r;
+            }
+            else
+            {
+                return GetRecipient(user.UserId);
             }
         }
 
@@ -167,11 +196,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 var userExtension = player.GetExtension<IUserPeerExtension>();
 
-                if (userExtension != null && !ignoreRecipients.Contains(userExtension.Peer.Id))
+                if (userExtension != null
+                    && !ignoreRecipients.Contains(userExtension.Peer.Id)
+                    && TryGetRecipient(userExtension.UserId, out var recipient))
                 {
-                    var recipient = GetRecipient(userExtension.UserId);
-
-                    if (recipient != null) recipient.Notify(message);
+                    recipient.Notify(message);
                 }
             }
         }
@@ -194,13 +223,27 @@ namespace MasterServerToolkit.MasterServer
                 {
                     var userExtension = peer.GetExtension<IUserPeerExtension>();
 
-                    if (userExtension != null)
+                    if (userExtension != null && TryGetRecipient(userExtension.UserId, out var recipient))
                     {
-                        var recipient = GetRecipient(userExtension.UserId);
-
-                        if (recipient != null) recipient.Notify(message);
+                        recipient.Notify(message);
                     }
                 }
+            }
+        }
+
+        public virtual void NoticeToAll(string message, bool addToPromise = false)
+        {
+            var recipients = authModule.LoggedInUsers.ToList().Select(i => i.Peer.Id).ToList();
+            NoticeToRecipients(recipients, message);
+
+            if (addToPromise && !promisedMessages.Contains(message))
+            {
+                if (promisedMessages.Count >= maxPromisedMessages)
+                {
+                    promisedMessages.RemoveAt(0);
+                }
+
+                promisedMessages.Add(message);
             }
         }
 

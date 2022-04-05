@@ -50,7 +50,7 @@ namespace MasterServerToolkit.Games
         protected override void OnInitialize()
         {
             // Set cliet mode
-            Mst.Client.Rooms.ForceClientMode = true;
+            Mst.Client.Rooms.IsClientMode = true;
 
             // Set MSF global options
             Mst.Options.Set(MstDictKeys.AUTOSTART_ROOM_CLIENT, true);
@@ -78,7 +78,7 @@ namespace MasterServerToolkit.Games
         /// Sends request to master server to start new room process
         /// </summary>
         /// <param name="spawnOptions"></param>
-        public virtual void CreateNewRoom(string regionName, MstProperties spawnOptions)
+        public virtual void CreateNewRoom(string regionName, MstProperties spawnOptions, UnityAction failCallback = null)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room... Please wait!");
 
@@ -99,7 +99,11 @@ namespace MasterServerToolkit.Games
                 if (controller == null)
                 {
                     Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, null));
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, () =>
+                    {
+                        failCallback?.Invoke();
+                    }));
+
                     return;
                 }
 
@@ -119,13 +123,18 @@ namespace MasterServerToolkit.Games
                         Mst.Client.Spawners.AbortSpawn(controller.SpawnTaskId);
 
                         logger.Error("Failed spawn new room. Time is up!");
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Time is up!", null));
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Time is up!", () =>
+                        {
+                            failCallback?.Invoke();
+                        }));
 
+                        OnRoomStartAborted();
                         OnRoomStartAbortedEvent?.Invoke();
 
                         return;
                     }
 
+                    OnRoomStarted();
                     OnRoomStartedEvent?.Invoke();
 
                     logger.Info("You have successfully spawned new room");
@@ -133,6 +142,10 @@ namespace MasterServerToolkit.Games
                 }, matchCreationTimeout);
             });
         }
+
+        protected virtual void OnRoomStarted() { }
+
+        protected virtual void OnRoomStartAborted() { }
 
         /// <summary>
         /// Sends request to master server to start new room process

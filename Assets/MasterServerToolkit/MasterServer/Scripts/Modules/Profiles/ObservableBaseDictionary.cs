@@ -9,19 +9,22 @@ namespace MasterServerToolkit.MasterServer
     {
         private const int _setOperation = 0;
         private const int _removeOperation = 1;
-        private Queue<UpdateEntry> _updates;
+        private Queue<DictionaryUpdateEntry> _updates;
 
-        protected ObservableBaseDictionary(short key) : this(key, null) { }
+        protected ObservableBaseDictionary(ushort key) : this(key, null) { }
 
-        protected ObservableBaseDictionary(short key, Dictionary<TKey, TValue> defaultValues) : base(key)
+        protected ObservableBaseDictionary(ushort key, Dictionary<TKey, TValue> defaultValues) : base(key)
         {
-            _updates = new Queue<UpdateEntry>();
+            _updates = new Queue<DictionaryUpdateEntry>();
             _value = defaultValues == null ? new Dictionary<TKey, TValue>() :  defaultValues.ToDictionary(k => k.Key, k => k.Value);
         }
 
-        public override string ToString()
+        /// <summary>
+        /// Returns an immutable list of keys
+        /// </summary>
+        public IEnumerable<TKey> Keys
         {
-            return Serialize();
+            get { return _value.Keys; }
         }
 
         /// <summary>
@@ -57,7 +60,7 @@ namespace MasterServerToolkit.MasterServer
 
             MarkDirty();
 
-            _updates.Enqueue(new UpdateEntry()
+            _updates.Enqueue(new DictionaryUpdateEntry()
             {
                 key = key,
                 operation = _setOperation,
@@ -75,7 +78,7 @@ namespace MasterServerToolkit.MasterServer
 
             MarkDirty();
 
-            _updates.Enqueue(new UpdateEntry()
+            _updates.Enqueue(new DictionaryUpdateEntry()
             {
                 key = key,
                 operation = _removeOperation,
@@ -245,7 +248,7 @@ namespace MasterServerToolkit.MasterServer
             _updates.Clear();
         }
 
-        private struct UpdateEntry
+        private struct DictionaryUpdateEntry
         {
             public byte operation;
             public TKey key;

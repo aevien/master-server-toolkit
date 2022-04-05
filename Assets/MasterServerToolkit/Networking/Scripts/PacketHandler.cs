@@ -7,13 +7,13 @@
     {
         private event IncommingMessageHandler Handler;
 
-        public PacketHandler(short opCode, IncommingMessageHandler handler)
+        public PacketHandler(ushort opCode, IncommingMessageHandler handler)
         {
             OpCode = opCode;
             Handler += handler;
         }
 
-        public short OpCode { get; }
+        public ushort OpCode { get; }
 
         public void Handle(IIncomingMessage message)
         {

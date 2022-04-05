@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
@@ -10,5 +11,6 @@ namespace MasterServerToolkit.MasterServer
         ServerBehaviour Server { get; set; }
         void Initialize(IServer server);
         MstProperties Info();
+        JObject JsonInfo();
     }
 }

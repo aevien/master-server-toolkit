@@ -4,10 +4,6 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    /// <summary>
-    /// Starts the master server
-    /// </summary>
-    [AddComponentMenu("Master Server Toolkit/MasterServerBehaviour")]
     public class MasterServerBehaviour : ServerBehaviour
     {
         /// <summary>

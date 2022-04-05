@@ -6,12 +6,12 @@ namespace MasterServerToolkit.Networking
 {
     public class MessageFactory : IMessageFactory
     {
-        public IOutgoingMessage Create(short opCode)
+        public IOutgoingMessage Create(ushort opCode)
         {
             return new OutgoingMessage(opCode);
         }
 
-        public IOutgoingMessage Create(short opCode, byte[] data)
+        public IOutgoingMessage Create(ushort opCode, byte[] data)
         {
             return new OutgoingMessage(opCode, data);
         }
@@ -32,7 +32,7 @@ namespace MasterServerToolkit.Networking
 
                 //Debug.Log($"Flag is: {flags}");
 
-                var opCode = converter.ToInt16(buffer, start + 1);
+                var opCode = converter.ToUInt16(buffer, start + 1);
                 var pointer = start + 3;
 
                 //Debug.Log($"OpCode is: {opCode}");

@@ -12,7 +12,7 @@ namespace MasterServerToolkit.Utils
         /// <summary>
         /// Current instance of this singleton
         /// </summary>
-        private static T _singleton { get; set; }
+        private static T _instance { get; set; }
 
         protected virtual void Awake()
         {
@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Utils
         {
             yield return new WaitForEndOfFrame();
 
-            if (_singleton != null && _singleton != this)
+            if (_instance != null && _instance != this)
             {
                 isNowDestroying = true;
                 Destroy(gameObject);
@@ -33,14 +33,14 @@ namespace MasterServerToolkit.Utils
         /// <summary>
         /// Current instance of this singleton
         /// </summary>
-        public static T Singleton
+        public static T Instance
         {
             get
             {
-                if (!_singleton)
+                if (!_instance)
                     Create();
 
-                return _singleton;
+                return _instance;
             }
         }
 
@@ -58,18 +58,18 @@ namespace MasterServerToolkit.Utils
         /// <param name="name"></param>
         public static void Create(string name)
         {
-            if (_singleton)
+            if (_instance)
                 return;
 
-            _singleton = FindObjectOfType<T>();
+            _instance = FindObjectOfType<T>();
 
-            if (_singleton)
+            if (_instance)
                 return;
 
             string newName = !string.IsNullOrEmpty(name) ? name : $"--{typeof(T).Name}".ToUpper();
             var go = new GameObject(newName);
-            _singleton = go.AddComponent<T>();
-            DontDestroyOnLoad(_singleton);
+            _instance = go.AddComponent<T>();
+            DontDestroyOnLoad(_instance);
         }
     }
 }

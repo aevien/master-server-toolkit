@@ -106,9 +106,9 @@ namespace MasterServerToolkit.MasterServer
             Mst.Server.Spawners.DefaultPort = Mst.Args.RoomDefaultPort;
 
             // Subscribe to connection event
-            Mst.Connection.AddConnectionListener(OnConnectedToMasterEventHandler);
+            Mst.Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
             // Subscribe to disconnection event
-            Mst.Connection.AddDisconnectionListener(OnDisconnectedFromMasterEventHandler, false);
+            Mst.Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
 
             DontDestroyOnLoad(gameObject);
         }
@@ -123,9 +123,9 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void OnDestroy()
         {
             // Remove connection listener
-            Mst.Connection.RemoveConnectionListener(OnConnectedToMasterEventHandler);
+            Mst.Connection.RemoveConnectionOpenListener(OnConnectedToMasterEventHandler);
             // Remove disconnection listener
-            Mst.Connection.RemoveDisconnectionListener(OnDisconnectedFromMasterEventHandler);
+            Mst.Connection.RemoveConnectionCloseListener(OnDisconnectedFromMasterEventHandler);
         }
 
         /// <summary>

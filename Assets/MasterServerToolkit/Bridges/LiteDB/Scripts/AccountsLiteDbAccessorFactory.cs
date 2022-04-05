@@ -14,8 +14,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
         };
 
         [Header("Accounts DB Settings"), SerializeField]
-        private bool useAccountDb = true;
-        [SerializeField]
         private string accountDbName = "accounts";
 
         private AccountsDatabaseAccessor accountsAccessor;
@@ -40,12 +38,9 @@ namespace MasterServerToolkit.Bridges.LiteDB
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
             try
             {
-                if (useAccountDb)
-                {
-                    accountsAccessor = new AccountsDatabaseAccessor(accountDbName);
-                    Mst.Server.DbAccessors.SetAccessor<IAccountsDatabaseAccessor>(accountsAccessor);
-                    accountsAccessor.InitCollections();
-                }
+                accountsAccessor = new AccountsDatabaseAccessor(accountDbName);
+                Mst.Server.DbAccessors.AddAccessor<IAccountsDatabaseAccessor>(accountsAccessor);
+                accountsAccessor.InitCollections();
             }
             catch (Exception e)
             {

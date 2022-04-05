@@ -36,7 +36,7 @@ namespace MasterServerToolkit.MasterServer
                 B = peerId
             };
 
-            connection.SendMessage((short)MstMessageCodes.GetLobbyMemberData, packet, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetLobbyMemberData, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -62,7 +62,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void GetLobbyInfo(int lobbyId, LobbyInfoCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((short)MstMessageCodes.GetLobbyInfo, lobbyId, (status, response) =>
+            connection.SendMessage((ushort)MstOpCodes.GetLobbyInfo, lobbyId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

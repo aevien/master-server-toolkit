@@ -4,11 +4,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Aevien.UI
+namespace MasterServerToolkit.UI
 {
     public class UIProperty : MonoBehaviour
     {
-        public enum UIPropertyValueFormat { F0, F1, F2, F3, F4, F5}
+        public enum UIPropertyValueFormat { F0, F1, F2, F3, F4, F5 }
 
         #region INSPECTOR
 
@@ -21,12 +21,14 @@ namespace Aevien.UI
         [SerializeField]
         protected Image progressBar;
         [SerializeField]
-        protected Color startColor = Color.red;
+        protected Color minColor = Color.red;
         [SerializeField]
         protected Color maxColor = Color.green;
 
         [Header("Settings"), SerializeField]
-        protected float startValue = 0f;
+        protected string id = "propertyId";
+        [SerializeField]
+        protected float minValue = 0f;
         [SerializeField]
         protected float currentValue = 50f;
         [SerializeField]
@@ -40,14 +42,35 @@ namespace Aevien.UI
         [SerializeField]
         protected UIPropertyValueFormat formatValue = UIPropertyValueFormat.F1;
         [SerializeField]
+        protected bool invertValue = false;
+
+        [Header("Editor Settings"), SerializeField]
         protected bool useValue = true;
         [SerializeField]
+        protected bool useLable = true;
+        [SerializeField]
+        protected bool useIcon = true;
+        [SerializeField]
         protected bool useProgress = true;
+        [SerializeField]
+        protected bool useColors = true;
 
         #endregion
 
         private float currentProgressValue = 0f;
         private float targetProgressValue = 0f;
+
+        public string Id
+        {
+            get
+            {
+                return id;
+            }
+            set
+            {
+                id = value;
+            }
+        }
 
         public string Lable
         {
@@ -79,7 +102,9 @@ namespace Aevien.UI
 
         private void Awake()
         {
-            SetValues(startValue, currentValue, maxValue);
+            SetMin(minValue);
+            SetMax(maxValue);
+            SetValue(currentValue);
         }
 
         private void OnValidate()
@@ -98,17 +123,29 @@ namespace Aevien.UI
                 valueText.gameObject.SetActive(useValue);
             }
 
+            if (lableText)
+            {
+                lableText.gameObject.SetActive(useLable);
+            }
+
+            if (iconImage)
+            {
+                iconImage.gameObject.SetActive(useIcon);
+            }
+
             if (progressBar)
             {
                 progressBar.gameObject.SetActive(useProgress);
-                SetValues(startValue, currentValue, maxValue);
+                SetMin(minValue);
+                SetMax(maxValue);
+                SetValue(currentValue);
                 Update();
             }
         }
 
         private void Update()
         {
-            if (startValue < maxValue)
+            if (minValue < maxValue)
             {
                 if (smoothValue && Application.isPlaying)
                     currentProgressValue = Mathf.Lerp(currentProgressValue, targetProgressValue, Time.deltaTime * progressSpeed);
@@ -118,7 +155,12 @@ namespace Aevien.UI
                 if (progressBar && progressBar.isActiveAndEnabled)
                 {
                     progressBar.fillAmount = currentProgressValue;
-                    progressBar.color = Color.Lerp(startColor, maxColor, currentProgressValue);
+                    progressBar.color = Color.Lerp(minColor, maxColor, currentProgressValue);
+                }
+
+                if (useColors && iconImage)
+                {
+                    iconImage.color = Color.Lerp(minColor, maxColor, currentProgressValue);
                 }
 
                 if (valueText)
@@ -126,19 +168,16 @@ namespace Aevien.UI
             }
         }
 
-        /// <summary>
-        /// Sets initial values
-        /// </summary>
-        /// <param name="start"></param>
-        /// <param name="current"></param>
-        /// <param name="max"></param>
-        public void SetValues(float start, float current, float max)
+        public void SetMin(float value)
         {
-            startValue = start;
-            currentValue = current;
-            maxValue = max;
+            minValue = value;
+            if (minValue > maxValue) maxValue = minValue;
+        }
 
-            SetValue(currentValue);
+        public void SetMax(float value)
+        {
+            maxValue = value;
+            if (minValue > maxValue) maxValue = minValue;
         }
 
         /// <summary>
@@ -147,10 +186,25 @@ namespace Aevien.UI
         /// <param name="value"></param>
         public void SetValue(float value)
         {
-            if (startValue == maxValue) return;
+            if (minValue == maxValue) return;
 
-            currentValue = Mathf.Clamp(value, startValue, maxValue);
-            targetProgressValue = currentValue / maxValue;
+            currentValue = Mathf.Clamp(value, minValue, maxValue);
+
+            float totalDifference;
+            float currentDifference;
+
+            if (invertValue)
+            {
+                totalDifference = Mathf.Abs(minValue - maxValue);
+                currentDifference = Mathf.Abs(currentValue - maxValue);
+            }
+            else
+            {
+                totalDifference = Mathf.Abs(minValue - maxValue);
+                currentDifference = Mathf.Abs(minValue - currentValue);
+            }
+
+            targetProgressValue = currentDifference / totalDifference;
         }
     }
 }

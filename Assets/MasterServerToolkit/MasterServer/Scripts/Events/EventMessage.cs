@@ -44,5 +44,10 @@ namespace MasterServerToolkit.MasterServer
         {
             return _data.ToString();
         }
+
+        public bool AsBool()
+        {
+            return Convert.ToBoolean(_data);
+        }
     }
 }

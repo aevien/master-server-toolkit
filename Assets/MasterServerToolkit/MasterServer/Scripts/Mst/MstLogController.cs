@@ -13,16 +13,10 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        private string logFileId;
-
-        /// <summary>
-        /// 
-        /// </summary>
         private DateTime realtimeSinceStartup;
 
         public MstLogController(LogLevel globalLogLevel)
         {
-            logFileId = Mst.Helper.CreateRandomAlphanumericString(6);
             realtimeSinceStartup = DateTime.Now;
 
             // Add default appender
@@ -33,26 +27,6 @@ namespace MasterServerToolkit.MasterServer
 
             // Initialize the log manager
             LogManager.Initialize(appenders, globalLogLevel);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public string LogFile
-        {
-            get
-            {
-                var dt = DateTime.Now;
-
-                if (!Directory.Exists(Mst.Args.LogFileDir))
-                    Directory.CreateDirectory(Mst.Args.LogFileDir);
-
-                string filePrefix = Mst.Args.AsString("-processLogFilePrefix", $"mst_{dt:MM_dd_yyyy_hh}") + $"_{logFileId}";
-                string logFile = $"{filePrefix}.log";
-
-                return Path.Combine(Mst.Args.LogFileDir, logFile);
-            }
         }
 
         /// <summary>
@@ -72,7 +46,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="logLevel"></param>
         public void ForceLogging(LogLevel logLevel)
         {
-            LogManager.ForceLogLevel = logLevel;
+            LogManager.LogLevel = logLevel;
         }
 
         public LogLevel GlobalLogLevel

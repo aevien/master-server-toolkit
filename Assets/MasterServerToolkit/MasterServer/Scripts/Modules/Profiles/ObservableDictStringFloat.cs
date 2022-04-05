@@ -8,8 +8,8 @@ namespace MasterServerToolkit.MasterServer
 {
     public class ObservableDictStringFloat : ObservableBaseDictionary<string, float>
     {
-        public ObservableDictStringFloat(short key) : base(key) { }
-        public ObservableDictStringFloat(short key, Dictionary<string, float> defaultValues) : base(key, defaultValues) { }
+        public ObservableDictStringFloat(ushort key) : base(key) { }
+        public ObservableDictStringFloat(ushort key, Dictionary<string, float> defaultValues) : base(key, defaultValues) { }
 
         public override string Serialize()
         {

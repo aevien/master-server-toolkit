@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Networking;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {

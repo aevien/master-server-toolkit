@@ -26,6 +26,11 @@ namespace MasterServerToolkit.Networking
         private List<Action> _mainThreadActions;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private List<Action> _debouncedActions;
+
+        /// <summary>
         /// Main thread lockobject
         /// </summary>
         private readonly object _mainThreadLock = new object();
@@ -54,6 +59,9 @@ namespace MasterServerToolkit.Networking
 
             // Create list of main thread actions
             _mainThreadActions = new List<Action>();
+
+            // 
+            _debouncedActions = new List<Action>();
 
             // Start timer
             StartCoroutine(StartTicker());
@@ -90,8 +98,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public static void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
         {
-            if (Singleton)
-                Singleton.StartCoroutine(WaitPingCoroutine(address, callback, timeout));
+            if (Instance)
+                Instance.StartCoroutine(WaitPingCoroutine(address, callback, timeout));
         }
 
         /// <summary>
@@ -133,8 +141,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="timeoutSeconds"></param>
         public static void WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            if (Singleton)
-                Singleton.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
+            if (Instance)
+                Instance.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
         }
 
         /// <summary>
@@ -146,8 +154,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="timeoutSeconds"></param>
         public static void WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            if (Singleton)
-                Singleton.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
+            if (Instance)
+                Instance.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
         }
 
         /// <summary>
@@ -176,8 +184,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public static void WaitForSeconds(float time, Action callback)
         {
-            if (Singleton)
-                Singleton.StartCoroutine(Singleton.StartWaitingForSeconds(time, callback));
+            if (Instance)
+                Instance.StartCoroutine(Instance.StartWaitingForSeconds(time, callback));
         }
 
         /// <summary>
@@ -199,8 +207,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public static void WaitForRealtimeSeconds(float time, Action callback)
         {
-            if (Singleton)
-                Singleton.StartCoroutine(Singleton.StartWaitingForRealtimeSeconds(time, callback));
+            if (Instance)
+                Instance.StartCoroutine(Instance.StartWaitingForRealtimeSeconds(time, callback));
         }
 
         /// <summary>
@@ -221,8 +229,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public static void WaitForEndOfFrame(Action callback)
         {
-            if (Singleton)
-                Singleton.StartCoroutine(Singleton.StartWaitingForEndOfFrame(callback));
+            if (Instance)
+                Instance.StartCoroutine(Instance.StartWaitingForEndOfFrame(callback));
         }
 
         /// <summary>
@@ -242,8 +250,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="action"></param>
         public static void RunInMainThread(Action action)
         {
-            if (Singleton)
-                Singleton.AddToMainThread(action);
+            if (Instance)
+                Instance.AddToMainThread(action);
         }
 
         /// <summary>

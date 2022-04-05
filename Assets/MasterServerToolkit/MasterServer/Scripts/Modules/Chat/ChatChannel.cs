@@ -57,7 +57,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void NotifyOnJoined(ChatUserPeerExtension newUser)
         {
             var data = new List<string>() { Name, newUser.Username };
-            var msg = Mst.Create.Message((short)MstMessageCodes.UserJoinedChannel, data.ToBytes());
+            var msg = Mst.Create.Message((ushort)MstOpCodes.UserJoinedChannel, data.ToBytes());
 
             foreach (var user in channelUsers.Values)
             {
@@ -75,7 +75,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void NotifyOnLeft(ChatUserPeerExtension removedUser)
         {
             var data = new List<string>() { Name, removedUser.Username };
-            var msg = Mst.Create.Message((short)MstMessageCodes.UserLeftChannel, data.ToBytes());
+            var msg = Mst.Create.Message((ushort)MstOpCodes.UserLeftChannel, data.ToBytes());
 
             foreach (var user in channelUsers.Values)
             {
@@ -105,12 +105,8 @@ namespace MasterServerToolkit.MasterServer
         {
             var extension = peer.GetExtension<ChatUserPeerExtension>();
 
-            if (extension == null)
-            {
-                return;
-            }
-
-            RemoveUser(extension);
+            if (extension != null)
+                RemoveUser(extension);
         }
 
         /// <summary>
@@ -126,14 +122,11 @@ namespace MasterServerToolkit.MasterServer
             user.CurrentChannels.Remove(this);
 
             // Remove user
-            channelUsers.Remove(user.Username);
+            if (channelUsers.Remove(user.Username))
+                NotifyOnLeft(user);
 
             if (user.DefaultChannel == this)
-            {
                 user.DefaultChannel = null;
-            }
-
-            NotifyOnLeft(user);
         }
 
         /// <summary>
@@ -144,7 +137,7 @@ namespace MasterServerToolkit.MasterServer
             // Override name to be in a "standard" format (uppercase letters and etc.)
             packet.Receiver = Name;
 
-            var msg = Mst.Create.Message((short)MstMessageCodes.ChatMessage, packet);
+            var msg = Mst.Create.Message((ushort)MstOpCodes.ChatMessage, packet);
 
             foreach (var user in channelUsers.Values)
             {

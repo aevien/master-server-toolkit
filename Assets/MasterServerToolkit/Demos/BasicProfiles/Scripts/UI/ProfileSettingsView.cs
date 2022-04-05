@@ -56,8 +56,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private void ProfilesManager_OnProfileLoadedEvent()
         {
-            DisplayName = profilesManager.Profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.DisplayName).Serialize();
-            AvatarUrl = profilesManager.Profile.GetProperty<ObservableString>((short)ObservablePropertiyCodes.Avatar).Serialize();
+            DisplayName = profilesManager.Profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Serialize();
+            AvatarUrl = profilesManager.Profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Serialize();
         }
 
         protected override void OnDestroy()
@@ -71,13 +71,13 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
         }
 
-        private void ProfilesManager_OnPropertyUpdatedEvent(short key, IObservableProperty property)
+        private void ProfilesManager_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
         {
-            if (key == (short)ObservablePropertiyCodes.DisplayName)
+            if (key == (short)ObservablePropertyCodes.DisplayName)
             {
                 DisplayName = property.Serialize();
             }
-            else if (key == (short)ObservablePropertiyCodes.Avatar)
+            else if (key == (short)ObservablePropertyCodes.Avatar)
             {
                 AvatarUrl = property.Serialize();
             }
