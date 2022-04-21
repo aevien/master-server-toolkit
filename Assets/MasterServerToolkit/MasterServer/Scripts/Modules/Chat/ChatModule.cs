@@ -703,7 +703,10 @@ namespace MasterServerToolkit.MasterServer
                     };
                 });
 
-                message.Respond(new ChatChannelsListPacket() { Channels = channels.ToList() }, ResponseStatus.Success);
+                message.Respond(new ChatChannelsListPacket()
+                {
+                    Channels = channels.ToList()
+                }, ResponseStatus.Success);
             }
             // If we got system exception
             catch (MstMessageHandlerException e)

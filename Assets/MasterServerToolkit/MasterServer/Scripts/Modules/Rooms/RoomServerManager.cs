@@ -17,6 +17,8 @@ namespace MasterServerToolkit.MasterServer
     [Serializable]
     public class RoomPlayerEvent : UnityEvent<RoomPlayer> { }
 
+    public delegate ObservableServerProfile ProfileFactoryDelegate(string userId);
+
     public class RoomServerManager : BaseClientBehaviour
     {
         #region INSPECTOR
@@ -108,6 +110,13 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public bool HasPlayers => Players != null && Players.Count() > 0;
 
+        /// <summary>
+        /// By default, profiles module will use this factory to create a profile for users.
+        /// If you're using profiles, you will need to change this factory to construct the
+        /// structure of a profile.
+        /// </summary>
+        public ProfileFactoryDelegate ProfileFactory { get; set; }
+
         protected override void Awake()
         {
             base.Awake();
@@ -117,6 +126,8 @@ namespace MasterServerToolkit.MasterServer
             playersByUsername = new Dictionary<string, RoomPlayer>();
             playersByMasterPeerId = new Dictionary<int, RoomPlayer>();
             playersByRoomPeerId = new Dictionary<int, RoomPlayer>();
+
+            ProfileFactory = (userId) => new ObservableServerProfile(userId);
         }
 
         protected override void OnDestroy()
@@ -143,16 +154,6 @@ namespace MasterServerToolkit.MasterServer
             // Listen to master server connection status
             Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
             Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        protected virtual ObservableServerProfile ProfileFactory(string userId)
-        {
-            return new ObservableServerProfile(userId);
         }
 
         private void OnConnectedToMasterEventHandler()
@@ -535,7 +536,7 @@ namespace MasterServerToolkit.MasterServer
         {
             MstTimer.WaitForSeconds(2f, () =>
             {
-                Mst.Server.Notifications.NotifyRecipients(player.MasterPeerId,
+                Mst.Server.Notifications.NotifyRecipient(player.MasterPeerId,
                             $"Hi, {player.Username.ToRed()}!\nWelcome to \"{RoomOptions.Name}\" server", null);
             });
 
@@ -590,6 +591,18 @@ namespace MasterServerToolkit.MasterServer
         {
             playersByRoomPeerId.TryGetValue(peerId, out RoomPlayer player);
             return player;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="peerId"></param>
+        /// <param name="roomPlayer"></param>
+        /// <returns></returns>
+        public bool TryGetRoomPlayerByRoomPeer(int peerId, out RoomPlayer roomPlayer)
+        {
+            roomPlayer = GetRoomPlayerByRoomPeer(peerId);
+            return roomPlayer != null;
         }
 
         /// <summary>

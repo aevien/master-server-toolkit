@@ -15,7 +15,7 @@ namespace MasterServerToolkit.MasterServer
 
             int count = reader.ReadUInt16();
 
-            for(int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++)
             {
                 var channel = new ChatChannelInfo()
                 {

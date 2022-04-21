@@ -17,7 +17,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="recipient"></param>
         /// <param name="message"></param>
         /// <param name="callback"></param>
-        public void NotifyRecipients(int recipient, string message, SuccessCallback callback)
+        public void NotifyRecipient(int recipient, string message, SuccessCallback callback)
         {
             NotifyRecipients(new int[] { recipient }, message, callback, Connection);
         }

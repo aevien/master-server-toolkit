@@ -132,6 +132,7 @@ TextureImporter:
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
+  ignoreMasterTextureLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -805,6 +806,36 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      menu: 6934154925517905568
+      silver_coins: 9129354605046137251
+      gradient_bg: 2176595490370957018
+      ip_address: 4139023523627789917
+      backpack: -5343897376169499932
+      msf_logo_watermark: -746675581518417749
+      bg_05: -5017801085933234494
+      bg_06: 1042861624189045805
+      frame_01: 4138848172959368440
+      msf_logo: 1227216424554068601
+      bg_07: 1061102728927809257
+      connection: 9146976222828657104
+      gradient_bg_2: 309054333361620999
+      user: -5841255510044930599
+      config: -4149600816155440385
+      globe: -4195352488869587978
+      unity_logo: 9156950971560463236
+      lock: 8464627282614862601
+      gold_coins: 8675995047303388538
+      bg_01: -7730398009979016775
+      bg_02: -5667121454029602559
+      msf_logo_256: -4697253405287060111
+      unlock: 2988090094233564578
+      bronze_coins: -5207509682399473976
+      frame_02: 5823024787834327110
+      bg_03: 6211154084914666243
+      port: -2166547787996835203
+      bg_04: 8852086037993172051
+      msf_logo_512: -2729415941221293220
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

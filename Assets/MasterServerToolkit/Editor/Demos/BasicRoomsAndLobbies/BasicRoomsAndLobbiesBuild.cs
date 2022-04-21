@@ -32,7 +32,12 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
                 },
                 locationPathName = Path.Combine(buildFolder, "Room.exe"),
                 target = BuildTarget.StandaloneWindows64,
+#if UNITY_2021_1_OR_NEWER
+                options = BuildOptions.ShowBuiltPlayer | BuildOptions.Development,
+                subtarget = isHeadless ? (int)StandaloneBuildSubtarget.Server : (int)StandaloneBuildSubtarget.Player
+#else
                 options = isHeadless ? BuildOptions.ShowBuiltPlayer | BuildOptions.EnableHeadlessMode : BuildOptions.ShowBuiltPlayer
+#endif
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
@@ -71,7 +76,12 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
                 scenes = new[] { "Assets/MasterServerToolkit/Demos/BasicRoomsAndLobbies/Scenes/Master/Master.unity" },
                 locationPathName = Path.Combine(buildFolder, "MasterAndSpawner.exe"),
                 target = BuildTarget.StandaloneWindows64,
+#if UNITY_2021_1_OR_NEWER
+                options = BuildOptions.ShowBuiltPlayer | BuildOptions.Development,
+                subtarget = (int)StandaloneBuildSubtarget.Server
+#else
                 options = BuildOptions.EnableHeadlessMode | BuildOptions.ShowBuiltPlayer | BuildOptions.Development
+#endif
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
@@ -113,7 +123,12 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
                 },
                 locationPathName = Path.Combine(buildFolder, "Spawner.exe"),
                 target = BuildTarget.StandaloneWindows64,
-                options = BuildOptions.ShowBuiltPlayer | BuildOptions.EnableHeadlessMode
+#if UNITY_2021_1_OR_NEWER
+                options = BuildOptions.ShowBuiltPlayer | BuildOptions.Development,
+                subtarget = (int)StandaloneBuildSubtarget.Server
+#else
+                options = BuildOptions.EnableHeadlessMode | BuildOptions.ShowBuiltPlayer | BuildOptions.Development
+#endif
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);

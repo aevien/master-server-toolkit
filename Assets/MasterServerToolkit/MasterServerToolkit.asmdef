@@ -3,8 +3,8 @@
     "rootNamespace": "",
     "references": [
         "Unity.TextMeshPro",
-        "Mirror",
-        "SimpleWebTransport"
+        "SimpleWebTransport",
+        "Mirror"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

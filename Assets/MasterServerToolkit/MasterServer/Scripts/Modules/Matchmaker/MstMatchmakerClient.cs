@@ -60,19 +60,26 @@ namespace MasterServerToolkit.MasterServer
 
                 int totalRegions = Regions.Count;
 
-                foreach (var region in Regions)
+                if (totalRegions > 0)
                 {
-                    MstTimer.WaitPing(region.Ip, (time) =>
+                    foreach (var region in Regions)
                     {
-                        totalRegions--;
-
-                        region.PingTime = time;
-
-                        if (totalRegions <= 0)
+                        MstTimer.WaitPing(region.Ip, (time) =>
                         {
-                            callback?.Invoke(Regions);
-                        }
-                    }, 1f);
+                            totalRegions--;
+
+                            region.PingTime = time;
+
+                            if (totalRegions <= 0)
+                            {
+                                callback?.Invoke(Regions);
+                            }
+                        }, 1f);
+                    }
+                }
+                else
+                {
+                    callback?.Invoke(Regions);
                 }
             });
         }
