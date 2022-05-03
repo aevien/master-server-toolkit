@@ -100,6 +100,7 @@
         UpdateServerProfile,
         UpdateClientProfile,
         UpdateDisplayNameRequest,
+        UpdateAvatarRequest,
 
         // Notifications
         SubscribeToNotifications,
@@ -118,7 +119,7 @@
         GetDeclinedFriendships,
         DeclineFriendship,
 
-        // Guilds
-
+        // Player
+        PlayerDied
     }
 }

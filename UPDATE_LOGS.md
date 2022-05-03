@@ -1,5 +1,9 @@
 ## Updates Log
 
+### Msf 4.9.2
+
+[changelog here](https://aevien.itch.io/mst/devlog/376613/mst-v492-released)
+
 ### Msf 4.9.1
 
 [changelog here](https://aevien.itch.io/mst/devlog/372106/mst-v491-released)

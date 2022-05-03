@@ -6,7 +6,6 @@ namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class ProfileSettingsView : UIView
     {
-        private DemoProfilesBehaviour profilesManager;
         private TMP_InputField displayNameInputField;
         private TMP_InputField avatarUrlInputField;
 
@@ -38,37 +37,32 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
         }
 
+        protected override void Awake()
+        {
+            base.Awake();
+            Mst.Client.Profiles.OnProfileLoadedEvent += Profiles_OnProfileLoadedEvent;
+        }
+
         protected override void Start()
         {
             base.Start();
-
-            if (!profilesManager)
-            {
-                profilesManager = FindObjectOfType<DemoProfilesBehaviour>();
-            }
-
-            profilesManager.OnPropertyUpdatedEvent += ProfilesManager_OnPropertyUpdatedEvent;
-            profilesManager.OnProfileLoadedEvent.AddListener(ProfilesManager_OnProfileLoadedEvent);
-
             displayNameInputField = ChildComponent<TMP_InputField>("displayNameInputField");
             avatarUrlInputField = ChildComponent<TMP_InputField>("avatarUrlInputField");
-        }
-
-        private void ProfilesManager_OnProfileLoadedEvent()
-        {
-            DisplayName = profilesManager.Profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Serialize();
-            AvatarUrl = profilesManager.Profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Serialize();
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
+            Mst.Client.Profiles.OnProfileLoadedEvent -= Profiles_OnProfileLoadedEvent;
+        }
 
-            if (profilesManager)
-            {
-                profilesManager.OnPropertyUpdatedEvent += ProfilesManager_OnPropertyUpdatedEvent;
-                profilesManager.OnProfileLoadedEvent.RemoveListener(ProfilesManager_OnProfileLoadedEvent);
-            }
+        private void Profiles_OnProfileLoadedEvent(ObservableProfile profile)
+        {
+            profile.OnPropertyUpdatedEvent -= ProfilesManager_OnPropertyUpdatedEvent;
+            profile.OnPropertyUpdatedEvent += ProfilesManager_OnPropertyUpdatedEvent;
+
+            DisplayName = profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Serialize();
+            AvatarUrl = profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Serialize();
         }
 
         private void ProfilesManager_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)

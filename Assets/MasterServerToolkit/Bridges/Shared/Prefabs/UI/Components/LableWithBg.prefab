@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2778929153212471957}
   - component: {fileID: 4479109798132465812}
   - component: {fileID: 7026908046432230792}
+  - component: {fileID: 6242758480855457550}
   m_Layer: 5
   m_Name: LableWithBg
   m_TagString: Untagged
@@ -92,6 +93,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lableText: {fileID: 7798748059753615552}
   lable: LableWithBg
+--- !u!114 &6242758480855457550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2193082278679815174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: 32
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1001 &126676450521415347
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -193,7 +214,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5, type: 3}
       propertyPath: m_fontSize
-      value: 20.15
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5, type: 3}
+      propertyPath: m_margin.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5, type: 3}
+      propertyPath: m_margin.x
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5, type: 3}
+      propertyPath: m_margin.z
+      value: 15
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ff504d2d5864d6241b0aa7db65bda4b5, type: 3}

@@ -24,13 +24,13 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// The loaded profile of client
         /// </summary>
-        public ObservableProfile Profile { get; protected set; }
+        protected ObservableProfile profile;
 
         protected override void OnInitialize()
         {
             base.OnInitialize();
 
-            Profile = new ObservableProfile();
+            profile = new ObservableProfile();
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace MasterServerToolkit.Games
 
             MstTimer.WaitForSeconds(0.2f, () =>
             {
-                Mst.Client.Profiles.GetProfileValues(Profile, (isSuccessful, error) =>
+                Mst.Client.Profiles.FillInProfileValues(profile, (isSuccessful, error) =>
                 {
                     Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 

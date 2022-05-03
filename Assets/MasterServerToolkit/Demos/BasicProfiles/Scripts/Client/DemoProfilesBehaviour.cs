@@ -10,18 +10,15 @@ namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class DemoProfilesBehaviour : ProfilesBehaviour
     {
-        private ProfileView profileView;
         private ProfileSettingsView profileSettingsView;
 
-        public event Action<ushort, IObservableProperty> OnPropertyUpdatedEvent;
         public UnityEvent OnProfileSavedEvent;
 
         protected override void OnInitialize()
         {
-            profileView = ViewsManager.GetView<ProfileView>("ProfileView");
             profileSettingsView = ViewsManager.GetView<ProfileSettingsView>("ProfileSettingsView");
 
-            Profile = new ObservableProfile
+            profile = new ObservableProfile
             {
                 new ObservableString((ushort)ObservablePropertyCodes.DisplayName),
                 new ObservableString((ushort)ObservablePropertyCodes.Avatar),
@@ -29,20 +26,6 @@ namespace MasterServerToolkit.Examples.BasicProfile
                 new ObservableFloat((ushort)ObservablePropertyCodes.Silver),
                 new ObservableFloat((ushort)ObservablePropertyCodes.Gold)
             };
-
-            Profile.OnPropertyUpdatedEvent += OnPropertyUpdatedEventHandler;
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-
-            Profile.OnPropertyUpdatedEvent -= OnPropertyUpdatedEventHandler;
-        }
-
-        private void OnPropertyUpdatedEventHandler(ushort key, IObservableProperty property)
-        {
-            OnPropertyUpdatedEvent?.Invoke(key, property);
         }
 
         public void UpdateProfile()

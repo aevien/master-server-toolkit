@@ -14,6 +14,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         [Header("Components"), SerializeField]
         private RoomServerManager roomServerManager;
 
+        [Header("Settings"), SerializeField]
+        private bool active = true;
+
         #endregion
 
         /// <summary>
@@ -23,6 +26,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
         public void Initialize()
         {
+            if (!active) return;
+
             // Start loading fake data for notifications
             StartCoroutine(LoadFakeData());
         }
@@ -47,7 +52,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                     var json = www.downloadHandler.text;
                     ParseData(json);
                 }
-
             }
         }
 

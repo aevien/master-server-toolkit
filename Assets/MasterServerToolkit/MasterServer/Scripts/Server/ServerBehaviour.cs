@@ -152,7 +152,8 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Awake()
         {
-            if (string.IsNullOrEmpty(MstApplicationConfig.Instance.ApplicationKey)) throw new Exception("ApplicationKey is not defined");
+            if (string.IsNullOrEmpty(MstApplicationConfig.Instance.ApplicationKey))
+                throw new Exception("ApplicationKey is not defined");
 
             if (!Mst.Runtime.IsEditor)
                 Application.targetFrameRate = Mst.Args.AsInt(Mst.Args.Names.TargetFrameRate, targetFrameRate);

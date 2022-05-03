@@ -5,6 +5,16 @@ namespace MasterServerToolkit.MasterServer
 {
     public class MstProfilesClient : MstBaseClient
     {
+        /// <summary>
+        /// Currently loaded profile
+        /// </summary>
+        public ObservableProfile Profile { get; private set; }
+
+        /// <summary>
+        /// Checks if profile is already loaded
+        /// </summary>
+        public bool IsLoaded => Profile != null;
+
         public event Action<ObservableProfile> OnProfileLoadedEvent;
 
         public MstProfilesClient(IClientSocket connection) : base(connection) { }
@@ -15,9 +25,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="profile"></param>
         /// <param name="callback"></param>
-        public void GetProfileValues(ObservableProfile profile, SuccessCallback callback)
+        public void FillInProfileValues(ObservableProfile profile, SuccessCallback callback)
         {
-            GetProfileValues(profile, callback, Connection);
+            FillInProfileValues(profile, callback, Connection);
         }
 
         /// <summary>
@@ -26,7 +36,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="profile"></param>
         /// <param name="callback"></param>
         /// <param name="connection"></param>
-        public void GetProfileValues(ObservableProfile profile, SuccessCallback callback, IClientSocket connection)
+        public void FillInProfileValues(ObservableProfile profile, SuccessCallback callback, IClientSocket connection)
         {
             if (!connection.IsConnected)
             {
@@ -44,9 +54,9 @@ namespace MasterServerToolkit.MasterServer
 
                 // Use the bytes received, to replicate the profile
                 profile.FromBytes(response.AsBytes());
+                Profile = profile;
 
-                //
-                OnProfileLoadedEvent?.Invoke(profile);
+                OnProfileLoadedEvent?.Invoke(Profile);
 
                 // Listen to profile updates, and apply them
                 connection.RegisterMessageHandler((ushort)MstOpCodes.UpdateClientProfile, message =>

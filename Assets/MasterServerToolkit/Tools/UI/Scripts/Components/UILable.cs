@@ -21,15 +21,15 @@ namespace MasterServerToolkit.UI
         {
             if (string.IsNullOrEmpty(lable))
             {
-                Lable = name;
+                Text = name;
             }
             else
             {
-                Lable = lable;
+                Text = lable;
             }
         }
 
-        public string Lable
+        public string Text
         {
             get
             {

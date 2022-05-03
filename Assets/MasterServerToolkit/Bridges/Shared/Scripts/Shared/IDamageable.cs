@@ -7,5 +7,6 @@ namespace MasterServerToolkit.Games
     public interface IDamageable
     {
         void TakeDamage(float value);
+        void TakeDamage(float value, IIdentifiable damageGiver);
     }
 }

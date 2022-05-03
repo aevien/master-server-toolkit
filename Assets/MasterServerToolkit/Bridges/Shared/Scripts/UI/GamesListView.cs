@@ -102,46 +102,46 @@ namespace MasterServerToolkit.Games
                 int index = 0;
 
                 var gameNameCol = Instantiate(uiColLablePrefab, listContainer, false);
-                gameNameCol.Lable = "Name";
+                gameNameCol.Text = "Name";
 
                 var gameAddressCol = Instantiate(uiColLablePrefab, listContainer, false);
-                gameAddressCol.Lable = "Address";
+                gameAddressCol.Text = "Address";
 
                 var gameRegionCol = Instantiate(uiColLablePrefab, listContainer, false);
-                gameRegionCol.Lable = "Region";
+                gameRegionCol.Text = "Region";
 
                 var pingRegionCol = Instantiate(uiColLablePrefab, listContainer, false);
-                pingRegionCol.Lable = "Ping";
+                pingRegionCol.Text = "Ping";
 
                 var gamePlayersCol = Instantiate(uiColLablePrefab, listContainer, false);
-                gamePlayersCol.Lable = "Players";
+                gamePlayersCol.Text = "Players";
 
                 var ConnectBtnCol = Instantiate(uiColLablePrefab, listContainer, false);
-                ConnectBtnCol.Lable = "#";
+                ConnectBtnCol.Text = "#";
 
                 foreach (GameInfoPacket gameInfo in games)
                 {
                     var gameNameLable = Instantiate(uiLablePrefab, listContainer, false);
-                    gameNameLable.Lable = gameInfo.IsPasswordProtected ? $"{gameInfo.Name} <color=yellow>[Password]</color>" : gameInfo.Name;
+                    gameNameLable.Text = gameInfo.IsPasswordProtected ? $"{gameInfo.Name} <color=yellow>[Password]</color>" : gameInfo.Name;
                     gameNameLable.name = $"gameNameLable_{index}";
 
                     var gameAddressLable = Instantiate(uiLablePrefab, listContainer, false);
-                    gameAddressLable.Lable = gameInfo.Address;
+                    gameAddressLable.Text = gameInfo.Address;
                     gameAddressLable.name = $"gameAddressLable_{index}";
 
                     var gameRegionLable = Instantiate(uiLablePrefab, listContainer, false);
                     string region = string.IsNullOrEmpty(gameInfo.Region) ? "International" : gameInfo.Region;
-                    gameRegionLable.Lable = region;
+                    gameRegionLable.Text = region;
                     gameRegionLable.name = $"gameRegionLable_{index}";
 
                     var pingRegionLable = Instantiate(uiLablePrefab, listContainer, false);
-                    pingRegionLable.Lable = $"...";
+                    pingRegionLable.Text = $"...";
 
                     var rx = new Regex(@":\d+");
                     string ip = rx.Replace(gameInfo.Address.Trim(), "");
 
                     MstTimer.WaitPing(ip, (time) => {
-                        pingRegionLable.Lable = $"{time} ms.";
+                        pingRegionLable.Text = $"{time} ms.";
                     });
 
                     pingRegionLable.name = $"pingRegionLable_{index}";

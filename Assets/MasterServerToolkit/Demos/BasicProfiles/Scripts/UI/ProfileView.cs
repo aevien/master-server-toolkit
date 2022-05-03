@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.MasterServer;
+﻿using MasterServerToolkit.Games;
+using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Collections;
 using UnityEngine;
@@ -9,8 +10,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class ProfileView : UIView
     {
-        private Image avatarImage;
-        private DemoProfilesBehaviour profilesManager;
+        private AvatarComponent avatar;
         private UIProperty displayNameUIProperty;
         private UIProperty bronzeUIProperty;
         private UIProperty silverUIProperty;
@@ -72,18 +72,26 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
         }
 
+        protected override void Awake()
+        {
+            base.Awake();
+            Mst.Client.Profiles.OnProfileLoadedEvent += Profiles_OnProfileLoadedEvent;
+        }
+
+        private void Profiles_OnProfileLoadedEvent(ObservableProfile profile)
+        {
+            profile.OnPropertyUpdatedEvent -= Profile_OnPropertyUpdatedEvent;
+            profile.OnPropertyUpdatedEvent += Profile_OnPropertyUpdatedEvent;
+
+            foreach (var prop in profile.Properties)
+                Profile_OnPropertyUpdatedEvent(prop.Key, prop.Value);
+        }
+
         protected override void Start()
         {
             base.Start();
 
-            if (!profilesManager)
-            {
-                profilesManager = FindObjectOfType<DemoProfilesBehaviour>();
-            }
-
-            profilesManager.OnPropertyUpdatedEvent += ProfilesManager_OnPropertyUpdatedEvent;
-
-            avatarImage = ChildComponent<Image>("avatarImage");
+            avatar = ChildComponent<AvatarComponent>("avatar");
             displayNameUIProperty = ChildComponent<UIProperty>("displayNameUIProperty");
 
             bronzeUIProperty = ChildComponent<UIProperty>("bronzeUIProperty");
@@ -94,14 +102,10 @@ namespace MasterServerToolkit.Examples.BasicProfile
         protected override void OnDestroy()
         {
             base.OnDestroy();
-
-            if (profilesManager)
-            {
-                profilesManager.OnPropertyUpdatedEvent -= ProfilesManager_OnPropertyUpdatedEvent;
-            }
+            Mst.Client.Profiles.OnProfileLoadedEvent -= Profiles_OnProfileLoadedEvent;
         }
 
-        private void ProfilesManager_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
+        private void Profile_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
         {
             if (key == (short)ObservablePropertyCodes.DisplayName)
             {
@@ -109,7 +113,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
             else if (key == (short)ObservablePropertyCodes.Avatar)
             {
-                LoadAvatarImage(property.Serialize());
+                avatar.SetAvatarUrl(property.Serialize());
             }
             else if (key == (short)ObservablePropertyCodes.Bronze)
             {
@@ -122,45 +126,6 @@ namespace MasterServerToolkit.Examples.BasicProfile
             else if (key == (short)ObservablePropertyCodes.Gold)
             {
                 Gold = property.As<ObservableFloat>().Value().ToString("F2");
-            }
-        }
-
-        private void LoadAvatarImage(string url)
-        {
-            StartCoroutine(StartLoadAvatarImage(url));
-        }
-
-        private IEnumerator StartLoadAvatarImage(string url)
-        {
-            using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(url))
-            {
-                yield return www.SendWebRequest();
-
-#if UNITY_2019_1_OR_NEWER && !UNITY_2020_3_OR_NEWER
-                if (www.isHttpError || www.isNetworkError)
-                {
-                    Debug.Log(www.error);
-                }
-                else
-                {
-                    var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-                    avatarImage.sprite = null;
-                    avatarImage.sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
-                }
-#elif UNITY_2020_3_OR_NEWER
-                if (www.result == UnityWebRequest.Result.ProtocolError
-                    || www.result == UnityWebRequest.Result.ProtocolError
-                     || www.result == UnityWebRequest.Result.DataProcessingError)
-                {
-                    Debug.Log(www.error);
-                }
-                else if (www.result == UnityWebRequest.Result.Success)
-                {
-                    var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-                    avatarImage.sprite = null;
-                    avatarImage.sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
-                }
-#endif
             }
         }
     }

@@ -107,19 +107,19 @@ namespace MasterServerToolkit.Games
                 int index = 0;
 
                 var playerIndoexCol = Instantiate(uiColLablePrefab, listContainer, false);
-                playerIndoexCol.Lable = "#";
+                playerIndoexCol.Text = "#";
 
                 var playerNameCol = Instantiate(uiColLablePrefab, listContainer, false);
-                playerNameCol.Lable = "Name";
+                playerNameCol.Text = "Name";
 
                 foreach (string player in players)
                 {
                     var playerIndoexLable = Instantiate(uiLablePrefab, listContainer, false);
-                    playerIndoexLable.Lable = (index + 1).ToString();
+                    playerIndoexLable.Text = (index + 1).ToString();
                     playerIndoexLable.name = $"playerIndoexLable_{index}";
 
                     var playerNameLable = Instantiate(uiLablePrefab, listContainer, false);
-                    playerNameLable.Lable = player;
+                    playerNameLable.Text = player;
                     playerNameLable.name = $"playerNameLable_{index}";
 
                     index++;

@@ -15,6 +15,12 @@ namespace MasterServerToolkit.MasterServer
             Key = key;
         }
 
+        protected ObservableBase(ushort key, T value)
+        {
+            Key = key;
+            _value = value;
+        }
+
         public ushort Key { get; private set; }
         public event Action<IObservableProperty> OnDirtyEvent;
 
