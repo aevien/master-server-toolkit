@@ -22,6 +22,7 @@ namespace MasterServerToolkit.MasterServer
             base.Awake();
 
             AddOptionalDependency<LobbiesModule>();
+            AddOptionalDependency<RoomsModule>();
             AddDependency<SpawnersModule>();
         }
 
@@ -49,8 +50,8 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Add handlers
-            server.RegisterMessageHandler((ushort)MstOpCodes.FindGamesRequest, FindGamesRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetRegionsRequest, GetRegionsRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.FindGamesRequest, FindGamesRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetRegionsRequest, GetRegionsRequestHandler);
         }
 
         /// <summary>
@@ -78,17 +79,13 @@ namespace MasterServerToolkit.MasterServer
 
                 if (list.Count == 0)
                 {
-                    throw new MstMessageHandlerException("No game found. Try to create your own game", ResponseStatus.Default);
+                    message.Respond("No game found. Try to create your own game", ResponseStatus.Default);
+                    return;
                 }
 
                 // Convert to generic list and serialize to bytes
                 var bytes = list.Select(game => (ISerializablePacket)game).ToBytes();
                 message.Respond(bytes, ResponseStatus.Success);
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
             }
             // If we got another exception
             catch (Exception e)
@@ -104,30 +101,24 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (!spawnersModule)
                 {
-                    var list = spawnersModule.GetRegions();
-
-                    if (list.Count == 0)
-                    {
-                        throw new MstMessageHandlerException("No regions found. Please start spawner to get regions", ResponseStatus.Default);
-                    }
-
-                    message.Respond(new RegionsPacket()
-                    {
-                        Regions = list
-                    }, ResponseStatus.Success);
+                    message.Respond("Getting a list of regions is not allowed", ResponseStatus.Failed);
+                    logger.Error("No spawner module found");
+                    return;
                 }
-                else
+
+                var list = spawnersModule.GetRegions();
+
+                if (list.Count == 0)
                 {
-                    message.Respond(new RegionsPacket()
-                    {
-                        Regions = new List<RegionInfo>()
-                    }, ResponseStatus.Success);
+                    message.Respond("No regions found. Please start spawner to get regions", ResponseStatus.Failed);
+                    logger.Error("No spawner started");
+                    return;
                 }
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
+
+                message.Respond(new RegionsPacket()
+                {
+                    Regions = list
+                }, ResponseStatus.Success);
             }
             // If we got another exception
             catch (Exception e)

@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Events;
@@ -131,7 +132,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Fired when spawner connected to master
         /// </summary>
-        protected virtual void OnConnectedToMasterEventHandler()
+        protected virtual void OnConnectedToMasterEventHandler(IClientSocket client)
         {
             // If we want to start a spawner (cmd argument was found)
             if (Mst.Args.StartSpawner || (autoStartInEditor && Mst.Runtime.IsEditor))
@@ -143,7 +144,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Fired when spawner disconnected from master
         /// </summary>
-        protected virtual void OnDisconnectedFromMasterEventHandler()
+        protected virtual void OnDisconnectedFromMasterEventHandler(IClientSocket client)
         {
             logger.Info("Spawner disconnected from server. Stopping it...");
             StopSpawner();

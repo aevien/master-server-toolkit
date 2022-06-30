@@ -16,83 +16,90 @@ namespace MasterServerToolkit.MasterServer
         protected ObservableBaseDictionary(ushort key, Dictionary<TKey, TValue> defaultValues) : base(key)
         {
             _updates = new Queue<DictionaryUpdateEntry>();
-            _value = defaultValues == null ? new Dictionary<TKey, TValue>() :  defaultValues.ToDictionary(k => k.Key, k => k.Value);
+            _value = defaultValues == null ? new Dictionary<TKey, TValue>() : defaultValues.ToDictionary(k => k.Key, k => k.Value);
+        }
+
+        public TValue this[TKey key]
+        {
+            get
+            {
+                return _value[key];
+            }
+            set
+            {
+                if (value == null)
+                {
+                    Remove(key);
+                    return;
+                }
+
+                _value[key] = value;
+
+                _updates.Enqueue(new DictionaryUpdateEntry()
+                {
+                    key = key,
+                    operation = _setOperation,
+                    value = value
+                });
+
+                MarkDirty();
+            }
         }
 
         /// <summary>
         /// Returns an immutable list of keys
         /// </summary>
-        public IEnumerable<TKey> Keys
-        {
-            get { return _value.Keys; }
-        }
+        public IEnumerable<TKey> Keys => _value.Keys;
 
         /// <summary>
         /// Returns an immutable list of values
         /// </summary>
-        public IEnumerable<TValue> Values
-        {
-            get { return _value.Values; }
-        }
+        public ICollection<TValue> Values => _value.Values;
 
         /// <summary>
-        /// Returns an immutable list of key-value pairs
+        /// 
         /// </summary>
-        public IEnumerable<KeyValuePair<TKey, TValue>> Pairs
-        {
-            get { return _value.ToList(); }
-        }
+        public int Count => _value.Count;
 
         /// <summary>
-        /// Sets or add a given value by key
+        /// 
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="value"></param>
-        public void SetValue(TKey key, TValue value)
+        /// <param name="item"></param>
+        public void Add(TKey key, TValue item)
         {
-            if (value == null)
-            {
-                Remove(key);
-                return;
-            }
-
-            _value[key] = value;
-
-            MarkDirty();
+            _value.Add(key, item);
 
             _updates.Enqueue(new DictionaryUpdateEntry()
             {
                 key = key,
                 operation = _setOperation,
-                value = value
+                value = item
             });
-        }
-
-        /// <summary>
-        /// Removes value by given key
-        /// </summary>
-        /// <param name="key"></param>
-        public void Remove(TKey key)
-        {
-            _value.Remove(key);
 
             MarkDirty();
-
-            _updates.Enqueue(new DictionaryUpdateEntry()
-            {
-                key = key,
-                operation = _removeOperation,
-            });
         }
 
         /// <summary>
-        /// Gets value by given key
+        /// 
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public TValue GetValue(TKey key)
+        public bool Remove(TKey key)
         {
-            return _value[key];
+            if (_value.Remove(key))
+            {
+                _updates.Enqueue(new DictionaryUpdateEntry()
+                {
+                    key = key,
+                    operation = _removeOperation,
+                });
+
+                MarkDirty();
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -103,9 +110,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool TryGetValue(TKey key, out TValue result)
         {
-            bool getResult = _value.TryGetValue(key, out TValue val);
-            result = val;
-            return getResult;
+            _value.TryGetValue(key, out result);
+            return result != null;
         }
 
         /// <summary>
@@ -228,6 +234,7 @@ namespace MasterServerToolkit.MasterServer
                         }
 
                         var value = ReadValue(reader);
+
                         if (_value.ContainsKey(key))
                         {
                             _value[key] = value;
@@ -246,6 +253,27 @@ namespace MasterServerToolkit.MasterServer
         public override void ClearUpdates()
         {
             _updates.Clear();
+        }
+
+        public bool ContainsKey(TKey key)
+        {
+            return _value.ContainsKey(key);
+        }
+
+        public void Add(KeyValuePair<TKey, TValue> item)
+        {
+            Add(item.Key, item.Value);
+        }
+
+        public bool Remove(KeyValuePair<TKey, TValue> item)
+        {
+            return Remove(item.Key);
+        }
+
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+        {
+            foreach (KeyValuePair<TKey, TValue> item in _value)
+                yield return item;
         }
 
         private struct DictionaryUpdateEntry

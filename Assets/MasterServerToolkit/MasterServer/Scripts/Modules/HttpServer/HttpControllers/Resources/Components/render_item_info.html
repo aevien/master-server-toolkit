@@ -1,0 +1,30 @@
+<span>
+    <template v-if="Object.prototype.toString.call(info) === '[object Array]'">
+        <table v-if="info.length > 0" class="table table-striped table-bordered table-sm mb-0">
+            <tbody>
+                <tr v-for="(value, index) in info" :key="index">
+                    <td>
+                        <render-item-info :info="value" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </template>
+    <template v-else-if="Object.prototype.toString.call(info) === '[object Object]'">
+        <table class="table table-striped table-bordered table-sm mb-0">
+            <tbody>
+                <tr v-for="(value, name, index) in info" :key="index">
+                    <th scope="row" width="150">
+                        {{$mstUtils.camelcaseToFriendly(name)}}
+                    </th>
+                    <td>
+                        <render-item-info :info="value" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </template>
+    <template v-else>
+        {{info}}
+    </template>
+</span>

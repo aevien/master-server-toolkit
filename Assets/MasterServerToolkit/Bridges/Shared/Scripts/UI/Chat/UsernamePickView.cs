@@ -2,8 +2,6 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using MasterServerToolkit.Utils;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 

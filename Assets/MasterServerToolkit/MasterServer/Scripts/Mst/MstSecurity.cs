@@ -1,19 +1,34 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
+    public delegate void ClientAuthenticatorProviderDelegate(IClientSocket connection, SuccessCallback callback);
+    public delegate void ClientValidattorProviderDelegate(ProvideServerAccessCheckPacket accessCheckOptions, SuccessCallback callback);
+
     /// <summary>
     /// Helper class, which implements means to encrypt and decrypt data
     /// </summary>
     public partial class MstSecurity : MstBaseClient
     {
         public delegate void PermissionLevelCallback(int? permissionLevel, string error);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ClientAuthenticatorProviderDelegate clientAuthenticatorProvider;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ClientValidattorProviderDelegate clientValidatorProvider;
 
         /// <summary>
         /// Salt string
@@ -28,7 +43,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Size of RSA key
         /// </summary>
-        public int RsaKeySize { get; set; } = 512;
+        public int RsaKeySize { get; set; } = Mst.Args.AsInt("-mstRsaKeySize", 512);
 
         #region PASSWORD HASHING
 
@@ -59,6 +74,99 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// Default client authenticator method used by client to validate its connections to server
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="callback"></param>
+        private void DefaultAuthenticator(IClientSocket connection, SuccessCallback callback)
+        {
+            string deviceIdHash = CreateHash(SystemInfo.deviceUniqueIdentifier);
+            string applicationKeyHash = CreateHash(Mst.Settings.ApplicationKey);
+
+            var accessInfo = new ProvideServerAccessCheckPacket()
+            {
+                DeviceId = deviceIdHash,
+                ApplicationKey = applicationKeyHash
+            };
+
+            connection.SendMessage(MstOpCodes.ServerAccessRequest, accessInfo, (status, error) =>
+            {
+                if (status != ResponseStatus.Success)
+                {
+                    callback?.Invoke(false, error.AsString());
+                    Logs.Error(error.AsString());
+                    return;
+                }
+
+                callback?.Invoke(true, string.Empty);
+            });
+        }
+
+        /// <summary>
+        /// Default client validation method used by server to validate incoming connections
+        /// </summary>
+        /// <param name="accessCheckOptions"></param>
+        /// <param name="callback"></param>
+        private void DefaultValidator(ProvideServerAccessCheckPacket accessCheckOptions, SuccessCallback callback)
+        {
+            string applicationKeyHash = accessCheckOptions.ApplicationKey;
+            string applicationKey = Mst.Settings.ApplicationKey;
+
+            if (ValidatePassword(applicationKey, applicationKeyHash))
+            {
+                callback?.Invoke(true, string.Empty);
+            }
+            else
+            {
+                callback?.Invoke(false, "Application key is not valid");
+            }
+        }
+
+        /// <summary>
+        /// Sets new authenticator used in <see cref="AuthenticateConnection(IClientSocket, SuccessCallback)"/> method
+        /// </summary>
+        /// <param name="clientAuthenticator"></param>
+        public void SetClientAuthenticator(ClientAuthenticatorProviderDelegate clientAuthenticator)
+        {
+            clientAuthenticatorProvider = clientAuthenticator;
+        }
+
+        /// <summary>
+        /// Sets new validator used in <see cref="ValidateConnection(ProvideServerAccessCheckPacket, SuccessCallback)"/> method
+        /// </summary>
+        /// <param name="clientValidattor"></param>
+        public void SetClientValidator(ClientValidattorProviderDelegate clientValidattor)
+        {
+            clientValidatorProvider = clientValidattor;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="callback"></param>
+        public void AuthenticateConnection(IClientSocket connection, SuccessCallback callback)
+        {
+            if (clientAuthenticatorProvider != null)
+                clientAuthenticatorProvider?.Invoke(connection, callback);
+            else
+                DefaultAuthenticator(connection, callback);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="accessCheckOptions"></param>
+        /// <param name="callback"></param>
+        public void ValidateConnection(ProvideServerAccessCheckPacket accessCheckOptions, SuccessCallback callback)
+        {
+            if (clientValidatorProvider != null)
+                clientValidatorProvider?.Invoke(accessCheckOptions, callback);
+            else
+                DefaultValidator(accessCheckOptions, callback);
+        }
+
+        /// <summary>
         /// Requests client permission level
         /// </summary>
         /// <param name="key"></param>
@@ -76,7 +184,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="connection"></param>
         public void RequestPermissionLevel(string key, PermissionLevelCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((ushort)MstOpCodes.PermissionLevelRequest, key, (status, response) =>
+            connection.SendMessage(MstOpCodes.PermissionLevelRequest, key, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -89,17 +197,6 @@ namespace MasterServerToolkit.MasterServer
 
                 callback.Invoke(CurrentPermissionLevel, null);
             });
-        }
-
-        /// <summary>
-        /// Should be called on client. Generates RSA public key, 
-        /// sends it to master, which returns encrypted AES key. After decrypting AES key,
-        /// callback is invoked with the value. You can then use the AES key to encrypt data
-        /// </summary>
-        /// <param name="callback"></param>
-        public void GetAesKey(Action<string> callback)
-        {
-            GetAesKey(callback, Connection);
         }
 
         /// <summary>
@@ -138,7 +235,7 @@ namespace MasterServerToolkit.MasterServer
             xs.Serialize(sw, data.ClientsPublicKey);
 
             // Send the request
-            connection.SendMessage((ushort)MstOpCodes.AesKeyRequest, sw.ToString(), (status, response) =>
+            connection.SendMessage(MstOpCodes.AesKeyRequest, sw.ToString(), (status, response) =>
             {
                 if (data.ClientAesKey != null)
                 {
@@ -159,12 +256,14 @@ namespace MasterServerToolkit.MasterServer
 
                 callback.Invoke(data.ClientAesKey);
             });
+
+            sw.Close();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private void OnEncryptableConnectionDisconnected()
+        private void OnEncryptableConnectionDisconnected(IClientSocket client)
         {
             var disconnected = _encryptionData.Keys.Where(c => !c.IsConnected).ToList();
 
@@ -280,6 +379,7 @@ namespace MasterServerToolkit.MasterServer
                     // prepend the IV
                     msEncrypt.Write(BitConverter.GetBytes(aesAlg.IV.Length), 0, sizeof(int));
                     msEncrypt.Write(aesAlg.IV, 0, aesAlg.IV.Length);
+
                     using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                     {
                         using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
@@ -288,6 +388,7 @@ namespace MasterServerToolkit.MasterServer
                             swEncrypt.Write(plainText);
                         }
                     }
+
                     outStr = Convert.ToBase64String(msEncrypt.ToArray());
                 }
             }

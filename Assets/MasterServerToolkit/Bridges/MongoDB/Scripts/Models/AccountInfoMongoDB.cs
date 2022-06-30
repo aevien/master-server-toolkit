@@ -1,10 +1,9 @@
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
 using MasterServerToolkit.MasterServer;
-using System;
-using System.Collections.Generic;
-using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System;
+using System.Collections.Generic;
 
 namespace MasterServerToolkit.Bridges.MongoDB
 {

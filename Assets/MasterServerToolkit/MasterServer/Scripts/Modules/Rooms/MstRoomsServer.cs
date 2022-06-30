@@ -15,7 +15,7 @@ namespace MasterServerToolkit.MasterServer
         /// Maximum time the master server can wait for a response from game server
         /// to see if it can give access to a peer
         /// </summary>
-        public float AccessProviderTimeout { get; set; } = 3;
+        public float AccessProviderTimeout { get; set; } = 5;
 
         /// <summary>
         /// Event, invoked when a room is registered

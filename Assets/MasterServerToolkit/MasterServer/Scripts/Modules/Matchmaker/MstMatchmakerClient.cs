@@ -64,7 +64,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     foreach (var region in Regions)
                     {
-                        MstTimer.WaitPing(region.Ip, (time) =>
+                        MstTimer.Instance.WaitPing(region.Ip, (time) =>
                         {
                             totalRegions--;
 

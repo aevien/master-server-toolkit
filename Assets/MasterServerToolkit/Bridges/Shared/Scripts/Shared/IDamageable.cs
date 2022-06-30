@@ -1,12 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace MasterServerToolkit.Games
+﻿namespace MasterServerToolkit.Games
 {
     public interface IDamageable
     {
-        void TakeDamage(float value);
-        void TakeDamage(float value, IIdentifiable damageGiver);
+        void Damage(float value);
+        void Damage(float value, IIdentifiable damageGiver);
     }
 }

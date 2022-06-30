@@ -9,9 +9,9 @@ namespace MasterServerToolkit.MasterServer
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
-            byte count = reader.ReadByte();
+            ushort count = reader.ReadUInt16();
 
-            for (byte i = 0; i < count; i++)
+            for (ushort i = 0; i < count; i++)
             {
                 Regions.Add(new RegionInfo()
                 {
@@ -23,7 +23,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write((byte)Regions.Count);
+            writer.Write((ushort)Regions.Count);
 
             foreach (var region in Regions)
             {

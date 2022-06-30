@@ -77,10 +77,10 @@ namespace MasterServerToolkit.MasterServer
             Logs.Info($"Ws controller service is opened for {ID}");
 
             // Find all websocket controllers and add them to server
-            foreach (var controller in httpServerModule.WsControllers.Values)
-            {
-                controller.Initialize(httpServerModule, this);
-            }
+            //foreach (var controller in httpServerModule.WsControllers.Values)
+            //{
+            //    controller.Initialize(httpServerModule, this);
+            //}
         }
 
         protected override void OnClose(CloseEventArgs e)

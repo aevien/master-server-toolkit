@@ -1,0 +1,18 @@
+<script type="text/javascript">
+    const ModulesInfo = {
+        data() {
+            return {}
+        },
+        computed: {
+            modulesInfo() {
+                return this.$store.getters.modulesInfo
+            }
+        },
+        created() {
+            let vm = this
+            vm.$store.dispatch('loadModulesInfo')
+        },
+        methods: {},
+        template: `#vueComponentTemplate`
+    }
+</script>

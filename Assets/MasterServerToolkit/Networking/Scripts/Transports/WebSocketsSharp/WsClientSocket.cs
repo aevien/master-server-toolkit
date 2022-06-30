@@ -2,7 +2,6 @@
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
-using WebSocketSharp;
 
 namespace MasterServerToolkit.Networking
 {
@@ -39,9 +38,9 @@ namespace MasterServerToolkit.Networking
         }
         public bool UseSecure { get; set; }
 
-        public event Action OnConnectionOpenEvent;
-        public event Action OnConnectionCloseEvent;
-        public event Action<ConnectionStatus> OnStatusChangedEvent;
+        public event ConnectionDelegate OnConnectionOpenEvent;
+        public event ConnectionDelegate OnConnectionCloseEvent;
+        public event ConnectionStatusDelegate OnStatusChangedEvent;
 
         public WsClientSocket()
         {
@@ -70,8 +69,12 @@ namespace MasterServerToolkit.Networking
                         Status = ConnectionStatus.Connected;
                         _peer.SendDelayedMessages();
 
-                        if (fireEvent)
-                            OnConnectionOpenEvent?.Invoke();
+                        // Client should be validated
+                        Mst.Security.AuthenticateConnection(this, (isSuccess, error) =>
+                        {
+                            if (isSuccess && fireEvent)
+                                OnConnectionOpenEvent?.Invoke(this);
+                        });
                     }
 
                     break;
@@ -82,7 +85,7 @@ namespace MasterServerToolkit.Networking
                         Status = ConnectionStatus.Disconnected;
 
                         if (fireEvent)
-                            OnConnectionCloseEvent?.Invoke();
+                            OnConnectionCloseEvent?.Invoke(this);
                     }
 
                     break;
@@ -134,7 +137,7 @@ namespace MasterServerToolkit.Networking
             }
         }
 
-        public void WaitForConnection(Action<IClientSocket> connectionCallback, float timeoutSeconds)
+        public void WaitForConnection(ConnectionDelegate connectionCallback, float timeoutSeconds)
         {
             if (IsConnected)
             {
@@ -146,14 +149,14 @@ namespace MasterServerToolkit.Networking
             var timedOut = false;
 
             // Make local function
-            void onConnected()
+            void onConnected(IClientSocket client)
             {
                 OnConnectionOpenEvent -= onConnected;
                 isConnected = true;
 
                 if (!timedOut)
                 {
-                    connectionCallback.Invoke(this);
+                    connectionCallback.Invoke(client);
                 }
             }
 
@@ -161,7 +164,7 @@ namespace MasterServerToolkit.Networking
             OnConnectionOpenEvent += onConnected;
 
             // Wait for some seconds
-            MstTimer.WaitForSeconds(timeoutSeconds, () =>
+            MstTimer.Instance.WaitForSeconds(timeoutSeconds, () =>
             {
                 if (!isConnected)
                 {
@@ -172,12 +175,12 @@ namespace MasterServerToolkit.Networking
             });
         }
 
-        public void WaitForConnection(Action<IClientSocket> connectionCallback)
+        public void WaitForConnection(ConnectionDelegate connectionCallback)
         {
             WaitForConnection(connectionCallback, connectionTimeout);
         }
 
-        public void AddConnectionOpenListener(Action callback, bool invokeInstantlyIfConnected = true)
+        public void AddConnectionOpenListener(ConnectionDelegate callback, bool invokeInstantlyIfConnected = true)
         {
             // Remove copy of the callback method to prevent double invocation
             RemoveConnectionOpenListener(callback);
@@ -187,16 +190,16 @@ namespace MasterServerToolkit.Networking
 
             if (IsConnected && invokeInstantlyIfConnected)
             {
-                callback.Invoke();
+                callback.Invoke(this);
             }
         }
 
-        public void RemoveConnectionOpenListener(Action callback)
+        public void RemoveConnectionOpenListener(ConnectionDelegate callback)
         {
             OnConnectionOpenEvent -= callback;
         }
 
-        public void AddConnectionCloseListener(Action callback, bool invokeInstantlyIfDisconnected = true)
+        public void AddConnectionCloseListener(ConnectionDelegate callback, bool invokeInstantlyIfDisconnected = true)
         {
             // Remove copy of the callback method to prevent double invocation
             RemoveConnectionCloseListener(callback);
@@ -206,11 +209,11 @@ namespace MasterServerToolkit.Networking
 
             if (!IsConnected && invokeInstantlyIfDisconnected)
             {
-                callback.Invoke();
+                callback.Invoke(this);
             }
         }
 
-        public void RemoveConnectionCloseListener(Action callback)
+        public void RemoveConnectionCloseListener(ConnectionDelegate callback)
         {
             OnConnectionCloseEvent -= callback;
         }
@@ -257,7 +260,7 @@ namespace MasterServerToolkit.Networking
 
             while (data != null)
             {
-                _peer.HandleDataReceived(data);
+                _peer.HandleReceivedData(data);
                 data = webSocket.Recv();
             }
 
@@ -289,11 +292,11 @@ namespace MasterServerToolkit.Networking
 
             if (UseSecure)
             {
-                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{MstApplicationConfig.Instance.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{Mst.Settings.ApplicationKey}"));
             }
             else
             {
-                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/app/{MstApplicationConfig.Instance.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/app/{Mst.Settings.ApplicationKey}"));
             }
 
             _peer = new WsClientPeer(webSocket);
@@ -304,7 +307,7 @@ namespace MasterServerToolkit.Networking
             MstUpdateRunner.Instance.Add(this);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-            MstTimer.Singleton.StartCoroutine(webSocket.Connect());
+            MstUpdateRunner.Instance.StartCoroutine(webSocket.Connect());
 #else
             webSocket.Connect();
 #endif

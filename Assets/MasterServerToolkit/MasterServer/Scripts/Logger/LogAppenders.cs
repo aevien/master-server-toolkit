@@ -1,9 +1,4 @@
-﻿using MasterServerToolkit.MasterServer;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.RegularExpressions;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MasterServerToolkit.Logging
 {

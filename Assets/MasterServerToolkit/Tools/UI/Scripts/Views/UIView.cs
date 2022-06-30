@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.MasterServer;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -22,6 +23,9 @@ namespace MasterServerToolkit.UI
         [SerializeField]
         protected bool ignoreHideAll = false;
 
+        [Header("Logger Settings"), SerializeField]
+        protected LogLevel logLevel = LogLevel.Info;
+
         [Header("Events")]
         public UnityEvent OnShowEvent;
         public UnityEvent OnHideEvent;
@@ -29,6 +33,11 @@ namespace MasterServerToolkit.UI
         public UnityEvent OnHideFinishedEvent;
 
         #endregion
+
+        /// <summary>
+        /// Logger connected to this view
+        /// </summary>
+        protected Logging.Logger logger;
 
         private Dictionary<string, Component> children;
         protected Dictionary<string, IUIViewComponent> uiViewComponents;
@@ -46,6 +55,9 @@ namespace MasterServerToolkit.UI
         {
             if (!canvasGroup)
                 canvasGroup = GetComponent<CanvasGroup>();
+
+            logger = Mst.Create.Logger(GetType().Name);
+            logger.LogLevel = logLevel;
 
             uiViewComponents = new Dictionary<string, IUIViewComponent>();
             children = new Dictionary<string, Component>();

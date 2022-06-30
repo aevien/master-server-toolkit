@@ -1,10 +1,6 @@
 ﻿using MasterServerToolkit.Games;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
-using System.Collections;
-using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.UI;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
@@ -15,6 +11,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
         private UIProperty bronzeUIProperty;
         private UIProperty silverUIProperty;
         private UIProperty goldUIProperty;
+
+        private ProfileLoaderBehaviour profileLoader;
 
         public string DisplayName
         {
@@ -72,24 +70,12 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
         }
 
-        protected override void Awake()
-        {
-            base.Awake();
-            Mst.Client.Profiles.OnProfileLoadedEvent += Profiles_OnProfileLoadedEvent;
-        }
-
-        private void Profiles_OnProfileLoadedEvent(ObservableProfile profile)
-        {
-            profile.OnPropertyUpdatedEvent -= Profile_OnPropertyUpdatedEvent;
-            profile.OnPropertyUpdatedEvent += Profile_OnPropertyUpdatedEvent;
-
-            foreach (var prop in profile.Properties)
-                Profile_OnPropertyUpdatedEvent(prop.Key, prop.Value);
-        }
-
         protected override void Start()
         {
             base.Start();
+
+            profileLoader = FindObjectOfType<ProfileLoaderBehaviour>();
+            profileLoader.OnProfileLoadedEvent.AddListener(OnProfileLoadedEventHandler);
 
             avatar = ChildComponent<AvatarComponent>("avatar");
             displayNameUIProperty = ChildComponent<UIProperty>("displayNameUIProperty");
@@ -102,7 +88,17 @@ namespace MasterServerToolkit.Examples.BasicProfile
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            Mst.Client.Profiles.OnProfileLoadedEvent -= Profiles_OnProfileLoadedEvent;
+
+            if (profileLoader && profileLoader.Profile != null)
+                profileLoader.Profile.OnPropertyUpdatedEvent -= Profile_OnPropertyUpdatedEvent;
+        }
+
+        private void OnProfileLoadedEventHandler()
+        {
+            profileLoader.Profile.OnPropertyUpdatedEvent += Profile_OnPropertyUpdatedEvent;
+
+            foreach (var property in profileLoader.Profile.Properties)
+                Profile_OnPropertyUpdatedEvent(property.Key, property.Value);
         }
 
         private void Profile_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)

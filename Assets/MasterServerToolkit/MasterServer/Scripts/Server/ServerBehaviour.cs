@@ -2,7 +2,9 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -40,13 +42,22 @@ namespace MasterServerToolkit.MasterServer
         protected LogLevel logLevel = LogLevel.Info;
 
         [SerializeField, Tooltip("IP address, to which server will listen to")]
-        protected string serverIP = "127.0.0.1";
+        protected string serverIp = "127.0.0.1";
 
         [SerializeField, Tooltip("Port, to which server will listen to")]
         protected int serverPort = 5000;
 
         [SerializeField, Tooltip("The max number of allowed connections. If 0 - means unlimeted")]
         protected ushort maxConnections = 0;
+
+        [SerializeField]
+        protected float inactivityTimeout = 5f;
+
+        [SerializeField]
+        protected float validationTimeout = 5f;
+
+        [SerializeField]
+        protected float accessProviderTimeout = 5f;
 
         [Header("Editor Settings"), SerializeField]
         private HelpBox hpEditor = new HelpBox()
@@ -61,6 +72,26 @@ namespace MasterServerToolkit.MasterServer
         #endregion
 
         /// <summary>
+        /// 
+        /// </summary>
+        protected int currentInactivePeersCount => connectedPeers.Values.Where(x => !x.IsConnected).Count();
+
+        /// <summary>
+        /// Gets the total number of clients connected to the server during the entire session
+        /// </summary>
+        protected int totalPeersCount = 0;
+
+        /// <summary>
+        /// Gets the highest number of clients connected to the server during the entire session
+        /// </summary>
+        protected int highestPeersCount = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        protected int rejectedPeersCount = 0;
+
+        /// <summary>
         /// Server socket
         /// </summary>
         private IServerSocket socket;
@@ -68,32 +99,27 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Server messages handlers list
         /// </summary>
-        private Dictionary<ushort, IPacketHandler> handlers;
+        private readonly ConcurrentDictionary<ushort, IPacketHandler> handlers = new ConcurrentDictionary<ushort, IPacketHandler>();
 
         /// <summary>
-        /// Server modules handlers
+        /// Server modules
         /// </summary>
-        private Dictionary<Type, IBaseServerModule> modules;
+        private readonly Dictionary<Type, IBaseServerModule> modules = new Dictionary<Type, IBaseServerModule>();
 
         /// <summary>
         /// Initialized server modules list
         /// </summary>
-        private HashSet<Type> initializedModules;
+        private readonly HashSet<Type> initializedModules = new HashSet<Type>();
 
         /// <summary>
         /// List of connected clients to server
         /// </summary>
-        private Dictionary<int, IPeer> connectedPeers;
+        private readonly ConcurrentDictionary<int, IPeer> connectedPeers = new ConcurrentDictionary<int, IPeer>();
 
         /// <summary>
-        /// List of connected clients to server by guids
+        /// 
         /// </summary>
-        private Dictionary<Guid, IPeer> peersByGuidLookup;
-
-        /// <summary>
-        /// Just message constant
-        /// </summary>
-        protected const string internalServerErrorMessage = "Internal Server Error";
+        private readonly ConcurrentDictionary<int, IPeer> unauthenticatedPeers = new ConcurrentDictionary<int, IPeer>();
 
         /// <summary>
         /// Current server behaviour <see cref="Logger"/>
@@ -108,22 +134,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Gets peers count currently connected to server
         /// </summary>
-        public int CurrentPeersCount => connectedPeers != null ? connectedPeers.Count : 0;
-
-        /// <summary>
-        /// Gets the total number of clients connected to the server during the entire session
-        /// </summary>
-        public int TotalPeersCount { get; protected set; }
-
-        /// <summary>
-        /// Gets the highest number of clients connected to the server during the entire session
-        /// </summary>
-        public int HighestPeersCount { get; protected set; }
+        public int CurrentPeersCount => connectedPeers.Count;
 
         /// <summary>
         /// Server local IP address
         /// </summary>
-        public string Address => serverIP;
+        public string Address => serverIp;
 
         /// <summary>
         /// Server port
@@ -150,48 +166,44 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event Action OnServerStoppedEvent;
 
-        protected virtual void Awake()
+        protected virtual void Start()
         {
-            if (string.IsNullOrEmpty(MstApplicationConfig.Instance.ApplicationKey))
+            if (!Mst.Settings.HasApplicationKey)
                 throw new Exception("ApplicationKey is not defined");
 
             if (!Mst.Runtime.IsEditor)
                 Application.targetFrameRate = Mst.Args.AsInt(Mst.Args.Names.TargetFrameRate, targetFrameRate);
 
+            // Set timeout
+            inactivityTimeout = Mst.Args.AsFloat(Mst.Args.Names.ClientInactivityTimeout, inactivityTimeout);
+            validationTimeout = Mst.Args.AsFloat(Mst.Args.Names.ClientValidationTimeout, validationTimeout);
+
+            // 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
-
-            connectedPeers = new Dictionary<int, IPeer>();
-            modules = new Dictionary<Type, IBaseServerModule>();
-            initializedModules = new HashSet<Type>();
-            handlers = new Dictionary<ushort, IPacketHandler>();
-            peersByGuidLookup = new Dictionary<Guid, IPeer>();
 
             // Create the server 
             socket = Mst.Create.ServerSocket();
             socket.LogLevel = logLevel;
 
-            // Setup secure connection
-            socket.UseSecure = MstApplicationConfig.Instance.UseSecure;
-            socket.CertificatePath = MstApplicationConfig.Instance.CertificatePath;
-            socket.CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
-            socket.ApplicationKey = MstApplicationConfig.Instance.ApplicationKey;
+            // Setup secure connection in Start method
+            socket.UseSecure = Mst.Settings.UseSecure;
+            socket.CertificatePath = Mst.Settings.CertificatePath;
+            socket.CertificatePassword = Mst.Settings.CertificatePassword;
+            socket.ApplicationKey = Mst.Settings.ApplicationKey;
 
             socket.OnPeerConnectedEvent += OnPeerConnectedEventHandle;
             socket.OnPeerDisconnectedEvent += OnPeerDisconnectedEventHandler;
 
-            // AesKey handler
-            RegisterMessageHandler((ushort)MstOpCodes.AesKeyRequest, GetAesKeyRequestHandler);
-            RegisterMessageHandler((ushort)MstOpCodes.PermissionLevelRequest, PermissionLevelRequestHandler);
-            RegisterMessageHandler((ushort)MstOpCodes.PeerGuidRequest, GetPeerGuidRequestHandler);
-        }
+            RegisterMessageHandler(MstOpCodes.AesKeyRequest, AesKeyRequestHandler);
+            RegisterMessageHandler(MstOpCodes.PermissionLevelRequest, PermissionLevelRequestHandler);
+            RegisterMessageHandler(MstOpCodes.PeerGuidRequest, PeerGuidRequestHandler);
+            RegisterMessageHandler(MstOpCodes.ServerAccessRequest, ServerAccessRequestHandler);
 
-        protected virtual void Start()
-        {
             if (IsAllowedToBeStartedInEditor())
             {
                 // Start the server on next frame
-                MstTimer.WaitForEndOfFrame(() =>
+                MstTimer.Instance.WaitForEndOfFrame(() =>
                 {
                     StartServer();
                 });
@@ -225,18 +237,61 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <returns></returns>
+        public virtual JObject JsonInfo()
+        {
+            var info = new JObject();
+
+            try
+            {
+                info.Add("initializedModules", GetInitializedModules().Count);
+                info.Add("unitializedModules", GetUninitializedModules().Count);
+                info.Add("activeClients", CurrentPeersCount);
+                info.Add("inactiveClients", currentInactivePeersCount);
+                info.Add("unauthenticatedPeers", unauthenticatedPeers.Count);
+                info.Add("totalClients", totalPeersCount);
+                info.Add("highestClients", highestPeersCount);
+                //info.Add("updatebles", MstUpdateRunner.Instance.Count);
+                info.Add("peersAccepted", totalPeersCount);
+                info.Add("peersRejected", rejectedPeersCount);
+                info.Add("useSecure", Mst.Settings.UseSecure);
+                info.Add("certificatePath", Mst.Settings.CertificatePath);
+                info.Add("certificatePassword", Mst.Settings.CertificatePassword);
+                info.Add("applicationKey", Mst.Settings.ApplicationKey);
+                info.Add("localIp", Address);
+                info.Add("publicIp", Address);
+                info.Add("port", Port);
+                info.Add("incomingTraffic", Mst.Analytics.TotalReceived);
+                info.Add("outgoingTraffic", Mst.Analytics.TotalSent);
+            }
+            catch (Exception e)
+            {
+                info.Add("error", e.ToString());
+            }
+
+            return info;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public virtual MstProperties Info()
         {
             MstProperties info = new MstProperties();
             info.Set("Initialized modules", GetInitializedModules().Count);
             info.Set("Unitialized modules", GetUninitializedModules().Count);
-            info.Set("Current clients", CurrentPeersCount);
-            info.Set("Total clients", TotalPeersCount);
-            info.Set("Highest clients", HighestPeersCount);
-            info.Set("Use SSL", MstApplicationConfig.Instance.UseSecure);
-            info.Set("Certificate Path", MstApplicationConfig.Instance.CertificatePath);
-            info.Set("Certificate Password", MstApplicationConfig.Instance.CertificatePassword);
-            info.Set("Application Key", MstApplicationConfig.Instance.ApplicationKey);
+            info.Set("Active clients", CurrentPeersCount);
+            info.Set("Inactive clients", currentInactivePeersCount);
+            info.Add("Unauthenticated clients", unauthenticatedPeers.Count);
+            info.Set("Total clients", totalPeersCount);
+            info.Set("Highest clients", highestPeersCount);
+            //info.Set("Updatebles", MstUpdateRunner.Instance.Count);
+            info.Set("Peers accepted", totalPeersCount);
+            info.Set("Peers rejected", rejectedPeersCount);
+            info.Set("Use SSL", Mst.Settings.UseSecure);
+            info.Set("Certificate Path", Mst.Settings.CertificatePath);
+            info.Set("Certificate Password", Mst.Settings.CertificatePassword);
+            info.Set("Application Key", Mst.Settings.ApplicationKey);
             info.Set("Local Ip", Address);
             info.Set("Public Ip", Address);
             info.Set("Port", Port);
@@ -249,7 +304,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="listenToIp"></param>
         public void SetIpAddress(string listenToIp)
         {
-            serverIP = listenToIp;
+            serverIp = listenToIp;
         }
 
         /// <summary>
@@ -266,7 +321,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void StartServer()
         {
-            StartServer(serverIP, serverPort);
+            StartServer(serverIp, serverPort);
         }
 
         /// <summary>
@@ -275,7 +330,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="listenToPort"></param>
         public virtual void StartServer(int listenToPort)
         {
-            StartServer(serverIP, listenToPort);
+            StartServer(serverIp, listenToPort);
         }
 
         /// <summary>
@@ -290,7 +345,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            serverIP = listenToIp;
+            serverIp = listenToIp;
             serverPort = listenToPort;
 
             MstProperties startInfo = new MstProperties();
@@ -300,15 +355,41 @@ namespace MasterServerToolkit.MasterServer
             startInfo.Add("\tCertificate Path", !socket.UseSecure ? "Undefined" : socket.CertificatePath);
             startInfo.Add("\tCertificate Pass", string.IsNullOrEmpty(socket.CertificatePath) || !socket.UseSecure ? "Undefined" : "********");
 
-            logger.Info($"Starting Server...\n{startInfo.ToReadableString(";\n", " ")}");
+            logger.Info($"Starting {GetType().Name.SplitByUppercase()}...\n{startInfo.ToReadableString(";\n", " ")}");
 
             socket.Listen(listenToIp, listenToPort);
             LookForModules();
             IsRunning = true;
             OnStartedServer();
             OnServerStartedEvent?.Invoke();
+
+            MstTimer.Instance.OnTickEvent += Instance_OnTickEvent;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="currentTick"></param>
+        private void Instance_OnTickEvent(long currentTick)
+        {
+            // Searching peers that are not connected and their inactivity time is out
+            var inactivePeers = connectedPeers.Values
+                .Where(x => !x.IsConnected && DateTime.Now.Subtract(x.LastActivity).TotalSeconds >= inactivityTimeout);
+
+            foreach (var peer in inactivePeers)
+                OnPeerDisconnectedEventHandler(peer);
+
+            // Searching peers that are connected but their validation time is out
+            var invalidPeers = unauthenticatedPeers.Values
+                .Where(x => DateTime.Now.Subtract(x.StartActivity).TotalSeconds >= validationTimeout);
+
+            foreach (var peer in invalidPeers)
+                peer.Disconnect("Validation timeout");
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private void LookForModules()
         {
             if (lookForModules)
@@ -330,7 +411,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (uninitializedModules.Count > 0)
                 {
-                    logger.Warn($"Some of the {GetType().Name} modules failed to initialize: \n{string.Join(" \n", uninitializedModules.Select(m => m.GetType().ToString()).ToArray())}");
+                    logger.Warn($"Some of the {GetType().Name.SplitByUppercase()} modules failed to initialize: \n{string.Join(" \n", uninitializedModules.Select(m => m.GetType().ToString()).ToArray())}");
                 }
             }
         }
@@ -340,12 +421,17 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void StopServer()
         {
+            MstTimer.Instance.OnTickEvent -= Instance_OnTickEvent;
             IsRunning = false;
-            socket.Stop();
+            socket?.Stop();
             OnServerStoppedEvent?.Invoke();
             OnStoppedServer();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="peer"></param>
         private void OnPeerConnectedEventHandle(IPeer peer)
         {
             // Check if max number of connections has been reached
@@ -358,15 +444,6 @@ namespace MasterServerToolkit.MasterServer
             // Listen to messages
             peer.OnMessageReceivedEvent += OnMessageReceived;
 
-            // Save the peer
-            connectedPeers[peer.Id] = peer;
-
-            // Add total clients
-            TotalPeersCount++;
-
-            if (connectedPeers.Count > HighestPeersCount)
-                HighestPeersCount++;
-
             // Create the security extension
             var extension = peer.AddExtension(new SecurityInfoPeerExtension());
 
@@ -374,35 +451,31 @@ namespace MasterServerToolkit.MasterServer
             extension.PermissionLevel = 0;
 
             // Create a unique peer guid
-            extension.UniqueGuid = Guid.NewGuid();
-            peersByGuidLookup[extension.UniqueGuid] = peer;
+            extension.UniqueGuid = Mst.Helper.CreateGuid();
 
-            // Invoke the event
-            OnPeerConnectedEvent?.Invoke(peer);
-            OnPeerConnected(peer);
-
-            logger.Debug($"Client {peer.Id} connected to server. Total clients are: {connectedPeers.Count}");
+            // Waiting for authentication
+            unauthenticatedPeers[peer.Id] = peer;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="peer"></param>
         private void OnPeerDisconnectedEventHandler(IPeer peer)
         {
             // Remove listener to messages
             peer.OnMessageReceivedEvent -= OnMessageReceived;
 
             // Remove the peer
-            connectedPeers.Remove(peer.Id);
+            connectedPeers.TryRemove(peer.Id, out var _);
 
-            var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-
-            if (extension != null)
-            {
-                // Remove from guid lookup
-                peersByGuidLookup.Remove(extension.UniqueGuid);
-            }
+            //
+            OnPeerDisconnected(peer);
 
             // Invoke the event
             OnPeerDisconnectedEvent?.Invoke(peer);
-            OnPeerDisconnected(peer);
+
+            peer?.Dispose();
 
             logger.Debug($"Client {peer.Id} disconnected from server. Total clients are: {connectedPeers.Count}");
         }
@@ -427,6 +500,7 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
+                message.Peer.LastActivity = DateTime.Now;
                 handlers.TryGetValue(message.OpCode, out IPacketHandler handler);
 
                 if (handler == null)
@@ -435,7 +509,7 @@ namespace MasterServerToolkit.MasterServer
 
                     if (message.IsExpectingResponse)
                     {
-                        message.Respond(internalServerErrorMessage, ResponseStatus.NotHandled);
+                        message.Respond("Internal Server Error", ResponseStatus.NotHandled);
                         return;
                     }
 
@@ -460,7 +534,7 @@ namespace MasterServerToolkit.MasterServer
 
                 try
                 {
-                    message.Respond(internalServerErrorMessage, ResponseStatus.Error);
+                    message.Respond("Internal Server Error", ResponseStatus.Error);
                 }
                 catch (Exception exception)
                 {
@@ -683,50 +757,70 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void GetPeerGuidRequestHandler(IIncomingMessage message)
+        protected virtual async void PeerGuidRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
-            message.Respond(extension.UniqueGuid.ToByteArray(), ResponseStatus.Success);
+
+            if (extension != null)
+            {
+                message.Respond(extension.UniqueGuid.ToByteArray(), ResponseStatus.Success);
+            }
+            else
+            {
+                message.Respond(ResponseStatus.Unauthorized);
+                await Task.Delay(200);
+                message.Peer.Disconnect(ResponseStatus.Unauthorized.ToString());
+            }
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void PermissionLevelRequestHandler(IIncomingMessage message)
+        protected virtual async void PermissionLevelRequestHandler(IIncomingMessage message)
         {
-            var key = message.AsString();
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
-            var currentLevel = extension.PermissionLevel;
-            var newLevel = currentLevel;
-            var permissionClaimed = false;
 
-            foreach (var entry in permissions)
+            if (extension != null)
             {
-                if (entry.key == key)
+                var key = message.AsString();
+                var currentLevel = extension.PermissionLevel;
+                var newLevel = currentLevel;
+                var permissionClaimed = false;
+
+                foreach (var entry in permissions)
                 {
-                    newLevel = entry.permissionLevel;
-                    permissionClaimed = true;
+                    if (entry.key == key)
+                    {
+                        newLevel = entry.permissionLevel;
+                        permissionClaimed = true;
+                    }
                 }
+
+                extension.PermissionLevel = newLevel;
+
+                if (!permissionClaimed && !string.IsNullOrEmpty(key))
+                {
+                    // If we didn't claim a permission
+                    message.Respond("Invalid permission key", ResponseStatus.Unauthorized);
+                    return;
+                }
+
+                message.Respond(newLevel, ResponseStatus.Success);
             }
-
-            extension.PermissionLevel = newLevel;
-
-            if (!permissionClaimed && !string.IsNullOrEmpty(key))
+            else
             {
-                // If we didn't claim a permission
-                message.Respond("Invalid permission key", ResponseStatus.Unauthorized);
-                return;
+                message.Respond(ResponseStatus.Unauthorized);
+                await Task.Delay(200);
+                message.Peer.Disconnect(ResponseStatus.Unauthorized.ToString());
             }
-
-            message.Respond(newLevel, ResponseStatus.Success);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void GetAesKeyRequestHandler(IIncomingMessage message)
+        protected virtual async void AesKeyRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
             var encryptedKey = extension.AesKeyEncrypted;
@@ -766,6 +860,60 @@ namespace MasterServerToolkit.MasterServer
             });
 
             message.Respond(encryptedAes, ResponseStatus.Success);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void ServerAccessRequestHandler(IIncomingMessage message)
+        {
+            // Get access check options
+            var accessCheckOptions = message.Deserialize(new ProvideServerAccessCheckPacket());
+
+            // Request access code from client
+            Mst.Security.ValidateConnection(accessCheckOptions, (isSuccess, error) =>
+            {
+                if (!isSuccess)
+                {
+                    logger.Error(error);
+
+                    if (message.Peer != null && message.Peer.IsConnected)
+                    {
+                        message.Respond(error, ResponseStatus.Success);
+                        message.Peer.Disconnect(error);
+                    }
+
+                    rejectedPeersCount++;
+                    return;
+                }
+
+                // Remove from authentication list
+                if (unauthenticatedPeers.TryRemove(message.Peer.Id, out IPeer peer) && peer != null)
+                {
+                    // Peer is authenticated
+                    message.Respond(ResponseStatus.Success);
+
+                    // Save the peer
+                    connectedPeers[peer.Id] = peer;
+
+                    // Add total clients
+                    totalPeersCount++;
+
+                    // Set highest peers count info
+                    if (connectedPeers.Count > highestPeersCount)
+                        highestPeersCount++;
+
+                    // 
+                    OnPeerConnected(peer);
+
+                    // Invoke the event
+                    OnPeerConnectedEvent?.Invoke(peer);
+
+                    logger.Debug($"Client {peer.Id} connected to server. Total clients are: {connectedPeers.Count}");
+                }
+            });
         }
 
         #endregion

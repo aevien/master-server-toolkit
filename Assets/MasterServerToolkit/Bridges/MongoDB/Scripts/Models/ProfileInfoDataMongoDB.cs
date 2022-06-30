@@ -9,7 +9,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
         [BsonId]
         public ObjectId _id { get; set; }
         public string Id { get => _id.ToString(); set => _id = new ObjectId(value); }
-        
+
         public string UserId { get; set; }
         public byte[] Data { get; set; }
     }

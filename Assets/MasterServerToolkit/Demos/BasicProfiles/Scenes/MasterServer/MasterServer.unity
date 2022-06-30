@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -241,51 +241,6 @@ Transform:
   m_Father: {fileID: 1005001217}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &778244820
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 778244821}
-  - component: {fileID: 778244822}
-  m_Layer: 0
-  m_Name: HomeController
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &778244821
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 778244820}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1112139946}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &778244822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 778244820}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d5dea7977d220d41975bdeda9882f37, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 3
 --- !u!1 &1005001215
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,9 +275,12 @@ MonoBehaviour:
   permissions: []
   targetFrameRate: 60
   logLevel: 0
-  serverIP: 127.0.0.1
+  serverIp: 127.0.0.1
   serverPort: 5000
   maxConnections: 0
+  inactivityTimeout: 5
+  validationTimeout: 5
+  accessProviderTimeout: 5
   autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:
@@ -373,8 +331,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 778244821}
+  m_Children: []
   m_Father: {fileID: 1005001217}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -391,37 +348,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  heatBeatCheckInterval: 5
   httpAddress: 127.0.0.1
   httpPort: 8080
   defaultIndexPage:
   - index
   - home
-  mimeTypes:
-  - name: .html
-    type: text/html
-  - name: .htm
-    type: text/html
-  - name: .txt
-    type: text/plain
-  - name: .css
-    type: text/css
-  - name: .xml
-    type: text/xml
-  - name: .js
-    type: application/javascript
-  - name: .json
-    type: application/json
-  - name: .gif
-    type: image/gif
-  - name: .jpeg
-    type: image/jpeg
-  - name: .jpg
-    type: image/jpeg
-  - name: .png
-    type: image/png
-  - name: .tif
-    type: image/tiff
-  rootDirectory: wwwroot
   authenticationSchemes: 1
   realm: adminusers@masterservertoolkit.com
   username: admin
@@ -592,8 +524,8 @@ MonoBehaviour:
   logLevel: 0
   useAuthModule: 1
   unloadProfileAfter: 20
-  saveProfileInterval: 1
-  clientUpdateInterval: 0
+  saveProfileDebounceTime: 1
+  clientUpdateDebounceTime: 0.1
   editProfilePermissionLevel: 0
   ignoreProfileMissmatchError: 0
   databaseAccessorFactory: {fileID: 1428928145}

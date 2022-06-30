@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Networking;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -70,6 +71,11 @@ namespace MasterServerToolkit.MasterServer
         #endregion
 
         /// <summary>
+        /// 
+        /// </summary>
+        protected IAccountsDatabaseAccessor authDatabaseAccessor;
+
+        /// <summary>
         /// Censor module for bad words checking :)
         /// </summary>
         protected CensorModule censorModule;
@@ -77,12 +83,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Collection of users who are currently logged in by user id
         /// </summary>
-        protected Dictionary<string, IUserPeerExtension> LoggedInUsersById { get; set; }
+        protected ConcurrentDictionary<string, IUserPeerExtension> LoggedInUsersById { get; set; } = new ConcurrentDictionary<string, IUserPeerExtension>();
 
         /// <summary>
         /// Collection of users who are currently logged in by username
         /// </summary>
-        protected Dictionary<string, IUserPeerExtension> LoggedInUsersByUsername { get; set; }
+        protected ConcurrentDictionary<string, IUserPeerExtension> LoggedInUsersByUsername { get; set; } = new ConcurrentDictionary<string, IUserPeerExtension>();
 
         /// <summary>
         /// Collection of users who are currently logged in
@@ -114,11 +120,6 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event UserEmailConfirmedEventHandlerDelegate OnUserEmailConfirmedEvent;
 
-        /// <summary>
-        /// Invoked, when user successfully updated his account
-        /// </summary>
-        public event UserAccountUpdatedEventHandlerDelegate OnUserAccountUpdatedEvent;
-
         protected override void Awake()
         {
             base.Awake();
@@ -142,43 +143,55 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
-            databaseAccessorFactory?.CreateAccessors();
+            if (databaseAccessorFactory)
+                databaseAccessorFactory.CreateAccessors();
+
+            authDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
+
+            // If guest user cansave its account info
+            if (authDatabaseAccessor == null)
+            {
+                logger.Fatal($"Account database implementation was not found in {GetType().Name}");
+                return;
+            }
 
             censorModule = server.GetModule<CensorModule>();
-            mailer ??= FindObjectOfType<Mailer>();
-
-            // Init logged in users list by id
-            LoggedInUsersById = new Dictionary<string, IUserPeerExtension>();
-            LoggedInUsersByUsername = new Dictionary<string, IUserPeerExtension>();
 
             // Set handlers
-            server.RegisterMessageHandler((ushort)MstOpCodes.SignIn, SignInMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.SignUp, SignUpMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.SignOut, SignOutMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.SignIn, SignInMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.SignUp, SignUpMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.SignOut, SignOutMessageHandler);
 
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetPasswordResetCode, GetPasswordResetCodeMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.ChangePassword, ChangePasswordMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetPasswordResetCode, GetPasswordResetCodeMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.ChangePassword, ChangePasswordMessageHandler);
 
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetEmailConfirmationCode, GetEmailConfirmationCodeMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.ConfirmEmail, ConfirmEmailMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetEmailConfirmationCode, GetEmailConfirmationCodeMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.ConfirmEmail, ConfirmEmailMessageHandler);
 
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetLoggedInUsersCount, GetLoggedInUsersCountMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetLoggedInUsersCount, GetLoggedInUsersCountMessageHandler);
 
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
-
-            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateAccountInfo, UpdateAccountInfoMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
         }
 
         public override JObject JsonInfo()
         {
             var data = base.JsonInfo();
-            data.Add("loggedInUsers", LoggedInUsers.Count());
-            data.Add("allowGuests", enableGuestLogin);
-            data.Add("saveGuests", saveGuestInfo);
-            data.Add("guestNamePrefix", guestPrefix);
-            data.Add("emailConfirmRequired", emailConfirmRequired);
-            data.Add("minUsernameLength", usernameMinChars);
-            data.Add("minPasswordLength", userPasswordMinChars);
+
+            try
+            {
+                data.Add("loggedInUsers", LoggedInUsers.Count());
+                data.Add("allowGuests", enableGuestLogin);
+                data.Add("saveGuests", saveGuestInfo);
+                data.Add("guestNamePrefix", guestPrefix);
+                data.Add("emailConfirmRequired", emailConfirmRequired);
+                data.Add("minUsernameLength", usernameMinChars);
+                data.Add("minPasswordLength", userPasswordMinChars);
+            }
+            catch (Exception e)
+            {
+                data.Add("error", e.ToString());
+            }
+
             return data;
         }
 
@@ -186,7 +199,7 @@ namespace MasterServerToolkit.MasterServer
         {
             MstProperties info = base.Info();
 
-            info.Add("Users", LoggedInUsers.Count());
+            info.Add("Logged In Users", LoggedInUsers.Count());
             info.Add("Allow Guests", enableGuestLogin);
             info.Add("Save Guests", saveGuestInfo);
             info.Add("Guest Name Prefix", guestPrefix);
@@ -204,7 +217,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual string GenerateGuestUsername()
         {
             string prefix = string.IsNullOrEmpty(guestPrefix) ? "user_" : guestPrefix;
-            return $"{prefix}{Mst.Helper.CreateFriendlyId()}";
+            return $"{prefix}{Mst.Helper.CreateGuidString()}";
         }
 
         /// <summary>
@@ -339,7 +352,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         protected virtual void OnUserDisconnectedEventListener(IPeer peer)
         {
-            peer.OnPeerDisconnectedEvent -= OnUserDisconnectedEventListener;
+            peer.OnConnectionCloseEvent -= OnUserDisconnectedEventListener;
 
             var extension = peer.GetExtension<IUserPeerExtension>();
 
@@ -348,8 +361,8 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            LoggedInUsersByUsername.Remove(extension.Username.ToLower());
-            LoggedInUsersById.Remove(extension.UserId);
+            LoggedInUsersByUsername.TryRemove(extension.Username.ToLower(), out _);
+            LoggedInUsersById.TryRemove(extension.UserId, out _);
 
             OnUserLoggedOutEvent?.Invoke(extension);
         }
@@ -383,30 +396,30 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         protected virtual async void ChangePasswordMessageHandler(IIncomingMessage message)
         {
-            var data = new Dictionary<string, string>().FromBytes(message.AsBytes());
+            var data = MstProperties.FromBytes(message.AsBytes());
 
-            if (!data.ContainsKey("code") || !data.ContainsKey("password") || !data.ContainsKey("email"))
+            if (!data.Has("code") || !data.Has("password") || !data.Has("email"))
             {
                 message.Respond("Invalid request", ResponseStatus.Unauthorized);
                 return;
             }
 
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-            var passwordResetData = await authDbAccessor.GetPasswordResetDataAsync(data["email"]);
 
-            if (passwordResetData == null || passwordResetData.Code == null || passwordResetData.Code != data["code"])
+            var passwordResetData = await authDatabaseAccessor.GetPasswordResetDataAsync(data.AsString("email"));
+
+            if (passwordResetData == null || passwordResetData.Code == null || passwordResetData.Code != data.AsString("code"))
             {
                 message.Respond("Invalid code provided", ResponseStatus.Unauthorized);
                 return;
             }
 
-            var account = await authDbAccessor.GetAccountByEmailAsync(data["email"]);
+            var account = await authDatabaseAccessor.GetAccountByEmailAsync(data.AsString("email"));
 
             // Delete (overwrite) code used
-            await authDbAccessor.SavePasswordResetCodeAsync(account, null);
+            await authDatabaseAccessor.SavePasswordResetCodeAsync(account, null);
 
-            account.Password = Mst.Security.CreateHash(data["password"]);
-            await authDbAccessor.UpdateAccountAsync(account);
+            account.Password = Mst.Security.CreateHash(data.AsString("password"));
+            await authDatabaseAccessor.UpdateAccountAsync(account);
 
             message.Respond(ResponseStatus.Success);
         }
@@ -427,8 +440,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual async void GetPasswordResetCodeMessageHandler(IIncomingMessage message)
         {
             var userEmail = message.AsString();
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-            var userAccount = await authDbAccessor.GetAccountByEmailAsync(userEmail);
+            var userAccount = await authDatabaseAccessor.GetAccountByEmailAsync(userEmail);
 
             if (userAccount == null)
             {
@@ -437,7 +449,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             var passwordResetCode = Mst.Helper.CreateRandomAlphanumericString(serviceCodeMinChars);
-            await authDbAccessor.SavePasswordResetCodeAsync(userAccount, passwordResetCode);
+            await authDatabaseAccessor.SavePasswordResetCodeAsync(userAccount, passwordResetCode);
 
             StringBuilder emailBody = new StringBuilder();
             emailBody.Append($"<h3>You have requested reset password</h3>");
@@ -483,8 +495,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-            var requiredCode = await authDbAccessor.GetEmailConfirmationCodeAsync(userExtension.Account.Email);
+            var requiredCode = await authDatabaseAccessor.GetEmailConfirmationCodeAsync(userExtension.Account.Email);
 
             if (requiredCode != confirmationCode)
             {
@@ -496,7 +507,7 @@ namespace MasterServerToolkit.MasterServer
             userExtension.Account.IsEmailConfirmed = true;
 
             // Update account
-            await authDbAccessor.UpdateAccountAsync(userExtension.Account);
+            await authDatabaseAccessor.UpdateAccountAsync(userExtension.Account);
 
             // Respond with success
             message.Respond(ResponseStatus.Success);
@@ -526,9 +537,8 @@ namespace MasterServerToolkit.MasterServer
             }
 
             var newEmailConfirmationCode = Mst.Helper.CreateRandomAlphanumericString(serviceCodeMinChars);
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
 
-            await authDbAccessor.SaveEmailConfirmationCodeAsync(userExtension.Account.Email, newEmailConfirmationCode);
+            await authDatabaseAccessor.SaveEmailConfirmationCodeAsync(userExtension.Account.Email, newEmailConfirmationCode);
 
             if (mailer == null)
             {
@@ -588,121 +598,17 @@ namespace MasterServerToolkit.MasterServer
             var userAccountPacket = new PeerAccountInfoPacket()
             {
                 PeerId = peerId,
-                Properties = new MstProperties(userAccount.Properties),
+                Properties = userAccount.Properties,
                 Username = userExtension.Username,
                 UserId = userExtension.UserId
             };
 
             // This will help to know if current user is guest
-            userAccountPacket.Properties.Set(MstDictKeys.USER_IS_GUEST, userAccount.IsGuest);
+            userAccountPacket.Properties[MstDictKeys.USER_IS_GUEST] = userAccount.IsGuest.ToString();
 
             message.Respond(userAccountPacket, ResponseStatus.Success);
 
             await Task.Delay(0);
-        }
-
-        /// <summary>
-        /// Handle update properties request handler
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual async void UpdateAccountInfoMessageHandler(IIncomingMessage message)
-        {
-            message.Respond(ResponseStatus.Success);
-
-            logger.Debug($"Changing user {message.Peer.Id} properties");
-
-            var encryptedData = message.AsBytes();
-            var securityExt = message.Peer.GetExtension<SecurityInfoPeerExtension>();
-            var aesKey = securityExt.AesKey;
-
-            if (aesKey == null)
-            {
-                // There's no aesKey that client and master agreed upon
-                message.Respond("Insecure request", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            var decryptedBytesData = Mst.Security.DecryptAES(encryptedData, aesKey);
-            var userUpdatePropertiesInfo = SerializablePacket.FromBytes(decryptedBytesData, new UpdateAccountInfoPacket());
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-
-            if (string.IsNullOrEmpty(userUpdatePropertiesInfo.Id))
-            {
-                logger.Debug("No user found to change his properties");
-                message.Respond("Invalid request", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            // Trying to get user account by user id
-            IAccountInfoData userAccount = await authDbAccessor.GetAccountByIdAsync(userUpdatePropertiesInfo.Id);
-
-            // if no account found
-            if (userAccount == null)
-            {
-                message.Respond("Invalid request", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            // Check if new username is valid
-            if (IsUsernameValid(userUpdatePropertiesInfo.Username))
-            {
-                // Set new username
-                userAccount.Username = userUpdatePropertiesInfo.Username.Trim();
-            }
-
-            // Check if new password is valid
-            if (!string.IsNullOrEmpty(userUpdatePropertiesInfo.Password.Trim()))
-            {
-                // Set new password
-                userAccount.Password = Mst.Security.CreateHash(userAccount.Password.Trim());
-            }
-
-            // Check if new email is valid
-            if (IsEmailValid(userUpdatePropertiesInfo.Email) && userAccount.Email != userUpdatePropertiesInfo.Email)
-            {
-                // Set new email
-                userAccount.Email = userUpdatePropertiesInfo.Email;
-                // Set email confirmation status
-                userAccount.IsEmailConfirmed = !emailConfirmRequired;
-            }
-
-            // If username and password are set so we are not a guest user!
-            if (!string.IsNullOrEmpty(userAccount.Username) && !string.IsNullOrEmpty(userAccount.Password))
-            {
-                userAccount.IsGuest = false;
-            }
-            // If email and password are set so we are not a guest user!
-            else if (IsEmailValid(userAccount.Email) && !string.IsNullOrEmpty(userAccount.Password))
-            {
-                userAccount.IsGuest = false;
-            }
-
-            // Set phone number
-            userAccount.PhoneNumber = userUpdatePropertiesInfo.PhoneNumber;
-
-            // Set facebook Id
-            userAccount.Facebook = userUpdatePropertiesInfo.Facebook;
-
-            // Set another custom properties
-            userAccount.Properties = userUpdatePropertiesInfo.Properties.ToDictionary();
-
-            // Trying to update account info data
-            bool updateResult = await authDbAccessor.UpdateAccountAsync(userAccount);
-
-            if (!updateResult)
-            {
-                message.Respond("An error occurred when updating the user's account", ResponseStatus.Error);
-                return;
-            }
-
-            logger.Debug($"User {message.Peer.Id} has changed his account info successfully");
-
-            // Send response to client
-            message.Respond("Account properties have been successfully updated", ResponseStatus.Success);
-
-            userAccount.MarkAsDirty();
-
-            OnUserAccountUpdatedEvent?.Invoke(userAccount);
         }
 
         /// <summary>
@@ -713,13 +619,17 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                // Get accounts db accessor
-                var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
+                // Get peer extension
+                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
-                // If guest user cansave its account info
-                if (authDbAccessor == null)
+                // If user is logged in
+                bool isLoggedIn = userExtension != null;
+
+                // If user is already logged in and he is not a guest
+                if (isLoggedIn && !userExtension.Account.IsGuest)
                 {
-                    throw new Exception("Account database accessor is not defined in AuthModule");
+                    message.Respond($"You are already logged in as {userExtension.Account.Username}", ResponseStatus.Error);
+                    return;
                 }
 
                 // Get security extension
@@ -745,78 +655,82 @@ namespace MasterServerToolkit.MasterServer
                 // Parse our data to user creadentials
                 var userCredentials = MstProperties.FromBytes(decryptedBytesData);
 
-                // Check if our registration request is valid
-                if (!userCredentials.Has(MstDictKeys.USER_NAME) || !userCredentials.Has(MstDictKeys.USER_PASSWORD) || !userCredentials.Has(MstDictKeys.USER_EMAIL))
+                bool hasUsername = userCredentials.Has(MstDictKeys.USER_NAME);
+                bool hasPassword = userCredentials.Has(MstDictKeys.USER_PASSWORD);
+                bool hasEmail = userCredentials.Has(MstDictKeys.USER_EMAIL);
+
+                if (!hasPassword)
                 {
-                    message.Respond("Invalid registration request", ResponseStatus.Error);
+                    message.Respond("Password required", ResponseStatus.Invalid);
                     return;
                 }
 
-                var userName = userCredentials.AsString(MstDictKeys.USER_NAME);
-                var userPassword = userCredentials.AsString(MstDictKeys.USER_PASSWORD);
-                var userEmail = userCredentials.AsString(MstDictKeys.USER_EMAIL).ToLower();
+
+                if (!hasEmail && !hasUsername)
+                {
+                    message.Respond("Username or email required", ResponseStatus.Invalid);
+                    return;
+                }
+
+                string userName = userCredentials.AsString(MstDictKeys.USER_NAME);
+                string userPassword = userCredentials.AsString(MstDictKeys.USER_PASSWORD);
+                string userEmail = userCredentials.AsString(MstDictKeys.USER_EMAIL).ToLower();
 
                 // Check if length of our password is valid
                 if (userPasswordMinChars > userPassword.Length)
                 {
-                    message.Respond($"Invalid user password. It must consist at least {userPasswordMinChars} characters", ResponseStatus.Error);
-                    return;
-                }
-
-                // Get peer extension
-                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
-
-                // If user is already logged in
-                if (userExtension != null)
-                {
-                    // Fail, if user is already logged in, and not with a guest account
-                    message.Respond("You are already logged in", ResponseStatus.Unauthorized);
+                    message.Respond($"Invalid user password. It must consist at least {userPasswordMinChars} characters", ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if username is valid
-                if (!IsUsernameValid(userName))
+                if (hasUsername && !IsUsernameValid(userName))
                 {
-                    message.Respond("Invalid Username", ResponseStatus.Error);
+                    message.Respond($"Invalid username {userName}", ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if there's a forbidden word in username
-                if (censorModule != null && censorModule.HasCensoredWord(userName))
+                if (hasUsername && censorModule != null && censorModule.HasCensoredWord(userName))
                 {
-                    message.Respond("Forbidden word used in username", ResponseStatus.Error);
+                    message.Respond($"Forbidden word used in username {userName}", ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if username length is good
-                if ((userName.Length < usernameMinChars) || (userName.Length > usernameMaxChars))
+                if (hasUsername && ((userName.Length < usernameMinChars) || (userName.Length > usernameMaxChars)))
                 {
-                    message.Respond($"Invalid usernanme length. Min length is {usernameMinChars} and max length is {usernameMaxChars}", ResponseStatus.Error);
+                    message.Respond($"Invalid usernanme length. Min length is {usernameMinChars} and max length is {usernameMaxChars}", ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if email is valid
-                if (!IsEmailValid(userEmail))
+                if (hasEmail && !IsEmailValid(userEmail))
                 {
-                    message.Respond("Invalid Email", ResponseStatus.Invalid);
+                    message.Respond($"Invalid email {userEmail}", ResponseStatus.Invalid);
                     return;
                 }
 
                 // Create account instance
-                var userAccount = authDbAccessor.CreateAccountInstance();
-                userAccount.Username = userName;
+                var userAccount = isLoggedIn ? userExtension.Account : authDatabaseAccessor.CreateAccountInstance();
+                userAccount.Username = hasUsername ? userName : userEmail;
                 userAccount.Email = userEmail;
                 userAccount.IsGuest = false;
                 userAccount.Password = Mst.Security.CreateHash(userPassword);
 
-                // Let's set user email as confirmed if confirmation is not required by default
-                if (!emailConfirmRequired)
-                {
-                    userAccount.IsEmailConfirmed = true;
-                }
+                // Let's set user email as confirmed if both confirmation is not required by default and user has email
+                userAccount.IsEmailConfirmed = !emailConfirmRequired && hasEmail;
 
-                // Insert new account ot DB
-                await authDbAccessor.InsertNewAccountAsync(userAccount);
+                if (isLoggedIn)
+                {
+                    // Insert new account ot DB
+                    await authDatabaseAccessor.UpdateAccountAsync(userAccount);
+                }
+                else
+                {
+                    // Insert new account ot DB
+                    await authDatabaseAccessor.InsertNewAccountAsync(userAccount);
+                }
 
                 message.Respond(ResponseStatus.Success);
 
@@ -829,30 +743,25 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
         private void SignOutMessageHandler(IIncomingMessage message)
         {
             try
             {
-                string userId = message.AsString();
+                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
-                // Trying to get user extension from peer
-                var userExtension = GetLoggedInUserById(userId);
-
-                if (userExtension == null)
-                {
+                if (userExtension == null || userExtension.Account == null)
                     return;
-                }
 
-                LoggedInUsersByUsername.Remove(userExtension.Username.ToLower());
-                LoggedInUsersById.Remove(userExtension.UserId);
+                LoggedInUsersByUsername.TryRemove(userExtension.Username.ToLower(), out _);
+                LoggedInUsersById.TryRemove(userExtension.UserId, out _);
 
                 NotifyOnUserLoggedOutEvent(userExtension);
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                logger.Error(e.Message);
-                message.Respond(e.Message, e.Status);
+
+                message.Peer.Disconnect("Signed out");
             }
             // If we got another exception
             catch (Exception e)
@@ -881,7 +790,8 @@ namespace MasterServerToolkit.MasterServer
                 if (aesKey == null)
                 {
                     // There's no aesKey that client and master agreed upon
-                    throw new MstMessageHandlerException("Insecure request", ResponseStatus.Unauthorized);
+                    message.Respond("Insecure request", ResponseStatus.Unauthorized);
+                    return;
                 }
 
                 // Get excrypted data
@@ -894,18 +804,24 @@ namespace MasterServerToolkit.MasterServer
                 var userCredentials = MstProperties.FromBytes(decryptedBytesData);
 
                 // Let's run auth factory
-                IAccountInfoData userAccount = await RunAuthFactory(message.Peer, userCredentials);
+                IAccountInfoData userAccount = await RunAuthFactory(message.Peer, userCredentials, message);
+
+                if (userAccount == null)
+                {
+                    message.Respond("Account is not created!", ResponseStatus.Failed);
+                    return;
+                }
 
                 // Setup auth extension
                 var userExtension = message.Peer.AddExtension(CreateUserPeerExtension(message.Peer));
-                userExtension.Account = userAccount ?? throw new MstMessageHandlerException("Account is not created!", ResponseStatus.Failed);
+                userExtension.Account = userAccount;
 
                 // Listen to disconnect event
-                userExtension.Peer.OnPeerDisconnectedEvent += OnUserDisconnectedEventListener;
+                userExtension.Peer.OnConnectionCloseEvent += OnUserDisconnectedEventListener;
 
                 // Add to lookup of logged in users
-                LoggedInUsersByUsername.Add(userExtension.Username.ToLower(), userExtension);
-                LoggedInUsersById.Add(userExtension.UserId, userExtension);
+                LoggedInUsersByUsername.TryAdd(userExtension.Username.ToLower(), userExtension);
+                LoggedInUsersById.TryAdd(userExtension.UserId, userExtension);
 
                 logger.Debug($"User {message.Peer.Id} signed in as {userAccount.Username}");
 
@@ -914,12 +830,6 @@ namespace MasterServerToolkit.MasterServer
 
                 // Trigger the login event
                 OnUserLoggedInEvent?.Invoke(userExtension);
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                logger.Error(e.Message);
-                message.Respond(e.Message, e.Status);
             }
             // If we got another exception
             catch (Exception e)
@@ -935,31 +845,31 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         /// <param name="userCredentials"></param>
         /// <returns></returns>
-        protected virtual Task<IAccountInfoData> RunAuthFactory(IPeer peer, MstProperties userCredentials)
+        protected virtual Task<IAccountInfoData> RunAuthFactory(IPeer peer, MstProperties userCredentials, IIncomingMessage message)
         {
             // Guest Authentication
             if (userCredentials.Has(MstDictKeys.USER_IS_GUEST))
             {
-                return SignInAsGuest(peer, userCredentials);
+                return SignInAsGuest(peer, userCredentials, message);
             }
             // Token Authentication
             else if (userCredentials.Has(MstDictKeys.USER_AUTH_TOKEN))
             {
-                return SignInByToken(peer, userCredentials);
+                return SignInByToken(peer, userCredentials, message);
             }
             // Username / Password authentication
             else if (userCredentials.Has(MstDictKeys.USER_NAME) && userCredentials.Has(MstDictKeys.USER_PASSWORD))
             {
-                return SignInWithLoginAndPassword(peer, userCredentials);
+                return SignInWithLoginAndPassword(peer, userCredentials, message);
             }
             // Email authentication
             else if (userCredentials.Has(MstDictKeys.USER_EMAIL))
             {
-                return SignInWithEmail(peer, userCredentials);
+                return SignInWithEmail(peer, userCredentials, message);
             }
             else
             {
-                return Task.FromResult<IAccountInfoData>(null);
+                return null;
             }
         }
 
@@ -969,11 +879,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         /// <param name="userCredentials"></param>
         /// <returns></returns>
-        protected virtual async Task<IAccountInfoData> SignInWithEmail(IPeer peer, MstProperties userCredentials)
+        protected virtual async Task<IAccountInfoData> SignInWithEmail(IPeer peer, MstProperties userCredentials, IIncomingMessage message)
         {
-            // Get auth accessor
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-
             // Trying to get user extension from peer
             var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
 
@@ -981,13 +888,8 @@ namespace MasterServerToolkit.MasterServer
             if (userPeerExtension != null)
             {
                 logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
-                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
-            }
-
-            // If no db accessor found
-            if (authDbAccessor == null)
-            {
-                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+                message.Respond("You are already logged in", ResponseStatus.Failed);
+                return null;
             }
 
             // Get user email
@@ -996,18 +898,20 @@ namespace MasterServerToolkit.MasterServer
             // if email is not in valid format
             if (!IsEmailValid(userEmail))
             {
-                throw new MstMessageHandlerException("Your email is not valid", ResponseStatus.Invalid);
+                message.Respond($"Email {userEmail} is invalid", ResponseStatus.Invalid);
+                return null;
             }
 
             // If another session found
             if (IsUserLoggedInByUsername(userEmail))
             {
                 logger.Debug("Another user is already logged in with this account");
-                throw new MstMessageHandlerException("This account is already logged in", ResponseStatus.Failed);
+                message.Respond("This account is already logged in", ResponseStatus.Failed);
+                return null;
             }
 
             // Get account by its email
-            IAccountInfoData userAccount = await authDbAccessor.GetAccountByEmailAsync(userEmail);
+            IAccountInfoData userAccount = await authDatabaseAccessor.GetAccountByEmailAsync(userEmail);
 
             // Create new password
             string newPassword = Mst.Helper.CreateRandomAlphanumericString(userPasswordMinChars);
@@ -1017,7 +921,7 @@ namespace MasterServerToolkit.MasterServer
             // if no account found let's create it
             if (userAccount == null)
             {
-                userAccount = authDbAccessor.CreateAccountInstance();
+                userAccount = authDatabaseAccessor.CreateAccountInstance();
                 userAccount.Username = userEmail;
                 userAccount.Email = userEmail;
                 userAccount.IsGuest = false;
@@ -1025,7 +929,7 @@ namespace MasterServerToolkit.MasterServer
                 userAccount.IsEmailConfirmed = true;
 
                 // Save account and return its id in DB
-                var accountId = await authDbAccessor.InsertNewAccountAsync(userAccount);
+                var accountId = await authDatabaseAccessor.InsertNewAccountAsync(userAccount);
 
                 // Set account Id if it was not defined earlier
                 userAccount.Id = accountId;
@@ -1039,11 +943,12 @@ namespace MasterServerToolkit.MasterServer
             // Let's save user auth token
             userAccount.SetToken(tokenExpiresInDays);
 
-            await authDbAccessor.UpdateAccountAsync(userAccount);
+            await authDatabaseAccessor.UpdateAccountAsync(userAccount);
 
             if (mailer == null)
             {
-                throw new MstMessageHandlerException("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
+                message.Respond("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
+                return null;
             }
 
             StringBuilder emailBody = new StringBuilder();
@@ -1056,7 +961,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (!sentResult)
             {
-                throw new MstMessageHandlerException("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
+                message.Respond("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
+                return null;
             }
 
             return userAccount;
@@ -1068,11 +974,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         /// <param name="userCredentials"></param>
         /// <returns></returns>
-        protected virtual async Task<IAccountInfoData> SignInWithLoginAndPassword(IPeer peer, MstProperties userCredentials)
+        protected virtual async Task<IAccountInfoData> SignInWithLoginAndPassword(IPeer peer, MstProperties userCredentials, IIncomingMessage message)
         {
-            // Get auth accessor
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-
             // Trying to get user extension from peer
             var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
 
@@ -1080,13 +983,8 @@ namespace MasterServerToolkit.MasterServer
             if (userPeerExtension != null)
             {
                 logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
-                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
-            }
-
-            // If no db accessor found
-            if (authDbAccessor == null)
-            {
-                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+                message.Respond("You are already logged in", ResponseStatus.Failed);
+                return null;
             }
 
             // Get username
@@ -1099,28 +997,31 @@ namespace MasterServerToolkit.MasterServer
             if (IsUserLoggedInByUsername(userName))
             {
                 logger.Debug("Another user is already logged in with this account");
-                throw new MstMessageHandlerException("This account is already logged in", ResponseStatus.Failed);
+                message.Respond("This account is already logged in", ResponseStatus.Failed);
+                return null;
             }
 
             // Get account by its username
-            IAccountInfoData userAccount = await authDbAccessor.GetAccountByUsernameAsync(userName);
+            IAccountInfoData userAccount = await authDatabaseAccessor.GetAccountByUsernameAsync(userName);
 
             if (userAccount == null)
             {
                 // Couldn't find an account with this name
-                throw new MstMessageHandlerException("Invalid Credentials", ResponseStatus.Invalid);
+                message.Respond("Invalid Credentials", ResponseStatus.Invalid);
+                return null;
             }
 
             if (!Mst.Security.ValidatePassword(userPassword, userAccount.Password))
             {
                 // Password is not correct
-                throw new MstMessageHandlerException("Invalid Credentials", ResponseStatus.Invalid);
+                message.Respond("Invalid Credentials", ResponseStatus.Invalid);
+                return null;
             }
 
             // Let's save user auth token
             userAccount.SetToken(tokenExpiresInDays);
 
-            await authDbAccessor.UpdateAccountAsync(userAccount);
+            await authDatabaseAccessor.UpdateAccountAsync(userAccount);
 
             return userAccount;
         }
@@ -1131,11 +1032,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         /// <param name="userCredentials"></param>
         /// <returns></returns>
-        protected virtual async Task<IAccountInfoData> SignInByToken(IPeer peer, MstProperties userCredentials)
+        protected virtual async Task<IAccountInfoData> SignInByToken(IPeer peer, MstProperties userCredentials, IIncomingMessage message)
         {
-            // Get auth accessor
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-
             // Trying to get user extension from peer
             var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
 
@@ -1143,42 +1041,40 @@ namespace MasterServerToolkit.MasterServer
             if (userPeerExtension != null)
             {
                 logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
-                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
-            }
-
-            // If no db accessor found
-            if (authDbAccessor == null)
-            {
-                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+                message.Respond("You are already logged in", ResponseStatus.Failed);
+                return null;
             }
 
             // Get account by token
-            IAccountInfoData userAccount = await authDbAccessor.GetAccountByTokenAsync(userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN));
+            IAccountInfoData userAccount = await authDatabaseAccessor.GetAccountByTokenAsync(userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN));
 
             // if no account found
             if (userAccount == null)
             {
-                throw new MstMessageHandlerException("Your token is not valid", ResponseStatus.Invalid);
+                message.Respond("Your token is not valid", ResponseStatus.Invalid);
+                return null;
             }
 
             // If token has expired
             if (userAccount.IsTokenExpired())
             {
-                throw new MstMessageHandlerException("Your session token has expired", ResponseStatus.Invalid);
+                message.Respond("Your session token has expired", ResponseStatus.Invalid);
+                return null;
             }
 
             // If another session found
             if (IsUserLoggedInByUsername(userAccount.Username))
             {
                 logger.Debug("Another user is already logged in with this account");
-                throw new MstMessageHandlerException("This account is already logged in", ResponseStatus.Failed);
+                message.Respond("This account is already logged in", ResponseStatus.Failed);
+                return null;
             }
 
             // Let's set new user auth token
             userAccount.SetToken(tokenExpiresInDays);
 
             // Save account
-            await authDbAccessor.UpdateAccountAsync(userAccount);
+            await authDatabaseAccessor.UpdateAccountAsync(userAccount);
 
             return userAccount;
         }
@@ -1189,11 +1085,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         /// <param name="userCredentials"></param>
         /// <returns></returns>
-        protected virtual async Task<IAccountInfoData> SignInAsGuest(IPeer peer, MstProperties userCredentials)
+        protected virtual async Task<IAccountInfoData> SignInAsGuest(IPeer peer, MstProperties userCredentials, IIncomingMessage message)
         {
-            // Get auth accessor
-            var authDbAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
-
             // Trying to get user extension from peer
             var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
 
@@ -1201,19 +1094,15 @@ namespace MasterServerToolkit.MasterServer
             if (userPeerExtension != null)
             {
                 logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
-                throw new MstMessageHandlerException("You are already logged in", ResponseStatus.Failed);
+                message.Respond("You are already logged in", ResponseStatus.Failed);
+                return null;
             }
 
             // Check if guest login is allowed
             if (!enableGuestLogin)
             {
-                throw new MstMessageHandlerException("Guest login is not allowed in this game", ResponseStatus.Error);
-            }
-
-            // If no db accessor found
-            if (authDbAccessor == null)
-            {
-                throw new MstMessageHandlerException("Account database accessor is not defined in AuthModule", ResponseStatus.Error);
+                message.Respond("Guest login is not allowed in this game", ResponseStatus.Error);
+                return null;
             }
 
             // User device Name and Id
@@ -1226,7 +1115,7 @@ namespace MasterServerToolkit.MasterServer
             // If guest data was allowed to be saved
             if (saveGuestInfo)
                 // Trying to get user account by user device id
-                userAccount = await authDbAccessor.GetAccountByDeviceIdAsync(userDeviceId);
+                userAccount = await authDatabaseAccessor.GetAccountByDeviceIdAsync(userDeviceId);
 
             // If current client is on the same device
             bool anotherGuestOnTheSameDevice = userAccount != null && IsUserLoggedInById(userAccount.Id);
@@ -1234,7 +1123,7 @@ namespace MasterServerToolkit.MasterServer
             // If guest has no account create it
             if (userAccount == null || anotherGuestOnTheSameDevice)
             {
-                userAccount = authDbAccessor.CreateAccountInstance();
+                userAccount = authDatabaseAccessor.CreateAccountInstance();
                 userAccount.Username = GenerateGuestUsername();
                 userAccount.DeviceId = userDeviceId;
                 userAccount.DeviceName = userDeviceName;
@@ -1243,13 +1132,13 @@ namespace MasterServerToolkit.MasterServer
                 if (saveGuestInfo && !anotherGuestOnTheSameDevice)
                 {
                     // Save account and return its id in DB
-                    var accountId = await authDbAccessor.InsertNewAccountAsync(userAccount);
+                    var accountId = await authDatabaseAccessor.InsertNewAccountAsync(userAccount);
 
                     // Set account Id if it was not defined earlier
                     userAccount.Id = accountId;
 
                     // Save all updates
-                    await authDbAccessor.UpdateAccountAsync(userAccount);
+                    await authDatabaseAccessor.UpdateAccountAsync(userAccount);
                 }
             }
 

@@ -156,7 +156,7 @@ namespace MasterServerToolkit.MasterServer
             Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
         }
 
-        private void OnConnectedToMasterEventHandler()
+        private void OnConnectedToMasterEventHandler(IClientSocket client)
         {
             logger.Info("Room server connected to master server as client");
 
@@ -165,7 +165,7 @@ namespace MasterServerToolkit.MasterServer
                 StopCoroutine(TerminateRoomAfterDelay());
             }
 
-            MstTimer.WaitForEndOfFrame(() =>
+            MstTimer.Instance.WaitForEndOfFrame(() =>
             {
                 // If this room was spawned
                 if (Mst.Server.Spawners.IsSpawnedProccess)
@@ -184,7 +184,7 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
-        private void OnDisconnectedFromMasterEventHandler()
+        private void OnDisconnectedFromMasterEventHandler(IClientSocket client)
         {
             if (terminateRoomWhenDisconnected)
             {
@@ -222,7 +222,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomPeerId"></param>
         public virtual void OnPeerDisconnected(int roomPeerId)
         {
-            MstTimer.WaitForSeconds(0.2f, () =>
+            MstTimer.Instance.WaitForSeconds(0.2f, () =>
             {
                 // Try to find player in filtered list
                 if (playersByRoomPeerId.TryGetValue(roomPeerId, out RoomPlayer player))
@@ -288,8 +288,10 @@ namespace MasterServerToolkit.MasterServer
                                 throw new Exception(accountError);
                             }
 
+                            var accountProperties = new MstProperties(accountInfo.Properties);
+
                             // If we do not want guest users to play in our room
-                            if (!allowGuestUsers && accountInfo.Properties.Has(MstDictKeys.USER_IS_GUEST) && accountInfo.Properties.AsBool(MstDictKeys.USER_IS_GUEST))
+                            if (!allowGuestUsers && accountProperties.Has(MstDictKeys.USER_IS_GUEST) && accountProperties.AsBool(MstDictKeys.USER_IS_GUEST))
                             {
                                 // Remove guest player from room on master server
                                 if (RoomController.IsActive)
@@ -299,9 +301,9 @@ namespace MasterServerToolkit.MasterServer
                             }
 
                             // Create new room player
-                            var player = new RoomPlayer(usernameAndPeerId.PeerId, roomPeerId, accountInfo.UserId, accountInfo.Username, accountInfo.Properties)
+                            var player = new RoomPlayer(usernameAndPeerId.PeerId, roomPeerId, accountInfo.UserId, accountInfo.Username, accountProperties)
                             {
-                                Profile = ProfileFactory(accountInfo.UserId)
+                                Profile = ProfileFactory.Invoke(accountInfo.UserId)
                             };
 
                             // Add this player to filtered lists
@@ -495,7 +497,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="accessCheckOptions"></param>
         /// <param name="giveAccess"></param>
-        protected virtual void CreateAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallback giveAccess)
+        protected virtual void CreateAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallbackDelegate giveAccess)
         {
             // Use accessCheckOptions to check user that requested access to room
             giveAccess.Invoke(new RoomAccessPacket()
@@ -534,7 +536,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="player"></param>
         protected virtual void OnPlayerJoinedRoom(RoomPlayer player)
         {
-            MstTimer.WaitForSeconds(2f, () =>
+            MstTimer.Instance.WaitForSeconds(2f, () =>
             {
                 Mst.Server.Notifications.NotifyRecipient(player.MasterPeerId,
                             $"Hi, {player.Username.ToRed()}!\nWelcome to \"{RoomOptions.Name}\" server", null);

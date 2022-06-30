@@ -65,7 +65,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             float timeToWait = Random.Range(3f, 10f);
 
-            MstTimer.WaitForRealtimeSeconds(timeToWait, () =>
+            MstTimer.Instance.WaitForRealtimeSeconds(timeToWait, () =>
             {
                 var task = tasks[Random.Range(0, tasks.Count)];
                 string message = $"<color=#B7E117FF>{task["title"]}</color>\n".ToUpper() +

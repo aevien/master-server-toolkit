@@ -9,7 +9,7 @@ namespace MasterServerToolkit.MasterServer
     {
         public ObservableDictionaryInt(ushort key) : base(key) { }
 
-        public ObservableDictionaryInt(ushort key, Dictionary<int, int> defaultValues) : base(key, defaultValues)  { }
+        public ObservableDictionaryInt(ushort key, Dictionary<int, int> defaultValues) : base(key, defaultValues) { }
 
         public override string Serialize()
         {

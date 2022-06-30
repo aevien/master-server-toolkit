@@ -73,5 +73,33 @@ namespace MasterServerToolkit.Utils
                 }
             }
         }
+
+
+        public void UnloadSceneByName(string sceneName, bool unloadUnusedAssets, UnityAction<float> onProgress, UnityAction onUnloaded)
+        {
+            StartCoroutine(UnloadScene(sceneName, unloadUnusedAssets, onProgress, onUnloaded));
+        }
+
+        IEnumerator UnloadScene(string sceneName, bool unloadUnusedAssets, UnityAction<float> onProgress, UnityAction onUnloaded)
+        {
+
+            AsyncOperation asyncOperation = SceneManager.UnloadSceneAsync(sceneName);
+
+            if (asyncOperation == null) yield return null;
+
+            asyncOperation.completed += (op) =>
+            {
+                loadedScenes.Remove(sceneName);
+                onUnloaded?.Invoke();
+            };
+
+            while (!asyncOperation.isDone)
+            {
+                onProgress?.Invoke(asyncOperation.progress);
+                yield return null;
+            }
+
+            if (unloadUnusedAssets) yield return Resources.UnloadUnusedAssets();
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using MasterServerToolkit.Networking;
-using System;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -12,7 +11,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "4.9.2";
+        public static string Version => "4.10";
 
         /// <summary>
         /// Just name of the framework
@@ -23,6 +22,11 @@ namespace MasterServerToolkit.MasterServer
         /// Root menu of framework
         /// </summary>
         public const string ToolMenu = "Tools/Master Server Toolkit/";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public const string CreateMenu = "Master Server Toolkit/";
 
         /// <summary>
         /// Check if MST in dev mode
@@ -37,7 +41,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Advanced master server framework settings
         /// </summary>
-        public static MstAdvancedSettings Advanced { get; private set; }
+        public static MstAdvancedSettings Settings { get; private set; }
 
         /// <summary>
         /// Collection of methods, that can be used BY CLIENT, connected to master server
@@ -90,6 +94,11 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
+        public static MstAnalytics Analytics { get; private set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static MstProperties Options { get; private set; }
 
         static Mst()
@@ -98,7 +107,7 @@ namespace MasterServerToolkit.MasterServer
             Helper = new MstHelper();
 
             // Initialize advanced settings
-            Advanced = new MstAdvancedSettings();
+            Settings = new MstAdvancedSettings();
 
             // Initialize runtime data
             Runtime = new MstRuntime();
@@ -110,7 +119,7 @@ namespace MasterServerToolkit.MasterServer
             Options = new MstProperties();
 
             // Create a default connection
-            Connection = Advanced.ClientSocketFactory();
+            Connection = Settings.ClientSocketFactory();
 
             // Initialize parts of framework, that act as "clients"
             Client = new MstClient(Connection);
@@ -121,6 +130,9 @@ namespace MasterServerToolkit.MasterServer
             Create = new MstCreate();
             Concurrency = new MstConcurrency();
             Events = new MstEventsChannel("default", true);
+
+            //
+            Analytics = new MstAnalytics();
 
             UseDevMode = Args.UseDevMode;
         }

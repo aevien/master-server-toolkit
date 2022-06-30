@@ -1,4 +1,5 @@
 using MasterServerToolkit.Networking;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +13,12 @@ namespace MasterServerToolkit.MasterServer
         private const byte _removeOperation = 1;
         private const byte _insertOperation = 2;
         private Queue<ListUpdateEntry> _updates;
+        public int Count => _value.Count;
+
+        public event Action<T, T> OnSetEvent;
+        public event Action<T> OnAddEvent;
+        public event Action<int, T> OnInsertEvent;
+        public event Action<T> OnRemoveEvent;
 
         protected ObservableBaseList(ushort key) : this(key, null) { }
 
@@ -42,23 +49,15 @@ namespace MasterServerToolkit.MasterServer
 
                 _value[index] = value;
 
-                MarkDirty();
-
                 _updates.Enqueue(new ListUpdateEntry()
                 {
                     index = index,
                     operation = _setOperation,
                     value = value
                 });
-            }
-        }
 
-        /// <summary>
-        /// The number of items in list
-        /// </summary>
-        public int Count()
-        {
-            return _value.Count;
+                MarkDirty();
+            }
         }
 
         /// <summary>
@@ -85,9 +84,9 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="collection"></param>
         public void AddRange(IEnumerable<T> collection)
         {
-            _value.AddRange(collection);
+            int startIndex = _value.Count > 0 ? _value.Count - 1 : 0;
 
-            int startIndex = _value.Count - 1;
+            _value.AddRange(collection);
 
             for (int i = startIndex; i < _value.Count; i++)
             {
@@ -127,7 +126,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool Remove(T value)
         {
-            int index = _value.IndexOf(value);
+            int index = IndexOf(value);
 
             if (index >= 0)
             {
@@ -136,6 +135,16 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public int IndexOf(T value)
+        {
+            return _value.IndexOf(value);
         }
 
         /// <summary>
@@ -213,6 +222,7 @@ namespace MasterServerToolkit.MasterServer
                     for (var i = 0; i < count; i++)
                     {
                         var value = ReadValue(reader);
+
                         if (i < _value.Count)
                         {
                             _value[i] = value;
@@ -267,7 +277,9 @@ namespace MasterServerToolkit.MasterServer
 
                         if (operation == _removeOperation)
                         {
+                            T item = _value[index];
                             _value.RemoveAt(index);
+                            OnRemoveEvent?.Invoke(item);
                             continue;
                         }
 
@@ -276,16 +288,20 @@ namespace MasterServerToolkit.MasterServer
                         if (operation == _insertOperation)
                         {
                             _value.Insert(index, value);
+                            OnInsertEvent?.Invoke(index, value);
                             continue;
                         }
 
                         if (index < _value.Count)
                         {
+                            T old = _value[index];
                             _value[index] = value;
+                            OnSetEvent?.Invoke(old, value);
                         }
                         else
                         {
                             _value.Add(value);
+                            OnAddEvent?.Invoke(value);
                         }
                     }
                 }
@@ -307,6 +323,22 @@ namespace MasterServerToolkit.MasterServer
         public override void ClearUpdates()
         {
             _updates.Clear();
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            foreach (var v in _value)
+            {
+                yield return v;
+            }
+        }
+
+        public void Clear()
+        {
+            for(int i = 0; i < _value.Count; i++)
+            {
+                RemoveAt(i);
+            }
         }
 
         private struct ListUpdateEntry

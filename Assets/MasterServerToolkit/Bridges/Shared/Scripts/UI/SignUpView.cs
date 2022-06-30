@@ -105,7 +105,7 @@ namespace MasterServerToolkit.Games
         {
             AuthBehaviour.Instance.SignUp(Username, Email, Password);
         }
-        
+
         /// <summary>
         /// Shows sing in view by sending event
         /// </summary>

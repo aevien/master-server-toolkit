@@ -47,6 +47,11 @@ namespace MasterServerToolkit.Networking
         ResponseStatus Status { get; }
 
         /// <summary>
+        /// Content of the message
+        /// </summary>
+        byte[] Data { get; }
+
+        /// <summary>
         /// Returns true if message contains any data
         /// </summary>
         bool HasData { get; }

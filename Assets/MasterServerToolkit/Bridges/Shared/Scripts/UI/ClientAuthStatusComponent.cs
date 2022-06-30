@@ -1,6 +1,4 @@
 ﻿using MasterServerToolkit.MasterServer;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +10,7 @@ namespace MasterServerToolkit.Games
         #region INSPECTOR
         [Header("Settings"), SerializeField]
         private bool changeStatusColor = true;
-        
+
         [Header("Status Colors"), SerializeField]
         private Color unauthorizedStatusColor = Color.red;
         [SerializeField]

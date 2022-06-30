@@ -1,10 +1,7 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicNetworking
 {
@@ -23,7 +20,7 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         public void SendNetMessage()
         {
             string message = "Hello from client";
-            Mst.Client.Connection.SendMessage((ushort)MessageCodes.Message, message);
+            Mst.Client.Connection.SendMessage(MessageCodes.Message, message);
         }
 
         /// <summary>
@@ -32,7 +29,7 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         public void SendNetMessageWithResponse()
         {
             string text = "Hello from client and waiting for response from server";
-            Mst.Client.Connection.SendMessage((ushort)MessageCodes.MessageWithResponse, text, (status, message) =>
+            Mst.Client.Connection.SendMessage(MessageCodes.MessageWithResponse, text, (status, message) =>
             {
                 if (status == Networking.ResponseStatus.Error)
                 {
@@ -47,7 +44,7 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         /// <summary>
         /// Connection callback handler
         /// </summary>
-        private void Connection_OnConnectedEvent()
+        private void Connection_OnConnectedEvent(IClientSocket client)
         {
             Logs.Info("Now the client is ready to send messages to server and receive responses from it");
         }
@@ -55,7 +52,7 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         /// <summary>
         /// Disconnection callback
         /// </summary>
-        private void Connection_OnDisconnectedEvent()
+        private void Connection_OnDisconnectedEvent(IClientSocket client)
         {
             Logs.Info("Client disconnected from server");
         }

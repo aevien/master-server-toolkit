@@ -1,8 +1,6 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -191,7 +189,7 @@ namespace MasterServerToolkit.Games
                 statusInfoText.gameObject.SetActive(true);
             }
 
-            MstTimer.WaitForSeconds(0.5f, () =>
+            MstTimer.Instance.WaitForSeconds(0.5f, () =>
             {
                 // Join default chat
                 Mst.Client.Chat.JoinChannel(defaultChannelName, (isSuccess, joinChannelError) =>

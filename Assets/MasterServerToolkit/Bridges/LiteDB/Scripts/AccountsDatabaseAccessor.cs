@@ -1,5 +1,4 @@
 ﻿using LiteDB;
-using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;

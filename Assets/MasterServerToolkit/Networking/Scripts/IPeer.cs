@@ -16,14 +16,29 @@ namespace MasterServerToolkit.Networking
         int Id { get; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        DateTime StartActivity { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        DateTime LastActivity { get; set; }
+
+        /// <summary>
         /// True, if connection is stil valid
         /// </summary>
         bool IsConnected { get; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        event PeerActionHandler OnConnectionOpenEvent;
+
+        /// <summary>
         /// Invoked when peer disconnects
         /// </summary>
-        event PeerActionHandler OnPeerDisconnectedEvent;
+        event PeerActionHandler OnConnectionCloseEvent;
 
         /// <summary>
         /// Invoked when peer receives a message
@@ -90,6 +105,14 @@ namespace MasterServerToolkit.Networking
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         T GetExtension<T>() where T : IPeerExtension;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="extension"></param>
+        /// <returns></returns>
+        bool TryGetExtension<T>(out T extension) where T : IPeerExtension;
 
         /// <summary>
         /// Check if peer has <see cref="IPeerExtension"/>

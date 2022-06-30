@@ -1,0 +1,21 @@
+<script type="text/javascript">
+    const SystemInfo = {
+        data() {
+            return {}
+        },
+        created() {
+            let vm = this
+            vm.$store.dispatch('loadSystemInfo')
+        },
+        computed: {
+            systemInfo() {
+                return this.$store.getters.systemInfo
+            },
+            serverInfo() {
+                return this.$store.getters.serverInfo
+            }
+        },
+        methods: {},
+        template: `#vueComponentTemplate`
+    }
+</script>

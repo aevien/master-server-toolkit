@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -22,7 +21,8 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// 
         /// </summary>
-        public Vector2 Size {
+        public Vector2 Size
+        {
             get
             {
                 if (!rectTransform) rectTransform = GetComponent<RectTransform>();

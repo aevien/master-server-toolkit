@@ -1,6 +1,5 @@
 using MasterServerToolkit.MasterServer;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using WebSocketSharp;
@@ -86,7 +85,7 @@ namespace MasterServerToolkit.Networking
         [DllImport("__Internal")]
         private static extern int MstSocketError(int socketInstance, byte[] ptr, int length);
 
-        public bool IsConnected => return MstSocketState(m_NativeRef) == 1;
+        public bool IsConnected => MstSocketState(m_NativeRef) == 1;
 
         public int CloseCode => MstSocketCode(m_NativeRef);
 

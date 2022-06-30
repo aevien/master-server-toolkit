@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>#mstTitle #mstVersion</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1 text-uppercase">
+                    <img src="#logo" alt="#mstTitle #mstVersion" style="height:40px" />
+                </span>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active"
+                               id="system-info-tab"
+                               data-bs-toggle="tab"
+                               data-bs-target="#system-info-tab-pane"
+                               type="button"
+                               role="tab"
+                               aria-controls="system-info-tab-pane"
+                               aria-selected="true"
+                               href="#"
+                               @click="pageTitle='System And Server Info'">
+                                System And Server
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link"
+                               id="server-info-tab"
+                               data-bs-toggle="tab"
+                               data-bs-target="#server-info-tab-pane"
+                               type="button"
+                               role="tab"
+                               aria-controls="server-info-tab-pane"
+                               aria-selected="false"
+                               href="#"
+                               @click="pageTitle='Analytics'">
+                                Analytics
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link"
+                               id="modules-info-tab"
+                               data-bs-toggle="tab"
+                               data-bs-target="#modules-info-tab-pane"
+                               type="button"
+                               role="tab"
+                               aria-controls="modules-info-tab-pane"
+                               aria-selected="false"
+                               href="#"
+                               @click="pageTitle='Modules'">
+                                Modules
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                Analytics Sources
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-lg-end" aria-labelledby="navbarDropdown">
+                                <li v-for="(item, index) in sources" :key="item">
+                                    <a class="dropdown-item" @click="selectSource(item)" href="#" :class="{active : item == selectedSource}">
+                                        {{item}}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col p-0">
+                    <div class="card border-light">
+                        <div class="card-header text-uppercase fw-semibold d-flex">
+                            {{pageTitle}} [{{selectedSource}}]
+                            <div class="form-check form-switch ms-auto">
+                                <input class="form-check-input" @click="toggleUseUpdate" type="checkbox" checked role="switch" id="useUpdateCheckbox">
+                                <label class="form-check-label" for="useUpdateCheckbox">
+                                    <span v-if="$store.getters.useUpdate">Update On</span>
+                                    <span v-else>Update Off</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content" id="mstTabContent">
+                                <div class="tab-pane fade show active p-0" id="system-info-tab-pane" role="tabpanel" aria-labelledby="system-info-tab" tabindex="0">
+                                    <system-info />
+                                </div>
+                                <div class="tab-pane fade" id="server-info-tab-pane" role="tabpanel" aria-labelledby="server-info-tab" tabindex="0">
+                                    <analytics-info />
+                                </div>
+                                <div class="tab-pane fade" id="modules-info-tab-pane" role="tabpanel" aria-labelledby="modules-info-tab" tabindex="0">
+                                    <modules-info />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js" integrity="sha256-ErZ09KkZnzjpqcane4SCyyHsKAXMvID9/xwbl/Aq1pc=" crossorigin="anonymous"></script>
+    #jsOutput
+</body>
+</html>

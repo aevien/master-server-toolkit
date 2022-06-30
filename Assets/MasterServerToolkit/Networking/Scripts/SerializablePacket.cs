@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace MasterServerToolkit.Networking
 {
@@ -39,6 +40,15 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public string ToBase64String()
+        {
+            return Convert.ToBase64String(ToBytes());
+        }
+
+        /// <summary>
         /// Parses packet from bytes
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -55,6 +65,18 @@ namespace MasterServerToolkit.Networking
                     return packet;
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <param name="packet"></param>
+        /// <returns></returns>
+        public static T FromBase64String<T>(string value, T packet) where T : ISerializablePacket
+        {
+            return FromBytes(Convert.FromBase64String(value), packet);
         }
 
         /// <summary>

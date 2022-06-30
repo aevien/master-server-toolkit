@@ -1,10 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
-using MasterServerToolkit.MasterServer;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
-using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -30,9 +25,18 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public ServerBehaviour MasterServer { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public virtual void Dispose() { }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="httpServer"></param>
         public virtual void Initialize(HttpServerModule httpServer)
         {
-            HttpServer = httpServer; 
+            HttpServer = httpServer;
             MasterServer = httpServer.Server;
 
             logger = Mst.Create.Logger(GetType().Name);

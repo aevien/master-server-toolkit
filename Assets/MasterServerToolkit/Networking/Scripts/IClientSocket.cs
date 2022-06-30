@@ -2,6 +2,9 @@
 
 namespace MasterServerToolkit.Networking
 {
+    public delegate void ConnectionDelegate(IClientSocket client);
+    public delegate void ConnectionStatusDelegate(ConnectionStatus status);
+
     public interface IClientSocket : IMsgDispatcher
     {
         /// <summary>
@@ -38,18 +41,18 @@ namespace MasterServerToolkit.Networking
         /// Event, which is invoked when we successfully 
         /// connect to another socket
         /// </summary>
-        event Action OnConnectionOpenEvent;
+        event ConnectionDelegate OnConnectionOpenEvent;
 
         /// <summary>
         /// Event, which is invoked when we are
         /// disconnected from another socket with normal code
         /// </summary>
-        event Action OnConnectionCloseEvent;
+        event ConnectionDelegate OnConnectionCloseEvent;
 
         /// <summary>
         /// Event, invoked when connection status changes
         /// </summary>
-        event Action<ConnectionStatus> OnStatusChangedEvent;
+        event ConnectionStatusDelegate OnStatusChangedEvent;
 
         /// <summary>
         /// Starts connecting to another socket
@@ -74,14 +77,14 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="connectionCallback"></param>
         /// <param name="timeoutSeconds"></param>
-        void WaitForConnection(Action<IClientSocket> connectionCallback, float timeoutSeconds);
+        void WaitForConnection(ConnectionDelegate connectionCallback, float timeoutSeconds);
 
         /// <summary>
         /// Invokes a callback when connection is established, or after the timeout
         /// (even if failed to connect). If already connected, callback is invoked instantly
         /// </summary>
         /// <param name="connectionCallback"></param>
-        void WaitForConnection(Action<IClientSocket> connectionCallback);
+        void WaitForConnection(ConnectionDelegate connectionCallback);
 
         /// <summary>
         /// Adds a listener, which is invoked when connection is established,
@@ -90,13 +93,13 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="callback"></param>
         /// <param name="invokeInstantlyIfConnected"></param>
-        void AddConnectionOpenListener(Action callback, bool invokeInstantlyIfConnected = true);
+        void AddConnectionOpenListener(ConnectionDelegate callback, bool invokeInstantlyIfConnected = true);
 
         /// <summary>
         /// Removes connection listener
         /// </summary>
         /// <param name="callback"></param>
-        void RemoveConnectionOpenListener(Action callback);
+        void RemoveConnectionOpenListener(ConnectionDelegate callback);
 
         /// <summary>
         /// Adds listener, which is invoked when connection is closed,
@@ -104,13 +107,13 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="callback"></param>
         /// <param name="invokeInstantlyIfDisconnected"></param>
-        void AddConnectionCloseListener(Action callback, bool invokeInstantlyIfDisconnected = true);
+        void AddConnectionCloseListener(ConnectionDelegate callback, bool invokeInstantlyIfDisconnected = true);
 
         /// <summary>
         /// Removes disconnection listener
         /// </summary>
         /// <param name="callback"></param>
-        void RemoveConnectionCloseListener(Action callback);
+        void RemoveConnectionCloseListener(ConnectionDelegate callback);
 
         /// <summary>
         /// Adds a packet handler, which will be invoked when a message of

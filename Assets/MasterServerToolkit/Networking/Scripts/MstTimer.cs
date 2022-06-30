@@ -7,11 +7,8 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
-    /// <summary>
-    /// Done handler delegate
-    /// </summary>
-    /// <param name="isSuccessful"></param>
     public delegate void TimerActionCompleteHandler(bool isSuccessful);
+    public delegate void TickActionHandler(long currentTick);
 
     /// <summary>
     /// Pink wait handler delegate
@@ -23,17 +20,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// List of main thread actions
         /// </summary>
-        private List<Action> _mainThreadActions;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private List<Action> _debouncedActions;
-
-        /// <summary>
-        /// Main thread lockobject
-        /// </summary>
-        private readonly object _mainThreadLock = new object();
+        private Queue<Action> _mainThreadActions;
 
         /// <summary>
         /// Current tick of scaled time
@@ -43,7 +30,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Event, which is invoked every second
         /// </summary>
-        public event Action<long> OnTickEvent;
+        public event TickActionHandler OnTickEvent;
 
         /// <summary>
         /// Invokes when application shuts down
@@ -58,10 +45,7 @@ namespace MasterServerToolkit.Networking
             Application.runInBackground = true;
 
             // Create list of main thread actions
-            _mainThreadActions = new List<Action>();
-
-            // 
-            _debouncedActions = new List<Action>();
+            _mainThreadActions = new Queue<Action>();
 
             // Start timer
             StartCoroutine(StartTicker());
@@ -69,16 +53,11 @@ namespace MasterServerToolkit.Networking
 
         private void Update()
         {
-            if (_mainThreadActions.Count > 0)
+            lock (_mainThreadActions)
             {
-                lock (_mainThreadLock)
+                while (_mainThreadActions.Count > 0)
                 {
-                    foreach (var actions in _mainThreadActions)
-                    {
-                        actions.Invoke();
-                    }
-
-                    _mainThreadActions.Clear();
+                    _mainThreadActions.Dequeue()?.Invoke();
                 }
             }
         }
@@ -96,10 +75,9 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="address"></param>
         /// <param name="callback"></param>
-        public static void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
+        public void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
         {
-            if (Instance)
-                Instance.StartCoroutine(WaitPingCoroutine(address, callback, timeout));
+            StartCoroutine(WaitPingCoroutine(address, callback, timeout));
         }
 
         /// <summary>
@@ -108,7 +86,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="address"></param>
         /// <param name="callback"></param>
         /// <returns></returns>
-        private static IEnumerator WaitPingCoroutine(string address, WaitPingCallback callback, float timeout)
+        private IEnumerator WaitPingCoroutine(string address, WaitPingCallback callback, float timeout)
         {
             DateTime startTime = DateTime.Now;
             DateTime endTime = startTime.AddSeconds(timeout);
@@ -139,10 +117,9 @@ namespace MasterServerToolkit.Networking
         /// <param name="condition"></param>
         /// <param name="completeCallback"></param>
         /// <param name="timeoutSeconds"></param>
-        public static void WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
+        public void WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            if (Instance)
-                Instance.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
+            StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
         }
 
         /// <summary>
@@ -152,10 +129,9 @@ namespace MasterServerToolkit.Networking
         /// <param name="condition"></param>
         /// <param name="completeCallback"></param>
         /// <param name="timeoutSeconds"></param>
-        public static void WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
+        public void WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            if (Instance)
-                Instance.StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
+            StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
         }
 
         /// <summary>
@@ -166,7 +142,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="timeoutSeconds"></param>
         /// <param name="reverseCondition"></param>
         /// <returns></returns>
-        private static IEnumerator WaitWhileTrueCoroutine(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds, bool reverseCondition = false)
+        private IEnumerator WaitWhileTrueCoroutine(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds, bool reverseCondition = false)
         {
             while ((timeoutSeconds > 0) && (condition.Invoke() == !reverseCondition))
             {
@@ -182,10 +158,9 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="time"></param>
         /// <param name="callback"></param>
-        public static void WaitForSeconds(float time, Action callback)
+        public void WaitForSeconds(float time, Action callback)
         {
-            if (Instance)
-                Instance.StartCoroutine(Instance.StartWaitingForSeconds(time, callback));
+            StartCoroutine(StartWaitingForSeconds(time, callback));
         }
 
         /// <summary>
@@ -205,10 +180,9 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="time"></param>
         /// <param name="callback"></param>
-        public static void WaitForRealtimeSeconds(float time, Action callback)
+        public void WaitForRealtimeSeconds(float time, Action callback)
         {
-            if (Instance)
-                Instance.StartCoroutine(Instance.StartWaitingForRealtimeSeconds(time, callback));
+            StartCoroutine(StartWaitingForRealtimeSeconds(time, callback));
         }
 
         /// <summary>
@@ -227,10 +201,9 @@ namespace MasterServerToolkit.Networking
         /// 
         /// </summary>
         /// <param name="callback"></param>
-        public static void WaitForEndOfFrame(Action callback)
+        public void WaitForEndOfFrame(Action callback)
         {
-            if (Instance)
-                Instance.StartCoroutine(Instance.StartWaitingForEndOfFrame(callback));
+            StartCoroutine(StartWaitingForEndOfFrame(callback));
         }
 
         /// <summary>
@@ -248,10 +221,9 @@ namespace MasterServerToolkit.Networking
         /// 
         /// </summary>
         /// <param name="action"></param>
-        public static void RunInMainThread(Action action)
+        public void RunInMainThread(Action action)
         {
-            if (Instance)
-                Instance.AddToMainThread(action);
+            AddToMainThread(action);
         }
 
         /// <summary>
@@ -260,9 +232,9 @@ namespace MasterServerToolkit.Networking
         /// <param name="action"></param>
         private void AddToMainThread(Action action)
         {
-            lock (_mainThreadLock)
+            lock (_mainThreadActions)
             {
-                _mainThreadActions.Add(action);
+                _mainThreadActions.Enqueue(action);
             }
         }
 

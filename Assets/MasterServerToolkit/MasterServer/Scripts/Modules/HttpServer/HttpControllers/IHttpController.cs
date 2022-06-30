@@ -1,6 +1,8 @@
-﻿namespace MasterServerToolkit.MasterServer
+﻿using System;
+
+namespace MasterServerToolkit.MasterServer
 {
-    public interface IHttpController
+    public interface IHttpController : IDisposable
     {
         HttpServerModule HttpServer { get; set; }
         ServerBehaviour MasterServer { get; set; }

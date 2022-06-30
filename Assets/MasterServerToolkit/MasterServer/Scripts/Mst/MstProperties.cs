@@ -10,6 +10,8 @@ namespace MasterServerToolkit.MasterServer
     {
         private Dictionary<string, string> properties;
 
+        public int Count => properties.Count;
+
         public MstProperties()
         {
             properties = new Dictionary<string, string>();
@@ -184,6 +186,26 @@ namespace MasterServerToolkit.MasterServer
         public void Add(string key)
         {
             AddToOptions(key, string.Empty);
+        }
+
+        /// <summary>
+        /// Add float item
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        public void Add(string key, object value)
+        {
+            AddToOptions(key, value);
+        }
+
+        /// <summary>
+        /// Set float item
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        public void Set(string key, object value)
+        {
+            SetToOptions(key, value);
         }
 
         /// <summary>
@@ -557,6 +579,18 @@ namespace MasterServerToolkit.MasterServer
         public override string ToString()
         {
             return ToReadableString();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        {
+            foreach (var kvp in properties)
+            {
+                yield return kvp;
+            }
         }
     }
 }

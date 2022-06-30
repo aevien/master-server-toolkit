@@ -1,7 +1,5 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace MasterServerToolkit.MasterServer
 {

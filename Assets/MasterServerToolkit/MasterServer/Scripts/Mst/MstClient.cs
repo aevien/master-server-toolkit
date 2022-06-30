@@ -20,8 +20,6 @@ namespace MasterServerToolkit.MasterServer
 
         public MstNotificationClient Notifications { get; private set; }
 
-        public MstAnalytics Analytics { get; private set; }
-
         public MstClient(IClientSocket connection) : base(connection)
         {
             Rooms = new MstRoomsClient(connection);
@@ -32,7 +30,6 @@ namespace MasterServerToolkit.MasterServer
             Lobbies = new MstLobbiesClient(connection);
             Profiles = new MstProfilesClient(connection);
             Notifications = new MstNotificationClient(connection);
-            Analytics = new MstAnalytics();
         }
     }
 }

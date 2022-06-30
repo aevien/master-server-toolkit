@@ -13,7 +13,7 @@ namespace MasterServerToolkit.MasterServer.Web
         /// <param name="node"></param>
         protected void AssignAttributes(XmlElement node)
         {
-            foreach(var kvp in Attributes)
+            foreach (var kvp in Attributes)
             {
                 node.SetAttribute(kvp.Key, kvp.Value);
             }

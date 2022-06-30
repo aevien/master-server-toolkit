@@ -48,7 +48,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="packetCreator">Factory function</param>
         /// <returns></returns>
-        public static IEnumerable<T> DeserializeList<T>(byte[] data, Func<T> packetCreator)  where T : ISerializablePacket
+        public static IEnumerable<T> DeserializeList<T>(byte[] data, Func<T> packetCreator) where T : ISerializablePacket
         {
             using (var ms = new MemoryStream(data))
             {

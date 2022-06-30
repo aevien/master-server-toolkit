@@ -1,7 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -12,22 +11,28 @@ namespace MasterServerToolkit.Networking
     /// <summary>
     /// Server socket, which accepts websocket connections
     /// </summary>
-    public partial class WsServerSocket : IServerSocket, IUpdatable
+    public class WsServerSocket : IServerSocket
     {
         private WebSocketServer server;
-        private readonly Queue<Action> executeOnUpdate;
-        private Logger logger;
+        private readonly Logger logger;
+        private LogLevel logLevel = LogLevel.Info;
 
         public bool UseSecure { get; set; }
         public string CertificatePath { get; set; }
         public string CertificatePassword { get; set; }
         public string ApplicationKey { get; set; }
-        public LogLevel LogLevel { get; set; } = LogLevel.Info;
+        public LogLevel LogLevel
+        {
+            get
+            {
+                return logLevel;
+            }
+            set
+            {
+                logLevel = value;
+            }
+        }
 
-        /// <summary>
-        /// Invokes before server frame is updated
-        /// </summary>
-        public event Action OnUpdateEvent;
         public event PeerActionHandler OnPeerConnectedEvent;
         public event PeerActionHandler OnPeerDisconnectedEvent;
         public event Action<IServerSocket> OnBeforeServerStart;
@@ -35,8 +40,7 @@ namespace MasterServerToolkit.Networking
         public WsServerSocket()
         {
             logger = Mst.Create.Logger(GetType().Name);
-            logger.LogLevel = LogLevel;
-            executeOnUpdate = new Queue<Action>();
+            logger.LogLevel = logLevel;
         }
 
         /// <summary>
@@ -118,9 +122,9 @@ namespace MasterServerToolkit.Networking
                         server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath, CertificatePassword);
 
                     server.SslConfiguration.EnabledSslProtocols =
-                        System.Security.Authentication.SslProtocols.Tls12
-                        | System.Security.Authentication.SslProtocols.Ssl3
-                        | System.Security.Authentication.SslProtocols.Default;
+                        System.Security.Authentication.SslProtocols.Tls
+                        | System.Security.Authentication.SslProtocols.Tls11
+                        | System.Security.Authentication.SslProtocols.Tls12;
                 }
 
                 // Setup all services used by server
@@ -131,9 +135,6 @@ namespace MasterServerToolkit.Networking
 
                 // Start server
                 server.Start();
-
-                // Add this server to updater
-                MstUpdateRunner.Instance.Add(this);
             }
             catch (CryptographicException e)
             {
@@ -150,20 +151,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public void Stop()
         {
-            MstUpdateRunner.Instance.Remove(this);
             server?.Stop();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="action"></param>
-        public void ExecuteOnUpdate(Action action)
-        {
-            lock (executeOnUpdate)
-            {
-                executeOnUpdate.Enqueue(action);
-            }
         }
 
         /// <summary>
@@ -175,55 +163,24 @@ namespace MasterServerToolkit.Networking
             // Master server service
             server.AddWebSocketService<WsService>($"/app/{ApplicationKey}", (serviceForPeer) =>
             {
-                serviceForPeer.IgnoreExtensions = true;
-                serviceForPeer.SetServerSocket(this);
-
-                var peer = new WsServerPeer(serviceForPeer);
-
-                serviceForPeer.OnOpenEvent += () =>
+                var peer = new WsServerPeer(serviceForPeer)
                 {
-                    ExecuteOnUpdate(() =>
-                    {
-                        peer.SendDelayedMessages();
-                        OnPeerConnectedEvent?.Invoke(peer);
-                    });
-
-                    logger.Debug($"Connection for peer [{peer.Id}] is open");
+                    LogLevel = logLevel
                 };
 
-                serviceForPeer.OnMessageEvent += (data) =>
+                peer.OnConnectionOpenEvent += (peer) =>
                 {
-                    peer.HandleDataReceived(data);
+                    OnPeerConnectedEvent?.Invoke(peer);
                 };
 
-                serviceForPeer.OnCloseEvent += reason =>
+                peer.OnConnectionCloseEvent += (peer) =>
                 {
                     OnPeerDisconnectedEvent?.Invoke(peer);
-                    peer.NotifyDisconnectEvent();
-                };
-
-                serviceForPeer.OnErrorEvent += reason =>
-                {
-                    logger.Error(reason);
-                    peer.NotifyDisconnectEvent();
                 };
             });
 
             // Echo test service
             server.AddWebSocketService<EchoService>("/echo");
-        }
-
-        public void Update()
-        {
-            OnUpdateEvent?.Invoke();
-
-            lock (executeOnUpdate)
-            {
-                while (executeOnUpdate.Count > 0)
-                {
-                    executeOnUpdate.Dequeue()?.Invoke();
-                }
-            }
         }
     }
 }

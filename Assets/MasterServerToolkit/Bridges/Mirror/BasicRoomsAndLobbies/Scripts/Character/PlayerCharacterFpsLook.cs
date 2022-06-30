@@ -8,7 +8,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
     [RequireComponent(typeof(PlayerCharacterInput))]
     public class PlayerCharacterFpsLook : PlayerCharacterLook
     {
-        #region INSPECTOR
+#region INSPECTOR
 
         [Header("Positioning"), SerializeField]
         protected Vector3 cameraPoint = new Vector3(0, 1.75f, 0.15f);
@@ -25,7 +25,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
         [SerializeField, Range(0.01f, 1f)]
         protected float smoothnessTime = 0.1f;
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Current camera and character rotation

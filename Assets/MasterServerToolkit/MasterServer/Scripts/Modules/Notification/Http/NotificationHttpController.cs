@@ -1,12 +1,9 @@
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 using UnityEngine;
-using WebSocketSharp.Net;
-using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -27,10 +24,8 @@ namespace MasterServerToolkit.MasterServer
             httpServer.RegisterHttpRequestHandler("notify", HttpMethod.POST, OnNotifyHttpRequestHandler);
         }
 
-        private void OnNotifyHttpRequestHandler(HttpRequestEventArgs eventArgs)
+        private void OnNotifyHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            var request = eventArgs.Request;
-            var response = eventArgs.Response;
             var jsonResponse = new JObject();
 
             try

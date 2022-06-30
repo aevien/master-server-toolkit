@@ -1,0 +1,46 @@
+<div class="row">
+    <div class="col-md-2">
+        <div class="list-group list-group-flush">
+            <a v-for="(item, index) in modulesInfo"
+               :key="index"
+               href="#"
+               class="list-group-item list-group-item-action mb-1 p-2 border"
+               :class="{ active: index == 0 }"
+               :id="item.name + '-tab'"
+               data-bs-toggle="tab"
+               :data-bs-target="'#' + item.name + '-tab-pane'"
+               type="button"
+               role="tab"
+               :aria-controls="item.name + '-tab-pane'"
+               :aria-selected="index == 0">
+                {{$mstUtils.camelcaseToFriendly(item.name)}}
+            </a>
+        </div>
+    </div>
+    <div class="col-md-10">
+        <div class="tab-content" id="mstTabContent">
+            <div v-for="(item, index) in modulesInfo"
+                 class="tab-pane fade p-0 table-responsive"
+                 :class="{ active: index == 0, show: index == 0 }"
+                 :id="item.name + '-tab-pane'"
+                 role="tabpanel"
+                 :aria-labelledby="item.name + '-tab'"
+                 :tabindex="index">
+                <table class="table table-striped table-bordered table-sm">
+                    <tbody>
+                        <tr v-for="(value, name, index2) in item"
+                            :key="index2"
+                            :class="{'table-danger':name === 'error'}">
+                            <th scope="row" width="300">
+                                {{$mstUtils.camelcaseToFriendly(name)}}
+                            </th>
+                            <td>
+                                <render-item-info :info="value" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

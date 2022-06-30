@@ -1,0 +1,118 @@
+<script type="text/javascript">
+    const ServerInfoAnalytics = {
+        data() {
+            return {}
+        },
+        created() {
+            let vm = this
+            vm.$store.dispatch('loadServerInfo')
+        },
+        mounted() {
+            let vm = this
+            vm.initChart()
+
+            setInterval(() => {
+                vm.updateChart()
+            }, vm.chartUpdateInterval)
+        },
+        computed: {
+            serverInfo() {
+                return this.$store.getters.serverInfo
+            },
+            chartUpdateInterval() {
+                return this.$store.getters.chartUpdateInterval
+            }
+        },
+        methods: {
+            initChart() {
+                let vm = this
+
+                let labels = []
+                let highestClients = []
+                let activeClients = []
+                let inactiveClients = []
+                let incomingTraffic = []
+                let outgoingTraffic = []
+
+                for (let i = 1; i < 61; i++) {
+                    labels.push(i)
+                    highestClients.push(0)
+                    activeClients.push(0)
+                    inactiveClients.push(0)
+                    incomingTraffic.push(0)
+                    outgoingTraffic.push(0)
+                }
+
+                vm.$mstCharts.create('serverInfoChart', {
+                    type: 'line',
+                    options: {
+                        responsive: true
+                    },
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Highest',
+                            data: highestClients,
+                            borderColor: 'rgb(0, 177, 209)'
+                        },
+                        {
+                            label: 'Active',
+                            data: activeClients,
+                            borderColor: 'rgb(37, 211, 102)'
+                        },
+                        {
+                            label: 'Inactive',
+                            data: inactiveClients,
+                            borderColor: 'rgb(255, 69, 0)'
+                        }]
+                    }
+                })
+
+                vm.$mstCharts.create('serverTrafficChart', {
+                    type: 'line',
+                    options: {
+                        responsive: true
+                    },
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'In traffic (mb)',
+                                data: incomingTraffic,
+                                borderColor: 'rgb(128, 69, 0)'
+                            },
+                            {
+                                label: 'Out traffic (mb)',
+                                data: outgoingTraffic,
+                                borderColor: 'rgb(255, 69, 60)'
+                            }]
+                    }
+                })
+            },
+            updateChart() {
+                let vm = this
+                let serverInfoChart = vm.$mstCharts.serverInfoChart
+                let serverTrafficChart = vm.$mstCharts.serverTrafficChart
+
+                if (vm.$store.getters.useUpdate) {
+                    // Server info chart update
+                    serverInfoChart.data.datasets[0].data.shift()
+                    serverInfoChart.data.datasets[0].data.push(vm.serverInfo.highestClients)
+                    serverInfoChart.data.datasets[1].data.shift()
+                    serverInfoChart.data.datasets[1].data.push(vm.serverInfo.activeClients)
+                    serverInfoChart.data.datasets[2].data.shift()
+                    serverInfoChart.data.datasets[2].data.push(vm.serverInfo.inactiveClients)
+                    serverInfoChart.update()
+
+                    // Server traffic chart update
+                    serverTrafficChart.data.datasets[0].data.shift()
+                    serverTrafficChart.data.datasets[0].data.push(vm.serverInfo.incomingTraffic / (1024 * 1024))
+                    serverTrafficChart.data.datasets[1].data.shift()
+                    serverTrafficChart.data.datasets[1].data.push(vm.serverInfo.outgoingTraffic / (1024 * 1024))
+                    serverTrafficChart.update()
+                }
+            }
+        },
+        template: `#vueComponentTemplate`
+    }
+</script>

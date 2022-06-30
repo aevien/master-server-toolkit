@@ -1,7 +1,4 @@
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -14,6 +11,9 @@ namespace MasterServerToolkit.MasterServer
 
         ConcurrentDictionary<int, long> _totalBytesSentByOpCode = new ConcurrentDictionary<int, long>();
         ConcurrentDictionary<int, long> _totalBytesReceivedByOpCode = new ConcurrentDictionary<int, long>();
+
+        public long TotalReceived => _totalBytesReceived;
+        public long TotalSent => _totalBytesSent;
 
         /// <summary>
         /// 

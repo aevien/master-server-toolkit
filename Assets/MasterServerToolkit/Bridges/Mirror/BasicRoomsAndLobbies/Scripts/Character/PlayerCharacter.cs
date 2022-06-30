@@ -18,7 +18,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
             OnCharacterDestroyedEvent?.Invoke(this);
         }
 
-        #region SERVER
+#region SERVER
 
         public override void OnStartServer()
         {
@@ -26,9 +26,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
             OnServerCharacterSpawnedEvent?.Invoke(this);
         }
 
-        #endregion
+#endregion
 
-        #region CLIENT
+#region CLIENT
 
         public override void OnStartLocalPlayer()
         {
@@ -42,7 +42,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
             OnClientCharacterSpawnedEvent?.Invoke(this);
         }
 
-        #endregion
+#endregion
     }
 }
 #endif

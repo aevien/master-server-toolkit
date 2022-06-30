@@ -17,11 +17,7 @@ namespace MasterServerToolkit.Networking
             delayedMessages = new Queue<byte[]>();
         }
 
-        public override bool IsConnected
-        {
-            get { return socket.IsConnected; }
-        }
-
+        public override bool IsConnected => socket != null ? socket.IsConnected : false;
 
         public void SendDelayedMessages()
         {
@@ -68,7 +64,7 @@ namespace MasterServerToolkit.Networking
                 }
             }
 
-            Mst.Client.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+            Mst.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
             socket.Send(message.ToBytes());
         }
 

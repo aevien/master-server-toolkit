@@ -1,11 +1,10 @@
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
+using MasterServerToolkit.MasterServer;
+using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MasterServerToolkit.MasterServer;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.MongoDB
 {
@@ -18,8 +17,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
         private IMongoCollection<PasswordResetDataMongoDB> _resetCodesCollection;
         private IMongoCollection<EmailConfirmationDataMongoDB> _emailConfirmations;
 
-        public AccountsDatabaseAccessor(string connectionString, string databaseName) 
-            : this(new MongoClient(connectionString), databaseName){}
+        public AccountsDatabaseAccessor(string connectionString, string databaseName)
+            : this(new MongoClient(connectionString), databaseName) { }
 
         public AccountsDatabaseAccessor(MongoClient client, string databaseName)
         {
@@ -35,21 +34,21 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
             _accountsCollection.Indexes.CreateOne(
                 new CreateIndexModel<AccountInfoMongoDB>(
-                    Builders<AccountInfoMongoDB>.IndexKeys.Ascending(e => e.Username),new CreateIndexOptions(){ Unique = true }
+                    Builders<AccountInfoMongoDB>.IndexKeys.Ascending(e => e.Username), new CreateIndexOptions() { Unique = true }
                 )
             );
 
-            
+
 
             _resetCodesCollection.Indexes.CreateOne(
                 new CreateIndexModel<PasswordResetDataMongoDB>(
-                    Builders<PasswordResetDataMongoDB>.IndexKeys.Ascending(e => e.Email),new CreateIndexOptions(){ Unique = true }
+                    Builders<PasswordResetDataMongoDB>.IndexKeys.Ascending(e => e.Email), new CreateIndexOptions() { Unique = true }
                 )
             );
 
             _emailConfirmations.Indexes.CreateOne(
                 new CreateIndexModel<EmailConfirmationDataMongoDB>(
-                    Builders<EmailConfirmationDataMongoDB>.IndexKeys.Ascending(e => e.Email),new CreateIndexOptions(){ Unique = true }
+                    Builders<EmailConfirmationDataMongoDB>.IndexKeys.Ascending(e => e.Email), new CreateIndexOptions() { Unique = true }
                 )
             );
         }
@@ -59,7 +58,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
             return new AccountInfoMongoDB();
         }
 
-        
+
         public async Task<IAccountInfoData> GetAccountByIdAsync(string id)
         {
             var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, id);
@@ -68,21 +67,21 @@ namespace MasterServerToolkit.Bridges.MongoDB
                 return _accountsCollection.Find(filter).FirstOrDefault();
             });
         }
-        
-       
+
+
         public async Task<IAccountInfoData> GetAccountByUsernameAsync(string username)
         {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Username,username);
+            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Username, username);
             return await Task.Run(() =>
             {
                 return _accountsCollection.Find(filter).FirstOrDefault();
             });
         }
 
-        
+
         public async Task<IAccountInfoData> GetAccountByEmailAsync(string email)
         {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Email,email);
+            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Email, email);
             return await Task.Run(() =>
             {
                 return _accountsCollection.Find(filter).FirstOrDefault();
@@ -92,7 +91,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         public async Task<IAccountInfoData> GetAccountByPhoneNumberAsync(string phoneNumber)
         {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.PhoneNumber,phoneNumber);
+            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.PhoneNumber, phoneNumber);
             return await Task.Run(() =>
             {
                 return _accountsCollection.Find(filter).FirstOrDefault();
@@ -101,7 +100,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         public async Task<IAccountInfoData> GetAccountByTokenAsync(string token)
         {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Token,token);
+            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Token, token);
             return await Task.Run(() =>
             {
                 return _accountsCollection.Find(filter).FirstOrDefault();
@@ -110,15 +109,15 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         public async Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId)
         {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.DeviceId,deviceId.ToLower());
+            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.DeviceId, deviceId.ToLower());
             return await Task.Run(() =>
             {
                 return _accountsCollection.Find(filter).FirstOrDefault();
             });
         }
 
-        
-        
+
+
 
         public async Task<IEnumerable<IAccountInfoData>> GetAccountsByIdAsync(IEnumerable<string> ids)
         {
@@ -128,7 +127,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
                 return _accountsCollection.Find(filter).ToEnumerable();
             });
         }
-        
+
 
         public async Task<IEnumerable<IAccountInfoData>> GetPagedAccounts(int pageIndex = 0, int pageSize = 100)
         {
@@ -151,16 +150,16 @@ namespace MasterServerToolkit.Bridges.MongoDB
                 });
             });
         }
-        
+
         public async Task<IPasswordResetData> GetPasswordResetDataAsync(string email)
         {
-            var filter = Builders<PasswordResetDataMongoDB>.Filter.Eq(i => i.Email,email.ToLower());
+            var filter = Builders<PasswordResetDataMongoDB>.Filter.Eq(i => i.Email, email.ToLower());
             return await Task.Run(() =>
             {
                 return _resetCodesCollection.Find(filter).FirstOrDefault();
             });
         }
-        
+
 
         public async Task SaveEmailConfirmationCodeAsync(string email, string code)
         {
@@ -183,10 +182,10 @@ namespace MasterServerToolkit.Bridges.MongoDB
             });
         }
 
-        
+
         public async Task<bool> UpdateAccountAsync(IAccountInfoData account)
         {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id,account.Id);
+            var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, account.Id);
 
             return await Task.Run(() =>
             {
@@ -194,12 +193,13 @@ namespace MasterServerToolkit.Bridges.MongoDB
                 return true;
             });
         }
-        
+
 
         public async Task<string> InsertNewAccountAsync(IAccountInfoData account)
         {
             var acc = account as AccountInfoMongoDB;
-            await Task.Run(() => {
+            await Task.Run(() =>
+            {
                 _accountsCollection.InsertOne(acc);
             });
             return acc.Id;
@@ -213,7 +213,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
             return await Task.Run(() =>
             {
                 account.Token = token;
-                _accountsCollection.UpdateOne(filter,update);
+                _accountsCollection.UpdateOne(filter, update);
                 return true;
             });
         }

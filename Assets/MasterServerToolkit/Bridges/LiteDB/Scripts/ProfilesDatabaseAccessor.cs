@@ -70,7 +70,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
         {
             string userId = profile.UserId;
 
-            var data = await Task.Run(() => {
+            var data = await Task.Run(() =>
+            {
                 return profiles?.FindOne(a => a.UserId == userId);
             });
 
@@ -82,7 +83,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
                     Data = profile.ToBytes()
                 };
 
-                await Task.Run(() => {
+                await Task.Run(() =>
+                {
                     profiles?.Insert(data);
                 });
             }

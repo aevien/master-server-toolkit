@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.Utils
@@ -36,6 +34,11 @@ namespace MasterServerToolkit.Utils
         public static void LoadSceneByIndexAdditive(int sceneBuildIndex, UnityAction<float> onProgress, UnityAction onLoaded)
         {
             sceneLoadManager.LoadSceneByIndexAdditive(sceneBuildIndex, onProgress, onLoaded);
+        }
+
+        public static void UnloadSceneByName(string sceneName, bool unloadUnusedAssets, UnityAction<float> onProgress, UnityAction onUnloaded)
+        {
+            sceneLoadManager.UnloadSceneByName(sceneName, unloadUnusedAssets, onProgress, onUnloaded);
         }
     }
 }

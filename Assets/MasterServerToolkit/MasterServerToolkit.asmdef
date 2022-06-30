@@ -4,7 +4,10 @@
     "references": [
         "Unity.TextMeshPro",
         "SimpleWebTransport",
-        "Mirror"
+        "Mirror",
+        "FishNet.Runtime",
+        "FishNet.Generated",
+        "FishNet.Example"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

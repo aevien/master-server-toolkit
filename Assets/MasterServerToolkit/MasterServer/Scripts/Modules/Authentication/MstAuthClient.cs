@@ -8,7 +8,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class MstAuthClient : MstBaseClient
     {
-        public delegate void SignInCallback(ClientAccountInfo accountInfo, string error);
+        public delegate void SignInCallback(AccountInfoPacket accountInfo, string error);
 
         /// <summary>
         /// Check if user is signed in
@@ -28,7 +28,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Current useraccount info
         /// </summary>
-        public ClientAccountInfo AccountInfo { get; protected set; }
+        public AccountInfoPacket AccountInfo { get; protected set; }
 
         /// <summary>
         /// Invokes when successfully signed in
@@ -54,11 +54,6 @@ namespace MasterServerToolkit.MasterServer
         /// Invokes when password successfully changed
         /// </summary>
         public event Action OnPasswordChangedEvent;
-
-        /// <summary>
-        /// Invokes when properties successfully changed
-        /// </summary>
-        public event Action OnPropertiesChangedEvent;
 
         public MstAuthClient(IClientSocket connection) : base(connection) { }
 
@@ -143,7 +138,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                connection.SendMessage((ushort)MstOpCodes.SignUp, encryptedData, (status, response) =>
+                connection.SendMessage(MstOpCodes.SignUp, encryptedData, (status, response) =>
                 {
                     if (status != ResponseStatus.Success)
                     {
@@ -343,13 +338,13 @@ namespace MasterServerToolkit.MasterServer
 
             IsNowSigningIn = true;
 
+            Logs.Debug("Getting AES key...");
+
             // We first need to get an aes key 
             // so that we can encrypt our login data
             Mst.Security.GetAesKey(aesKey =>
             {
-                Logs.Debug("Getting AES key...");
-
-                if (aesKey == null)
+                if (string.IsNullOrEmpty(aesKey))
                 {
                     IsNowSigningIn = false;
                     callback.Invoke(null, "Failed to log in due to security issues");
@@ -358,7 +353,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
 
-                connection.SendMessage((ushort)MstOpCodes.SignIn, encryptedData, (status, response) =>
+                connection.SendMessage(MstOpCodes.SignIn, encryptedData, (status, response) =>
                 {
                     IsNowSigningIn = false;
 
@@ -372,24 +367,7 @@ namespace MasterServerToolkit.MasterServer
 
                     Logs.Debug("Successfully signed in!".ToGreen());
 
-                    // Parse account info
-                    var accountInfoPacket = response.Deserialize(new AccountInfoPacket());
-            
-                    AccountInfo = new ClientAccountInfo()
-                    {
-                        Id = accountInfoPacket.Id,
-                        Username = accountInfoPacket.Username,
-                        Email = accountInfoPacket.Email,
-                        PhoneNumber = accountInfoPacket.PhoneNumber,
-                        Facebook = accountInfoPacket.Facebook,
-                        Google = accountInfoPacket.Google,
-                        Apple = accountInfoPacket.Apple,
-                        Token = accountInfoPacket.Token,
-                        IsAdmin = accountInfoPacket.IsAdmin,
-                        IsGuest = accountInfoPacket.IsGuest,
-                        IsEmailConfirmed = accountInfoPacket.IsEmailConfirmed,
-                        Properties = accountInfoPacket.Properties,
-                    };
+                    AccountInfo = response.Deserialize(new AccountInfoPacket());
 
                     // If RememberMe is checked on and we are not guset, then save auth token
                     if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
@@ -436,7 +414,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.ConfirmEmail, code, (status, response) =>
+            connection.SendMessage(MstOpCodes.ConfirmEmail, code, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -476,7 +454,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.GetEmailConfirmationCode, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetEmailConfirmationCode, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -507,7 +485,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.GetPasswordResetCode, email, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetPasswordResetCode, email, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -516,6 +494,34 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 callback.Invoke(true, null);
+            });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        private void UpdateAccount(SuccessCallback callback, IClientSocket connection)
+        {
+            if (!connection.IsConnected)
+            {
+                callback.Invoke(false, "Not connected to server");
+                return;
+            }
+
+            var data = AccountInfo.Properties.ToBytes();
+
+            connection.SendMessage(MstOpCodes.UpdateAccountInfo, data, (status, response) =>
+            {
+                if (status != ResponseStatus.Success)
+                {
+                    callback.Invoke(false, response.AsString("Unknown error"));
+                    return;
+                }
+
+                callback.Invoke(true, null);
+                OnPasswordChangedEvent?.Invoke();
             });
         }
 
@@ -547,7 +553,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.ChangePassword, data.ToBytes(), (status, response) =>
+            connection.SendMessage(MstOpCodes.ChangePassword, data.ToBytes(), (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -556,74 +562,8 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 callback.Invoke(true, null);
-
                 OnPasswordChangedEvent?.Invoke();
             });
-        }
-
-        /// <summary>
-        /// Send request to update account properties
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="callback"></param>
-        public void UpdateAccountInfo(SuccessCallback callback)
-        {
-            UpdateAccountInfo(callback, Connection);
-        }
-
-        /// <summary>
-        /// Send request to update account properties
-        /// </summary>
-        /// <param name="callback"></param>
-        /// <param name="connection"></param>
-        public void UpdateAccountInfo(SuccessCallback callback, IClientSocket connection)
-        {
-            if (!connection.IsConnected)
-            {
-                callback.Invoke(false, "Not connected to server");
-                return;
-            }
-
-            // We first need to get an aes key 
-            // so that we can encrypt our login data
-            Mst.Security.GetAesKey(aesKey =>
-            {
-                if (aesKey == null)
-                {
-                    callback.Invoke(false, "Failed to update properties due to security issues");
-                    return;
-                }
-
-                var updateAccountPropertiesPacket = new UpdateAccountInfoPacket
-                {
-                    Id = AccountInfo.Id,
-                    Username = AccountInfo.Username,
-                    Password = AccountInfo.Password,
-                    Email = AccountInfo.Email,
-                    PhoneNumber = AccountInfo.PhoneNumber,
-                    Facebook = AccountInfo.Facebook,
-                    Properties = AccountInfo.Properties
-                };
-
-                var encryptedData = Mst.Security.EncryptAES(updateAccountPropertiesPacket.ToBytes(), aesKey);
-
-                connection.SendMessage((ushort)MstOpCodes.UpdateAccountInfo, encryptedData, (status, response) =>
-                {
-                    IsNowSigningIn = false;
-
-                    if (status != ResponseStatus.Success)
-                    {
-                        callback.Invoke(false, response.AsString("Unknown error"));
-                        return;
-                    }
-
-                    AccountInfo.MarkAsDirty(false);
-
-                    callback.Invoke(true, null);
-
-                    OnPropertiesChangedEvent?.Invoke();
-                });
-            }, connection);
         }
     }
 }

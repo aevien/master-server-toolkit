@@ -1,6 +1,5 @@
 using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -182,12 +181,15 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="roomId"></param>
         /// <param name="ignoreRecipients"></param>
-        /// <param name="message"></param>
-        public virtual void NoticeToRoom(int roomId, List<int> ignoreRecipients, string message)
+        /// <param name="textMessage"></param>
+        public virtual void NoticeToRoom(int roomId, List<int> ignoreRecipients, string textMessage, IIncomingMessage message)
         {
             // If rooms module not found
             if (!roomsModule)
-                throw new MstMessageHandlerException($"This message is for room users, but rooms module is not found");
+            {
+                message.Respond($"This message is for room users, but rooms module is not found");
+                return;
+            }
 
             // Let's get all users from room
             var players = roomsModule.GetPlayersOfRoom(roomId);
@@ -200,7 +202,7 @@ namespace MasterServerToolkit.MasterServer
                     && !ignoreRecipients.Contains(userExtension.Peer.Id)
                     && TryGetRecipient(userExtension.UserId, out var recipient))
                 {
-                    recipient.Notify(message);
+                    recipient.Notify(textMessage);
                 }
             }
         }
@@ -209,11 +211,14 @@ namespace MasterServerToolkit.MasterServer
         /// Sends notice to players given in <paramref name="recipients"/>
         /// </summary>
         /// <param name="recipients"></param>
-        /// <param name="message"></param>
-        public virtual void NoticeToRecipients(List<int> recipients, string message)
+        /// <param name="textMessage"></param>
+        public virtual void NoticeToRecipients(List<int> recipients, string textMessage)
         {
             if (!authModule)
-                throw new MstMessageHandlerException($"This message is for authorized users, but auth module is not found");
+            {
+                logger.Error($"This message is for authorized users, but auth module is not found");
+                return;
+            }
 
             foreach (int recipientId in recipients)
             {
@@ -225,25 +230,30 @@ namespace MasterServerToolkit.MasterServer
 
                     if (userExtension != null && TryGetRecipient(userExtension.UserId, out var recipient))
                     {
-                        recipient.Notify(message);
+                        recipient.Notify(textMessage);
                     }
                 }
             }
         }
 
-        public virtual void NoticeToAll(string message, bool addToPromise = false)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="textMessage"></param>
+        /// <param name="addToPromise"></param>
+        public virtual void NoticeToAll(string textMessage, bool addToPromise = false)
         {
             var recipients = authModule.LoggedInUsers.ToList().Select(i => i.Peer.Id).ToList();
-            NoticeToRecipients(recipients, message);
+            NoticeToRecipients(recipients, textMessage);
 
-            if (addToPromise && !promisedMessages.Contains(message))
+            if (addToPromise && !promisedMessages.Contains(textMessage))
             {
                 if (promisedMessages.Count >= maxPromisedMessages)
                 {
                     promisedMessages.RemoveAt(0);
                 }
 
-                promisedMessages.Add(message);
+                promisedMessages.Add(textMessage);
             }
         }
 
@@ -258,23 +268,23 @@ namespace MasterServerToolkit.MasterServer
 
                 // If unauthorized user is trying to subscribe the notifications
                 if (userExtension == null)
-                    throw new MstMessageHandlerException("Unauthorized request", ResponseStatus.Unauthorized);
+                {
+                    message.Respond("Unauthorized request", ResponseStatus.Unauthorized);
+                    return;
+                }
 
                 // If is already subscribed
                 if (HasRecipient(userExtension.UserId))
-                    throw new MstMessageHandlerException("You are already subscribed to notifications", ResponseStatus.NotHandled);
+                {
+                    message.Respond("You are already subscribed to notifications", ResponseStatus.NotHandled);
+                    return;
+                }
 
                 // Add new recipient
                 AddRecipient(userExtension);
 
                 // Respond about successfull subscription
                 message.Respond(ResponseStatus.Success);
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                logger.Error(e.Message);
-                message.Respond(e.Message, e.Status);
             }
             // If we got another exception
             catch (Exception e)
@@ -293,19 +303,16 @@ namespace MasterServerToolkit.MasterServer
 
                 // If unauthorized user is trying to subscribe the notifications
                 if (userExtension == null)
-                    throw new MstMessageHandlerException("Unauthorized request", ResponseStatus.Unauthorized);
+                {
+                    message.Respond("Unauthorized request", ResponseStatus.Unauthorized);
+                    return;
+                }
 
                 // Add new recipient
                 RemoveRecipient(userExtension.UserId);
 
                 // Respond about successfull unsubscription
                 message.Respond(ResponseStatus.Success);
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                logger.Error(e.Message);
-                message.Respond(e.Message, e.Status);
             }
             // If we got another exception
             catch (Exception e)
@@ -320,18 +327,24 @@ namespace MasterServerToolkit.MasterServer
             try
             {
                 if (!HasPermissionToNotify(message.Peer))
-                    throw new MstMessageHandlerException($"Unauthorized request", ResponseStatus.Unauthorized);
+                {
+                    message.Respond($"Unauthorized request", ResponseStatus.Unauthorized);
+                    return;
+                }
 
                 // Parse notification
                 var notification = message.Deserialize(new NotificationPacket());
 
                 if (string.IsNullOrEmpty(notification.Message))
-                    throw new MstMessageHandlerException($"Message cannot be empty");
+                {
+                    message.Respond($"Message cannot be empty");
+                    return;
+                }
 
                 // Check if notification for room users
                 if (useRoomsModule && notification.RoomId >= 0)
                 {
-                    NoticeToRoom(notification.RoomId, notification.IgnoreRecipients, notification.Message);
+                    NoticeToRoom(notification.RoomId, notification.IgnoreRecipients, notification.Message, message);
                 }
                 else if (notification.Recipients.Count > 0)
                 {
@@ -339,12 +352,6 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 message.Respond(ResponseStatus.Success);
-            }
-            // If we got system exception
-            catch (MstMessageHandlerException e)
-            {
-                logger.Error(e.Message);
-                message.Respond(e.Message, e.Status);
             }
             // If we got another exception
             catch (Exception e)

@@ -1,0 +1,237 @@
+<script src="https://unpkg.com/vue@next"></script>
+<script src="https://unpkg.com/vuex@4"></script>
+
+<script type="text/javascript">
+    function MstUtils() {
+        let utils = {}
+
+        utils.install = function (app, options) {
+            console.log('Mst utils installed')
+            app.config.globalProperties.$mstUtils = utils
+        }
+
+        utils.camelcaseToFriendly = function (value) {
+            let result = value.replace(/[A-Z]/g, (letter) => ' ' + letter.toUpperCase())
+            return result.replace(/^[a-zA-Z]/, (letter) => letter.toUpperCase())
+        }
+
+        utils.bytesToKb = function (value) {
+            return new Intl.NumberFormat("en", { style: "unit", unit: "kilobyte", unitDisplay: "short" }).format(value / 1024)
+        }
+
+        utils.bytesToMb = function (value) {
+            return new Intl.NumberFormat("en", { style: "unit", unit: "megabyte", unitDisplay: "short" }).format(value / (1024 * 1024))
+        }
+
+        utils.megabytesToGb = function (value) {
+            return new Intl.NumberFormat("en", { style: "unit", unit: "gigabyte", unitDisplay: "short" }).format(value / 1024)
+        }
+
+        utils.toMb = function (value) {
+            return new Intl.NumberFormat("en", { style: "unit", unit: "megabyte", unitDisplay: "short" }).format(value)
+        }
+
+        return utils
+    }
+
+    function MstCharts() {
+        let charts = {}
+
+        charts.install = function (app, options) {
+            console.log('Mst chart installed')
+            app.config.globalProperties.$mstCharts = charts
+        }
+
+        charts.create = function (chartName, options) {
+            if (!charts[chartName]) {
+                const ctx = document.getElementById(chartName).getContext('2d')
+                charts[chartName] = new Chart(ctx, options);
+            } else {
+                console.error(`$Chart with name ${chartName} already exists`)
+            }
+        }
+
+        return charts;
+    }
+</script>
+
+#systemInfo
+#modulesInfo
+#analyticsInfo
+#authModuleInfo
+#serverInfoAnalytics
+#renderItemInfo
+
+<script type="text/javascript">
+    const mstUtils = MstUtils()
+    const mstCharts = MstCharts()
+    const store = Vuex.createStore({
+        state() {
+            return {
+                _sources: [],
+                _serverInfo: {},
+                _systemInfo: {},
+                _modulesInfo: {},
+                _requestTimeout: 5000,
+                _requestInterval: 2000,
+                _chartUpdateInterval: 1000,
+                _useUpdate: true,
+                _selectedSource: ''
+            }
+        },
+        getters: {
+            serverInfo(state) {
+                if (state._selectedSource)
+                    return state._serverInfo[state._selectedSource]
+                else
+                    return {}
+            },
+            systemInfo(state) {
+                if (state._selectedSource)
+                    return state._systemInfo[state._selectedSource]
+                else
+                    return {}
+            },
+            modulesInfo(state) {
+                if (state._selectedSource)
+                    return state._modulesInfo[state._selectedSource]
+                else
+                    return {}
+            },
+            chartUpdateInterval(state) {
+                return state._chartUpdateInterval
+            },
+            useUpdate(state) {
+                return state._useUpdate
+            },
+            selectedSource(state) {
+                return state._selectedSource
+            },
+            sources(state) {
+                return state._sources
+            }
+        },
+        mutations: {
+            setServerInfo(state, data) {
+                state._serverInfo = data
+            },
+            setSystemInfo(state, data) {
+                state._systemInfo = data
+            },
+            setModulesInfo(state, data) {
+                state._modulesInfo = data
+            },
+            toggleUseUpdate(state) {
+                state._useUpdate = !state._useUpdate
+            },
+            selectSource(state, source) {
+                state._selectedSource = source
+            },
+            setSources(state, sources) {
+                state._sources = sources
+            }
+        },
+        actions: {
+            loadServerInfo(context) {
+                axios.get('/get-server-info', { timeout: context.state._requestTimeout })
+                    .then(function (response) {
+                        context.commit('setServerInfo', response.data)
+                        context.commit('setSources', Object.keys(response.data))
+
+                        if (!context.state._selectedSource) {
+                            context.commit('selectSource', Object.keys(response.data)[0])
+                        }
+
+                        setTimeout(() => {
+                            context.dispatch('loadServerInfo')
+                        }, context.state._requestInterval)
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+
+                        setTimeout(() => {
+                            context.dispatch('loadServerInfo')
+                        }, context.state._requestInterval)
+                    });
+            },
+            loadSystemInfo(context) {
+                let vm = this
+                axios.get('/get-system-info', { timeout: context.state._requestTimeout })
+                    .then(function (response) {
+                        context.commit('setSystemInfo', response.data)
+
+                        setTimeout(() => {
+                            context.dispatch('loadSystemInfo')
+                        }, context.state._requestInterval)
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+
+                        setTimeout(() => {
+                            context.dispatch('loadSystemInfo')
+                        }, context.state._requestInterval)
+                    });
+            },
+            loadModulesInfo(context) {
+                let vm = this
+                axios.get('/get-modules-info', { timeout: context.state._requestTimeout })
+                    .then(function (response) {
+                        context.commit('setModulesInfo', response.data)
+
+                        setTimeout(() => {
+                            context.dispatch('loadModulesInfo')
+                        }, context.state._requestInterval)
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+
+                        setTimeout(() => {
+                            context.dispatch('loadModulesInfo')
+                        }, context.state._requestInterval)
+                    });
+            }
+        }
+    })
+
+    const app = Vue.createApp({
+        data() {
+            return {
+                appTitle: '#mstTitle',
+                appVersion: '#mstVersion',
+                pageTitle: 'System And Server'
+            }
+        },
+        computed: {
+            sources() {
+                return this.$store.getters.sources
+            },
+            serverInfo() {
+                return this.$store.getters.serverInfo
+            },
+            selectedSource() {
+                return this.$store.getters.selectedSource
+            }
+        },
+        methods: {
+            toggleUseUpdate() {
+                this.$store.commit('toggleUseUpdate')
+            },
+            selectSource(source) {
+                this.$store.commit('selectSource', source)
+            }
+        }
+    })
+
+    app.use(mstCharts)
+    app.use(mstUtils)
+    app.use(store)
+
+    app.component('system-info', SystemInfo)
+    app.component('modules-info', ModulesInfo)
+    app.component('analytics-info', AnalyticsInfo)
+    app.component('auth-module-info', AuthModuleInfo)
+    app.component('server-info-analytics', ServerInfoAnalytics)
+    app.component('render-item-info', RenderItemInfo)
+
+    app.mount('#app')
+</script>

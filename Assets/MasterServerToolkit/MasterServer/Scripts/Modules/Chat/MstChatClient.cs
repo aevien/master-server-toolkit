@@ -28,9 +28,9 @@ namespace MasterServerToolkit.MasterServer
 
         public MstChatClient(IClientSocket connection) : base(connection)
         {
-            RegisterMessageHandler((ushort)MstOpCodes.UserJoinedChannel, OnUserJoinedChannelHandler);
-            RegisterMessageHandler((ushort)MstOpCodes.UserLeftChannel, OnUserLeftChannelHandler);
-            RegisterMessageHandler((ushort)MstOpCodes.ChatMessage, OnChatMessageHandler);
+            RegisterMessageHandler(MstOpCodes.UserJoinedChannel, OnUserJoinedChannelHandler);
+            RegisterMessageHandler(MstOpCodes.UserLeftChannel, OnUserLeftChannelHandler);
+            RegisterMessageHandler(MstOpCodes.ChatMessage, OnChatMessageHandler);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.PickUsername, username, (status, response) =>
+            connection.SendMessage(MstOpCodes.PickUsername, username, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -87,7 +87,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.JoinChannel, channel, (status, response) =>
+            connection.SendMessage(MstOpCodes.JoinChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -118,7 +118,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.LeaveChannel, channel, (status, response) =>
+            connection.SendMessage(MstOpCodes.LeaveChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -151,7 +151,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.SetDefaultChannel, channel, (status, response) =>
+            connection.SendMessage(MstOpCodes.SetDefaultChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -183,7 +183,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.GetCurrentChannels, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetCurrentChannels, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -215,7 +215,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.GetUsersInChannel, channel, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetUsersInChannel, channel, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -291,7 +291,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SendMessage(ChatMessagePacket packet, SuccessCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((ushort)MstOpCodes.ChatMessage, packet, (status, response) =>
+            connection.SendMessage(MstOpCodes.ChatMessage, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

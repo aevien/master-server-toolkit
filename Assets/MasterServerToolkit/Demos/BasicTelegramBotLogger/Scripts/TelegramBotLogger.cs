@@ -1,9 +1,6 @@
-using MasterServerToolkit.Logging;
-using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using Newtonsoft.Json.Linq;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 

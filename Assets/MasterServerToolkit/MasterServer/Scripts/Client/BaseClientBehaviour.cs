@@ -156,7 +156,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public T CastTo<T>() where T: class
+        public T CastTo<T>() where T : class
         {
             return this as T;
         }

@@ -16,7 +16,7 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ObservableProfile : IEnumerable<IObservableProperty>, IDisposable
     {
-        public delegate void OnPropertyUpdateHandler(ushort propertyCode, IObservableProperty property);
+        public delegate void ProfilePropertyUpdateDelegate(ushort propertyCode, IObservableProperty property);
 
         /// <summary>
         /// Check if object is disposed
@@ -36,7 +36,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Invoked, when one of the values changes
         /// </summary>
-        public event OnPropertyUpdateHandler OnPropertyUpdatedEvent;
+        public event ProfilePropertyUpdateDelegate OnPropertyUpdatedEvent;
 
         public ObservableProfile()
         {

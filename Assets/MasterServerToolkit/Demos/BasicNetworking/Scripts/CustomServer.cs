@@ -1,10 +1,7 @@
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicNetworking
 {
@@ -14,8 +11,8 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         {
             base.OnStartedServer();
 
-            RegisterMessageHandler((ushort)MessageCodes.Message, OnMessageReceivedHandler);
-            RegisterMessageHandler((ushort)MessageCodes.MessageWithResponse, OnMessageWithResponseReceivedHandler);
+            RegisterMessageHandler(MessageCodes.Message, OnMessageReceivedHandler);
+            RegisterMessageHandler(MessageCodes.MessageWithResponse, OnMessageWithResponseReceivedHandler);
         }
 
         private void OnMessageWithResponseReceivedHandler(IIncomingMessage message)
@@ -30,9 +27,9 @@ namespace MasterServerToolkit.Examples.BasicNetworking
         }
     }
 
-    public enum MessageCodes
+    public struct MessageCodes
     {
-        Message,
-        MessageWithResponse
+        public static ushort Message = nameof(Message).ToUint16Hash();
+        public static ushort MessageWithResponse = nameof(MessageWithResponse).ToUint16Hash();
     }
 }

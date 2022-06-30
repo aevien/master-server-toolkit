@@ -12,7 +12,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class RoomNetworkManager : NetworkManager
     {
-        #region INSPECTOR
+#region INSPECTOR
 
         [Header("Mirror Network Manager Components"), SerializeField]
         protected RoomServerManager roomServerManager;
@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         [Header("Mirror Network Manager Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Logger assigned to this module
@@ -129,13 +129,13 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             StopServer();
 
-            MstTimer.WaitForSeconds(1f, () =>
+            MstTimer.Instance.WaitForSeconds(1f, () =>
             {
                 Mst.Runtime.Quit();
             });
         }
 
-        #region MIRROR CALLBACKS
+#region MIRROR CALLBACKS
 
         /// <summary>
         /// When mirror server is started
@@ -218,7 +218,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             OnDisconnectedEvent?.Invoke(NetworkClient.connection);
         }
 
-        #endregion
+#endregion
 
         private void ValidateRoomAccessRequestHandler(NetworkConnection conn, ValidateRoomAccessRequestMessage mess)
         {
@@ -230,7 +230,16 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                     {
                         if (!isSuccess)
                         {
-                            throw new MstMessageHandlerException(error, ResponseStatus.Failed);
+                            logger.Error(error);
+
+                            conn.Send(new ValidateRoomAccessResultMessage()
+                            {
+                                Error = error,
+                                Status = ResponseStatus.Failed
+                            });
+
+                            MstTimer.Instance.WaitForSeconds(1f, () => conn.Disconnect());
+                            return;
                         }
 
                         conn.Send(new ValidateRoomAccessResultMessage()
@@ -238,18 +247,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                             Error = string.Empty,
                             Status = ResponseStatus.Success
                         });
-                    }
-                    // If we got system exception
-                    catch (MstMessageHandlerException e)
-                    {
-                        Debug.LogError(e.Message);
-                        conn.Send(new ValidateRoomAccessResultMessage()
-                        {
-                            Error = e.Message,
-                            Status = e.Status
-                        });
-
-                        MstTimer.WaitForSeconds(1f, () => conn.Disconnect());
                     }
                     // If we got another exception
                     catch (Exception e)
@@ -261,7 +258,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                             Status = ResponseStatus.Error
                         });
 
-                        MstTimer.WaitForSeconds(1f, () => conn.Disconnect());
+                        MstTimer.Instance.WaitForSeconds(1f, () => conn.Disconnect());
                     }
                 });
             }

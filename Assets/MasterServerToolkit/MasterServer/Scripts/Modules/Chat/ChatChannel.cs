@@ -36,7 +36,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Add disconnect listener
-            user.Peer.OnPeerDisconnectedEvent += OnUserDisconnect;
+            user.Peer.OnConnectionCloseEvent += OnUserDisconnect;
 
             // Add user
             channelUsers.Add(user.Username, user);
@@ -116,7 +116,7 @@ namespace MasterServerToolkit.MasterServer
         public void RemoveUser(ChatUserPeerExtension user)
         {
             // Remove disconnect listener
-            user.Peer.OnPeerDisconnectedEvent -= OnUserDisconnect;
+            user.Peer.OnConnectionCloseEvent -= OnUserDisconnect;
 
             // Remove channel from users collection
             user.CurrentChannels.Remove(this);

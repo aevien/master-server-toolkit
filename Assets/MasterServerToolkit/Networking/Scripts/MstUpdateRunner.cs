@@ -1,5 +1,4 @@
 ﻿using MasterServerToolkit.Utils;
-using System;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.Networking
@@ -13,16 +12,27 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// List of <see cref="IUpdatable"/>
         /// </summary>
-        private List<IUpdatable> _updatebles = new List<IUpdatable>();
+        private readonly List<IUpdatable> _updatebles = new List<IUpdatable>();
 
-        public int? Count => _updatebles?.Count;
+        /// <summary>
+        /// 
+        /// </summary>
+        public int Count => _updatebles.Count;
 
         private void Update()
         {
             for (int i = 0; i < _updatebles.Count; i++)
             {
                 IUpdatable runnable = _updatebles[i];
-                runnable?.Update();
+
+                if (runnable != null)
+                {
+                    runnable.Update();
+                }
+                else
+                {
+                    _updatebles.RemoveAt(i);
+                }
             }
         }
 
@@ -33,9 +43,7 @@ namespace MasterServerToolkit.Networking
         public void Add(IUpdatable updatable)
         {
             if (!_updatebles.Contains(updatable))
-            {
                 _updatebles.Add(updatable);
-            }
         }
 
         /// <summary>

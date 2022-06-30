@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Logging;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using System;
 
 namespace MasterServerToolkit.MasterServer

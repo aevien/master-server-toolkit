@@ -77,7 +77,7 @@ namespace MasterServerToolkit.Games
                 statusInfoText.gameObject.SetActive(true);
             }
 
-            MstTimer.WaitForSeconds(0.2f, () =>
+            MstTimer.Instance.WaitForSeconds(0.2f, () =>
             {
                 Mst.Client.Matchmaker.FindGames((games) =>
                 {
@@ -85,7 +85,7 @@ namespace MasterServerToolkit.Games
 
                     if (games.Count == 0)
                     {
-                        statusInfoText.text = "No games found! Try to create your own.";
+                        statusInfoText.text = "No games found! Try to create your own one.";
                         return;
                     }
 
@@ -140,7 +140,8 @@ namespace MasterServerToolkit.Games
                     var rx = new Regex(@":\d+");
                     string ip = rx.Replace(gameInfo.Address.Trim(), "");
 
-                    MstTimer.WaitPing(ip, (time) => {
+                    MstTimer.Instance.WaitPing(ip, (time) =>
+                    {
                         pingRegionLable.Text = $"{time} ms.";
                     });
 
@@ -150,14 +151,16 @@ namespace MasterServerToolkit.Games
                     string maxPleyers = gameInfo.MaxPlayers <= 0 ? "∞" : gameInfo.MaxPlayers.ToString();
                     gamePlayersBtn.SetLable($"{gameInfo.OnlinePlayers} / {maxPleyers} [Show]");
                     gamePlayersBtn.name = $"gamePlayersLable_{index}";
-                    gamePlayersBtn.AddOnClickListener(() => {
+                    gamePlayersBtn.AddOnClickListener(() =>
+                    {
                         Mst.Events.Invoke(MstEventKeys.showPlayersListView, new EventMessage(gameInfo.Id));
                         Hide();
                     });
 
                     var gameConnectBtn = Instantiate(uiButtonPrefab, listContainer, false);
                     gameConnectBtn.SetLable("Join");
-                    gameConnectBtn.AddOnClickListener(() => {
+                    gameConnectBtn.AddOnClickListener(() =>
+                    {
                         MatchmakingBehaviour.Instance.StartMatch(gameInfo);
                     });
                     gameConnectBtn.name = $"gameConnectBtn_{index}";

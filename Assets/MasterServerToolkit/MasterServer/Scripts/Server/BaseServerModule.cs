@@ -105,14 +105,26 @@ namespace MasterServerToolkit.MasterServer
 
             if (Dependencies.Count > 0)
             {
-                var dependencieArray = new JArray();
+                var dependenciesArray = new JArray();
 
                 for (int i = 0; i < Dependencies.Count; i++)
                 {
-                    dependencieArray.Add(Dependencies[i].Name);
+                    dependenciesArray.Add(Dependencies[i].Name);
                 }
 
-                json.Add("dependencies", dependencieArray);
+                json.Add("dependencies", dependenciesArray);
+            }
+
+            if (OptionalDependencies.Count > 0)
+            {
+                var optionalDependenciesArray = new JArray();
+
+                for (int i = 0; i < OptionalDependencies.Count; i++)
+                {
+                    optionalDependenciesArray.Add(OptionalDependencies[i].Name);
+                }
+
+                json.Add("optionalDependencies", optionalDependenciesArray);
             }
 
             return json;

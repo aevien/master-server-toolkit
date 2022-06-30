@@ -1,33 +1,56 @@
-﻿using System.Collections;
+﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.MasterServer;
+using System.Collections;
 using UnityEngine;
 
 namespace MasterServerToolkit.Utils
 {
     public class DynamicSingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     {
+        #region INSPECTOR
+
+        /// <summary>
+        /// Log level of this connector
+        /// </summary>
+        [Header("Base Settings"), SerializeField]
+        protected LogLevel logLevel = LogLevel.Info;
+
+        #endregion
+
+        /// <summary>
+        /// Logger assigned to this module
+        /// </summary>
+        protected Logging.Logger logger;
+
         /// <summary>
         /// Check if this object is not currently being destroyed
         /// </summary>
-        protected bool isNowDestroying = false;
+        protected static bool isNowDestroying = false;
         /// <summary>
         /// Current instance of this singleton
         /// </summary>
         private static T _instance { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        protected static bool isQuitting = false;
 
         protected virtual void Awake()
         {
+            logger = Mst.Create.Logger(typeof(T).Name);
+            logger.LogLevel = logLevel;
+
             StartCoroutine(WaitAndDestroy());
         }
 
-        private IEnumerator WaitAndDestroy()
+        private void OnDestroy()
         {
-            yield return new WaitForEndOfFrame();
+            isNowDestroying = true;
+        }
 
-            if (_instance != null && _instance != this)
-            {
-                isNowDestroying = true;
-                Destroy(gameObject);
-            }
+        private void OnApplicationQuit()
+        {
+            isQuitting = true;
         }
 
         /// <summary>
@@ -37,11 +60,19 @@ namespace MasterServerToolkit.Utils
         {
             get
             {
-                if (!_instance)
+                if (!_instance && !isQuitting && !isNowDestroying)
                     Create();
 
                 return _instance;
             }
+        }
+
+        private IEnumerator WaitAndDestroy()
+        {
+            yield return new WaitForEndOfFrame();
+
+            if (_instance != null && _instance != this)
+                Destroy(gameObject);
         }
 
         /// <summary>
@@ -58,12 +89,7 @@ namespace MasterServerToolkit.Utils
         /// <param name="name"></param>
         public static void Create(string name)
         {
-            if (_instance)
-                return;
-
-            _instance = FindObjectOfType<T>();
-
-            if (_instance)
+            if (_instance || isQuitting || isNowDestroying)
                 return;
 
             string newName = !string.IsNullOrEmpty(name) ? name : $"--{typeof(T).Name}".ToUpper();

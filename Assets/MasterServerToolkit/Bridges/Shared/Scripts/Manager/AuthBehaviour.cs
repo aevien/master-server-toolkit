@@ -120,7 +120,7 @@ namespace MasterServerToolkit.Games
 
             Mst.Client.Auth.RememberMe = rememberUser;
 
-            MstTimer.WaitForSeconds(0.5f, () =>
+            MstTimer.Instance.WaitForSeconds(0.5f, () =>
             {
                 // Listen to connection events
                 Connection.AddConnectionOpenListener(OnClientConnectedToServer);
@@ -136,7 +136,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// 
         /// </summary>
-        protected virtual void OnClientConnectedToServer()
+        protected virtual void OnClientConnectedToServer(IClientSocket client)
         {
             Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
@@ -148,7 +148,7 @@ namespace MasterServerToolkit.Games
             {
                 if (Mst.Client.Auth.HasAuthToken())
                 {
-                    MstTimer.WaitForSeconds(0.2f, () =>
+                    MstTimer.Instance.WaitForSeconds(0.2f, () =>
                     {
                         SignInWithToken();
                     });
@@ -163,7 +163,7 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// 
         /// </summary>
-        protected virtual void OnClientDisconnectedFromServer()
+        protected virtual void OnClientDisconnectedFromServer(IClientSocket client)
         {
             Connection.RemoveConnectionOpenListener(OnClientConnectedToServer);
             Connection.RemoveConnectionCloseListener(OnClientDisconnectedFromServer);
@@ -423,7 +423,7 @@ namespace MasterServerToolkit.Games
             logger.Debug("Sign out");
             Mst.Client.Auth.SignOut(true);
 
-            MstTimer.WaitForSeconds(0.2f, () =>
+            MstTimer.Instance.WaitForSeconds(0.2f, () =>
             {
                 ViewsManager.HideAllViews();
                 Mst.Events.Invoke(MstEventKeys.showSignInView);

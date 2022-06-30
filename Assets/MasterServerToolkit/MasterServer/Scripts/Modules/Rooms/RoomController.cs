@@ -10,14 +10,14 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     /// <param name="access"></param>
     /// <param name="error"></param>
-    public delegate void RoomAccessProviderCallback(RoomAccessPacket access, string error);
+    public delegate void RoomAccessProviderCallbackDelegate(RoomAccessPacket access, string error);
 
     /// <summary>
     /// Room access provider factory
     /// </summary>
     /// <param name="accessCheckOptions">Options you may use to dive access</param>
     /// <param name="giveAccess"></param>
-    public delegate void RoomAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallback giveAccess);
+    public delegate void RoomAccessProviderDelegate(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallbackDelegate giveAccess);
 
     /// <summary>
     /// Instance of this class will be created when room registration is completed.
@@ -28,7 +28,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Access provider
         /// </summary>
-        private RoomAccessProvider accessProvider;
+        private RoomAccessProviderDelegate accessProvider;
 
         /// <summary>
         /// Connection of current room controller
@@ -58,7 +58,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Access provider of current room controller
         /// </summary>
-        public RoomAccessProvider AccessProvider
+        public RoomAccessProviderDelegate AccessProvider
         {
             get
             {
@@ -95,7 +95,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Destroy(SuccessCallback callback)
         {
-            Mst.Server.Rooms.DestroyRoom(RoomId, (isSuccess, error) => {
+            Mst.Server.Rooms.DestroyRoom(RoomId, (isSuccess, error) =>
+            {
 
                 if (!isSuccess)
                 {
@@ -169,7 +170,7 @@ namespace MasterServerToolkit.MasterServer
         {
             Mst.Server.Rooms.ValidateAccess(RoomId, token, callback, Connection);
         }
-        
+
         /// <summary>
         /// Call this method when one of the players left current room
         /// </summary>
@@ -192,7 +193,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="accessCheckOptions"></param>
         /// <param name="callback"></param>
-        public void DefaultAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallback callback)
+        public void DefaultAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallbackDelegate callback)
         {
             callback.Invoke(new RoomAccessPacket()
             {
@@ -253,7 +254,7 @@ namespace MasterServerToolkit.MasterServer
             // Invoke the access provider
             roomController.AccessProvider.Invoke(roomAccessProviderCheck, (access, error) =>
             {
-                // In case provider timed out
+                // In case provider timed out or done successfully
                 if (isProviderDone)
                 {
                     return;
@@ -277,7 +278,7 @@ namespace MasterServerToolkit.MasterServer
             });
 
             // Timeout the access provider
-            MstTimer.WaitForRealtimeSeconds(Mst.Server.Rooms.AccessProviderTimeout, () =>
+            MstTimer.Instance.WaitForRealtimeSeconds(Mst.Server.Rooms.AccessProviderTimeout, () =>
             {
                 if (!isProviderDone)
                 {

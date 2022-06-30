@@ -11,7 +11,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
-            server.RegisterMessageHandler((ushort)MstOpCodes.Ping, OnPingRequestListener);
+            server.RegisterMessageHandler(MstOpCodes.Ping, OnPingRequestListener);
         }
 
         private void OnPingRequestListener(IIncomingMessage message)

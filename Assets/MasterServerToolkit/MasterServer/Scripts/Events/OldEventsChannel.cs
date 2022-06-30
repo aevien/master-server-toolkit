@@ -79,7 +79,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns>True if there was at least one listener</returns>
         public bool Fire(string eventName, object arg1 = null, object arg2 = null)
         {
-            if(_handlers.TryGetValue(eventName, out List<EventHandler> eventHandlersList))
+            if (_handlers.TryGetValue(eventName, out List<EventHandler> eventHandlersList))
             {
                 if (eventHandlersList == null || eventHandlersList.Count == 0)
                 {

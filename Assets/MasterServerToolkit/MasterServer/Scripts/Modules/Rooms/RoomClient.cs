@@ -2,9 +2,6 @@ using MasterServerToolkit.Games;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -83,7 +80,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (Mst.Runtime.IsEditor && autoStartInEditor)
             {
-                MstTimer.WaitForSeconds(autoStartDelay, () =>
+                MstTimer.Instance.WaitForSeconds(autoStartDelay, () =>
                 {
                     AutostartInEditor();
                 });
@@ -111,7 +108,7 @@ namespace MasterServerToolkit.MasterServer
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room in editor...");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            MstTimer.Instance.WaitForSeconds(1f, () =>
             {
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in...");
 

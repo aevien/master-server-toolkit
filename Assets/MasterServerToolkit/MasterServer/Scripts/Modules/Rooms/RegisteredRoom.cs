@@ -253,7 +253,7 @@ namespace MasterServerToolkit.MasterServer
             playerPeer.GetExtension<IUserPeerExtension>().JoinedRoomID = -1;
             Players.Remove(peerId);
             OnPlayerLeftEvent?.Invoke(playerPeer);
-        }  
+        }
 
         /// <summary>
         /// Clears all of the accesses that have not been confirmed in time

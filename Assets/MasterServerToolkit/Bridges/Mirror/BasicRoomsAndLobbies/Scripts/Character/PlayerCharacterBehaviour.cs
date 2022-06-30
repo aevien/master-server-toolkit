@@ -8,7 +8,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     public class PlayerCharacterBehaviour : NetworkBehaviour
     {
-        #region INSPECTOR
+#region INSPECTOR
 
         /// <summary>
         /// Log levelof this module
@@ -16,7 +16,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
         [Header("Base Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Logger assigned to this module

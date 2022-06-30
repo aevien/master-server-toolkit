@@ -138,6 +138,8 @@ namespace MasterServerToolkit.Networking
             get { return _data.Length > 0; }
         }
 
+        public byte[] Data => _data;
+
         /// <summary>
         /// Returns contents of this message. Mutable
         /// </summary>

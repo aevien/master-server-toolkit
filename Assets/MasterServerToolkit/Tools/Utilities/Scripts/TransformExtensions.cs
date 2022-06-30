@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -16,6 +17,17 @@ namespace MasterServerToolkit.Extensions
                     Object.Destroy(t.gameObject);
                 }
             }
+        }
+
+        public static T GetChildComponentByName<T>(this Transform parent, string childName) where T : Component
+        {
+            return parent.GetComponentsInChildren<T>(true).Where(c => c.name == childName).FirstOrDefault();
+        }
+
+        public static T TryGetChildComponentByName<T>(this Transform parent, string childName, out T comp) where T : Component
+        {
+            comp = GetChildComponentByName<T>(parent, childName);
+            return comp;
         }
     }
 }

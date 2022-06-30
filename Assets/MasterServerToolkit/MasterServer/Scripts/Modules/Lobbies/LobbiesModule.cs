@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Logging;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -54,18 +53,18 @@ namespace MasterServerToolkit.MasterServer
             factories = factories ?? new Dictionary<string, ILobbyFactory>();
             lobbies = lobbies ?? new Dictionary<int, ILobby>();
 
-            server.RegisterMessageHandler((ushort)MstOpCodes.CreateLobby, CreateLobbyHandle);
-            server.RegisterMessageHandler((ushort)MstOpCodes.JoinLobby, JoinLobbyHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.LeaveLobby, LeaveLobbyHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.SetLobbyProperties, SetLobbyPropertiesMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.SetMyProperties, SetMyPropertiesMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.JoinLobbyTeam, JoinLobbyTeamMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.SendMessageToLobbyChat, SendMessageToLobbyChatMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.SetLobbyAsReady, SetLobbyAsReadyMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.StartLobbyGame, StartLobbyGameMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetLobbyRoomAccess, GetLobbyRoomAccessMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetLobbyMemberData, GetLobbyMemberDataMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetLobbyInfo, GetLobbyInfoMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.CreateLobby, CreateLobbyHandle);
+            server.RegisterMessageHandler(MstOpCodes.JoinLobby, JoinLobbyHandler);
+            server.RegisterMessageHandler(MstOpCodes.LeaveLobby, LeaveLobbyHandler);
+            server.RegisterMessageHandler(MstOpCodes.SetLobbyProperties, SetLobbyPropertiesMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.SetMyProperties, SetMyPropertiesMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.JoinLobbyTeam, JoinLobbyTeamMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.SendMessageToLobbyChat, SendMessageToLobbyChatMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.SetLobbyAsReady, SetLobbyAsReadyMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.StartLobbyGame, StartLobbyGameMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetLobbyRoomAccess, GetLobbyRoomAccessMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetLobbyMemberData, GetLobbyMemberDataMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetLobbyInfo, GetLobbyInfoMessageHandler);
         }
 
         /// <summary>

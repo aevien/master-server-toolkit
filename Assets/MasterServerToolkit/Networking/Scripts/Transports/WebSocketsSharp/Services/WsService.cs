@@ -1,6 +1,4 @@
-﻿using MasterServerToolkit.Logging;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
@@ -9,10 +7,9 @@ namespace MasterServerToolkit.Networking
     /// <summary>
     /// Web socket service, designed to work with unitys main thread
     /// </summary>
-    public class WsService : WebSocketServiceBehavior
+    public class WsService : WebSocketServiceBehavior, IDisposable
     {
-        private WsServerSocket serverSocket;
-        private Queue<byte[]> messageQueue = new Queue<byte[]>();
+        private bool disposedValue = false;
 
         /// <summary>
         /// 
@@ -34,65 +31,24 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public event Action<byte[]> OnMessageEvent;
 
-        public void SetServerSocket(WsServerSocket serverSocket)
-        {
-            if (this.serverSocket == null)
-            {
-                this.serverSocket = serverSocket;
-                this.serverSocket.OnUpdateEvent += Update;
-            }
-        }
-
-        private void Update()
-        {
-            if (messageQueue.Count <= 0)
-            {
-                return;
-            }
-
-            lock (messageQueue)
-            {
-                while (messageQueue.Count > 0)
-                {
-                    OnMessageEvent?.Invoke(messageQueue.Dequeue());
-                }
-            }
-        }
-
         protected override void OnOpen()
         {
-            serverSocket.ExecuteOnUpdate(() =>
-            {
-                OnOpenEvent?.Invoke();
-            });
+            OnOpenEvent?.Invoke();
         }
 
         protected override void OnClose(CloseEventArgs e)
         {
-            serverSocket.OnUpdateEvent -= Update;
-
-            serverSocket.ExecuteOnUpdate(() =>
-            {
-                OnCloseEvent?.Invoke(e.Reason);
-            });
+            OnCloseEvent?.Invoke(e.Reason);
         }
 
         protected override void OnError(ErrorEventArgs e)
         {
-            serverSocket.OnUpdateEvent -= Update;
-
-            serverSocket.ExecuteOnUpdate(() =>
-            {
-                OnErrorEvent?.Invoke(e.Message);
-            });
+            OnErrorEvent?.Invoke(e.Message);
         }
 
         protected override void OnMessage(MessageEventArgs e)
         {
-            lock (messageQueue)
-            {
-                messageQueue.Enqueue(e.RawData);
-            }
+            OnMessageEvent?.Invoke(e.RawData);
         }
 
         public void SendAsync(byte[] data)
@@ -103,6 +59,27 @@ namespace MasterServerToolkit.Networking
         public void CloseAsync(string reason)
         {
             CloseAsync(CloseStatusCode.Normal, reason);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    OnOpenEvent = null;
+                    OnCloseEvent = null;
+                    OnErrorEvent = null;
+                    OnMessageEvent = null;
+                }
+
+                disposedValue = true;
+            }
         }
     }
 }

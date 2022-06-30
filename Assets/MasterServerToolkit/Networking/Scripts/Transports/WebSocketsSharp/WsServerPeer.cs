@@ -1,8 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Networking
 {
@@ -10,57 +9,89 @@ namespace MasterServerToolkit.Networking
     {
         private readonly WsService serviceForPeer;
         private Queue<byte[]> delayedMessages;
-        private readonly float delay = 0.2f;
         private bool isConnected = false;
 
-        public WsServerPeer(WsService session)
+        public override bool IsConnected => isConnected;
+
+        public WsServerPeer(WsService session) : base()
         {
             serviceForPeer = session;
-            serviceForPeer.OnOpenEvent += () =>
-            {
-                isConnected = true;
-            };
-            serviceForPeer.OnCloseEvent += (msg) => { isConnected = false; };
-            serviceForPeer.OnErrorEvent += (msg) => { isConnected = false; };
+            serviceForPeer.IgnoreExtensions = true;
+            serviceForPeer.OnOpenEvent += ServiceForPeer_OnOpenEvent;
+            serviceForPeer.OnCloseEvent += ServiceForPeer_OnCloseEvent;
+            serviceForPeer.OnErrorEvent += ServiceForPeer_OnErrorEvent;
+            serviceForPeer.OnMessageEvent += ServiceForPeer_OnMessageEvent;
 
             delayedMessages = new Queue<byte[]>();
 
+            // TODO
+            // Why is this true by default?
             isConnected = true;
         }
 
-        public void SendDelayedMessages()
+        private void ServiceForPeer_OnMessageEvent(byte[] data)
         {
-            MstTimer.Instance.StartCoroutine(SendDelayedMessagesCoroutine());
+            HandleReceivedData(data);
         }
 
-        private IEnumerator SendDelayedMessagesCoroutine()
+        private void ServiceForPeer_OnOpenEvent()
         {
-            yield return new WaitForSecondsRealtime(delay);
+            _ = SendDelayedMessages();
+            isConnected = true;
+            NotifyConnectionOpenEvent();
+        }
+
+        private void ServiceForPeer_OnCloseEvent(string reason)
+        {
+            isConnected = false;
+            NotifyConnectionCloseEvent(reason);
+        }
+
+        private void ServiceForPeer_OnErrorEvent(string error)
+        {
+            isConnected = false;
+            logger.Error(error);
+            NotifyConnectionCloseEvent(error);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (serviceForPeer != null)
+            {
+                serviceForPeer.OnOpenEvent -= ServiceForPeer_OnOpenEvent;
+                serviceForPeer.OnCloseEvent -= ServiceForPeer_OnCloseEvent;
+                serviceForPeer.OnErrorEvent -= ServiceForPeer_OnErrorEvent;
+                serviceForPeer.OnMessageEvent -= ServiceForPeer_OnMessageEvent;
+                serviceForPeer.Dispose();
+            }
+
+            delayedMessages?.Clear();
+
+            base.Dispose(disposing);
+        }
+
+        private async Task SendDelayedMessages()
+        {
+            await Task.Delay(200);
 
             if (delayedMessages == null)
             {
-                Debug.LogError("Delayed messages are already sent");
-                yield break;
+                logger.Error("Delayed messages are already sent");
+                return;
             }
 
             lock (delayedMessages)
             {
                 if (delayedMessages == null)
-                {
-                    yield break;
-                }
+                    return;
 
-                var copy = delayedMessages;
+                var delayedMessagesCopy = delayedMessages;
                 delayedMessages = null;
 
-                foreach (var data in copy)
-                {
+                foreach (var data in delayedMessagesCopy)
                     serviceForPeer.SendAsync(data);
-                }
             }
         }
-
-        public override bool IsConnected => isConnected;
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
@@ -83,7 +114,7 @@ namespace MasterServerToolkit.Networking
                     }
                 }
 
-                Mst.Client.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+                Mst.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
                 serviceForPeer.SendAsync(message.ToBytes());
             }
             else

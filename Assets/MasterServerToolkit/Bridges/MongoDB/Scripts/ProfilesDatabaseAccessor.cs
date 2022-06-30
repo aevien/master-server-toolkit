@@ -1,11 +1,9 @@
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
-using System;
-using System.Collections.Generic;
-using MongoDB.Bson;
-using MongoDB.Driver;
 using MasterServerToolkit.MasterServer;
-using System.Threading.Tasks;
+using MongoDB.Driver;
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.MongoDB
 {
@@ -16,8 +14,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         private IMongoCollection<ProfileInfoDataMongoDB> _profiles;
 
-        public ProfilesDatabaseAccessor(string connectionString, string databaseName) 
-            : this(new MongoClient(connectionString), databaseName){}
+        public ProfilesDatabaseAccessor(string connectionString, string databaseName)
+            : this(new MongoClient(connectionString), databaseName) { }
 
         public ProfilesDatabaseAccessor(MongoClient client, string databaseName)
         {
@@ -28,7 +26,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
             _profiles.Indexes.CreateOne(
                 new CreateIndexModel<ProfileInfoDataMongoDB>(
-                    Builders<ProfileInfoDataMongoDB>.IndexKeys.Ascending(e => e.UserId),new CreateIndexOptions(){ Unique = true }
+                    Builders<ProfileInfoDataMongoDB>.IndexKeys.Ascending(e => e.UserId), new CreateIndexOptions() { Unique = true }
                 )
             );
         }
@@ -55,7 +53,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
             await Task.Run(() =>
             {
-                _profiles.ReplaceOne(filter,data);
+                _profiles.ReplaceOne(filter, data);
             });
         }
 
@@ -63,7 +61,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
         {
             string userId = profile.UserId;
 
-            var data = await Task.Run(() => {
+            var data = await Task.Run(() =>
+            {
                 return _profiles.Find(a => a.UserId == userId).FirstOrDefault();
             });
 
@@ -75,11 +74,12 @@ namespace MasterServerToolkit.Bridges.MongoDB
                     Data = profile.ToBytes()
                 };
 
-                await Task.Run(() => {
+                await Task.Run(() =>
+                {
                     _profiles.InsertOne(data);
                 });
             }
-            
+
             return data;
         }
     }

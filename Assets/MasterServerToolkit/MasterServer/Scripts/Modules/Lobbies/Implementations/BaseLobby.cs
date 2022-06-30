@@ -308,7 +308,7 @@ namespace MasterServerToolkit.MasterServer
 
             Subscribe(lobbyUser.Peer);
 
-            lobbyUser.Peer.OnPeerDisconnectedEvent += OnPeerDisconnected;
+            lobbyUser.Peer.OnConnectionCloseEvent += OnPeerDisconnected;
 
             OnPlayerAdded(member);
 
@@ -355,7 +355,7 @@ namespace MasterServerToolkit.MasterServer
 
 
             // Unsubscribe
-            lobbyUser.Peer.OnPeerDisconnectedEvent -= OnPeerDisconnected;
+            lobbyUser.Peer.OnConnectionCloseEvent -= OnPeerDisconnected;
             Unsubscribe(lobbyUser.Peer);
 
             // Notify player himself that he's removed
@@ -1085,15 +1085,20 @@ namespace MasterServerToolkit.MasterServer
                 case LobbyState.FailedToStart:
                     StatusText = "Failed to start server";
                     break;
-                case LobbyState.Preparations: StatusText = "Failed to start server";
+                case LobbyState.Preparations:
+                    StatusText = "Failed to start server";
                     break;
-                case LobbyState.StartingGameServer: StatusText = "Starting game server";
+                case LobbyState.StartingGameServer:
+                    StatusText = "Starting game server";
                     break;
-                case LobbyState.GameInProgress: StatusText = "Game in progress";
+                case LobbyState.GameInProgress:
+                    StatusText = "Game in progress";
                     break;
-                case LobbyState.GameOver: StatusText = "Game is over";
+                case LobbyState.GameOver:
+                    StatusText = "Game is over";
                     break;
-                default: StatusText = "Unknown lobby state";
+                default:
+                    StatusText = "Unknown lobby state";
                     break;
             };
 

@@ -7,14 +7,12 @@ namespace MasterServerToolkit.MasterServer
     {
         public IServerSocket ServerSocket()
         {
-            var serverSocket = Mst.Advanced.ServerSocketFactory();
-            return serverSocket;
+            return Mst.Settings.ServerSocketFactory();
         }
 
         public IClientSocket ClientSocket()
         {
-            var clientSocket = Mst.Advanced.ClientSocketFactory();
-            return clientSocket;
+            return Mst.Settings.ClientSocketFactory();
         }
 
         /// <summary>

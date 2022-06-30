@@ -1,19 +1,17 @@
 ﻿using MasterServerToolkit.MasterServer.Web;
-using MasterServerToolkit.Networking;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Text;
 using System.Xml;
 using UnityEngine;
-using WebSocketSharp.Net;
-using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MstInfoHttpController : HttpController
     {
-        private Dictionary<string, string> systemInfo;
+        private MstProperties systemInfo;
         private string publicIp = "";
 
         public override void Initialize(HttpServerModule server)
@@ -21,16 +19,26 @@ namespace MasterServerToolkit.MasterServer
             base.Initialize(server);
 
             server.RegisterHttpRequestHandler("info", OnGetMstInfoHttpRequestHandler);
-            server.RegisterHttpRequestHandler("info.json", OnGetMstInfoJsonHttpRequestHandler);
+            server.RegisterHttpRequestHandler("info-json", OnGetMstInfoJsonHttpRequestHandler);
 
-            systemInfo = new Dictionary<string, string>
-            {
-                { "Device Id", SystemInfo.deviceUniqueIdentifier },
-                { "Device Model", SystemInfo.deviceModel },
-                { "Device Name", SystemInfo.deviceName },
-                { "Graphics Device Name", SystemInfo.graphicsDeviceName },
-                { "Graphics Device Version", SystemInfo.graphicsDeviceVersion }
-            };
+            systemInfo = new MstProperties();
+            systemInfo.Add("Device Id", SystemInfo.deviceUniqueIdentifier);
+            systemInfo.Add("Device Model", SystemInfo.deviceModel);
+            systemInfo.Add("Device Name", SystemInfo.deviceName);
+            systemInfo.Add("Device Type", SystemInfo.deviceType);
+            systemInfo.Add("Graphics Device Id", SystemInfo.graphicsDeviceID);
+            systemInfo.Add("Graphics Device Name", SystemInfo.graphicsDeviceName);
+            systemInfo.Add("Graphics Device Version", SystemInfo.graphicsDeviceVersion);
+            systemInfo.Add("Graphics Device Type", SystemInfo.graphicsDeviceType);
+            systemInfo.Add("Graphics Device Vendor Id", SystemInfo.graphicsDeviceVendorID);
+            systemInfo.Add("Graphics Device Vendor", SystemInfo.graphicsDeviceVendor);
+            systemInfo.Add("Graphics Device Memory", SystemInfo.graphicsMemorySize);
+            systemInfo.Add("OS", SystemInfo.operatingSystem);
+            systemInfo.Add("OS Family", SystemInfo.operatingSystemFamily);
+            systemInfo.Add("CPU Type", SystemInfo.processorType);
+            systemInfo.Add("CPU Frequency", SystemInfo.processorFrequency);
+            systemInfo.Add("CPU Count", SystemInfo.processorCount);
+            systemInfo.Add("RAM", SystemInfo.systemMemorySize);
 
             Mst.Helper.GetPublicIp((ip, error) =>
             {
@@ -38,10 +46,8 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
-        private void OnGetMstInfoJsonHttpRequestHandler(HttpRequestEventArgs eventArgs)
+        private void OnGetMstInfoJsonHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            var response = eventArgs.Response;
-
             JObject json = new JObject();
             JArray modulesJson = new JArray();
 
@@ -54,25 +60,21 @@ namespace MasterServerToolkit.MasterServer
 
             byte[] contents = Encoding.UTF8.GetBytes(json.ToString());
 
-            response.SetHeader("Access-Control-Allow-Origin", "*");
-            response.SetHeader("Access-Control-Allow-Methods", "*");
+            response.Headers.Set("Access-Control-Allow-Origin", "*");
+            response.Headers.Set("Access-Control-Allow-Methods", "*");
             response.ContentType = "application/json";
             response.ContentEncoding = Encoding.UTF8;
             response.ContentLength64 = contents.LongLength;
             response.Close(contents, true);
         }
 
-        private void OnGetMstInfoHttpRequestHandler(HttpRequestEventArgs eventArgs)
+        private void OnGetMstInfoHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            if (!HttpServer.TryGetQueryValue(eventArgs.Request, "ignoreLog", out string value))
-                logger.Debug($"Лог если нет игнора");
-
-            var response = eventArgs.Response;
-
             HtmlDocument html = new HtmlDocument
             {
                 Title = "MST Info"
             };
+
             html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
             html.AddMeta(new KeyValuePair<string, string>("name", "viewport"), new KeyValuePair<string, string>("content", "width=device-width, initial-scale=1"));
 
@@ -189,32 +191,45 @@ namespace MasterServerToolkit.MasterServer
             var tbody = html.CreateElement("tbody");
             table.AppendChild(tbody);
 
-            var thr = html.CreateElement("tr");
-            thead.AppendChild(thr);
-
-            var th1 = html.CreateElement("th");
-            th1.InnerText = "#";
-            th1.SetAttribute("scope", "col");
-            th1.SetAttribute("width", "200");
-            thr.AppendChild(th1);
-
-            var thr2 = html.CreateElement("th");
-            thr2.InnerText = "Name";
-            thr.AppendChild(thr2);
-
-            foreach (var property in systemInfo)
+            try
             {
-                var tr = html.CreateElement("tr");
-                tbody.AppendChild(tr);
+                var thr = html.CreateElement("tr");
+                thead.AppendChild(thr);
 
-                var th = html.CreateElement("th");
-                th.InnerText = property.Key;
-                th.SetAttribute("scope", "row");
-                tr.AppendChild(th);
+                var th1 = html.CreateElement("th");
+                th1.InnerText = "#";
+                th1.SetAttribute("scope", "col");
+                th1.SetAttribute("width", "200");
+                thr.AppendChild(th1);
 
-                var th2 = html.CreateElement("td");
-                th2.InnerText = property.Value;
-                tr.AppendChild(th2);
+                var thr2 = html.CreateElement("th");
+                thr2.InnerText = "Name";
+                thr.AppendChild(thr2);
+
+                foreach (var property in systemInfo)
+                {
+                    var tr = html.CreateElement("tr");
+                    tbody.AppendChild(tr);
+
+                    var th = html.CreateElement("th");
+                    th.InnerText = property.Key;
+                    th.SetAttribute("scope", "row");
+                    tr.AppendChild(th);
+
+                    var th2 = html.CreateElement("td");
+                    th2.InnerText = property.Value;
+                    tr.AppendChild(th2);
+                }
+            }
+            catch (Exception e)
+            {
+                var thr = html.CreateElement("tr");
+                thead.AppendChild(thr);
+                var th = html.CreateElement("td");
+                th.SetAttribute("colspan", "2");
+                th.AddClass("text-break");
+                th.InnerText = e.ToString();
+                thr.AppendChild(th);
             }
         }
 
@@ -274,39 +289,41 @@ namespace MasterServerToolkit.MasterServer
                 var td1 = html.CreateElement("td");
                 tr.AppendChild(td1);
 
-                // Subtable
-                var table2 = html.CreateElement("table");
-                table2.AddClass("table table-bordered table-striped table-hover table-sm");
-
-                td1.AppendChild(table2);
-
-                // Subtable body
-                var tbody2 = html.CreateElement("tbody");
-                table2.AppendChild(tbody2);
-
-                var infos = module.Info().ToDictionary();
-
-                foreach (string key in infos.Keys)
+                try
                 {
-                    // Subtable row
-                    tr = html.CreateElement("tr");
-                    tbody2.AppendChild(tr);
+                    // Subtable
+                    var table2 = html.CreateElement("table");
+                    table2.AddClass("table table-bordered table-striped table-hover table-sm");
 
-                    // First cell
-                    th = html.CreateElement("th");
-                    th.InnerText = key;
-                    th.SetAttribute("scope", "row");
-                    th.SetAttribute("width", "30%");
-                    tr.AppendChild(th);
+                    td1.AppendChild(table2);
 
-                    td = html.CreateElement("td");
-                    td.InnerText = infos[key];
-                    tr.AppendChild(td);
+                    // Subtable body
+                    var tbody2 = html.CreateElement("tbody");
+                    table2.AppendChild(tbody2);
 
-                    //var li = html.CreateElement("li");
-                    //li.AddClass("list-group-item");
-                    //li.InnerXml = info;
-                    //ul.AppendChild(li);
+                    foreach (var kvp in module.Info())
+                    {
+                        // Subtable row
+                        tr = html.CreateElement("tr");
+                        tbody2.AppendChild(tr);
+
+                        // First cell
+                        th = html.CreateElement("th");
+                        th.InnerText = kvp.Key;
+                        th.SetAttribute("scope", "row");
+                        th.SetAttribute("width", "30%");
+                        tr.AppendChild(th);
+
+                        td = html.CreateElement("td");
+                        td.InnerText = kvp.Value;
+                        tr.AppendChild(td);
+                    }
+                }
+                catch (Exception e)
+                {
+                    tr.AddClass("table-danger");
+                    td1.InnerText = e.ToString();
+                    td1.AddClass("text-break");
                 }
 
                 index++;

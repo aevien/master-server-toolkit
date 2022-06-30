@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
     public class PlayerCharacterLook : PlayerCharacterBehaviour
     {
-        #region INSPECTOR
+#region INSPECTOR
 
         [Header("Base Components"), SerializeField]
         protected Camera lookCamera;
@@ -26,7 +26,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
         [SerializeField]
         protected bool useCollisionDetection = true;
 
-        #endregion
+#endregion
 
         [SyncVar]
         protected bool lookIsAllowed = true;

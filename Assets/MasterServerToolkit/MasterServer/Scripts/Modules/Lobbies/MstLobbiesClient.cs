@@ -1,8 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {

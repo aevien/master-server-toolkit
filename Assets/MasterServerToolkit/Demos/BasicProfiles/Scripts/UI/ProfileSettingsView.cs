@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.MasterServer;
+﻿using MasterServerToolkit.Games;
+using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using TMPro;
 
@@ -8,6 +9,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
     {
         private TMP_InputField displayNameInputField;
         private TMP_InputField avatarUrlInputField;
+
+        private ProfileLoaderBehaviour profileLoader;
 
         public string DisplayName
         {
@@ -37,15 +40,13 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
         }
 
-        protected override void Awake()
-        {
-            base.Awake();
-            Mst.Client.Profiles.OnProfileLoadedEvent += Profiles_OnProfileLoadedEvent;
-        }
-
         protected override void Start()
         {
             base.Start();
+
+            profileLoader = FindObjectOfType<ProfileLoaderBehaviour>();
+            profileLoader.OnProfileLoadedEvent.AddListener(OnProfileLoadedEventHandler);
+
             displayNameInputField = ChildComponent<TMP_InputField>("displayNameInputField");
             avatarUrlInputField = ChildComponent<TMP_InputField>("avatarUrlInputField");
         }
@@ -53,16 +54,17 @@ namespace MasterServerToolkit.Examples.BasicProfile
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            Mst.Client.Profiles.OnProfileLoadedEvent -= Profiles_OnProfileLoadedEvent;
+
+            if (profileLoader && profileLoader.Profile != null)
+                profileLoader.Profile.OnPropertyUpdatedEvent -= ProfilesManager_OnPropertyUpdatedEvent;
         }
 
-        private void Profiles_OnProfileLoadedEvent(ObservableProfile profile)
+        private void OnProfileLoadedEventHandler()
         {
-            profile.OnPropertyUpdatedEvent -= ProfilesManager_OnPropertyUpdatedEvent;
-            profile.OnPropertyUpdatedEvent += ProfilesManager_OnPropertyUpdatedEvent;
+            profileLoader.Profile.OnPropertyUpdatedEvent += ProfilesManager_OnPropertyUpdatedEvent;
 
-            DisplayName = profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Serialize();
-            AvatarUrl = profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Serialize();
+            foreach (var property in profileLoader.Profile.Properties)
+                ProfilesManager_OnPropertyUpdatedEvent(property.Key, property.Value);
         }
 
         private void ProfilesManager_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)

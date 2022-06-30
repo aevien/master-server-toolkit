@@ -1,7 +1,4 @@
 using MasterServerToolkit.Networking;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -11,11 +8,12 @@ namespace MasterServerToolkit.MasterServer
         [Header("Components"), SerializeField]
         private RoomServerManager roomServerManager;
 
-        protected override void Awake()
+        protected override void Start()
         {
-            base.Awake();
+            base.Start();
+
             autoStartInEditor = false;
-            RegisterMessageHandler((ushort)MstOpCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
+            RegisterMessageHandler(MstOpCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
         }
 
         public override void StartServer()
@@ -34,7 +32,7 @@ namespace MasterServerToolkit.MasterServer
         {
             base.StopServer();
 
-            MstTimer.WaitForSeconds(1f, () =>
+            MstTimer.Instance.WaitForSeconds(1f, () =>
             {
                 Mst.Runtime.Quit();
             });
@@ -42,7 +40,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnStartedServer()
         {
-            logger.Info($"Room Server started and listening to: {serverIP}:{serverPort}");
+            logger.Info($"Room Server started and listening to: {serverIp}:{serverPort}");
             base.OnStartedServer();
             if (roomServerManager) roomServerManager.OnServerStarted();
         }
@@ -67,36 +65,18 @@ namespace MasterServerToolkit.MasterServer
             {
                 roomServerManager.ValidateRoomAccess(message.Peer.Id, message.AsString(), (isSuccess, error) =>
                 {
-                    try
+                    if (!isSuccess)
                     {
-                        if (!isSuccess)
-                        {
-                            throw new MstMessageHandlerException(error, ResponseStatus.Failed);
-                        }
+                        logger.Error("Unauthorized access to room was rejected");
+                        message.Peer.Disconnect("Unauthorized access to room was rejected");
+                    }
 
-                        message.Respond(ResponseStatus.Success);
-                    }
-                    // If we got system exception
-                    catch (MstMessageHandlerException e)
-                    {
-                        logger.Error(e.Message);
-                        message.Respond(e.Message, e.Status);
-                        MstTimer.WaitForSeconds(1f, () =>
-                        {
-                            message.Peer.Disconnect("Unauthorized access to room was rejected");
-                        });
-                    }
-                    // If we got another exception
-                    catch (Exception e)
-                    {
-                        logger.Error(e.Message);
-                        message.Respond(e.Message, ResponseStatus.Error);
-                        MstTimer.WaitForSeconds(1f, () =>
-                        {
-                            message.Peer.Disconnect(e.Message);
-                        });
-                    }
+                    message.Respond(ResponseStatus.Success);
                 });
+            }
+            else
+            {
+                message.Peer.Disconnect("Room is invalid");
             }
         }
 

@@ -1,20 +1,17 @@
-﻿using MasterServerToolkit.Logging;
-using MasterServerToolkit.MasterServer.Web;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.MasterServer.Web;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+using System.Net;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 using UnityEngine;
-using WebSocketSharp.Net;
-using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public delegate void OnHttpRequestDelegate(HttpRequestEventArgs eventArgs);
+    public delegate void OnHttpRequestDelegate(HttpListenerRequest request, HttpListenerResponse response);
 
     public enum HttpMethod { GET, POST, PUT, DELETE }
 
@@ -22,83 +19,105 @@ namespace MasterServerToolkit.MasterServer
     {
         #region INSPECTOR
 
+        [Header("Accessibility Settings"), SerializeField]
+        private float heatBeatCheckInterval = 5f;
+
         [Header("Http Server Settings"), SerializeField]
         protected string httpAddress = "127.0.0.1";
         [SerializeField]
         protected int httpPort = 5056;
         [SerializeField]
         protected string[] defaultIndexPage = new string[] { "index", "home" };
-        [SerializeField]
-        protected List<MimeTypeInfo> mimeTypes;
-
-        [SerializeField]
-        protected string rootDirectory = "wwwroot";
 
         [Header("User Credentials Settings"), SerializeField]
-        protected AuthenticationSchemes authenticationSchemes = AuthenticationSchemes.Digest;
-        [SerializeField]
-        protected string realm = "adminusers@masterservertoolkit.com";
-        [SerializeField]
         protected string username = "admin";
         [SerializeField]
         protected string password = "admin";
 
         #endregion
 
+        private string checkHeartBeatUrl = "";
+
         /// <summary>
         /// Current http server
         /// </summary>
-        private HttpServer httpServer;
-
-        /// <summary>
-        /// List of http request handlers
-        /// </summary>
-        private Dictionary<string, OnHttpRequestDelegate> httpRequestHandlers;
+        private HttpListener httpServer;
 
         /// <summary>
         /// 
         /// </summary>
-        private string wsServicePath = "ws";
+        private Thread httpThread;
+
+        /// <summary>
+        /// List of http request handlers
+        /// </summary>
+        private Dictionary<string, OnHttpRequestDelegate> httpRequestActions;
 
         /// <summary>
         /// List of surface controllers
         /// </summary>
-        public Dictionary<Type, IHttpController> SurfaceControllers { get; protected set; }
-
-        /// <summary>
-        /// List of web socket controllers
-        /// </summary>
-        public Dictionary<Type, IWsController> WsControllers { get; protected set; }
+        public Dictionary<Type, IHttpController> Controllers { get; protected set; }
 
         /// <summary>
         /// Invokes before server frame is updated
         /// </summary>
         public event Action OnUpdateEvent;
 
-        public bool UserSecure { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool UseSecure { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string CertificatePath { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string CertificatePassword { get; set; }
 
         private void OnValidate()
         {
-            if (mimeTypes == null || mimeTypes.Count == 0)
-            {
-                mimeTypes = new List<MimeTypeInfo>
-                {
-                    new MimeTypeInfo() { name = ".html", type = "text/html" },
-                    new MimeTypeInfo() { name = ".htm", type = "text/html" },
-                    new MimeTypeInfo() { name = ".txt", type = "text/plain" },
-                    new MimeTypeInfo() { name = ".css", type = "text/css" },
-                    new MimeTypeInfo() { name = ".xml", type = "text/xml" },
-                    new MimeTypeInfo() { name = ".js", type = "application/javascript" },
-                    new MimeTypeInfo() { name = ".json", type = "application/json" },
-                    new MimeTypeInfo() { name = ".gif", type = "image/gif" },
-                    new MimeTypeInfo() { name = ".jpeg", type = "image/jpeg" },
-                    new MimeTypeInfo() { name = ".jpg", type = "image/jpeg" },
-                    new MimeTypeInfo() { name = ".png", type = "image/png" },
-                    new MimeTypeInfo() { name = ".tif", type = "image/tiff" }
-                };
-            }
+            heatBeatCheckInterval = Mathf.Clamp(heatBeatCheckInterval, 2f, 120f);
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+
+            username = Mst.Args.AsString(Mst.Args.Names.WebUsername, username);
+            password = Mst.Args.AsString(Mst.Args.Names.WebPassword, password);
+
+            // Set heartbeat check interval
+            heatBeatCheckInterval = Mathf.Clamp(Mst.Args.AsFloat(Mst.Args.Names.WebServerHeartbeatCheckInterval, heatBeatCheckInterval), 2f, 120f);
+
+            //
+            checkHeartBeatUrl = Mst.Args.AsString($"live-{Mst.Args.Names.WebServerHeartbeatCheckPage}", $"live-{Mst.Helper.CreateGuidString()}");
+
+            // Initialize controllers lists
+            Controllers = new Dictionary<Type, IHttpController>();
+
+            // Initialize handlers list
+            httpRequestActions = new Dictionary<string, OnHttpRequestDelegate>();
+        }
+
+        private void Start()
+        {
+            // Setup secure connection
+            UseSecure = Mst.Settings.UseSecure;
+            CertificatePath = Mst.Settings.CertificatePath;
+            CertificatePassword = Mst.Settings.CertificatePassword;
+
+            // Set port
+            httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);
+
+            // Set port
+            httpAddress = Mst.Args.AsString(Mst.Args.Names.WebAddress, httpAddress);
+
+            // Start heartbeat checking
+            InvokeRepeating(nameof(CheckHeartBeat), heatBeatCheckInterval, heatBeatCheckInterval);
         }
 
         private void Update()
@@ -111,180 +130,205 @@ namespace MasterServerToolkit.MasterServer
             Stop();
         }
 
-        private void OnApplicationQuit()
-        {
-            Stop();
-        }
-
         public override void Initialize(IServer server)
         {
-            // Setup secure connection
-            UserSecure = MstApplicationConfig.Instance.UseSecure;
-            CertificatePath = MstApplicationConfig.Instance.CertificatePath;
-            CertificatePassword = MstApplicationConfig.Instance.CertificatePassword;
+            Listen();
+        }
 
-            // Set port
-            httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);
+        [ContextMenu("Restart")]
+        private void Restart()
+        {
+            if (httpThread != null)
+                httpThread.Abort();
 
-            // Set port
-            httpAddress = Mst.Args.AsString(Mst.Args.Names.WebAddress, httpAddress);
+            Listen();
+        }
 
-            // Set root directory
-            rootDirectory = Mst.Args.AsString(Mst.Args.Names.WebRootDir, rootDirectory);
+        public void Listen()
+        {
+            Controllers.Clear();
+            httpRequestActions.Clear();
+
+            // Stop if started
+            Stop();
 
             // Initialize server
-            httpServer = new HttpServer(System.Net.IPAddress.Parse(httpAddress), httpPort, UserSecure)
-            {
-                AuthenticationSchemes = authenticationSchemes == AuthenticationSchemes.None ? AuthenticationSchemes.Anonymous : authenticationSchemes,
-                Realm = realm,
-                UserCredentialsFinder = UserCredentialsFinder
-            };
+            httpServer = new HttpListener();
+            httpServer.AuthenticationSchemes = AuthenticationSchemes.Basic;
 
-            // Init root directory. Create if exists
-            InitRooDirectory();
-
-            if (UserSecure)
-            {
-                if (string.IsNullOrEmpty(CertificatePath.Trim()))
-                {
-                    logger.Error("You are using secure connection, but no path to certificate defined. Stop connection process.");
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(CertificatePassword.Trim()))
-                    httpServer.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath);
-                else
-                    httpServer.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath, CertificatePassword);
-
-                httpServer.SslConfiguration.EnabledSslProtocols =
-                    System.Security.Authentication.SslProtocols.Tls12
-                    | System.Security.Authentication.SslProtocols.Ssl3
-                    | System.Security.Authentication.SslProtocols.Default;
-            }
-
-            // Initialize controllers lists
-            SurfaceControllers = new Dictionary<Type, IHttpController>();
-            WsControllers = new Dictionary<Type, IWsController>();
-
-            // Initialize handlers list
-            httpRequestHandlers = new Dictionary<string, OnHttpRequestDelegate>();
+            // Registers default pages
+            RegisterDefaultControllers();
 
             // Find all surface controllers and add them to server
             foreach (var controller in GetComponentsInChildren<IHttpController>())
             {
-                if (SurfaceControllers.ContainsKey(controller.GetType()))
+                if (!Controllers.ContainsKey(controller.GetType()))
                 {
-                    throw new Exception("A controller already exists in the server: " + controller.GetType());
+                    Controllers[controller.GetType()] = controller;
+                    controller.Initialize(this);
                 }
-
-                SurfaceControllers[controller.GetType()] = controller;
-                controller.Initialize(this);
             }
 
-            // Find all web socket controllers and add them to server
-            foreach (var controller in GetComponentsInChildren<IWsController>())
+            httpThread = new Thread(new ThreadStart(async () =>
             {
-                if (WsControllers.ContainsKey(controller.GetType()))
+                try
                 {
-                    throw new Exception("A controller already exists in the server: " + controller.GetType());
+                    // Start http server
+                    httpServer.Start();
+
+                    if (httpServer.IsListening)
+                    {
+                        logger.Info($"Http server is started and listening: {httpAddress}:{httpPort}");
+                    }
+                    else
+                    {
+                        logger.Error($"Http server is not started");
+                    }
+
+                    while (httpServer.IsListening)
+                    {
+                        // The GetContext method blocks while waiting for a request.
+                        HttpListenerContext context = await httpServer?.GetContextAsync();
+
+                        if (context == null) continue;
+
+                        ValidateRequest(context, () =>
+                        {
+                            // Obtain a request object.
+                            HttpListenerRequest request = context.Request;
+                            // Obtain a response object.
+                            HttpListenerResponse response = context.Response;
+
+                            switch (request.HttpMethod.ToLower())
+                            {
+                                case "get":
+                                    HttpGetRequestHandler(request, response);
+                                    break;
+                                case "post":
+                                    HttpPostRequestHandler(request, response);
+                                    break;
+                            }
+                        });
+                    }
                 }
+                catch (ObjectDisposedException) { }
+                catch (Exception e)
+                {
+                    logger.Error(e);
+                }
+            }));
 
-                WsControllers[controller.GetType()] = controller;
-            }
+            httpThread.IsBackground = true;
+            httpThread.Name = "MstWebServerThread";
 
-            // Start listen to Get request
-            httpServer.OnGet += HttpServer_OnGet;
-
-            // Start listen to Post request
-            httpServer.OnPost += HttpServer_OnPost;
-
-            // Start listen to Put request
-            httpServer.OnPut += HttpServer_OnPut;
-
-            // Register web socket controller service
-            httpServer.AddWebSocketService<WsControllerService>($"/{wsServicePath}", (service) =>
-            {
-                service.IgnoreExtensions = true;
-                service.SetHttpServer(this);
-            });
-
-            // Start http server
-            httpServer.Start();
-
-            if (httpServer.IsListening)
-            {
-                logger.Info($"Web socket server is started and listening: {httpServer.Address}:{httpServer.Port}/{wsServicePath}");
-                logger.Info($"Http server is started and listening: {httpServer.Address}:{httpServer.Port}");
-            }
+            httpThread.Start();
         }
 
-        /// <summary>
-        /// Init root directory. Create if exists
-        /// </summary>
-        private void InitRooDirectory()
+        private void ValidateRequest(HttpListenerContext context, Action successCallback)
         {
-            // Get app directory
-            string appDirectory = Directory.GetCurrentDirectory();
-
-            // Root directory path
-            string rootDirPath = Path.Combine(appDirectory, rootDirectory);
-
-            // Create if not eaxist
-            if (!Directory.Exists(rootDirPath))
+            if (context.User != null)
             {
-                logger.Info($"No web root directory found. Lets create it as \"{rootDirPath}\"");
+                var identity = (HttpListenerBasicIdentity)context.User.Identity;
 
-                Directory.CreateDirectory(rootDirPath);
+                string clientUsername = identity.Name;
+                string clientPassword = identity.Password;
 
-                logger.Info($"Root directory is created as \"{rootDirPath}\"");
+                if (username == clientUsername && password == clientPassword)
+                {
+                    successCallback?.Invoke();
+                }
+                else
+                {
+                    byte[] contents = Encoding.UTF8.GetBytes(Default401Page());
+
+                    context.Response.ContentType = "text/html";
+                    context.Response.ContentEncoding = Encoding.UTF8;
+                    context.Response.ContentLength64 = contents.LongLength;
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    context.Response.Close(contents, true);
+                }
             }
             else
             {
-                logger.Info($"Root directory found in \"{rootDirPath}\"");
+                successCallback?.Invoke();
             }
-
-            httpServer.DocumentRootPath = rootDirPath;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="identity"></param>
-        /// <returns></returns>
-        protected virtual NetworkCredential UserCredentialsFinder(IIdentity identity)
+        private async void CheckHeartBeat()
         {
-            if (identity.Name == username)
+            if (httpServer == null || !httpServer.IsListening) return;
+
+            HttpWebResponse hbWebResponse = null;
+
+            try
             {
-                return new NetworkCredential(identity.Name, password);
+                string url = CreateHttpRequestPrefix(checkHeartBeatUrl);
+
+                if (url.EndsWith("/"))
+                    url = url.Substring(0, url.Length - 1);
+
+                HttpWebRequest hbWebRequest = (HttpWebRequest)WebRequest.Create(url);
+                hbWebRequest.Credentials = new NetworkCredential(username, password);
+                hbWebRequest.Timeout = 2000;
+                hbWebRequest.Method = "GET";
+                hbWebRequest.ContentType = "text/html";
+
+                hbWebResponse = (HttpWebResponse)await hbWebRequest.GetResponseAsync();
+                hbWebResponse.Close();
             }
+            catch (Exception e)
+            {
+                if (hbWebResponse != null)
+                    hbWebResponse.Close();
 
-            return null;
+                logger.Error($"Web server is dead: {e}");
+                logger.Info($"Web server is restarting");
+
+                Restart();
+            }
         }
 
-        protected virtual void HttpServer_OnGet(object sender, HttpRequestEventArgs e)
+        private void RegisterDefaultControllers()
         {
-            HttpGetRequestHandler(sender, e);
+            RegisterHttpRequestHandler("/", (request, response) =>
+            {
+                byte[] contents = Encoding.UTF8.GetBytes(DefaultIndexPageHtml());
+
+                response.ContentType = "text/html";
+                response.ContentEncoding = Encoding.UTF8;
+                response.ContentLength64 = contents.LongLength;
+                response.Close(contents, true);
+            });
+
+            RegisterHttpRequestHandler(checkHeartBeatUrl, (request, response) =>
+            {
+                byte[] contents = Encoding.UTF8.GetBytes("Ok");
+
+                response.ContentType = "text/html";
+                response.ContentEncoding = Encoding.UTF8;
+                response.ContentLength64 = contents.LongLength;
+                response.Close(contents, true);
+            });
+
+            foreach (string page in defaultIndexPage)
+            {
+                RegisterHttpRequestHandler(page, (request, response) =>
+                {
+                    byte[] contents = Encoding.UTF8.GetBytes(DefaultIndexPageHtml());
+
+                    response.ContentType = "text/html";
+                    response.ContentEncoding = Encoding.UTF8;
+                    response.ContentLength64 = contents.LongLength;
+                    response.Close(contents, true);
+                });
+            }
         }
 
-        protected virtual void HttpServer_OnPost(object sender, HttpRequestEventArgs e)
-        {
-            HttpPostRequestHandler(sender, e);
-        }
-
-        protected virtual void HttpServer_OnPut(object sender, HttpRequestEventArgs e)
-        {
-            HttpPutRequestHandler(sender, e);
-        }
-
-        /// <summary>
-        /// Default 404 Page. Overload this method to create your own design.
-        /// </summary>
-        /// <returns></returns>
-        protected virtual string Default404Page()
+        protected virtual string Default401Page()
         {
             HtmlDocument html = new HtmlDocument
             {
-                Title = "404 | Master Server Toolkit"
+                Title = $"401 | {Mst.Name} {Mst.Version}"
             };
 
             html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
@@ -327,11 +371,90 @@ namespace MasterServerToolkit.MasterServer
 
             var h3 = html.CreateElement("h3");
             h3.AddClass("display-3");
-            h3.InnerText = "Home Page";
+            h3.InnerText = "401 Unauthorized request";
             col.AppendChild(h3);
 
             var p1 = html.CreateElement("p");
-            p1.InnerText = "This is default 404 page. You can override it by overloading Default404Page() method in HttpServerModule";
+            p1.InnerText = $"This is default 401 page. You can override it by overloading {nameof(Default401Page)} method in {nameof(HttpServerModule)}";
+            col.AppendChild(p1);
+
+            var p2 = html.CreateElement("p");
+            col.AppendChild(p2);
+
+            var ul = html.CreateElement("ul");
+            ul.AddClass("list-unstyled");
+            col.AppendChild(ul);
+
+            var li1 = html.CreateElement("li");
+            ul.AppendChild(li1);
+
+            var li2 = html.CreateElement("li");
+            ul.AppendChild(li2);
+
+            var href2 = html.CreateElement("a");
+            href2.InnerText = "Input valid credentials";
+            href2.SetAttribute("href", "/");
+            li2.AppendChild(href2);
+
+            return html.ToString();
+        }
+
+        /// <summary>
+        /// Default 404 Page. Overload this method to create your own design.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string Default404Page()
+        {
+            HtmlDocument html = new HtmlDocument
+            {
+                Title = $"404 | {Mst.Name} {Mst.Version}"
+            };
+
+            html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
+            html.AddMeta(new KeyValuePair<string, string>("name", "viewport"), new KeyValuePair<string, string>("content", "width=device-width, initial-scale=1"));
+            html.AddMeta(new KeyValuePair<string, string>("name", "description"), new KeyValuePair<string, string>("content", "Master Server Toolkit is designed to kickstart your back-end server development. It contains solutions to some of the common problems."));
+            html.AddMeta(new KeyValuePair<string, string>("name", "author"), new KeyValuePair<string, string>("content", "Master Server Toolkit"));
+
+            html.Links.Add(new HtmlLinkElement()
+            {
+                Href = HtmlLibs.BOOTSTRAP_CSS_SRC,
+                Rel = "stylesheet",
+                Integrity = HtmlLibs.BOOTSTRAP_CSS_INTEGRITY,
+                Crossorigin = "anonymous"
+            });
+
+            html.Scripts.Add(new HtmlScriptElement()
+            {
+                Src = HtmlLibs.BOOTSTRAP_JS_SRC,
+                Integrity = HtmlLibs.BOOTSTRAP_JS_INTEGRITY,
+                Crossorigin = "anonymous"
+            });
+
+            html.Body.AddClass("vh-100");
+
+            var container = html.CreateElement("div");
+            container.AddClass("container h-100");
+            html.Body.AppendChild(container);
+
+            var row = html.CreateElement("div");
+            row.AddClass("row h-100");
+            container.AppendChild(row);
+
+            var col = html.CreateElement("div");
+            col.AddClass("col align-self-center text-center");
+            row.AppendChild(col);
+
+            var h2 = html.CreateElement("h2");
+            h2.InnerText = $"{Mst.Name} {Mst.Version}";
+            col.AppendChild(h2);
+
+            var h3 = html.CreateElement("h3");
+            h3.AddClass("display-3");
+            h3.InnerText = "404 Page";
+            col.AppendChild(h3);
+
+            var p1 = html.CreateElement("p");
+            p1.InnerText = $"This is default 404 page. You can override it by overloading {nameof(Default404Page)} method in {nameof(HttpServerModule)}";
             col.AppendChild(p1);
 
             var p2 = html.CreateElement("p");
@@ -368,7 +491,7 @@ namespace MasterServerToolkit.MasterServer
         {
             HtmlDocument html = new HtmlDocument
             {
-                Title = "Home | Master Server Toolkit"
+                Title = $"Home | {Mst.Name} {Mst.Version}"
             };
 
             html.AddMeta(new KeyValuePair<string, string>("charset", "utf-8"));
@@ -415,7 +538,7 @@ namespace MasterServerToolkit.MasterServer
             col.AppendChild(h3);
 
             var p1 = html.CreateElement("p");
-            p1.InnerText = "This is default Index page. You can override it by overloading DefaultIndexPageHtml() method in HttpServerModule";
+            p1.InnerText = $"This is default Index page. You can override it by overloading {nameof(DefaultIndexPageHtml)} method in {nameof(HttpServerModule)}";
             col.AppendChild(p1);
 
             var p2 = html.CreateElement("p");
@@ -447,34 +570,11 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="page"></param>
-        /// <returns></returns>
-        protected bool IsDefaultPage(string page)
-        {
-            if (string.IsNullOrEmpty(page.Trim())) return true;
-            if (defaultIndexPage == null || defaultIndexPage.Length == 0) return false;
-
-            foreach (string pageName in defaultIndexPage)
-            {
-                if (CreateUrlKey(pageName.ToLower(), HttpMethod.GET) == page.ToLower())
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="request"></param>
-        /// <param name="extension"></param>
         /// <returns></returns>
-        public bool TryGetExtension(HttpListenerRequest request, out string extension)
+        protected string ClearRawUrl(HttpListenerRequest request)
         {
-            string path = UrlToPath(request);
-            return TryGetExtension(path, out extension);
+            return request.RawUrl.Split('?', StringSplitOptions.RemoveEmptyEntries)[0];
         }
 
         /// <summary>
@@ -483,15 +583,13 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="path"></param>
         /// <param name="extension"></param>
         /// <returns></returns>
-        public bool TryGetExtension(string path, out string extension)
+        protected bool TryGetExtension(string path, out string extension)
         {
             extension = string.Empty;
             int indexOfExtension = path.LastIndexOf('.');
 
             if (indexOfExtension >= 0)
-            {
                 extension = path.Substring(indexOfExtension);
-            }
 
             return !string.IsNullOrEmpty(extension);
         }
@@ -499,103 +597,38 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="request"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public bool TryGetQueryValue(HttpListenerRequest request, string key, out string value)
-        {
-            value = string.Empty;
-            return request != null && request.QueryString != null && !string.IsNullOrEmpty(request.QueryString[key]);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="rawUrl"></param>
-        /// <returns></returns>
-        public string UrlToPath(HttpListenerRequest request)
-        {
-            string[] parts = UrlToParts(request);
-            return string.Join("/", parts);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public string[] UrlToParts(HttpListenerRequest request)
-        {
-            string temp = request.RawUrl;
-            int indexOfQuestion = temp.IndexOf('?');
-            char[] separators = new char[] { '/' };
-
-            if (indexOfQuestion >= 0)
-            {
-                temp = temp.Substring(0, indexOfQuestion);
-            }
-
-            return temp.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected virtual void HttpGetRequestHandler(object sender, HttpRequestEventArgs e)
+        protected virtual void HttpGetRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            // Get request
-            var request = e.Request;
-
-            // Get responce
-            var response = e.Response;
-
-            // Let's parse user
-            string parsedUrl = UrlToPath(request);
-
-            if (!TryGetQueryValue(e.Request, "ignoreLog", out string value))
-                logger.Debug($"HTTP Get Request: [{parsedUrl}], Params: [{e.Request.QueryString}]");
-
-            // Let's ceate url key
-            string urlKey = CreateUrlKey(parsedUrl, HttpMethod.GET);
-
-            // If our url has index page
-            if (IsDefaultPage(urlKey))
+            try
             {
-                OnHttpRequestDelegate defaultPageHandler = null;
+                // Let's parse user
+                string cleanRawUrl = ClearRawUrl(request);
 
-                if (httpRequestHandlers.ContainsKey(urlKey))
-                    defaultPageHandler = httpRequestHandlers[urlKey];
+                // Let's ceate url key
+                string urlKey = CreateHttpRequestHandlerKey(cleanRawUrl, HttpMethod.GET);
 
-                if (defaultPageHandler != null)
+                if (httpRequestActions.ContainsKey(urlKey))
                 {
-                    defaultPageHandler.Invoke(e);
+                    httpRequestActions[urlKey].Invoke(request, response);
                 }
                 else
                 {
-                    byte[] contents = Encoding.UTF8.GetBytes(DefaultIndexPageHtml());
+                    byte[] contents = Encoding.UTF8.GetBytes(Default404Page());
 
+                    response.StatusCode = (int)HttpStatusCode.NotFound;
                     response.ContentType = "text/html";
                     response.ContentEncoding = Encoding.UTF8;
                     response.ContentLength64 = contents.LongLength;
                     response.Close(contents, true);
                 }
             }
-            else if (httpRequestHandlers.ContainsKey(urlKey))
+            catch (Exception e)
             {
-                httpRequestHandlers[urlKey].Invoke(e);
-            }
-            else if (TryGetExtension(parsedUrl, out string extension))
-            {
-                HandlePathWithExtension(e, extension);
-            }
-            else
-            {
-                byte[] contents = Encoding.UTF8.GetBytes(Default404Page());
+                byte[] contents = Encoding.UTF8.GetBytes(e.ToString());
 
-                response.StatusCode = (int)HttpStatusCode.NotFound;
+                response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 response.ContentType = "text/html";
                 response.ContentEncoding = Encoding.UTF8;
                 response.ContentLength64 = contents.LongLength;
@@ -606,62 +639,21 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="e"></param>
-        /// <param name="extension"></param>
-        private void HandlePathWithExtension(HttpRequestEventArgs e, string extension)
-        {
-            // Let's parse user
-            string path = UrlToPath(e.Request);
-
-            if (e.TryReadFile(path, out byte[] contents))
-            {
-                var mt = mimeTypes.Find(i => i.name.ToLower() == extension.ToLower());
-
-                if (mt != null)
-                {
-                    e.Response.ContentType = mt.type;
-                }
-                else
-                {
-                    e.Response.ContentType = "text/plain";
-                }
-            }
-            else
-            {
-                e.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                contents = Encoding.UTF8.GetBytes($"File \"{path}\" not found");
-                e.Response.ContentType = "text/html";
-            }
-
-            e.Response.ContentEncoding = Encoding.UTF8;
-            e.Response.ContentLength64 = contents.LongLength;
-            e.Response.Close(contents, true);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected virtual void HttpPostRequestHandler(object sender, HttpRequestEventArgs e)
+        protected virtual void HttpPostRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            // Get request
-            var request = e.Request;
-
-            // Get responce
-            var response = e.Response;
-
             // Let's parse user
-            string parsedUrl = UrlToPath(request);
+            string cleanRawUrl = ClearRawUrl(request);
 
-            logger.Debug($"HTTP Post Request: [{parsedUrl}]");
+            logger.Debug($"HTTP Post Request: [{cleanRawUrl}]");
 
             // Let's ceate url key
-            string urlKey = CreateUrlKey(parsedUrl, HttpMethod.POST);
+            string urlKey = CreateHttpRequestHandlerKey(cleanRawUrl, HttpMethod.POST);
 
-            if (httpRequestHandlers.ContainsKey(urlKey))
+            if (httpRequestActions.ContainsKey(urlKey))
             {
-                httpRequestHandlers[urlKey].Invoke(e);
+                httpRequestActions[urlKey].Invoke(request, response);
             }
             else
             {
@@ -680,25 +672,19 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected virtual void HttpPutRequestHandler(object sender, HttpRequestEventArgs e)
+        protected virtual void HttpPutRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            // Get request
-            var request = e.Request;
-
-            // Get responce
-            var response = e.Response;
-
             // Let's parse user
-            string parsedUrl = UrlToPath(request);
+            string cleanRawUrl = ClearRawUrl(request);
 
-            logger.Debug($"HTTP Put Request: [{parsedUrl}]");
+            logger.Debug($"HTTP Put Request: [{cleanRawUrl}]");
 
             // Let's ceate url key
-            string urlKey = CreateUrlKey(parsedUrl, HttpMethod.PUT);
+            string urlKey = CreateHttpRequestHandlerKey(cleanRawUrl, HttpMethod.PUT);
 
-            if (httpRequestHandlers.ContainsKey(urlKey))
+            if (httpRequestActions.ContainsKey(urlKey))
             {
-                httpRequestHandlers[urlKey].Invoke(e);
+                httpRequestActions[urlKey].Invoke(request, response);
             }
             else
             {
@@ -717,12 +703,12 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Stop()
         {
-            if (httpServer != null)
-            {
-                httpServer.OnGet -= HttpServer_OnGet;
-                httpServer.OnPost -= HttpServer_OnPost;
-                httpServer.Stop();
-            }
+            foreach (var controller in Controllers.Values)
+                controller.Dispose();
+
+            httpServer?.Stop();
+            httpServer?.Close();
+            logger.Info($"Http server stopped");
         }
 
         /// <summary>
@@ -731,10 +717,27 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="path"></param>
         /// <param name="httpMethod"></param>
         /// <returns></returns>
-        public string CreateUrlKey(string path, HttpMethod httpMethod)
+        public string CreateHttpRequestHandlerKey(string path, HttpMethod httpMethod)
         {
-            if (string.IsNullOrEmpty(path.Trim())) return string.Empty;
-            else return $"{httpMethod}/{path.Trim()}".ToLower();
+            return $"{httpMethod}/{path.Trim()}".Replace("//", "/").ToLower();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public string CreateHttpRequestPrefix(string path)
+        {
+            path = path.Trim();
+
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentNullException(nameof(path));
+
+            string scheme = UseSecure ? "https://" : "http://";
+            string url = $"{httpAddress}:{httpPort}/{path}/".Replace("//", "/");
+            return $"{scheme}{url}".ToLower();
         }
 
         /// <summary>
@@ -756,26 +759,41 @@ namespace MasterServerToolkit.MasterServer
         public void RegisterHttpRequestHandler(string path, HttpMethod httpMethod, OnHttpRequestDelegate handler)
         {
             string url;
+            string prefix = CreateHttpRequestPrefix(path);
 
             switch (httpMethod)
             {
                 case HttpMethod.POST:
-                    url = CreateUrlKey(path, httpMethod);
+                    url = CreateHttpRequestHandlerKey(path, httpMethod);
                     break;
                 case HttpMethod.PUT:
-                    url = CreateUrlKey(path, httpMethod);
+                    url = CreateHttpRequestHandlerKey(path, httpMethod);
                     break;
                 default:
-                    url = CreateUrlKey(path, HttpMethod.GET);
+                    url = CreateHttpRequestHandlerKey(path, HttpMethod.GET);
                     break;
             }
 
-            if (httpRequestHandlers.ContainsKey(url))
+            if (httpRequestActions.ContainsKey(url))
             {
                 throw new Exception($"Handler [{url}] already exists");
             }
 
-            httpRequestHandlers[url] = handler;
+            httpServer.Prefixes.Add(prefix);
+            httpRequestActions[url] = handler;
+        }
+
+        public override JObject JsonInfo()
+        {
+            var info = base.JsonInfo();
+
+            info.Add("localIp", httpAddress);
+            info.Add("port", httpPort);
+            info.Add("checkHeartBeatUrl", checkHeartBeatUrl);
+            info.Add("controllers", new JArray(Controllers.Keys.Select(x => x.Name)));
+            info.Add("requestActions", new JArray(httpRequestActions.Keys));
+
+            return info;
         }
 
         public override MstProperties Info()
@@ -783,10 +801,7 @@ namespace MasterServerToolkit.MasterServer
             MstProperties info = base.Info();
             info.Add("Local Ip", httpAddress);
             info.Add("Port", httpPort);
-            info.Add("WebSocket Service Path", wsServicePath);
-            info.Add("Root Web Directory", rootDirectory);
-            info.Add("Surface Controllers", string.Join(", ", SurfaceControllers.Keys));
-            info.Add("WebSocket Controllers", string.Join(", ", WsControllers.Keys));
+            info.Add("Surface Controllers", string.Join(", ", Controllers.Keys));
             return info;
         }
     }

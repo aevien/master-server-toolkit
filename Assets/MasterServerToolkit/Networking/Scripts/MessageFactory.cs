@@ -1,6 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
-using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
@@ -25,6 +24,10 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public IIncomingMessage FromBytes(byte[] buffer, int start, IPeer peer)
         {
+            byte[] data;
+            ushort opCode;
+            int dataLength;
+
             try
             {
                 var converter = EndianBitConverter.Big;
@@ -32,17 +35,20 @@ namespace MasterServerToolkit.Networking
 
                 //Debug.Log($"Flag is: {flags}");
 
-                var opCode = converter.ToUInt16(buffer, start + 1);
+                opCode = converter.ToUInt16(buffer, start + 1);
                 var pointer = start + 3;
 
                 //Debug.Log($"OpCode is: {opCode}");
 
-                var dataLength = converter.ToInt32(buffer, pointer);
+                dataLength = converter.ToInt32(buffer, pointer);
                 pointer += 4;
 
                 //Debug.Log($"Length is: {dataLength}");
 
-                var data = new byte[dataLength];
+                if (dataLength > buffer.Length)
+                    throw new ArgumentOutOfRangeException(nameof(dataLength));
+
+                data = new byte[dataLength];
                 Array.Copy(buffer, pointer, data, 0, dataLength);
                 pointer += dataLength;
 
@@ -77,8 +83,9 @@ namespace MasterServerToolkit.Networking
             }
             catch (Exception e)
             {
-                Logs.Error("WS Failed parsing an incoming message " + e);
+                Logs.Error($"WS Failed parsing an incoming message {e}");
             }
+
             return null;
         }
     }

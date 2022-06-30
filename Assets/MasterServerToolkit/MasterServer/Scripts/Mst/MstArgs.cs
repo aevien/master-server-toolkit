@@ -150,14 +150,14 @@ namespace MasterServerToolkit.MasterServer
         public int TargetFrameRate { get; private set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string WebAddress { get; private set; }
+
+        /// <summary>
         /// Port, which will be open on the web server
         /// </summary>
         public int WebPort { get; private set; }
-
-        /// <summary>
-        /// Use this cmd to setup web server root directory
-        /// </summary>
-        public string WebRootDir { get; private set; }
 
         /// <summary>
         /// Log file path
@@ -179,8 +179,8 @@ namespace MasterServerToolkit.MasterServer
             MasterPort = AsInt(Names.MasterPort, 5000);
             MasterIp = AsString(Names.MasterIp, "127.0.0.1");
 
+            WebAddress = AsString(Names.WebAddress, "127.0.0.1");
             WebPort = AsInt(Names.WebPort, 8080);
-            WebRootDir = AsString(Names.WebRootDir, "wwwroot");
 
             RoomName = AsString(Names.RoomName, "Room_" + Mst.Helper.CreateID_16());
             RoomIp = AsString(Names.RoomIp, "127.0.0.1");

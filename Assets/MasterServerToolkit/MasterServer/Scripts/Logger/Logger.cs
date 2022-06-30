@@ -1,8 +1,4 @@
-﻿using MasterServerToolkit.MasterServer;
-using System.Threading;
-using UnityEngine.Assertions;
-
-namespace MasterServerToolkit.Logging
+﻿namespace MasterServerToolkit.Logging
 {
     public delegate void LogHandler(Logger logger, LogLevel logLevel, object message);
 

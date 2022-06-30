@@ -1,0 +1,30 @@
+<script type="text/javascript">
+    const AuthModuleInfo = {
+        props: {
+            staticInfo: Object
+        },
+        data() {
+            return {
+                dynamicInfo: {}
+            }
+        },
+        created() {
+            let vm = this
+            vm.loadModuleInfo()
+        },
+        methods: {
+            loadModuleInfo() {
+                let vm = this
+                axios.get()
+                    .then(function (response) {
+                        vm.dynamicInfo = response.data
+                        console.log(response);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            }
+        },
+        template: `#vueComponentTemplate`
+    }
+</script>

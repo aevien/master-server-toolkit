@@ -52,7 +52,8 @@ namespace MasterServerToolkit.Games
 
             if (connectButton)
             {
-                connectButton.AddOnClickListener(() => {
+                connectButton.AddOnClickListener(() =>
+                {
                     MatchmakingBehaviour.Instance.StartMatch(gameInfo);
                 });
             }

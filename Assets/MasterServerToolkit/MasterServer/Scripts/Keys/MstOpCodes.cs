@@ -1,125 +1,119 @@
-﻿namespace MasterServerToolkit.MasterServer
+﻿using MasterServerToolkit.Extensions;
+
+namespace MasterServerToolkit.MasterServer
 {
-    public enum MstOpCodes
+    public struct MstOpCodes
     {
-        // Standard error code
-        Error = 31000,
+        public static ushort Error = "mst.error".ToUint16Hash();
 
-        // Ping request code
-        Ping,
+        public static ushort Ping = nameof(Ping).ToUint16Hash();
 
-        // Security
-        AesKeyRequest,
-        PermissionLevelRequest,
-        PeerGuidRequest,
+        public static ushort ServerAccessRequest = nameof(ServerAccessRequest).ToUint16Hash();
+        public static ushort AesKeyRequest = nameof(AesKeyRequest).ToUint16Hash();
+        public static ushort PermissionLevelRequest = nameof(PermissionLevelRequest).ToUint16Hash();
+        public static ushort PeerGuidRequest = nameof(PeerGuidRequest).ToUint16Hash();
 
-        // Rooms
-        RegisterRoomRequest,
-        DestroyRoomRequest,
-        SaveRoomOptionsRequest,
-        GetRoomAccessRequest,
-        ProvideRoomAccessCheck,
-        ValidateRoomAccessRequest,
-        PlayerLeftRoomRequest,
+        public static ushort RegisterRoomRequest = nameof(RegisterRoomRequest).ToUint16Hash();
+        public static ushort DestroyRoomRequest = nameof(DestroyRoomRequest).ToUint16Hash();
+        public static ushort SaveRoomOptionsRequest = nameof(SaveRoomOptionsRequest).ToUint16Hash();
+        public static ushort GetRoomAccessRequest = nameof(GetRoomAccessRequest).ToUint16Hash();
+        public static ushort ProvideRoomAccessCheck = nameof(ProvideRoomAccessCheck).ToUint16Hash();
+        public static ushort ValidateRoomAccessRequest = nameof(ValidateRoomAccessRequest).ToUint16Hash();
+        public static ushort PlayerLeftRoomRequest = nameof(PlayerLeftRoomRequest).ToUint16Hash();
 
-        // Spawner
-        RegisterSpawner,
-        SpawnProcessRequest,
-        ClientsSpawnRequest,
-        SpawnRequestStatusChange,
-        RegisterSpawnedProcess,
-        CompleteSpawnProcess,
-        KillProcessRequest,
-        ProcessStarted,
-        ProcessKilled,
-        AbortSpawnRequest,
-        GetSpawnFinalizationData,
-        UpdateSpawnerProcessesCount,
+        public static ushort RegisterSpawner = nameof(RegisterSpawner).ToUint16Hash();
+        public static ushort SpawnProcessRequest = nameof(SpawnProcessRequest).ToUint16Hash();
+        public static ushort ClientsSpawnRequest = nameof(ClientsSpawnRequest).ToUint16Hash();
+        public static ushort SpawnRequestStatusChange = nameof(SpawnRequestStatusChange).ToUint16Hash();
+        public static ushort RegisterSpawnedProcess = nameof(RegisterSpawnedProcess).ToUint16Hash();
+        public static ushort CompleteSpawnProcess = nameof(CompleteSpawnProcess).ToUint16Hash();
+        public static ushort KillProcessRequest = nameof(KillProcessRequest).ToUint16Hash();
+        public static ushort ProcessStarted = nameof(ProcessStarted).ToUint16Hash();
+        public static ushort ProcessKilled = nameof(ProcessKilled).ToUint16Hash();
+        public static ushort AbortSpawnRequest = nameof(AbortSpawnRequest).ToUint16Hash();
+        public static ushort GetSpawnFinalizationData = nameof(GetSpawnFinalizationData).ToUint16Hash();
+        public static ushort UpdateSpawnerProcessesCount = nameof(UpdateSpawnerProcessesCount).ToUint16Hash();
 
-        // Matchmaker
-        GetGameRequest,
-        FindGamesRequest,
-        GetRegionsRequest,
+        public static ushort GetGameRequest = nameof(GetGameRequest).ToUint16Hash();
+        public static ushort FindGamesRequest = nameof(FindGamesRequest).ToUint16Hash();
+        public static ushort GetRegionsRequest = nameof(GetRegionsRequest).ToUint16Hash();
 
-        // Auth
-        SignIn,
-        SignUp,
-        SignOut,
-        GetPasswordResetCode,
-        GetEmailConfirmationCode,
-        ConfirmEmail,
-        GetLoggedInUsersCount,
-        ChangePassword,
-        GetPeerAccountInfo,
-        UpdateAccountInfo,
+        public static ushort SignIn = nameof(SignIn).ToUint16Hash();
+        public static ushort SignUp = nameof(SignUp).ToUint16Hash();
+        public static ushort SignOut = nameof(SignOut).ToUint16Hash();
+        public static ushort GetPasswordResetCode = nameof(GetPasswordResetCode).ToUint16Hash();
+        public static ushort GetEmailConfirmationCode = nameof(GetEmailConfirmationCode).ToUint16Hash();
+        public static ushort ConfirmEmail = nameof(ConfirmEmail).ToUint16Hash();
+        public static ushort GetLoggedInUsersCount = nameof(GetLoggedInUsersCount).ToUint16Hash();
+        public static ushort ChangePassword = nameof(ChangePassword).ToUint16Hash();
+        public static ushort GetPeerAccountInfo = nameof(GetPeerAccountInfo).ToUint16Hash();
+        public static ushort UpdateAccountInfo = nameof(UpdateAccountInfo).ToUint16Hash();
 
-        // Chat
-        PickUsername,
-        JoinChannel,
-        LeaveChannel,
-        GetCurrentChannels,
-        ChatMessage,
-        GetUsersInChannel,
-        UserJoinedChannel,
-        UserLeftChannel,
-        SetDefaultChannel,
+        public static ushort PickUsername = nameof(PickUsername).ToUint16Hash();
+        public static ushort JoinChannel = nameof(JoinChannel).ToUint16Hash();
+        public static ushort LeaveChannel = nameof(LeaveChannel).ToUint16Hash();
+        public static ushort GetCurrentChannels = nameof(GetCurrentChannels).ToUint16Hash();
+        public static ushort ChatMessage = nameof(ChatMessage).ToUint16Hash();
+        public static ushort GetUsersInChannel = nameof(GetUsersInChannel).ToUint16Hash();
+        public static ushort UserJoinedChannel = nameof(UserJoinedChannel).ToUint16Hash();
+        public static ushort UserLeftChannel = nameof(UserLeftChannel).ToUint16Hash();
+        public static ushort SetDefaultChannel = nameof(SetDefaultChannel).ToUint16Hash();
 
-        // TODO cleanup
-        // Lobbies
-        JoinLobby,
-        LeaveLobby,
-        CreateLobby,
-        LobbyInfo,
-        SetLobbyProperties,
-        SetMyProperties,
-        SetLobbyAsReady,
-        StartLobbyGame,
-        LobbyChatMessage,
-        SendMessageToLobbyChat,
-        JoinLobbyTeam,
-        LobbyGameAccessRequest,
-        LobbyIsInLobby,
-        LobbyMasterChange,
-        LobbyStateChange,
-        LobbyStatusTextChange,
-        LobbyMemberPropertySet,
-        LeftLobby,
-        LobbyPropertyChanged,
-        LobbyMemberJoined,
-        LobbyMemberLeft,
-        LobbyMemberChangedTeam,
-        LobbyMemberReadyStatusChange,
-        LobbyMemberPropertyChanged,
-        GetLobbyRoomAccess,
-        GetLobbyMemberData,
-        GetLobbyInfo,
+        public static ushort JoinLobby = nameof(JoinLobby).ToUint16Hash();
+        public static ushort LeaveLobby = nameof(LeaveLobby).ToUint16Hash();
+        public static ushort CreateLobby = nameof(CreateLobby).ToUint16Hash();
+        public static ushort LobbyInfo = nameof(LobbyInfo).ToUint16Hash();
+        public static ushort SetLobbyProperties = nameof(SetLobbyProperties).ToUint16Hash();
+        public static ushort SetMyProperties = nameof(SetMyProperties).ToUint16Hash();
+        public static ushort SetLobbyAsReady = nameof(SetLobbyAsReady).ToUint16Hash();
+        public static ushort StartLobbyGame = nameof(StartLobbyGame).ToUint16Hash();
+        public static ushort LobbyChatMessage = nameof(LobbyChatMessage).ToUint16Hash();
+        public static ushort SendMessageToLobbyChat = nameof(SendMessageToLobbyChat).ToUint16Hash();
+        public static ushort JoinLobbyTeam = nameof(JoinLobbyTeam).ToUint16Hash();
+        public static ushort LobbyGameAccessRequest = nameof(LobbyGameAccessRequest).ToUint16Hash();
+        public static ushort LobbyIsInLobby = nameof(LobbyIsInLobby).ToUint16Hash();
+        public static ushort LobbyMasterChange = nameof(LobbyMasterChange).ToUint16Hash();
+        public static ushort LobbyStateChange = nameof(LobbyStateChange).ToUint16Hash();
+        public static ushort LobbyStatusTextChange = nameof(LobbyStatusTextChange).ToUint16Hash();
+        public static ushort LobbyMemberPropertySet = nameof(LobbyMemberPropertySet).ToUint16Hash();
+        public static ushort LeftLobby = nameof(LeftLobby).ToUint16Hash();
+        public static ushort LobbyPropertyChanged = nameof(LobbyPropertyChanged).ToUint16Hash();
+        public static ushort LobbyMemberJoined = nameof(LobbyMemberJoined).ToUint16Hash();
+        public static ushort LobbyMemberLeft = nameof(LobbyMemberLeft).ToUint16Hash();
+        public static ushort LobbyMemberChangedTeam = nameof(LobbyMemberChangedTeam).ToUint16Hash();
+        public static ushort LobbyMemberReadyStatusChange = nameof(LobbyMemberReadyStatusChange).ToUint16Hash();
+        public static ushort LobbyMemberPropertyChanged = nameof(LobbyMemberPropertyChanged).ToUint16Hash();
+        public static ushort GetLobbyRoomAccess = nameof(GetLobbyRoomAccess).ToUint16Hash();
+        public static ushort GetLobbyMemberData = nameof(GetLobbyMemberData).ToUint16Hash();
+        public static ushort GetLobbyInfo = nameof(GetLobbyInfo).ToUint16Hash();
 
-        // Profiles
-        ClientProfileRequest,
-        ServerProfileRequest,
-        UpdateServerProfile,
-        UpdateClientProfile,
-        UpdateDisplayNameRequest,
-        UpdateAvatarRequest,
+        public static ushort ClientProfileRequest = nameof(ClientProfileRequest).ToUint16Hash();
+        public static ushort ServerProfileRequest = nameof(ServerProfileRequest).ToUint16Hash();
+        public static ushort UpdateServerProfile = nameof(UpdateServerProfile).ToUint16Hash();
+        public static ushort UpdateClientProfile = nameof(UpdateClientProfile).ToUint16Hash();
+        public static ushort UpdateDisplayNameRequest = nameof(UpdateDisplayNameRequest).ToUint16Hash();
+        public static ushort UpdateAvatarRequest = nameof(UpdateAvatarRequest).ToUint16Hash();
 
-        // Notifications
-        SubscribeToNotifications,
-        UnsubscribeFromNotifications,
-        Notification,
+        public static ushort SubscribeToNotifications = nameof(SubscribeToNotifications).ToUint16Hash();
+        public static ushort UnsubscribeFromNotifications = nameof(UnsubscribeFromNotifications).ToUint16Hash();
+        public static ushort Notification = nameof(Notification).ToUint16Hash();
 
-        // Friends
-        FriendAdded,
-        GetFriends,
-        RemoveFriends,
-        InspectFriend,
-        BlockFriends,
-        RequestFriendship,
-        AcceptFriendship,
-        IgnoreFriendship,
-        GetDeclinedFriendships,
-        DeclineFriendship,
+        public static ushort FriendAdded = nameof(FriendAdded).ToUint16Hash();
+        public static ushort GetFriends = nameof(GetFriends).ToUint16Hash();
+        public static ushort RemoveFriends = nameof(RemoveFriends).ToUint16Hash();
+        public static ushort InspectFriend = nameof(InspectFriend).ToUint16Hash();
+        public static ushort BlockFriends = nameof(BlockFriends).ToUint16Hash();
+        public static ushort RequestFriendship = nameof(RequestFriendship).ToUint16Hash();
+        public static ushort AcceptFriendship = nameof(AcceptFriendship).ToUint16Hash();
+        public static ushort IgnoreFriendship = nameof(IgnoreFriendship).ToUint16Hash();
+        public static ushort GetDeclinedFriendships = nameof(GetDeclinedFriendships).ToUint16Hash();
+        public static ushort DeclineFriendship = nameof(DeclineFriendship).ToUint16Hash();
 
-        // Player
-        PlayerDied
+        public static ushort PlayerDied = nameof(PlayerDied).ToUint16Hash();
+
+        public static ushort JoinDashboard = nameof(JoinDashboard).ToUint16Hash();
+        public static ushort SystemInfo = nameof(SystemInfo).ToUint16Hash();
+        public static ushort ServerInfo = nameof(ServerInfo).ToUint16Hash();
+        public static ushort ModulesInfo = nameof(ModulesInfo).ToUint16Hash();
     }
 }

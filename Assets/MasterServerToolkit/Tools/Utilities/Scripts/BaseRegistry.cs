@@ -34,7 +34,7 @@ namespace MasterServerToolkit.Utils
 
             if (items.Remove(key))
             {
-                OnItemAddEvent?.Invoke(item);
+                OnItemRemoveEvent?.Invoke(item);
                 OnChangeEvent?.Invoke();
                 return true;
             }

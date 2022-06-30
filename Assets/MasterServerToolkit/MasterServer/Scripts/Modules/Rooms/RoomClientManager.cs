@@ -1,11 +1,7 @@
 using MasterServerToolkit.Games;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -33,7 +29,7 @@ namespace MasterServerToolkit.MasterServer
 
             roomConnection.WaitForConnection((socket) =>
             {
-                if(socket == null)
+                if (socket == null)
                 {
                     roomConnection.Close();
                     logger.Error($"Connection timeout has expired");
@@ -50,7 +46,7 @@ namespace MasterServerToolkit.MasterServer
             roomConnection.Close();
         }
 
-        private void OnConnectedToRoomEventHandler()
+        private void OnConnectedToRoomEventHandler(IClientSocket client)
         {
             roomConnection.SendMessage((ushort)MstOpCodes.ValidateRoomAccessRequest, AccessData.Token, (status, response) =>
             {
@@ -67,7 +63,7 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
-        private void OnDisconnectedFromRoomEventHandler()
+        private void OnDisconnectedFromRoomEventHandler(IClientSocket client)
         {
             LoadOfflineScene();
         }

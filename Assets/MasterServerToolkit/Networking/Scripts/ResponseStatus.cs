@@ -1,6 +1,6 @@
 ﻿namespace MasterServerToolkit.Networking
 {
-    public enum ResponseStatus: ushort
+    public enum ResponseStatus : ushort
     {
         Default,
         Success,

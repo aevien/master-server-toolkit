@@ -1,9 +1,5 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -29,7 +25,7 @@ namespace MasterServerToolkit.MasterServer
         {
             var notification = message.AsString();
 
-            if(notification != null)
+            if (notification != null)
             {
                 Logs.Debug($"Notification from server: {notification}");
                 OnNotificationReceivedEvent?.Invoke(notification);

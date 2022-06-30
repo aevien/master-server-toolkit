@@ -1,6 +1,5 @@
 using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -123,7 +122,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void OnUserLoggedInEventHandler(IUserPeerExtension user)
         {
             //
-            user.Peer.OnPeerDisconnectedEvent += Peer_OnPeerDisconnectedEvent;
+            user.Peer.OnConnectionCloseEvent += Peer_OnPeerDisconnectedEvent;
 
             // If user already loaded friends
             if (!friends.ContainsKey(user.UserId))
@@ -158,7 +157,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Peer_OnPeerDisconnectedEvent(IPeer peer)
         {
-            peer.OnPeerDisconnectedEvent -= Peer_OnPeerDisconnectedEvent;
+            peer.OnConnectionCloseEvent -= Peer_OnPeerDisconnectedEvent;
 
             var userExtension = peer.GetExtension<IUserPeerExtension>();
 
@@ -183,7 +182,11 @@ namespace MasterServerToolkit.MasterServer
                 var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
                 // If this request was not made by active user
-                if (userExtension == null) throw new MstMessageHandlerException("Unauthorized request", ResponseStatus.Unauthorized);
+                if (userExtension == null)
+                {
+                    message.Respond("Unauthorized request", ResponseStatus.Unauthorized);
+                    return;
+                }
 
                 // If user already have request list
                 if (outgoingFriendshipRequsts.ContainsKey(userExtension.UserId))
@@ -194,7 +197,8 @@ namespace MasterServerToolkit.MasterServer
                     // Check if this request exists ins list
                     if (!currentOutgoingIds.Add(requestedUserId))
                     {
-                        throw new MstMessageHandlerException("You have already sent this user a friendship request.", ResponseStatus.Failed);
+                        message.Respond("You have already sent this user a friendship request", ResponseStatus.Unauthorized);
+                        return;
                     }
                 }
                 else
@@ -206,10 +210,6 @@ namespace MasterServerToolkit.MasterServer
                 await friendsDatabaseAccessor.UpdateOutgoingFriendshipRequests(userExtension.UserId, outgoingFriendshipRequsts[userExtension.UserId]);
 
                 message.Respond(ResponseStatus.Success);
-            }
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
             }
             catch (Exception e)
             {
@@ -228,7 +228,11 @@ namespace MasterServerToolkit.MasterServer
                 var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
                 // If this request was not made by active user
-                if (userExtension == null) throw new MstMessageHandlerException("Unauthorized request", ResponseStatus.Unauthorized);
+                if (userExtension == null)
+                {
+                    message.Respond("Unauthorized request", ResponseStatus.Unauthorized);
+                    return;
+                }
 
                 // Add friend to accepter user
                 friends[userExtension.UserId].Add(acceptedUserId);
@@ -257,16 +261,9 @@ namespace MasterServerToolkit.MasterServer
                 outgoingFriendshipRequsts[acceptedUserId].Remove(userExtension.UserId);
                 incomingFriendshipRequsts[acceptedUserId].Remove(userExtension.UserId);
 
-                
+
                 await friendsDatabaseAccessor.UpdateOutgoingFriendshipRequests(acceptedUserId, outgoingFriendshipRequsts[acceptedUserId]);
 
-                
-
-                
-            }
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
             }
             catch (Exception e)
             {
@@ -280,10 +277,6 @@ namespace MasterServerToolkit.MasterServer
             {
 
             }
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
-            }
             catch (Exception e)
             {
                 message.Respond(e.Message, ResponseStatus.Error);
@@ -295,10 +288,6 @@ namespace MasterServerToolkit.MasterServer
             try
             {
 
-            }
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
             }
             catch (Exception e)
             {
@@ -314,17 +303,26 @@ namespace MasterServerToolkit.MasterServer
                 var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
                 if (userExtension == null)
-                    throw new MstMessageHandlerException("Unauthorized", ResponseStatus.Unauthorized);
+                {
+                    message.Respond("Unauthorized", ResponseStatus.Unauthorized);
+                    return;
+                }
 
                 IFriendsInfoData friendsInfo = await friendsDatabaseAccessor.RestoreFriends(userExtension.UserId);
 
                 if (friendsInfo == null)
-                    throw new MstMessageHandlerException("No friends found", ResponseStatus.Failed);
+                {
+                    message.Respond("No friends found", ResponseStatus.Failed);
+                    return;
+                }
 
                 var usersList = authModule.GetLoggedInUsersByIds(friendsInfo.UsersIds);
 
                 if (usersList.Count() == 0)
-                    throw new MstMessageHandlerException("No friends found", ResponseStatus.Failed);
+                {
+                    message.Respond("No friends found", ResponseStatus.Failed);
+                    return;
+                }
 
                 var friends = new FriendsInfoDataPacket();
                 friends.LastUpdate = friendsInfo.LastUpdate;
@@ -334,10 +332,6 @@ namespace MasterServerToolkit.MasterServer
                 {
                     //friends.Users
                 }
-            }
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
             }
             catch (Exception e)
             {
@@ -356,10 +350,6 @@ namespace MasterServerToolkit.MasterServer
             {
 
             }
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
-            }
             catch (Exception e)
             {
                 message.Respond(e.Message, ResponseStatus.Error);
@@ -371,10 +361,6 @@ namespace MasterServerToolkit.MasterServer
             try
             {
 
-            }
-            catch (MstMessageHandlerException e)
-            {
-                message.Respond(e.Message, e.Status);
             }
             catch (Exception e)
             {

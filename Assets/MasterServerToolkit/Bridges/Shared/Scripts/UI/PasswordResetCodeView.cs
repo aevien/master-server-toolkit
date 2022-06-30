@@ -36,7 +36,7 @@ namespace MasterServerToolkit.Games
         {
             Hide();
         }
-        
+
         /// <summary>
         /// Sends request to master to generate rest password code and send it to user email
         /// </summary>

@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Logging;
-using System;
+﻿using System;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -51,6 +50,16 @@ namespace MasterServerToolkit.MasterServer
         public bool Equals(IObservableProperty<T> other)
         {
             return Key == other.Key;
+        }
+
+        public string ToBase64String()
+        {
+            return Convert.ToBase64String(ToBytes());
+        }
+
+        public void FromBase64String(string data)
+        {
+            FromBytes(Convert.FromBase64String(data));
         }
 
         public abstract byte[] ToBytes();

@@ -28,7 +28,7 @@ namespace MasterServerToolkit.MasterServer.Web
             {
                 List<string> existingClasses = el.GetAttribute("class").Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
-                foreach(string newClass in newClasses)
+                foreach (string newClass in newClasses)
                 {
                     if (!existingClasses.Contains(newClass.Trim()))
                     {

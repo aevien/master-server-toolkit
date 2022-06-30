@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace MasterServerToolkit.MasterServer
@@ -254,11 +252,8 @@ namespace MasterServerToolkit.MasterServer
                             var processId = process.Id;
 
                             // Notify server that we've successfully handled the request
-                            MstTimer.RunInMainThread(() =>
-                            {
-                                message.Respond(ResponseStatus.Success);
-                                NotifyProcessStarted(data.SpawnTaskId, processId, startProcessInfo.Arguments);
-                            });
+                            message.Respond(ResponseStatus.Success);
+                            NotifyProcessStarted(data.SpawnTaskId, processId, startProcessInfo.Arguments);
 
                             process.WaitForExit();
                         }
@@ -267,7 +262,7 @@ namespace MasterServerToolkit.MasterServer
                     {
                         if (!processStarted)
                         {
-                            MstTimer.RunInMainThread(() => { message.Respond(ResponseStatus.Failed); });
+                            message.Respond(ResponseStatus.Failed);
                         }
 
                         Logger.Error("An exception was thrown while starting a process. Make sure that you have set a correct build path. " +
@@ -282,13 +277,10 @@ namespace MasterServerToolkit.MasterServer
                             processes.Remove(data.SpawnTaskId);
                         }
 
-                        MstTimer.RunInMainThread(() =>
-                        {
-                            // Release the port number
-                            Mst.Server.Spawners.ReleasePort(machinePortArgument);
-                            Logger.Debug($"Notifying about killed process with spawn id [{data.SpawnTaskId}]");
-                            NotifyProcessKilled(data.SpawnTaskId);
-                        });
+                        // Release the port number
+                        Mst.Server.Spawners.ReleasePort(machinePortArgument);
+                        Logger.Debug($"Notifying about killed process with spawn id [{data.SpawnTaskId}]");
+                        NotifyProcessKilled(data.SpawnTaskId);
                     }
 
                 }).Start();

@@ -22,6 +22,9 @@ namespace MasterServerToolkit.Networking
         private readonly Dictionary<Type, IPeerExtension> extensionsList;
         private static readonly object idGenerationLock = new object();
         private static int peerIdGenerator;
+        private bool disposedValue = false;
+        protected readonly Logging.Logger logger;
+        protected LogLevel logLevel = LogLevel.Info;
 
         /// <summary>
         /// Default timeout, after which response callback is invoked with
@@ -34,21 +37,6 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public abstract bool IsConnected { get; }
 
-        protected BasePeer()
-        {
-            peerPropertyData = new Dictionary<int, object>();
-            acknowledgements = new Dictionary<int, ResponseCallback>(30);
-            ackTimeoutQueue = new List<long[]>();
-            extensionsList = new Dictionary<Type, IPeerExtension>();
-
-            MstTimer.Instance.OnTickEvent += HandleAckDisposalTick;
-
-            timeoutMessage = new IncomingMessage("-1".ToUint16Hash(), 0, "Time out".ToBytes(), DeliveryMethod.ReliableFragmentedSequenced, this)
-            {
-                Status = ResponseStatus.Timeout
-            };
-        }
-
         /// <summary>
         /// Fires when peer received message
         /// </summary>
@@ -57,7 +45,12 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Fires when peer disconnects
         /// </summary>
-        public event PeerActionHandler OnPeerDisconnectedEvent;
+        public event PeerActionHandler OnConnectionOpenEvent;
+
+        /// <summary>
+        /// Fires when peer disconnects
+        /// </summary>
+        public event PeerActionHandler OnConnectionCloseEvent;
 
         /// <summary>
         /// Current peer info
@@ -80,6 +73,52 @@ namespace MasterServerToolkit.Networking
 
                 return _id;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public LogLevel LogLevel
+        {
+            get
+            {
+                return logLevel;
+            }
+            set
+            {
+                logLevel = value;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DateTime StartActivity { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DateTime LastActivity { get; set; }
+
+        protected BasePeer()
+        {
+            StartActivity = DateTime.Now;
+            LastActivity = DateTime.Now;
+
+            logger = Mst.Create.Logger(GetType().Name);
+            logger.LogLevel = logLevel;
+
+            peerPropertyData = new Dictionary<int, object>();
+            acknowledgements = new Dictionary<int, ResponseCallback>(30);
+            ackTimeoutQueue = new List<long[]>();
+            extensionsList = new Dictionary<Type, IPeerExtension>();
+
+            MstTimer.Instance.OnTickEvent += HandleAckDisposalTick;
+
+            timeoutMessage = new IncomingMessage("-1".ToUint16Hash(), 0, "Time out".ToBytes(), DeliveryMethod.ReliableFragmentedSequenced, this)
+            {
+                Status = ResponseStatus.Timeout
+            };
         }
 
         /// <summary>
@@ -341,13 +380,13 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         public void SetProperty(int id, object data)
         {
-            if (this.peerPropertyData.ContainsKey(id))
+            if (peerPropertyData.ContainsKey(id))
             {
-                this.peerPropertyData[id] = data;
+                peerPropertyData[id] = data;
             }
             else
             {
-                this.peerPropertyData.Add(id, data);
+                peerPropertyData.Add(id, data);
             }
         }
 
@@ -387,7 +426,7 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        /// Get any <see cref="IPeerExtension"/> from peer
+        /// Gets <see cref="IPeerExtension"/> from peer
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
@@ -401,6 +440,18 @@ namespace MasterServerToolkit.Networking
             {
                 return default;
             }
+        }
+
+        /// <summary>
+        /// Tries to get <see cref="IPeerExtension"/> from peer
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="extension"></param>
+        /// <returns></returns>
+        public bool TryGetExtension<T>(out T extension) where T : IPeerExtension
+        {
+            extension = GetExtension<T>();
+            return extension != null;
         }
 
         /// <summary>
@@ -422,9 +473,19 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Notify OnPeerDisconnectedEvent
         /// </summary>
-        public void NotifyDisconnectEvent()
+        protected void NotifyConnectionOpenEvent()
         {
-            OnPeerDisconnectedEvent?.Invoke(this);
+            OnConnectionOpenEvent?.Invoke(this);
+            logger.Debug($"Peer [{Id}] opened connection");
+        }
+
+        /// <summary>
+        /// Notify OnPeerDisconnectedEvent
+        /// </summary>
+        protected void NotifyConnectionCloseEvent(string reason = "")
+        {
+            OnConnectionCloseEvent?.Invoke(this);
+            logger.Debug($"Peer [{Id}] closed connection. Reason is: {reason}");
         }
 
         /// <summary>
@@ -468,18 +529,14 @@ namespace MasterServerToolkit.Networking
         protected void TriggerAck(int ackId, ResponseStatus statusCode, IIncomingMessage message)
         {
             ResponseCallback ackCallback;
+
             lock (acknowledgements)
             {
                 acknowledgements.TryGetValue(ackId, out ackCallback);
-
-                if (ackCallback == null)
-                {
-                    return;
-                }
-
                 acknowledgements.Remove(ackId);
             }
-            ackCallback(statusCode, message);
+
+            ackCallback?.Invoke(statusCode, message);
         }
 
         /// <summary>
@@ -496,17 +553,8 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="message"></param>
-        public virtual void HandleMessage(IIncomingMessage message)
-        {
-            NotifyMessageEvent(message);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="buffer"></param>
-        public void HandleDataReceived(byte[] buffer)
+        public void HandleReceivedData(byte[] buffer)
         {
             HandleDataReceived(buffer, 0);
         }
@@ -518,27 +566,31 @@ namespace MasterServerToolkit.Networking
         /// <param name="start"></param>
         public void HandleDataReceived(byte[] buffer, int start)
         {
-            IIncomingMessage message;
+            // Deserialize message from bytes
+            IIncomingMessage message = MessageHelper.FromBytes(buffer, start, this);
 
-            try
-            {
-                // Deserialize message from bytes
-                message = MessageHelper.FromBytes(buffer, start, this);
+            if (message == null)
+                return;
 
-                if (message.AckRequestId.HasValue)
-                {
-                    // We received a message which is a response to our ack request
-                    TriggerAck(message.AckRequestId.Value, message.Status, message);
-                    return;
-                }
-            }
-            catch (Exception e)
+            if (message != null && message.AckRequestId.HasValue)
             {
-                Logs.Error("Failed parsing an incomming message: " + e);
+                // We received a message which is a response to our ack request
+                TriggerAck(message.AckRequestId.Value, message.Status, message);
                 return;
             }
 
+            Mst.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Incoming);
+
             HandleMessage(message);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        public virtual void HandleMessage(IIncomingMessage message)
+        {
+            NotifyMessageEvent(message);
         }
 
         #region Ack Disposal Stuff
@@ -594,8 +646,6 @@ namespace MasterServerToolkit.Networking
         #endregion
 
         #region IDisposable Support
-
-        private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
         {

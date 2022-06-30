@@ -2,7 +2,6 @@
 using UnityEditor;
 #endif
 using UnityEngine;
-using MasterServerToolkit.Logging;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         using System.Runtime.InteropServices;

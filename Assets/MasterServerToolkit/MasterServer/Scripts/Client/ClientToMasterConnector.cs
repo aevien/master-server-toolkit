@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace MasterServerToolkit.MasterServer
+﻿namespace MasterServerToolkit.MasterServer
 {
     /// <summary>
     /// Automatically connects to master server
@@ -12,7 +10,7 @@ namespace MasterServerToolkit.MasterServer
             base.Awake();
 
             // If master IP is provided via cmd arguments
-            serverIP = Mst.Args.AsString(Mst.Args.Names.MasterIp, serverIP);
+            serverIp = Mst.Args.AsString(Mst.Args.Names.MasterIp, serverIp);
             // If master port is provided via cmd arguments
             serverPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, serverPort);
         }

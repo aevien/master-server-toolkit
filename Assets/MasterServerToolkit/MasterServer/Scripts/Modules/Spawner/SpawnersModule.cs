@@ -1,9 +1,8 @@
-﻿using MasterServerToolkit.Logging;
-using MasterServerToolkit.MasterServer.Web;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -31,8 +30,8 @@ namespace MasterServerToolkit.MasterServer
         private int nextSpawnerId = 0;
         private int nextSpawnTaskId = 0;
 
-        protected Dictionary<int, RegisteredSpawner> spawnersList;
-        protected Dictionary<int, SpawnTask> spawnTasksList;
+        protected readonly ConcurrentDictionary<int, RegisteredSpawner> spawnersList = new ConcurrentDictionary<int, RegisteredSpawner>();
+        protected readonly ConcurrentDictionary<int, SpawnTask> spawnTasksList = new ConcurrentDictionary<int, SpawnTask>();
 
         public event Action<RegisteredSpawner> OnSpawnerRegisteredEvent;
         public event Action<RegisteredSpawner> OnSpawnerDestroyedEvent;
@@ -40,9 +39,6 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
-            spawnersList = new Dictionary<int, RegisteredSpawner>();
-            spawnTasksList = new Dictionary<int, SpawnTask>();
-
             // Add handlers
             server.RegisterMessageHandler((ushort)MstOpCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
             server.RegisterMessageHandler((ushort)MstOpCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
@@ -83,7 +79,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             data.Add("totalStartedRooms", totalRooms);
-            data.Add("totalRegions", new JArray(GetRegions().Select(i => i.Name).ToArray()));
+            data.Add("allRegions", new JArray(GetRegions().Select(i => i.Name).ToArray()));
             data.Add("maxConcurrentRequests", RegisteredSpawner.MaxConcurrentRequests);
             data.Add("spawners", spawners);
 
@@ -152,7 +148,7 @@ namespace MasterServerToolkit.MasterServer
                 peer.SetProperty((int)MstPeerPropertyCodes.RegisteredSpawners, peerSpawners);
 
                 // Listen to disconnection
-                peer.OnPeerDisconnectedEvent += OnRegisteredPeerDisconnect;
+                peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
             }
 
             // Add a new spawner
@@ -213,10 +209,9 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Remove the spawner from all spawners
-            spawnersList.Remove(spawner.SpawnerId);
-
-            // Invoke the event
-            OnSpawnerDestroyedEvent?.Invoke(spawner);
+            if(spawnersList.TryRemove(spawner.SpawnerId, out _))
+                // Invoke the event
+                OnSpawnerDestroyedEvent?.Invoke(spawner);
         }
 
         /// <summary>

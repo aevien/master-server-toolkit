@@ -1,6 +1,6 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,7 +27,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Registered rooms list
         /// </summary>
-        protected Dictionary<int, RegisteredRoom> roomsList;
+        protected readonly ConcurrentDictionary<int, RegisteredRoom> roomsList = new ConcurrentDictionary<int, RegisteredRoom>();
 
         /// <summary>
         /// Fired when new room is registered
@@ -45,22 +45,15 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public int NextRoomId => lastRoomId++;
 
-        protected override void Awake()
-        {
-            base.Awake();
-
-            roomsList = new Dictionary<int, RegisteredRoom>();
-        }
-
         public override void Initialize(IServer server)
         {
             // Add handlers
-            server.RegisterMessageHandler((ushort)MstOpCodes.RegisterRoomRequest, RegisterRoomRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.DestroyRoomRequest, DestroyRoomRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.SaveRoomOptionsRequest, SaveRoomOptionsRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetRoomAccessRequest, GetRoomAccessRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.PlayerLeftRoomRequest, PlayerLeftRoomRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.RegisterRoomRequest, RegisterRoomRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.DestroyRoomRequest, DestroyRoomRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.SaveRoomOptionsRequest, SaveRoomOptionsRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetRoomAccessRequest, GetRoomAccessRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.PlayerLeftRoomRequest, PlayerLeftRoomRequestHandler);
 
             // Maintain unconfirmed accesses
             InvokeRepeating(nameof(CleanUnconfirmedAccesses), 1f, 1f);
@@ -174,7 +167,7 @@ namespace MasterServerToolkit.MasterServer
                 peer.SetProperty((int)MstPeerPropertyCodes.RegisteredRooms, peerRooms);
 
                 // Listen to disconnect event
-                peer.OnPeerDisconnectedEvent += OnRegisteredPeerDisconnect;
+                peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
             }
 
             // Add a new room to peer
@@ -212,7 +205,7 @@ namespace MasterServerToolkit.MasterServer
                 player.Value.GetExtension<IUserPeerExtension>().JoinedRoomID = -1;
 
             // Remove the room from all rooms
-            roomsList.Remove(room.RoomId);
+            roomsList.TryRemove(room.RoomId, out _);
             room.Destroy();
 
             logger.Debug($"Room {room.RoomId} has been successfully destroyed");

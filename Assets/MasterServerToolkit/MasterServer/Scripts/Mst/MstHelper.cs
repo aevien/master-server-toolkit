@@ -66,12 +66,30 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// Create 128 bit unique string without "-" symbol
+        /// </summary>
+        /// <returns></returns>
+        public string CreateGuidStringN()
+        {
+            return CreateGuid().ToString("N");
+        }
+
+        /// <summary>
         /// Create 128 bit unique string
         /// </summary>
         /// <returns></returns>
         public string CreateGuidString()
         {
-            return Guid.NewGuid().ToString("N");
+            return CreateGuid().ToString();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public Guid CreateGuid()
+        {
+            return Guid.NewGuid();
         }
 
         /// <summary>

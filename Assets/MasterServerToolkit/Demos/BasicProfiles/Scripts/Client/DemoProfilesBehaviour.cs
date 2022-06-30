@@ -2,13 +2,12 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
-using System;
 using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
-    public class DemoProfilesBehaviour : ProfilesBehaviour
+    public class DemoProfilesBehaviour : ProfileLoaderBehaviour
     {
         private ProfileSettingsView profileSettingsView;
 
@@ -18,7 +17,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             profileSettingsView = ViewsManager.GetView<ProfileSettingsView>("ProfileSettingsView");
 
-            profile = new ObservableProfile
+            Profile = new ObservableProfile
             {
                 new ObservableString((ushort)ObservablePropertyCodes.DisplayName),
                 new ObservableString((ushort)ObservablePropertyCodes.Avatar),
@@ -32,7 +31,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Saving profile data... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            MstTimer.Instance.WaitForSeconds(1f, () =>
             {
                 var data = new Dictionary<string, string>
                 {

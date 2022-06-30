@@ -7,19 +7,23 @@ namespace MasterServerToolkit.CommandTerminal
         List<string> known_words = new List<string>();
         List<string> buffer = new List<string>();
 
-        public void Register(string word) {
+        public void Register(string word)
+        {
             known_words.Add(word.ToLower());
         }
 
-        public string[] Complete(ref string text) {
+        public string[] Complete(ref string text)
+        {
             string partial_word = EatLastWord(ref text).ToLower();
             string known;
             buffer.Clear();
 
-            for (int i = 0; i < known_words.Count; i++) {
+            for (int i = 0; i < known_words.Count; i++)
+            {
                 known = known_words[i];
 
-                if (known.StartsWith(partial_word)) {
+                if (known.StartsWith(partial_word))
+                {
                     buffer.Add(known);
                 }
             }
@@ -27,7 +31,8 @@ namespace MasterServerToolkit.CommandTerminal
             return buffer.ToArray();
         }
 
-        string EatLastWord(ref string text) {
+        string EatLastWord(ref string text)
+        {
             int last_space = text.LastIndexOf(' ');
             string result = text.Substring(last_space + 1);
 

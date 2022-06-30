@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using MasterServerToolkit.Networking;
+using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {

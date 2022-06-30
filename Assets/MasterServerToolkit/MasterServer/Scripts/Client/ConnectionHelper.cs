@@ -1,4 +1,4 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using System.Collections;
@@ -19,15 +19,13 @@ namespace MasterServerToolkit.MasterServer
         };
 
         [Header("Connection Settings"), Tooltip("Address to the server"), SerializeField]
-        protected string serverIP = "127.0.0.1";
+        protected string serverIp = "127.0.0.1";
 
         [Tooltip("Port of the server"), SerializeField]
         protected int serverPort = 5000;
 
         [Header("Advanced"), SerializeField]
-        protected float minTimeToConnect = 2f;
-        [SerializeField]
-        protected float maxTimeToConnect = 20f;
+        protected float timeout = 5f;
         [SerializeField]
         protected int maxAttemptsToConnect = 5;
         [SerializeField]
@@ -40,26 +38,31 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Triggers when connected to server
         /// </summary>
-        public UnityEvent OnConnectionOpenEvent;
+        public UnityEvent OnConnectedEvent;
+        /// <summary>
+        /// Triggers when failed connect to server
+        /// </summary>
+        public UnityEvent OnFailedConnectEvent;
 
         /// <summary>
         /// triggers when disconnected from server
         /// </summary>
-        public UnityEvent OnConnectionCloseEvent;
+        public UnityEvent OnDisconnectedEvent;
 
-        /// <summary>
-        /// triggers when connection to server failed
-        /// </summary>
-        public UnityEvent OnConnectionFailedEvent;
         #endregion
 
         protected int currentAttemptToConnect = 0;
-        protected float timeToConnect = 0.5f;
+        private bool isConnecting = false;
 
         /// <summary>
         /// Main connection to server
         /// </summary>
         public IClientSocket Connection { get; protected set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool IsConnected => Connection != null && Connection.IsConnected;
 
         protected override void Awake()
         {
@@ -74,14 +77,10 @@ namespace MasterServerToolkit.MasterServer
             // In case this object is not at the root level of hierarchy
             // move it there, so that it won't be destroyed
             if (transform.parent != null)
-            {
                 transform.SetParent(null, false);
-            }
 
-            if (Mst.Args.StartClientConnection)
-            {
-                connectOnStart = true;
-            }
+            // check if autostart connection os defined in cmd args
+            connectOnStart = Mst.Args.AsBool(Mst.Args.Names.StartClientConnection, connectOnStart);
         }
 
         protected virtual void Start()
@@ -101,8 +100,7 @@ namespace MasterServerToolkit.MasterServer
         {
             maxAttemptsToConnect = Mathf.Clamp(maxAttemptsToConnect, 1, int.MaxValue);
             waitAndConnect = Mathf.Clamp(waitAndConnect, 0.2f, 60f);
-            minTimeToConnect = Mathf.Clamp(minTimeToConnect, 5f, 60f);
-            maxTimeToConnect = Mathf.Clamp(maxTimeToConnect, 5f, 60f);
+            timeout = Mathf.Clamp(timeout, 2f, 60f);
         }
 
         /// <summary>
@@ -117,19 +115,19 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sets the server IP
         /// </summary>
-        /// <param name="serverIp"></param>
-        public void SetIpAddress(string serverIp)
+        /// <param name="address"></param>
+        public void SetIpAddress(string address)
         {
-            this.serverIP = serverIp;
+            serverIp = address;
         }
 
         /// <summary>
         /// Sets the server port
         /// </summary>
         /// <param name="masterPort"></param>
-        public void SetPort(int serverPort)
+        public void SetPort(int port)
         {
-            this.serverPort = serverPort;
+            serverPort = port;
         }
 
         /// <summary>
@@ -137,119 +135,76 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void StartConnection()
         {
-            StartConnection(serverIP, serverPort, maxAttemptsToConnect);
+            StartConnection(maxAttemptsToConnect);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="numberOfAttempts"></param>
         public void StartConnection(int numberOfAttempts)
         {
-            StartConnection(serverIP, serverPort, numberOfAttempts);
+            StartConnection(serverIp, serverPort, numberOfAttempts);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="serverIp"></param>
-        /// <param name="serverPort"></param>
-        /// <param name="numberOfAttempts"></param>
         public void StartConnection(string serverIp, int serverPort, int numberOfAttempts = 5)
-        {
-            if (gameObject && gameObject.activeSelf && gameObject.activeInHierarchy)
-                StartCoroutine(StartConnectionProcess(serverIp, serverPort, numberOfAttempts));
-        }
-
-        public void StopConnectionProcess()
-        {
-            StopAllCoroutines();
-            Connection?.Close();
-        }
-
-        protected virtual IEnumerator StartConnectionProcess(string serverIp, int serverPort, int numberOfAttempts)
         {
             currentAttemptToConnect = 0;
             maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
 
-            Connection.RemoveConnectionOpenListener(OnConnectedEventHandler);
-            Connection.RemoveConnectionCloseListener(OnDisconnectedEventHandler);
-
             Connection.AddConnectionOpenListener(OnConnectedEventHandler);
             Connection.AddConnectionCloseListener(OnDisconnectedEventHandler, false);
 
-            // Wait a fraction of a second, in case we're also starting a master server at the same time
-            yield return new WaitForSeconds(waitAndConnect);
+            StartConnectionProcess(serverIp, serverPort, numberOfAttempts);
+        }
 
-            if (!Connection.IsConnected)
+        protected virtual void StartConnectionProcess(string serverIp, int serverPort, int numberOfAttempts)
+        {
+            if (Connection.IsConnected || isConnecting) return;
+
+            currentAttemptToConnect++;
+            isConnecting = true;
+
+            if (!Connection.IsConnected && !Connection.IsConnecting)
             {
-                logger.Info($"Starting MASTER Connection Helper... {Mst.Version}");
-                logger.Info($"Connecting to MASTER server at: {serverIp}:{serverPort}");
+                logger.Info($"Starting {GetType().Name.SplitByUppercase()}...".ToGreen());
+                logger.Info($"{GetType().Name.SplitByUppercase()} is connecting to server at: {serverIp}:{serverPort}".ToGreen());
+            }
+            else if (!Connection.IsConnected && Connection.IsConnecting)
+            {
+                logger.Info($"{GetType().Name.SplitByUppercase()} is retrying to connect to server at: {serverIp}:{serverPort}. Attempt: {currentAttemptToConnect}".ToGreen());
             }
 
-            while (true)
+            Connection.UseSecure = Mst.Settings.UseSecure;
+            Connection.Connect(serverIp, serverPort, timeout);
+
+            // 
+            Connection.WaitForConnection((client) =>
             {
-                // If is already connected break cycle
-                if (Connection.IsConnected)
+                isConnecting = false;
+
+                if (!client.IsConnected)
                 {
-                    yield break;
+                    if (currentAttemptToConnect == maxAttemptsToConnect)
+                    {
+                        logger.Info($"{GetType().Name.SplitByUppercase()} cannot to connect to server at: {serverIp}:{serverPort}".ToRed());
+                        Connection.Close();
+                        OnFailedConnectEvent?.Invoke();
+                    }
+                    else
+                    {
+                        StartConnectionProcess(serverIp, serverPort, numberOfAttempts);
+                    }
                 }
-
-                // If currentAttemptToConnect of attempts is equals maxAttemptsToConnect stop connection
-                if (currentAttemptToConnect == maxAttemptsToConnect)
-                {
-                    logger.Error($"Client cannot to connect to MASTER server at: {serverIp}:{serverPort}");
-                    Connection.Close(false);
-                    OnConnectionFailedHandler();
-                    OnConnectionFailedEvent?.Invoke();
-                    yield break;
-                }
-
-                // If we got here, we're not connected
-                if (Connection.IsConnecting)
-                {
-                    if (currentAttemptToConnect > 0)
-                        logger.Info($"Retrying to connect to MASTER server at: {serverIp}:{serverPort}");
-
-                    currentAttemptToConnect++;
-                }
-
-                if (!Connection.IsConnected)
-                {
-                    Connection.UseSecure = MstApplicationConfig.Instance.UseSecure;
-                    Connection.Connect(serverIp, serverPort);
-                }
-
-                // Give a few seconds to try and connect
-                yield return new WaitForSeconds(timeToConnect);
-
-                // If we're still not connected
-                if (!Connection.IsConnected)
-                {
-                    timeToConnect = Mathf.Min(timeToConnect * 2, maxTimeToConnect);
-                }
-            }
+            });
         }
 
-        protected virtual void OnConnectedEventHandler()
+        protected virtual void OnDisconnectedEventHandler(IClientSocket client)
         {
-            logger.Info($"Connected to MASTER server at {serverIP}:{serverPort}");
-            timeToConnect = minTimeToConnect;
-            OnConnectionOpenEvent?.Invoke();
+            logger.Info($"{GetType().Name.SplitByUppercase()} disconnected from server".ToRed());
+            OnDisconnectedEvent?.Invoke();
         }
 
-        protected virtual void OnConnectionFailedHandler()
+        protected virtual void OnConnectedEventHandler(IClientSocket client)
         {
-            logger.Info($"Connection to MASTER server at {serverIP}:{serverPort} failed");
-            timeToConnect = minTimeToConnect;
-            OnConnectionFailedEvent?.Invoke();
-        }
-
-        protected virtual void OnDisconnectedEventHandler()
-        {
-            logger.Info($"Disconnected from MASTER server");
-            timeToConnect = minTimeToConnect;
-            OnConnectionCloseEvent?.Invoke();
+            logger.Info($"{GetType().Name.SplitByUppercase()} connected to server at: {serverIp}:{serverPort}".ToGreen());
+            OnConnectedEvent?.Invoke();
         }
     }
 }

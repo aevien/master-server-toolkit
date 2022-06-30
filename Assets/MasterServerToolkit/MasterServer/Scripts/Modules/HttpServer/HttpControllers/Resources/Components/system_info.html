@@ -1,0 +1,50 @@
+<div class="row">
+    <div class="col-md-6">
+        <div class="card rounded-0">
+            <div class="card-header">
+                System
+            </div>
+            <div class="card-body p-1">
+                <table class="table table-striped table-bordered table-sm">
+                    <tbody>
+                        <tr v-for="(value, name, index) in systemInfo" :key="index">
+                            <th scope="row" class="text-break" width="50%">
+                                {{$mstUtils.camelcaseToFriendly(name)}}
+                            </th>
+                            <td v-if="name == 'graphicsDeviceMemory' || name == 'ram'" class="text-break">
+                                {{$mstUtils.megabytesToGb(value)}}
+                            </td>
+                            <td v-else class="text-break">
+                                {{value}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card rounded-0">
+            <div class="card-header">
+                Server
+            </div>
+            <div class="card-body p-1">
+                <table class="table table-striped table-bordered table-sm">
+                    <tbody>
+                        <tr v-for="(value, name, index) in serverInfo" :key="index">
+                            <th scope="row" class="text-break" width="50%">
+                                {{$mstUtils.camelcaseToFriendly(name)}}
+                            </th>
+                            <td v-if="name == 'incomingTraffic' || name == 'outgoingTraffic'" class="text-break">
+                                {{$mstUtils.bytesToMb(value)}}
+                            </td>
+                            <td v-else class="text-break">
+                                {{value}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace MasterServerToolkit.MasterServer
+﻿namespace MasterServerToolkit.MasterServer
 {
     public class LobbyMember
     {

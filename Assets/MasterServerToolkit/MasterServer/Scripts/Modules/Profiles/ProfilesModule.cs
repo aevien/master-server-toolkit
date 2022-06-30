@@ -1,7 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public delegate ObservableServerProfile ProfileFactory(string userId, IPeer clientPeer);
+    public delegate ObservableServerProfile ObservableProfileFactoryDelegate(string userId, IPeer clientPeer);
 
     /// <summary>
     /// Handles player profiles within master server.
@@ -38,13 +38,13 @@ namespace MasterServerToolkit.MasterServer
         /// Interval, in which updated profiles will be saved to database
         /// </summary>
         [Tooltip("Interval, in which updated profiles will be saved to database")]
-        public float saveProfileInterval = 1f;
+        public float saveProfileDebounceTime = 1f;
 
         /// <summary>
         /// Interval, in which profile updates will be sent to clients
         /// </summary>
         [Tooltip("Interval, in which profile updates will be sent to clients")]
-        public float clientUpdateInterval = 0f;
+        public float clientUpdateDebounceTime = .1f;
 
         /// <summary>
         /// Permission user need to have to edit profile
@@ -74,12 +74,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of profiles that will be saved to to DB with updates
         /// </summary>
-        protected HashSet<string> profilesToBeSaved;
+        protected readonly HashSet<string> profilesToBeSaved = new HashSet<string>();
 
         /// <summary>
         /// List of profiles that will be sent to clients with updates
         /// </summary>
-        protected HashSet<string> profilesToBeSentToClients;
+        protected readonly HashSet<string> profilesToBeSentToClients = new HashSet<string>();
 
         /// <summary>
         /// DB to work with profile data
@@ -89,14 +89,14 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of the users profiles
         /// </summary>
-        protected Dictionary<string, ObservableServerProfile> profilesList;
+        protected readonly ConcurrentDictionary<string, ObservableServerProfile> profilesList = new ConcurrentDictionary<string, ObservableServerProfile>();
 
         /// <summary>
         /// By default, profiles module will use this factory to create a profile for users.
         /// If you're using profiles, you will need to change this factory to construct the
         /// structure of a profile.
         /// </summary>
-        public ProfileFactory ProfileFactory { get; set; }
+        public ObservableProfileFactoryDelegate ProfileFactory { get; set; }
 
         /// <summary>
         /// Gets list of userprofiles
@@ -123,24 +123,20 @@ namespace MasterServerToolkit.MasterServer
 
             // Add auth module as a dependency of this module
             AddOptionalDependency<AuthModule>();
-
-            // List of oaded profiles
-            profilesList = new Dictionary<string, ObservableServerProfile>();
-
-            // List of profiles that are waiting to be saved to DB
-            profilesToBeSaved = new HashSet<string>();
-
-            // List of profiles that are waiting to be sent to clients
-            profilesToBeSentToClients = new HashSet<string>();
         }
 
         public override void Initialize(IServer server)
         {
-            databaseAccessorFactory?.CreateAccessors();
+            if (databaseAccessorFactory)
+                databaseAccessorFactory.CreateAccessors();
+
             profileDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IProfilesDatabaseAccessor>();
 
             if (profileDatabaseAccessor == null)
-                logger.Error("Profiles database implementation was not found");
+            {
+                logger.Fatal($"Profiles database implementation was not found in {GetType().Name}");
+                return;
+            }
 
             // Auth dependency setup
             authModule = server.GetModule<AuthModule>();
@@ -158,9 +154,9 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Games dependency setup
-            server.RegisterMessageHandler((ushort)MstOpCodes.ServerProfileRequest, GameServerProfileRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.ClientProfileRequest, ClientProfileRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateServerProfile, ProfileUpdateHandler);
+            server.RegisterMessageHandler(MstOpCodes.ServerProfileRequest, GameServerProfileRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.ClientProfileRequest, ClientProfileRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.UpdateServerProfile, ProfileUpdateHandler);
         }
 
         public override MstProperties Info()
@@ -168,7 +164,7 @@ namespace MasterServerToolkit.MasterServer
             MstProperties info = base.Info();
 
             info.Add("Database Accessor", profileDatabaseAccessor != null ? "Connected" : "Not Connected");
-            info.Add("Profiles", Profiles.Count());
+            info.Add("Profiles", Profiles?.Count());
 
             return info;
         }
@@ -180,7 +176,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="accountData"></param>
         protected virtual async void OnUserLoggedInEventHandler(IUserPeerExtension user)
         {
-            user.Peer.OnPeerDisconnectedEvent += OnPeerPlayerDisconnectedEventHandler;
+            user.Peer.OnConnectionCloseEvent += OnPeerPlayerDisconnectedEventHandler;
 
             // Create a profile
             ObservableServerProfile profile;
@@ -195,7 +191,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 // We need to create a new one
                 profile = CreateProfile(user.UserId, user.Peer);
-                profilesList.Add(user.UserId, profile);
+                profilesList.TryAdd(user.UserId, profile);
             }
 
             // Restore profile data from database
@@ -221,9 +217,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual ObservableServerProfile CreateProfile(string userId, IPeer clientPeer)
         {
             if (ProfileFactory != null)
-            {
-                return ProfileFactory(userId, clientPeer);
-            }
+                return ProfileFactory.Invoke(userId, clientPeer);
 
             return new ObservableServerProfile(userId, clientPeer);
         }
@@ -232,25 +226,31 @@ namespace MasterServerToolkit.MasterServer
         /// Invoked, when profile is changed
         /// </summary>
         /// <param name="profile"></param>
-        private void OnProfileChangedEventHandler(ObservableServerProfile profile)
+        protected virtual void OnProfileChangedEventHandler(ObservableServerProfile profile)
         {
             var user = profile.ClientPeer.GetExtension<IUserPeerExtension>();
 
             if (!user.Account.IsGuest || (user.Account.IsGuest && authModule.SaveGuestInfo))
             {
-                if (!profilesToBeSaved.Contains(profile.UserId) && profile.ShouldBeSavedToDatabase)
+                lock (profilesToBeSaved)
                 {
-                    // If profile is not already waiting to be saved
-                    profilesToBeSaved.Add(profile.UserId);
-                    SaveProfile(profile, saveProfileInterval);
+                    if (!profilesToBeSaved.Contains(profile.UserId) && profile.ShouldBeSavedToDatabase)
+                    {
+                        // If profile is not already waiting to be saved
+                        profilesToBeSaved.Add(profile.UserId);
+                        SaveProfile(profile, saveProfileDebounceTime);
+                    }
                 }
             }
 
-            if (!profilesToBeSentToClients.Contains(profile.UserId))
+            lock (profilesToBeSentToClients)
             {
-                // If it's a master server
-                profilesToBeSentToClients.Add(profile.UserId);
-                SendUpdatesToClient(profile, clientUpdateInterval);
+                if (!profilesToBeSentToClients.Contains(profile.UserId))
+                {
+                    // If it's a master server
+                    profilesToBeSentToClients.Add(profile.UserId);
+                    SendUpdatesToClient(profile, clientUpdateDebounceTime);
+                }
             }
         }
 
@@ -260,7 +260,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="session"></param>
         protected virtual void OnPeerPlayerDisconnectedEventHandler(IPeer peer)
         {
-            peer.OnPeerDisconnectedEvent -= OnPeerPlayerDisconnectedEventHandler;
+            peer.OnConnectionCloseEvent -= OnPeerPlayerDisconnectedEventHandler;
 
             var profileExtension = peer.GetExtension<ProfilePeerExtension>();
 
@@ -282,8 +282,11 @@ namespace MasterServerToolkit.MasterServer
             // Wait for the delay
             await Task.Delay(Mathf.RoundToInt(delay < 0.01f ? 0.01f * 1000 : delay * 1000));
 
-            // Remove value from debounced updates
-            profilesToBeSaved.Remove(profile.UserId);
+            lock (profilesToBeSaved)
+            {
+                // Remove value from debounced updates
+                profilesToBeSaved.Remove(profile.UserId);
+            }
 
             await profileDatabaseAccessor.UpdateProfileAsync(profile);
         }
@@ -304,8 +307,11 @@ namespace MasterServerToolkit.MasterServer
                 // If client is not connected, and we don't need to send him profile updates
                 profile.ClearUpdates();
 
-                // Remove value from debounced updates
-                profilesToBeSentToClients.Remove(profile.UserId);
+                lock (profilesToBeSentToClients)
+                {
+                    // Remove value from debounced updates
+                    profilesToBeSentToClients.Remove(profile.UserId);
+                }
 
                 return;
             }
@@ -319,8 +325,11 @@ namespace MasterServerToolkit.MasterServer
             // Send these data to client
             profile.ClientPeer.SendMessage(MessageHelper.Create((ushort)MstOpCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
 
-            // Remove value from debounced updates
-            profilesToBeSentToClients.Remove(profile.UserId);
+            lock (profilesToBeSentToClients)
+            {
+                // Remove value from debounced updates
+                profilesToBeSentToClients.Remove(profile.UserId);
+            }
         }
 
         /// <summary>
@@ -336,22 +345,10 @@ namespace MasterServerToolkit.MasterServer
 
             // If user is logged in, do nothing
             if (authModule.IsUserLoggedInById(userId))
-            {
                 return;
-            }
 
-            profilesList.TryGetValue(userId, out ObservableServerProfile profile);
-
-            if (profile == null)
-            {
-                return;
-            }
-
-            // Remove profile
-            profilesList.Remove(userId);
-
-            // Remove listeners
-            profile.OnModifiedInServerEvent -= OnProfileChangedEventHandler;
+            if (profilesList.TryRemove(userId, out ObservableServerProfile profile) && profile != null)
+                profile.OnModifiedInServerEvent -= OnProfileChangedEventHandler;
         }
 
         /// <summary>

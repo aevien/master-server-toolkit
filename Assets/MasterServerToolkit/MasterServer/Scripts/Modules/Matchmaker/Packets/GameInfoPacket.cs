@@ -47,7 +47,7 @@ namespace MasterServerToolkit.MasterServer
 
             writer.Write(count);
 
-            foreach(string player in OnlinePlayersList)
+            foreach (string player in OnlinePlayersList)
             {
                 writer.Write(player);
             }
@@ -69,7 +69,7 @@ namespace MasterServerToolkit.MasterServer
 
             ushort count = reader.ReadUInt16();
 
-            for(int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++)
             {
                 OnlinePlayersList.Add(reader.ReadString());
             }

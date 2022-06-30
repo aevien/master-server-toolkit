@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -171,13 +169,23 @@ namespace MasterServerToolkit.UI
         public void SetMin(float value)
         {
             minValue = value;
-            if (minValue > maxValue) maxValue = minValue;
+
+            if (minValue > maxValue) 
+                maxValue = minValue;
+
+            currentProgressValue = 0f;
+            targetProgressValue = 0f;
         }
 
         public void SetMax(float value)
         {
             maxValue = value;
-            if (minValue > maxValue) maxValue = minValue;
+
+            if (minValue > maxValue) 
+                maxValue = minValue;
+
+            currentProgressValue = 0f;
+            targetProgressValue = 0f;
         }
 
         /// <summary>

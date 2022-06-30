@@ -183,7 +183,7 @@ namespace MasterServerToolkit.MasterServer
 
                 // Read spawn task options received from master server
                 var options = new MstProperties(new Dictionary<string, string>().FromBytes(response.AsBytes()));
-                
+
                 // Create spawn task controller
                 var process = new SpawnTaskController(spawnId, options, connection);
 

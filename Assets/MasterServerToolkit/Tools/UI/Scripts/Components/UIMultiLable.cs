@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -12,7 +10,7 @@ namespace MasterServerToolkit.UI
 
         public void SetLable(params string[] lables)
         {
-            if(lables.Length >= lablesText.Length)
+            if (lables.Length >= lablesText.Length)
             {
                 for (int i = 0; i < lablesText.Length; i++)
                 {
