@@ -1,14 +1,14 @@
-﻿namespace MasterServerToolkit.MasterServer
+﻿using MasterServerToolkit.Extensions;
+
+namespace MasterServerToolkit.MasterServer
 {
-    public enum MstPeerPropertyCodes : short
+    public struct MstPeerPropertyCodes
     {
-        Start = 26000,
+        public static uint Start = nameof(Start).ToUint32Hash();
 
-        // Rooms
-        RegisteredRooms,
+        public static uint RegisteredRooms = nameof(RegisteredRooms).ToUint32Hash();
 
-        // Spawners
-        RegisteredSpawners,
-        ClientSpawnRequest
+        public static uint RegisteredSpawners = nameof(RegisteredSpawners).ToUint32Hash();
+        public static uint ClientSpawnRequest = nameof(ClientSpawnRequest).ToUint32Hash();
     }
 }

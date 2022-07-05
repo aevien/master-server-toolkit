@@ -40,10 +40,7 @@ namespace MasterServerToolkit.MasterServer
             systemInfo.Add("CPU Count", SystemInfo.processorCount);
             systemInfo.Add("RAM", SystemInfo.systemMemorySize);
 
-            Mst.Helper.GetPublicIp((ip, error) =>
-            {
-                publicIp = !string.IsNullOrEmpty(ip) ? ip.Trim() : MasterServer.Address;
-            });
+            publicIp = Mst.Helper.GetPublicIp();
         }
 
         private void OnGetMstInfoJsonHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)

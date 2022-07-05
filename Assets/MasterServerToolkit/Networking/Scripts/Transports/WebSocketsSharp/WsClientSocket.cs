@@ -2,6 +2,7 @@
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
+using WebSocketSharp;
 
 namespace MasterServerToolkit.Networking
 {
@@ -37,6 +38,7 @@ namespace MasterServerToolkit.Networking
             }
         }
         public bool UseSecure { get; set; }
+        public ushort CloseCode { get; private set; }
 
         public event ConnectionDelegate OnConnectionOpenEvent;
         public event ConnectionDelegate OnConnectionCloseEvent;
@@ -83,6 +85,8 @@ namespace MasterServerToolkit.Networking
                     if (Status != ConnectionStatus.Disconnected)
                     {
                         Status = ConnectionStatus.Disconnected;
+
+                        CloseCode = (ushort)(webSocket != null ? webSocket.CloseCode : 0);
 
                         if (fireEvent)
                             OnConnectionCloseEvent?.Invoke(this);
@@ -316,10 +320,20 @@ namespace MasterServerToolkit.Networking
 
         public void Close(bool fireEvent = true)
         {
+            Close((ushort)CloseStatusCode.Normal, fireEvent);
+        }
+
+        public void Close(ushort code, bool fireEvent = true)
+        {
+            Close(code, "", fireEvent);
+        }
+
+        public void Close(ushort code, string reason, bool fireEvent = true)
+        {
             MstUpdateRunner.Instance.Remove(this);
 
             if (webSocket != null)
-                webSocket.Close();
+                webSocket.Close(code, reason);
 
             if (_peer != null)
             {

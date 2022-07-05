@@ -1,7 +1,4 @@
 ﻿#if MIRROR
-using Mirror;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
@@ -10,7 +7,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
     [RequireComponent(typeof(PlayerCharacterInput))]
     public class PlayerCharacterTopDownLook : PlayerCharacterLook
     {
-#region INSPECTOR
+        #region INSPECTOR
 
         [Header("TD Look Settings"), SerializeField]
         private Vector3 lookAtPoint = Vector3.zero;
@@ -46,7 +43,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
         [SerializeField]
         private bool usePadding = false;
 
-#endregion
+        #endregion
 
         private GameObject cameraRoot = null;
         private GameObject cameraYPoint = null;

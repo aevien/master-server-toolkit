@@ -1,9 +1,7 @@
 using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -335,7 +333,7 @@ namespace MasterServerToolkit.MasterServer
 
         public void Clear()
         {
-            for(int i = 0; i < _value.Count; i++)
+            for (int i = 0; i < _value.Count; i++)
             {
                 RemoveAt(i);
             }

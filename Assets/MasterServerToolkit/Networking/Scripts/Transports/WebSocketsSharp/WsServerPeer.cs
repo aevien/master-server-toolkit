@@ -2,6 +2,7 @@
 using MasterServerToolkit.MasterServer;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using WebSocketSharp;
 
 namespace MasterServerToolkit.Networking
 {
@@ -41,17 +42,17 @@ namespace MasterServerToolkit.Networking
             NotifyConnectionOpenEvent();
         }
 
-        private void ServiceForPeer_OnCloseEvent(string reason)
+        private void ServiceForPeer_OnCloseEvent(ushort code, string reason)
         {
             isConnected = false;
-            NotifyConnectionCloseEvent(reason);
+            NotifyConnectionCloseEvent(code, reason);
         }
 
         private void ServiceForPeer_OnErrorEvent(string error)
         {
             isConnected = false;
             logger.Error(error);
-            NotifyConnectionCloseEvent(error);
+            NotifyConnectionCloseEvent((ushort)CloseStatusCode.Abnormal, error);
         }
 
         protected override void Dispose(bool disposing)
@@ -123,9 +124,14 @@ namespace MasterServerToolkit.Networking
             }
         }
 
-        public override void Disconnect(string reason)
+        public override void Disconnect(string reason = "")
         {
-            serviceForPeer.CloseAsync(reason);
+            Disconnect((ushort)CloseStatusCode.Normal, reason);
+        }
+
+        public override void Disconnect(ushort code, string reason = "")
+        {
+            serviceForPeer.Disconnect(code, reason);
         }
     }
 }

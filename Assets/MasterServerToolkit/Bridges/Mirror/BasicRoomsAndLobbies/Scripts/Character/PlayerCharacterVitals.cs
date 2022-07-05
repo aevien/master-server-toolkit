@@ -10,14 +10,14 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 
     public class PlayerCharacterVitals : PlayerCharacterBehaviour
     {
-#region INSPECTOR
+        #region INSPECTOR
 
         [Header("Components"), SerializeField]
         private CharacterController characterController;
         [SerializeField]
         private GameObject dieEffectPrefab;
 
-#endregion
+        #endregion
 
         /// <summary>
         /// Called when player resurrected
@@ -112,7 +112,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 
             if (dieEffectPrefab)
             {
-                MstTimer.Instance.WaitForSeconds(1f, () => {
+                MstTimer.Instance.WaitForSeconds(1f, () =>
+                {
                     Instantiate(dieEffectPrefab, transform.position, Quaternion.identity);
                 });
             }

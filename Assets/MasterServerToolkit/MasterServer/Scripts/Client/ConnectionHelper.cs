@@ -1,7 +1,6 @@
 ﻿using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 

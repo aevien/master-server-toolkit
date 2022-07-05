@@ -170,7 +170,7 @@ namespace MasterServerToolkit.UI
         {
             minValue = value;
 
-            if (minValue > maxValue) 
+            if (minValue > maxValue)
                 maxValue = minValue;
 
             currentProgressValue = 0f;
@@ -181,7 +181,7 @@ namespace MasterServerToolkit.UI
         {
             maxValue = value;
 
-            if (minValue > maxValue) 
+            if (minValue > maxValue)
                 maxValue = minValue;
 
             currentProgressValue = 0f;

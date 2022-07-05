@@ -8,7 +8,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
     [RequireComponent(typeof(PlayerCharacterInput), typeof(CharacterController))]
     public class PlayerCharacterMovement : PlayerCharacterBehaviour
     {
-#region INSPECTOR
+        #region INSPECTOR
 
         [Header("Gravity Settings"), SerializeField]
         protected float gravityMultiplier = 3f;
@@ -37,7 +37,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
         [Header("Rotation Settings"), SerializeField, Range(5f, 20f)]
         protected float rotationSmoothTime = 5f;
 
-#endregion
+        #endregion
 
         /// <summary>
         /// The direction to which the character is required to look

@@ -19,7 +19,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// 
         /// </summary>
-        public event Action<string> OnCloseEvent;
+        public event Action<ushort, string> OnCloseEvent;
 
         /// <summary>
         /// 
@@ -38,7 +38,7 @@ namespace MasterServerToolkit.Networking
 
         protected override void OnClose(CloseEventArgs e)
         {
-            OnCloseEvent?.Invoke(e.Reason);
+            OnCloseEvent?.Invoke(e.Code, e.Reason);
         }
 
         protected override void OnError(ErrorEventArgs e)
@@ -56,9 +56,14 @@ namespace MasterServerToolkit.Networking
             SendAsync(data, null);
         }
 
-        public void CloseAsync(string reason)
+        public void Disconnect(string reason = "")
         {
-            CloseAsync(CloseStatusCode.Normal, reason);
+            CloseAsync((ushort)CloseStatusCode.Normal, reason);
+        }
+
+        public void Disconnect(ushort code, string reason)
+        {
+            CloseAsync(code, reason);
         }
 
         public void Dispose()

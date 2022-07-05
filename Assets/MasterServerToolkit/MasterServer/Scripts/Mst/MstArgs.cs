@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -223,7 +222,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
 #if !UNITY_EDITOR
-            if (Application.isMobilePlatform)
+            if (UnityEngine.Application.isMobilePlatform)
             {
                 return;
             }

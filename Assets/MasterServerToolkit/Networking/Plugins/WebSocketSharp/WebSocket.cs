@@ -241,19 +241,28 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Close websocket client connection
         /// </summary>
-        /// <param name="code"></param>
-        /// <param name="reason"></param>
-        public void Close(string reason = "")
+        public void Close()
         {
-            socket.CloseAsync(CloseStatusCode.Normal, reason);
+            Close((ushort)CloseStatusCode.Normal, "Connection closed successfuly");
         }
 
         /// <summary>
         /// Close websocket client connection
         /// </summary>
-        public void Close()
+        /// <param name="reason"></param>
+        public void Close(string reason = "")
         {
-            socket.CloseAsync(CloseStatusCode.Normal, "Connection closed successfuly");
+            Close((ushort)CloseStatusCode.Normal, reason);
+        }
+
+        /// <summary>
+        /// Close websocket client connection
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="reason"></param>
+        public void Close(ushort code, string reason = "")
+        {
+            socket.CloseAsync(code, reason);
         }
 #endif
     }

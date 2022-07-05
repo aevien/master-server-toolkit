@@ -1,7 +1,6 @@
 ﻿#if UNITY_EDITOR
 using UnityEditor;
 #endif
-using UnityEngine;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         using System.Runtime.InteropServices;
@@ -32,7 +31,7 @@ namespace MasterServerToolkit.MasterServer
 #if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #elif !UNITY_EDITOR && !UNITY_WEBGL
-            Application.Quit();
+            UnityEngine.Application.Quit();
 #elif !UNITY_EDITOR && UNITY_WEBGL
             MsfAlert(webGlQuitMessage);
             Logs.Info(webGlQuitMessage);

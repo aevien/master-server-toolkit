@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using WebSocketSharp;
 
 namespace MasterServerToolkit.Networking
 {
@@ -70,7 +71,12 @@ namespace MasterServerToolkit.Networking
 
         public override void Disconnect(string reason)
         {
-            socket.Close(reason);
+            Disconnect((ushort)CloseStatusCode.Normal, reason);
+        }
+
+        public override void Disconnect(ushort code, string reason)
+        {
+            socket.Close(code, reason);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicConnection
                 locationPathName = Path.Combine(buildFolder, "MasterServer.exe"),
                 target = BuildTarget.StandaloneWindows64,
 #if UNITY_2021_1_OR_NEWER
-                options = BuildOptions.ShowBuiltPlayer 
+                options = BuildOptions.ShowBuiltPlayer
                 | BuildOptions.Development
                 | BuildOptions.EnableDeepProfilingSupport,
                 subtarget = (int)StandaloneBuildSubtarget.Server

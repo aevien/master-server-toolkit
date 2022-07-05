@@ -18,6 +18,11 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// 
         /// </summary>
+        ushort CloseCode { get; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         DateTime StartActivity { get; set; }
 
         /// <summary>
@@ -74,14 +79,14 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="id"></param>
         /// <param name="data"></param>
-        void SetProperty(int id, object data);
+        void SetProperty(uint id, object data);
 
         /// <summary>
         /// Retrieves a property from the peer
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        object GetProperty(int id);
+        object GetProperty(uint id);
 
         /// <summary>
         /// Retrieves a property from the peer, and if it's not found,
@@ -90,7 +95,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="id"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        object GetProperty(int id, object defaultValue);
+        object GetProperty(uint id, object defaultValue);
 
         /// <summary>
         /// Adds an extension to this peer

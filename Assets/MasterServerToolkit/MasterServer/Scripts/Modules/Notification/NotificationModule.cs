@@ -71,9 +71,9 @@ namespace MasterServerToolkit.MasterServer
                 logger.Error($"{GetType().Name} was set to use {nameof(RoomsModule)}, but {nameof(RoomsModule)} was not found. It means that room players cannot receive notifications");
             }
 
-            server.RegisterMessageHandler((ushort)MstOpCodes.SubscribeToNotifications, OnSubscribeToNotificationsMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.UnsubscribeFromNotifications, OnUnsubscribeToNotificationsMessageHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.Notification, OnNotificationMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.SubscribeToNotifications, OnSubscribeToNotificationsMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.UnsubscribeFromNotifications, OnUnsubscribeToNotificationsMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.Notification, OnNotificationMessageHandler);
         }
 
         /// <summary>

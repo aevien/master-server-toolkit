@@ -129,7 +129,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         private void OnRegisteredPeerDisconnect(IPeer peer)
         {
-            Dictionary<int, RegisteredRoom> peerRooms = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
+            Dictionary<int, RegisteredRoom> peerRooms = peer.GetProperty(MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
 
             if (peerRooms == null)
             {
@@ -156,7 +156,7 @@ namespace MasterServerToolkit.MasterServer
         public virtual RegisteredRoom RegisterRoom(IPeer peer, RoomOptions options)
         {
             var room = new RegisteredRoom(NextRoomId, peer, options);
-            Dictionary<int, RegisteredRoom> peerRooms = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
+            Dictionary<int, RegisteredRoom> peerRooms = peer.GetProperty(MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
 
             if (peerRooms == null)
             {
@@ -164,7 +164,7 @@ namespace MasterServerToolkit.MasterServer
 
                 // Save the dictionary
                 peerRooms = new Dictionary<int, RegisteredRoom>();
-                peer.SetProperty((int)MstPeerPropertyCodes.RegisteredRooms, peerRooms);
+                peer.SetProperty(MstPeerPropertyCodes.RegisteredRooms, peerRooms);
 
                 // Listen to disconnect event
                 peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
@@ -192,7 +192,7 @@ namespace MasterServerToolkit.MasterServer
 
             if (peer != null)
             {
-                var peerRooms = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
+                var peerRooms = peer.GetProperty(MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
 
                 // Remove the room from peer
                 if (peerRooms != null)

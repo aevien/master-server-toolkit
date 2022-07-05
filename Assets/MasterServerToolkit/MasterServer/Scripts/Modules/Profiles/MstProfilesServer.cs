@@ -139,7 +139,7 @@ namespace MasterServerToolkit.MasterServer
                             profile.ClearUpdates();
                         }
 
-                        connection.SendMessage((ushort)MstOpCodes.UpdateServerProfile, ms.ToArray());
+                        connection.SendMessage(MstOpCodes.UpdateServerProfile, ms.ToArray());
                     }
                 }
 

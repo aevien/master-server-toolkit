@@ -12,7 +12,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
     public class RoomNetworkManager : NetworkManager
     {
-#region INSPECTOR
+        #region INSPECTOR
 
         [Header("Mirror Network Manager Components"), SerializeField]
         protected RoomServerManager roomServerManager;
@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         [Header("Mirror Network Manager Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
 
-#endregion
+        #endregion
 
         /// <summary>
         /// Logger assigned to this module
@@ -135,7 +135,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             });
         }
 
-#region MIRROR CALLBACKS
+        #region MIRROR CALLBACKS
 
         /// <summary>
         /// When mirror server is started
@@ -218,7 +218,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             OnDisconnectedEvent?.Invoke(NetworkClient.connection);
         }
 
-#endregion
+        #endregion
 
         private void ValidateRoomAccessRequestHandler(NetworkConnection conn, ValidateRoomAccessRequestMessage mess)
         {

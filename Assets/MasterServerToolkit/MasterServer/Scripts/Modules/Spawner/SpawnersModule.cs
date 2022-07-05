@@ -138,14 +138,14 @@ namespace MasterServerToolkit.MasterServer
             var spawnerInstance = new RegisteredSpawner(GenerateSpawnerId(), peer, options);
 
             // Find spawners in peer property
-            Dictionary<int, RegisteredSpawner> peerSpawners = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
+            Dictionary<int, RegisteredSpawner> peerSpawners = peer.GetProperty(MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
 
             // If this is the first time registering a spawners
             if (peerSpawners == null)
             {
                 // Save the dictionary
                 peerSpawners = new Dictionary<int, RegisteredSpawner>();
-                peer.SetProperty((int)MstPeerPropertyCodes.RegisteredSpawners, peerSpawners);
+                peer.SetProperty(MstPeerPropertyCodes.RegisteredSpawners, peerSpawners);
 
                 // Listen to disconnection
                 peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
@@ -170,7 +170,7 @@ namespace MasterServerToolkit.MasterServer
         private void OnRegisteredPeerDisconnect(IPeer peer)
         {
             // Get registered spawners from peer property
-            var peerSpawners = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
+            var peerSpawners = peer.GetProperty(MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
 
             // Return if now spawner found
             if (peerSpawners == null)
@@ -201,7 +201,7 @@ namespace MasterServerToolkit.MasterServer
             if (peer != null)
             {
                 // Get spawners from peer property
-                var peerSpawners = peer.GetProperty((int)MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
+                var peerSpawners = peer.GetProperty(MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
 
                 // Remove the spawner from peer
                 if (peerSpawners != null)
@@ -209,7 +209,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Remove the spawner from all spawners
-            if(spawnersList.TryRemove(spawner.SpawnerId, out _))
+            if (spawnersList.TryRemove(spawner.SpawnerId, out _))
                 // Invoke the event
                 OnSpawnerDestroyedEvent?.Invoke(spawner);
         }
@@ -436,7 +436,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Try to find existing request to prevent new one
-            SpawnTask prevRequest = peer.GetProperty((int)MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
+            SpawnTask prevRequest = peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
 
             if (prevRequest != null && !prevRequest.IsDoneStartingProcess)
             {
@@ -461,7 +461,7 @@ namespace MasterServerToolkit.MasterServer
             task.Requester = peer;
 
             // Save the task as peer property
-            peer.SetProperty((int)MstPeerPropertyCodes.ClientSpawnRequest, task);
+            peer.SetProperty(MstPeerPropertyCodes.ClientSpawnRequest, task);
 
             // Listen to status changes
             task.OnStatusChangedEvent += (status) =>
@@ -484,7 +484,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void AbortSpawnRequestHandler(IIncomingMessage message)
         {
-            var prevRequest = message.Peer.GetProperty((int)MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
+            SpawnTask prevRequest = message.Peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
 
             if (prevRequest == null)
             {

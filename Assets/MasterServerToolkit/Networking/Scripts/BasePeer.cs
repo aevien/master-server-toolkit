@@ -2,6 +2,7 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.Networking
@@ -13,9 +14,9 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public abstract class BasePeer : IPeer
     {
-        private readonly Dictionary<int, ResponseCallback> acknowledgements;
+        private readonly ConcurrentDictionary<int, ResponseCallback> acknowledgements = new ConcurrentDictionary<int, ResponseCallback>();
         protected readonly List<long[]> ackTimeoutQueue;
-        private readonly Dictionary<int, object> peerPropertyData;
+        private readonly ConcurrentDictionary<uint, object> peerPropertyData = new ConcurrentDictionary<uint, object>();
         private int _id = -1;
         private int nextAckId = 1;
         private readonly IIncomingMessage timeoutMessage;
@@ -100,6 +101,11 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public DateTime LastActivity { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public ushort CloseCode { get; protected set; }
+
         protected BasePeer()
         {
             StartActivity = DateTime.Now;
@@ -108,8 +114,6 @@ namespace MasterServerToolkit.Networking
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
-            peerPropertyData = new Dictionary<int, object>();
-            acknowledgements = new Dictionary<int, ResponseCallback>(30);
             ackTimeoutQueue = new List<long[]>();
             extensionsList = new Dictionary<Type, IPeerExtension>();
 
@@ -378,16 +382,9 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="id"></param>
         /// <param name="data"></param>
-        public void SetProperty(int id, object data)
+        public void SetProperty(uint id, object data)
         {
-            if (peerPropertyData.ContainsKey(id))
-            {
-                peerPropertyData[id] = data;
-            }
-            else
-            {
-                peerPropertyData.Add(id, data);
-            }
+            peerPropertyData[id] = data;
         }
 
         /// <summary>
@@ -395,7 +392,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public object GetProperty(int id)
+        public object GetProperty(uint id)
         {
             peerPropertyData.TryGetValue(id, out object value);
             return value;
@@ -407,7 +404,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="id"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public object GetProperty(int id, object defaultValue)
+        public object GetProperty(uint id, object defaultValue)
         {
             var obj = GetProperty(id);
             return obj ?? defaultValue;
@@ -468,7 +465,14 @@ namespace MasterServerToolkit.Networking
         /// Force disconnection
         /// </summary>
         /// <param name="reason"></param>
-        public abstract void Disconnect(string reason);
+        public abstract void Disconnect(string reason = "");
+
+        /// <summary>
+        /// Force disconnection
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="reason"></param>
+        public abstract void Disconnect(ushort code, string reason = "");
 
         /// <summary>
         /// Notify OnPeerDisconnectedEvent
@@ -482,10 +486,13 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Notify OnPeerDisconnectedEvent
         /// </summary>
-        protected void NotifyConnectionCloseEvent(string reason = "")
+        /// <param name="code"></param>
+        /// <param name="reason"></param>
+        protected void NotifyConnectionCloseEvent(ushort code, string reason = "")
         {
+            CloseCode = code;
             OnConnectionCloseEvent?.Invoke(this);
-            logger.Debug($"Peer [{Id}] closed connection. Reason is: {reason}");
+            logger.Debug($"Peer [{Id}] closed connection with code {code}. Reason is: {reason}");
         }
 
         /// <summary>
@@ -506,16 +513,9 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         protected int RegisterAck(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
         {
-            int id;
-
-            lock (acknowledgements)
-            {
-                id = nextAckId++;
-                acknowledgements.Add(id, responseCallback);
-            }
-
+            int id = nextAckId++;
+            acknowledgements[id] = responseCallback;
             message.AckRequestId = id;
-
             StartAckTimeout(id, timeoutSecs);
             return id;
         }
@@ -528,15 +528,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="message"></param>
         protected void TriggerAck(int ackId, ResponseStatus statusCode, IIncomingMessage message)
         {
-            ResponseCallback ackCallback;
-
-            lock (acknowledgements)
-            {
-                acknowledgements.TryGetValue(ackId, out ackCallback);
-                acknowledgements.Remove(ackId);
-            }
-
-            ackCallback?.Invoke(statusCode, message);
+            if (acknowledgements.TryRemove(ackId, out ResponseCallback ackCallback))
+                ackCallback?.Invoke(statusCode, message);
         }
 
         /// <summary>
@@ -628,19 +621,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="responseCode"></param>
         private void CancelAck(int ackId, ResponseStatus responseCode)
         {
-            ResponseCallback ackCallback;
-            lock (acknowledgements)
-            {
-                acknowledgements.TryGetValue(ackId, out ackCallback);
-
-                if (ackCallback == null)
-                {
-                    return;
-                }
-
-                acknowledgements.Remove(ackId);
-            }
-            ackCallback(responseCode, timeoutMessage);
+            if (acknowledgements.TryRemove(ackId, out ResponseCallback ackCallback))
+                ackCallback?.Invoke(responseCode, timeoutMessage);
         }
 
         #endregion

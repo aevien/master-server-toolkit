@@ -1,12 +1,15 @@
-﻿using System;
-
-namespace MasterServerToolkit.Networking
+﻿namespace MasterServerToolkit.Networking
 {
     public delegate void ConnectionDelegate(IClientSocket client);
     public delegate void ConnectionStatusDelegate(ConnectionStatus status);
 
     public interface IClientSocket : IMsgDispatcher
     {
+        /// <summary>
+        /// The code that the client receives when the connection is closed
+        /// </summary>
+        ushort CloseCode { get; }
+
         /// <summary>
         /// Connection status
         /// </summary>
@@ -142,6 +145,22 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Closes socket connection
         /// </summary>
+        /// <param name="fireEvent"></param>
         void Close(bool fireEvent = true);
+
+        /// <summary>
+        /// Closes socket connection
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="fireEvent"></param>
+        void Close(ushort code, bool fireEvent = true);
+
+        /// <summary>
+        /// Closes socket connection
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="reason"></param>
+        /// <param name="fireEvent"></param>
+        void Close(ushort code, string reason, bool fireEvent = true);
     }
 }

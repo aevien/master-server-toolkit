@@ -1,5 +1,4 @@
 ﻿#if MIRROR
-using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 {
