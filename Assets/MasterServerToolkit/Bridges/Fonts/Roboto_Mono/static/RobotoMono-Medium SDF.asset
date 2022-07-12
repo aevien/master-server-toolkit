@@ -49,14 +49,15 @@ Texture2D:
     path: 
 --- !u!21 &-4071271107329461964
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RobotoMono-Medium SDF Material
   m_Shader: {fileID: 4800000, guid: 68e6db2ebdc24f95958faec2be5558d6, type: 3}
-  m_ShaderKeywords: 
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -116,9 +117,9 @@ Material:
     - _OutlineWidth: 0
     - _PerspectiveFilter: 0.875
     - _Reflectivity: 10
-    - _ScaleRatioA: 1
-    - _ScaleRatioB: 1
-    - _ScaleRatioC: 1
+    - _ScaleRatioA: 0.8333333
+    - _ScaleRatioB: 0.6770833
+    - _ScaleRatioC: 0.6770833
     - _ScaleX: 1
     - _ScaleY: 1
     - _ShaderFlags: 0
@@ -163,12 +164,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
   m_Name: RobotoMono-Medium SDF
   m_EditorClassIdentifier: 
-  hashCode: 0
+  hashCode: 434491209
   material: {fileID: -4071271107329461964}
-  materialHashCode: 0
+  materialHashCode: -283818039
   m_Version: 1.1.0
   m_SourceFontFileGUID: 1f1492a461ea8f348affb04443cc512a
-  m_SourceFontFile_EditorRef: {fileID: 12800000, guid: 1f1492a461ea8f348affb04443cc512a, type: 3}
+  m_SourceFontFile_EditorRef: {fileID: 12800000, guid: 1f1492a461ea8f348affb04443cc512a,
+    type: 3}
   m_SourceFontFile: {fileID: 0}
   m_AtlasPopulationMode: 0
   m_FaceInfo:

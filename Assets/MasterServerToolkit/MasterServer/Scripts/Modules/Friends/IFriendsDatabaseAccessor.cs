@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public interface IFriendsDatabaseAccessor
+    public interface IFriendsDatabaseAccessor:IDatabaseAccessor
     {
         Task<IFriendsInfoData> RestoreFriends(string userId);
         Task<IFriendsInfoData> RestoreIncomingFriendshipRequests(string userId);

@@ -21,7 +21,6 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void StartConnection(RoomAccessPacket access)
         {
-            AccessData = access;
             roomConnection = Mst.Create.ClientSocket();
             roomConnection.AddConnectionOpenListener(OnConnectedToRoomEventHandler);
             roomConnection.AddConnectionCloseListener(OnDisconnectedFromRoomEventHandler, false);
@@ -48,7 +47,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnConnectedToRoomEventHandler(IClientSocket client)
         {
-            roomConnection.SendMessage((ushort)MstOpCodes.ValidateRoomAccessRequest, AccessData.Token, (status, response) =>
+            roomConnection.SendMessage(MstOpCodes.ValidateRoomAccessRequest, Mst.Client.Rooms.ReceivedAccess.Token, (status, response) =>
             {
                 if (status == ResponseStatus.Success)
                 {
@@ -73,7 +72,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void LoadOnlineScene()
         {
-            ScenesLoader.LoadSceneByName(AccessData.SceneName, (progressValue) =>
+            ScenesLoader.LoadSceneByName(Mst.Client.Rooms.ReceivedAccess.SceneName, (progressValue) =>
             {
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
             }, null);

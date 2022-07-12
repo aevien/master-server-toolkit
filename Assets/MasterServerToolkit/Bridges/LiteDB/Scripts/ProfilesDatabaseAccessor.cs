@@ -12,6 +12,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
         private ILiteCollection<ProfileInfoData> profiles;
         private readonly ILiteDatabase database;
 
+        public MstProperties CustomProperties { get; private set; } = new MstProperties();
+
         public ProfilesDatabaseAccessor(string databaseName)
         {
             database = new LiteDatabase($"{databaseName}.db");

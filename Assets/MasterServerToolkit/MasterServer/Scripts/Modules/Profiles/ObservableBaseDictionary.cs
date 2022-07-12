@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -229,25 +230,23 @@ namespace MasterServerToolkit.MasterServer
 
                         if (operation == _removeOperation)
                         {
-                            _value.Remove(key);
+                            Remove(key);
                             continue;
                         }
 
                         var value = ReadValue(reader);
 
-                        if (_value.ContainsKey(key))
+                        if (ContainsKey(key))
                         {
-                            _value[key] = value;
+                            this[key] = value;
                         }
                         else
                         {
-                            _value.Add(key, value);
+                            Add(key, value);
                         }
                     }
                 }
             }
-
-            MarkDirty();
         }
 
         public override void ClearUpdates()

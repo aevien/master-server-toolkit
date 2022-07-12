@@ -275,8 +275,8 @@ namespace MasterServerToolkit.MasterServer
 
                         if (operation == _removeOperation)
                         {
-                            T item = _value[index];
-                            _value.RemoveAt(index);
+                            T item = this[index];
+                            RemoveAt(index);
                             OnRemoveEvent?.Invoke(item);
                             continue;
                         }
@@ -285,27 +285,25 @@ namespace MasterServerToolkit.MasterServer
 
                         if (operation == _insertOperation)
                         {
-                            _value.Insert(index, value);
+                            Insert(index, value);
                             OnInsertEvent?.Invoke(index, value);
                             continue;
                         }
 
                         if (index < _value.Count)
                         {
-                            T old = _value[index];
-                            _value[index] = value;
+                            T old = this[index];
+                            this[index] = value;
                             OnSetEvent?.Invoke(old, value);
                         }
                         else
                         {
-                            _value.Add(value);
+                            Add(value);
                             OnAddEvent?.Invoke(value);
                         }
                     }
                 }
             }
-
-            MarkDirty();
         }
 
         protected void WriteIndex(int index, EndianBinaryWriter writer)

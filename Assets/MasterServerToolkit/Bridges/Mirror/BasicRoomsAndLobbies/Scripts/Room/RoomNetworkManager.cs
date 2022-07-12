@@ -71,7 +71,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         public event Action<NetworkConnection> OnDisconnectedEvent;
 
         /// <summary>
-        /// This is called on the Server when a Client connects from the Server
+        /// This is called on the Server when a Client connects the Server
         /// </summary>
         public event Action<NetworkConnection> OnClientConnectedEvent;
 
@@ -100,21 +100,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             maxConnections = (ushort)roomServerManager.RoomOptions.MaxConnections;
 
             // Set room IP just for information purpose only
-            networkAddress = roomServerManager.RoomOptions.RoomIp;
-
+            SetAddress(roomServerManager.RoomOptions.RoomIp);
             // Set room port
-            if (Transport.activeTransport is KcpTransport kcpTransport)
-            {
-                kcpTransport.Port = (ushort)roomServerManager.RoomOptions.RoomPort;
-            }
-            else if (Transport.activeTransport is TelepathyTransport telepathyTransport)
-            {
-                telepathyTransport.port = (ushort)roomServerManager.RoomOptions.RoomPort;
-            }
-            else if (Transport.activeTransport is SimpleWebTransport swTransport)
-            {
-                swTransport.port = (ushort)roomServerManager.RoomOptions.RoomPort;
-            }
+            SetPort(roomServerManager.RoomOptions.RoomPort);
 
             logger.Info($"Starting Room Server: {networkAddress}:{roomServerManager.RoomOptions.RoomPort}");
 
@@ -135,7 +123,37 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             });
         }
 
-        #region MIRROR CALLBACKS
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="address"></param>
+        public void SetAddress(string address)
+        {
+            networkAddress = address;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="port"></param>
+        public void SetPort(int port)
+        {
+            // Set room port
+            if (Transport.activeTransport is KcpTransport kcpTransport)
+            {
+                kcpTransport.Port = (ushort)port;
+            }
+            else if (Transport.activeTransport is TelepathyTransport telepathyTransport)
+            {
+                telepathyTransport.port = (ushort)port;
+            }
+            else if (Transport.activeTransport is SimpleWebTransport swTransport)
+            {
+                swTransport.port = (ushort)port;
+            }
+        }
+
+        #region MIRROR SERVER
 
         /// <summary>
         /// When mirror server is started
@@ -176,18 +194,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             OnHostStopEvent?.Invoke();
         }
 
-        public override void OnStartClient()
-        {
-            base.OnStartClient();
-            OnClientStartedEvent?.Invoke();
-        }
-
-        public override void OnStopClient()
-        {
-            base.OnStopClient();
-            OnClientStoppedEvent?.Invoke();
-        }
-
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
             logger.Info($"Client {conn.connectionId} has just joined the room");
@@ -203,22 +209,43 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             OnClientDisconnectedEvent?.Invoke(conn);
         }
 
+        #endregion
+
+        #region MIRROR CLIENT
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            logger.Info($"Сlient started");
+            OnClientStartedEvent?.Invoke();
+        }
+
+        public override void OnStopClient()
+        {
+            base.OnStopClient();
+
+            logger.Info($"Сlient stopped");
+            OnClientStoppedEvent?.Invoke();
+        }
+
         public override void OnClientConnect()
         {
-            if (Mst.Client.Rooms.HasAccess)
-            {
-                logger.Info($"You have joined a room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
-                OnConnectedEvent?.Invoke(NetworkClient.connection);
-            }
+            logger.Info($"Сlient connected");
+            OnConnectedEvent?.Invoke(NetworkClient.connection);
         }
 
         public override void OnClientDisconnect()
         {
             base.OnClientDisconnect();
+
+            logger.Info($"You have left a room");
             OnDisconnectedEvent?.Invoke(NetworkClient.connection);
         }
 
         #endregion
+
+        #region ROOM SERVER
 
         private void ValidateRoomAccessRequestHandler(NetworkConnection conn, ValidateRoomAccessRequestMessage mess)
         {
@@ -263,6 +290,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 });
             }
         }
+
+        #endregion
     }
 }
 #endif

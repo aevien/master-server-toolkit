@@ -154,7 +154,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lookForModules: 1
   lookInChildrenOnly: 1
-  permissions: []
+  permissions:
+  - key: Admin
+    permissionLevel: 99
   targetFrameRate: 30
   logLevel: 0
   serverIp: 127.0.0.1
@@ -162,7 +164,6 @@ MonoBehaviour:
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  accessProviderTimeout: 5
   autoStartInEditor: 1
 --- !u!4 &70840830
 Transform:
@@ -324,8 +325,6 @@ MonoBehaviour:
   defaultIndexPage:
   - index
   - home
-  authenticationSchemes: 0
-  realm: adminusers@masterservertoolkit.com
   username: admin
   password: admin
 --- !u!1 &1386406310

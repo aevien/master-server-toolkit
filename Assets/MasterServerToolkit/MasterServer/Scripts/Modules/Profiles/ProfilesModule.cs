@@ -323,7 +323,7 @@ namespace MasterServerToolkit.MasterServer
             profile.ClearUpdates();
 
             // Send these data to client
-            profile.ClientPeer.SendMessage(MessageHelper.Create((ushort)MstOpCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
+            profile.ClientPeer.SendMessage(MessageHelper.Create(MstOpCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
 
             lock (profilesToBeSentToClients)
             {

@@ -15,6 +15,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
         private ILiteCollection<FriendshipRequestInfoData> incomingFriendshipRequests;
         private readonly ILiteDatabase database;
 
+        public MstProperties CustomProperties { get; private set; } = new MstProperties();
+
         public FriendsDatabaseAccessor(string databaseName)
         {
             database = new LiteDatabase($"{databaseName}.db");

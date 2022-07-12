@@ -46,7 +46,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             base.OnDestroy();
 
-            if (NetworkManager.singleton is RoomNetworkManager manager)
+            if (RoomNetworkManager is RoomNetworkManager manager)
             {
                 manager.OnConnectedEvent -= Manager_OnConnectedEvent;
                 manager.OnDisconnectedEvent -= Manager_OnDisconnectedEvent;
@@ -55,41 +55,29 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
         protected override void StartConnection(RoomAccessPacket access)
         {
-            // Save access
-            AccessData = access;
-
-            logger.Info($"Start joining a room at {access.RoomIp}:{access.RoomPort}");
-
-            // Set room IP
-            NetworkManager.singleton.networkAddress = access.RoomIp;
-
-            logger.Info($"Custom info: {access.CustomOptions}");
-
-            // Set max connections(This is for Unet and Mirror only
-            NetworkManager.singleton.maxConnections = access.RoomMaxConnections;
-
-            // Set room port
-            if (Transport.activeTransport is KcpTransport kcpTransport)
+            if (RoomNetworkManager is RoomNetworkManager manager)
             {
-                kcpTransport.Port = (ushort)access.RoomPort;
-            }
-            else if (Transport.activeTransport is TelepathyTransport telepathyTransport)
-            {
-                telepathyTransport.port = (ushort)access.RoomPort;
-            }
-            else if (Transport.activeTransport is SimpleWebTransport swTransport)
-            {
-                swTransport.port = (ushort)access.RoomPort;
-            }
+                // Set room IP
+                manager.SetAddress(access.RoomIp);
+                manager.SetPort(access.RoomPort);
 
-            // Start client
-            if (!NetworkClient.isConnected)
-            {
-                NetworkManager.singleton.StartClient();
+                // Set max connections(This is for Unet and Mirror only
+                manager.maxConnections = access.RoomMaxConnections;
+
+                // Start client
+                if (!NetworkClient.isConnected)
+                {
+                    logger.Info($"Start connection to room server at {access.RoomIp}:{access.RoomPort}");
+                    manager.StartClient();
+                }
+                else
+                {
+                    logger.Info("Already connected");
+                }
             }
             else
             {
-                NetworkManager.singleton.OnClientConnect();
+                logger.Error("Connection error");
             }
         }
 
@@ -108,17 +96,30 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <param name="conn"></param>
         protected virtual void Manager_OnConnectedEvent(NetworkConnection conn)
         {
-            logger.Info("Room client has just joined a room server");
-            logger.Debug($"Validating access to room server with token [{AccessData.Token}]");
+            logger.Info($"Waitin for access data. Timeout in {roomConnectionTimeout} sec.");
 
-            // Register listener for access validation message from mirror room server
-            NetworkClient.RegisterHandler<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler, false);
-
-            // Send validation message to room server
-            conn.Send(new ValidateRoomAccessRequestMessage()
+            MstTimer.Instance.WaitWhile(() => !Mst.Client.Rooms.HasAccess, (isSuccess) =>
             {
-                Token = AccessData.Token
-            });
+                if (!isSuccess)
+                {
+                    logger.Error("Room connection timeout");
+                    Disconnect();
+                    return;
+                }
+
+                logger.Info($"Validating access to room server with token [{Mst.Client.Rooms.ReceivedAccess.Token}]");
+
+                // Register listener for access validation message from mirror room server
+                NetworkClient.RegisterHandler<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler, false);
+
+                // Send validation message to room server
+                conn.Send(new ValidateRoomAccessRequestMessage()
+                {
+                    Token = Mst.Client.Rooms.ReceivedAccess.Token
+                });
+
+                //logger.Info($"You have joined a room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
+            }, roomConnectionTimeout);
         }
 
         /// <summary>
@@ -147,6 +148,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             }
 
             logger.Debug("Access to server room is successfully validated");
+
             LoadOnlineScene();
         }
 
@@ -155,7 +157,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// </summary>
         protected virtual void LoadOnlineScene()
         {
-            ScenesLoader.LoadSceneByName(AccessData.SceneName, (progressValue) =>
+            ScenesLoader.LoadSceneByName(Mst.Client.Rooms.ReceivedAccess.SceneName, (progressValue) =>
             {
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
             },

@@ -56,9 +56,6 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField]
         protected float validationTimeout = 5f;
 
-        [SerializeField]
-        protected float accessProviderTimeout = 5f;
-
         [Header("Editor Settings"), SerializeField]
         private HelpBox hpEditor = new HelpBox()
         {

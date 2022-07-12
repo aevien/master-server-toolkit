@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public interface IAccountsDatabaseAccessor
+    public interface IAccountsDatabaseAccessor: IDatabaseAccessor
     {
         /// <summary>
         /// Should create an empty object with account data.

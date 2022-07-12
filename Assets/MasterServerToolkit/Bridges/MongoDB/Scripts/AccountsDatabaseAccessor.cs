@@ -17,6 +17,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
         private IMongoCollection<PasswordResetDataMongoDB> _resetCodesCollection;
         private IMongoCollection<EmailConfirmationDataMongoDB> _emailConfirmations;
 
+        public MstProperties CustomProperties { get; private set; } = new MstProperties();
+
         public AccountsDatabaseAccessor(string connectionString, string databaseName)
             : this(new MongoClient(connectionString), databaseName) { }
 

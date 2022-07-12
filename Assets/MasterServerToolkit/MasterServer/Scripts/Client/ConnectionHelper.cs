@@ -29,7 +29,6 @@ namespace MasterServerToolkit.MasterServer
         protected int maxAttemptsToConnect = 5;
         [SerializeField]
         protected float waitAndConnect = 0.2f;
-
         [Tooltip("If true, will try to connect on the Start()"), SerializeField]
         protected bool connectOnStart = false;
 
@@ -86,7 +85,9 @@ namespace MasterServerToolkit.MasterServer
         {
             if (connectOnStart)
             {
-                StartConnection();
+                MstTimer.Instance.WaitForSeconds(waitAndConnect, () => {
+                    StartConnection();
+                });
             }
         }
 

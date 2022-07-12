@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
             try
             {
-                Mst.Server.DbAccessors.AddAccessor<IAccountsDatabaseAccessor>(new AccountsDatabaseAccessor(mongoDbClientFactory.Client, mongoDbClientFactory.Database));
+                Mst.Server.DbAccessors.AddAccessor(new AccountsDatabaseAccessor(mongoDbClientFactory.Client, mongoDbClientFactory.Database));
             }
             catch (System.Exception e)
             {

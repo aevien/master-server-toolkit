@@ -2,6 +2,7 @@ using MasterServerToolkit.Games;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -14,8 +15,8 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Time of waiting the connection to mirror server
         /// </summary>
-        [Header("Base Settings"), SerializeField, Tooltip("Time of waiting the connection to mirror server")]
-        protected int roomConnectionTimeout = 10;
+        [Header("Base Settings"), SerializeField, Tooltip("Time of waiting the connection to room server in seconds")]
+        protected float roomConnectionTimeout = 10;
 
         [Header("Editor Settings"), SerializeField]
         private HelpBox editorHelp = new HelpBox()
@@ -56,18 +57,6 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
-        /// <summary>
-        /// Latest access data. When switching scenes, if this is set,
-        /// connector should most likely try to use this data to connect to game server
-        /// (if the scene is right)
-        /// </summary>
-        protected static RoomAccessPacket AccessData;
-
-        protected virtual void OnValidate()
-        {
-            roomConnectionTimeout = Mathf.Clamp(roomConnectionTimeout, 4, 60);
-        }
-
         protected override void Awake()
         {
             base.Awake();
@@ -89,16 +78,8 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnDestroy()
         {
+            // Register access listener
             Mst.Client.Rooms.OnAccessReceivedEvent -= OnAccessReceivedEvent;
-        }
-
-        /// <summary>
-        /// Invoked when room access received
-        /// </summary>
-        /// <param name="access"></param>
-        private void OnAccessReceivedEvent(RoomAccessPacket access)
-        {
-            StartConnection(access);
         }
 
         /// <summary>
@@ -164,6 +145,7 @@ namespace MasterServerToolkit.MasterServer
                 if (games.Count == 0)
                 {
                     logger.Error("No games found");
+
                     Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("No games found", null));
                     Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
                     return;
@@ -173,15 +155,21 @@ namespace MasterServerToolkit.MasterServer
 
                 Mst.Client.Rooms.GetAccess(games.First().Id, (access, getAccessError) =>
                 {
+                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+
                     if (!string.IsNullOrEmpty(getAccessError))
                     {
                         logger.Error(getAccessError);
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(getAccessError, null));
+                        Disconnect();
                     }
-
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
                 });
             });
+        }
+
+        private void OnAccessReceivedEvent(RoomAccessPacket access)
+        {
+            Connect(access);
         }
 
         /// <summary>
@@ -207,9 +195,6 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            // Save the access data
-            AccessData = access;
-
             var client = Instance as RoomClient<T>;
 
             // Start connection
@@ -222,6 +207,12 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static void Disconnect()
         {
+            if (Instance == null)
+            {
+                Logs.Error("Failed to disconnect from game server. No Game Connector was found in the scene");
+                return;
+            }
+
             var client = Instance as RoomClient<T>;
 
             // Start disconnection

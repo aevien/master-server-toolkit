@@ -43,7 +43,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             try
             {
                 friendsDatabaseAccessor = new FriendsDatabaseAccessor(friendsDbName);
-                Mst.Server.DbAccessors.AddAccessor<IFriendsDatabaseAccessor>(friendsDatabaseAccessor);
+                Mst.Server.DbAccessors.AddAccessor(friendsDatabaseAccessor);
                 friendsDatabaseAccessor.InitCollections();
             }
             catch (Exception e)

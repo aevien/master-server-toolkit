@@ -67,6 +67,25 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// Generated device id. Not unity's device id
+        /// </summary>
+        /// <returns></returns>
+        public string DeviceId()
+        {
+            if (PlayerPrefs.HasKey(MstDictKeys.USER_DEVICE_ID))
+            {
+                return PlayerPrefs.GetString(MstDictKeys.USER_DEVICE_ID);
+            }
+            else
+            {
+                string deviceId = Mst.Helper.CreateGuidStringN();
+                PlayerPrefs.SetString(MstDictKeys.USER_DEVICE_ID, deviceId);
+                PlayerPrefs.Save();
+                return deviceId;
+            }
+        }
+
+        /// <summary>
         /// Clear authentication token
         /// </summary>
         private void ClearAuthToken()
@@ -207,7 +226,7 @@ namespace MasterServerToolkit.MasterServer
             var credentials = new MstProperties();
             credentials.Add(MstDictKeys.USER_IS_GUEST);
             credentials.Add(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
-            credentials.Add(MstDictKeys.USER_DEVICE_ID, SystemInfo.deviceUniqueIdentifier);
+            credentials.Add(MstDictKeys.USER_DEVICE_ID, DeviceId());
 
             SignIn(credentials, callback, connection);
         }

@@ -13,6 +13,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
         private ILiteCollection<EmailConfirmationData> emailConfirmationCodesCollection;
         private readonly LiteDatabase database;
 
+        public MstProperties CustomProperties { get; private set; } = new MstProperties();
+
         public AccountsDatabaseAccessor(string databaseName)
         {
             database = new LiteDatabase($"{databaseName}.db");

@@ -59,12 +59,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
   m_Name: RobotoCondensed-BoldItalic SDF
   m_EditorClassIdentifier: 
-  hashCode: 0
+  hashCode: -59792521
   material: {fileID: 3573683019003806488}
-  materialHashCode: 0
+  materialHashCode: 1406246775
   m_Version: 1.1.0
   m_SourceFontFileGUID: 4d8f9c32f8cbaf746b1394a048aba1e1
-  m_SourceFontFile_EditorRef: {fileID: 12800000, guid: 4d8f9c32f8cbaf746b1394a048aba1e1, type: 3}
+  m_SourceFontFile_EditorRef: {fileID: 12800000, guid: 4d8f9c32f8cbaf746b1394a048aba1e1,
+    type: 3}
   m_SourceFontFile: {fileID: 0}
   m_AtlasPopulationMode: 0
   m_FaceInfo:
@@ -4126,14 +4127,15 @@ MonoBehaviour:
   tabSize: 10
 --- !u!21 &3573683019003806488
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RobotoCondensed-BoldItalic SDF Material
   m_Shader: {fileID: 4800000, guid: 68e6db2ebdc24f95958faec2be5558d6, type: 3}
-  m_ShaderKeywords: 
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -4193,9 +4195,9 @@ Material:
     - _OutlineWidth: 0
     - _PerspectiveFilter: 0.875
     - _Reflectivity: 10
-    - _ScaleRatioA: 1
-    - _ScaleRatioB: 1
-    - _ScaleRatioC: 1
+    - _ScaleRatioA: 0.8333333
+    - _ScaleRatioB: 0.6770833
+    - _ScaleRatioC: 0.6770833
     - _ScaleX: 1
     - _ScaleY: 1
     - _ShaderFlags: 0

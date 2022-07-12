@@ -43,7 +43,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             try
             {
                 profilesAccessor = new ProfilesDatabaseAccessor(profilesDbName);
-                Mst.Server.DbAccessors.AddAccessor<IProfilesDatabaseAccessor>(profilesAccessor);
+                Mst.Server.DbAccessors.AddAccessor(profilesAccessor);
                 profilesAccessor.InitCollections();
             }
             catch (Exception e)

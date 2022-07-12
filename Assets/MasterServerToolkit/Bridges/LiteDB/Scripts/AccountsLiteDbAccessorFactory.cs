@@ -38,7 +38,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
             try
             {
                 accountsAccessor = new AccountsDatabaseAccessor(accountDbName);
-                Mst.Server.DbAccessors.AddAccessor<IAccountsDatabaseAccessor>(accountsAccessor);
+                Mst.Server.DbAccessors.AddAccessor(accountsAccessor);
                 accountsAccessor.InitCollections();
             }
             catch (Exception e)

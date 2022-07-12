@@ -31,6 +31,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
             );
         }
 
+        public MstProperties CustomProperties { get; private set; } = new MstProperties();
+
         public async Task RestoreProfileAsync(ObservableServerProfile profile)
         {
             try

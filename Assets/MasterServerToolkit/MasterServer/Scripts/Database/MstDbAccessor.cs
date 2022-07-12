@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -9,21 +10,21 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of the db/api accessors
         /// </summary>
-        private Dictionary<Type, object> _accessors = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, IDatabaseAccessor> _accessors = new Dictionary<Type, IDatabaseAccessor>();
 
         /// <summary>
         /// Adds a database accessor to the list of available accessors
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="access"></param>
-        public void AddAccessor<T>(object access)
+        public void AddAccessor(IDatabaseAccessor access)
         {
-            if (_accessors.ContainsKey(typeof(T)))
+            if (_accessors.ContainsKey(access.GetType()))
             {
-                Logs.Warn($"Database accessor of type {typeof(T)} was overwriten");
+                Logs.Warn($"Database accessor of type {access.GetType()} was overwriten");
             }
 
-            _accessors[typeof(T)] = access;
+            _accessors[access.GetType()] = access;
         }
 
         /// <summary>
@@ -31,10 +32,14 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public T GetAccessor<T>() where T : class
+        public T GetAccessor<T>() where T : class, IDatabaseAccessor
         {
-            _accessors.TryGetValue(typeof(T), out object result);
-            return result as T;
+            _accessors.TryGetValue(typeof(T), out IDatabaseAccessor accessor);
+
+            if (accessor == null)
+            	accessor = _accessors.Values.FirstOrDefault(m => m is T);
+
+            return accessor as T;
         }
     }
 }

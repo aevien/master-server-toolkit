@@ -5,7 +5,7 @@ namespace MasterServerToolkit.MasterServer
     /// <summary>
     /// Represents generic database for profiles
     /// </summary>
-    public interface IProfilesDatabaseAccessor
+    public interface IProfilesDatabaseAccessor: IDatabaseAccessor
     {
         /// <summary>
         /// Should restore all values of the given profile, 

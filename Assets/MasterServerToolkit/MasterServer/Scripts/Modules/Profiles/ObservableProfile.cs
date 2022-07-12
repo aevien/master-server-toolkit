@@ -3,6 +3,7 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -26,23 +27,19 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Properties that are changed and waiting for to be sent
         /// </summary>
-        private HashSet<IObservableProperty> propertiesToBeSent;
+        private readonly HashSet<IObservableProperty> propertiesToBeSent = new HashSet<IObservableProperty>();
 
         /// <summary>
         /// Profile properties list
         /// </summary>
-        public Dictionary<ushort, IObservableProperty> Properties { get; protected set; }
+        public ConcurrentDictionary<ushort, IObservableProperty> Properties { get; protected set; } = new ConcurrentDictionary<ushort, IObservableProperty>();
 
         /// <summary>
         /// Invoked, when one of the values changes
         /// </summary>
         public event ProfilePropertyUpdateDelegate OnPropertyUpdatedEvent;
 
-        public ObservableProfile()
-        {
-            Properties = new Dictionary<ushort, IObservableProperty>();
-            propertiesToBeSent = new HashSet<IObservableProperty>();
-        }
+        public ObservableProfile() { }
 
         /// <summary>
         /// Check if profile has changed properties
@@ -126,8 +123,14 @@ namespace MasterServerToolkit.MasterServer
 
             //Logs.Debug($"{GetType().Name} adds property with key {property.Key}".ToGreen());
 
-            Properties.Add(property.Key, property);
-            property.OnDirtyEvent += OnDirtyPropertyEventHandler;
+            if(Properties.TryAdd(property.Key, property))
+            {
+                property.OnDirtyEvent += OnDirtyPropertyEventHandler;
+            }
+            else
+            {
+                Logs.Error($"Could not add property {property.Key} to profile");
+            }
         }
 
         /// <summary>

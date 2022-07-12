@@ -145,15 +145,12 @@ namespace MasterServerToolkit.MasterServer
             base.OnInitialize();
 
             // If we are on client side. It can be main menu, etc.
-            if (Mst.Client.Rooms.IsClientMode)
+            if (!Mst.Client.Rooms.IsClientMode)
             {
-                logger.Debug("Server cannot be started in client mode...");
-                return;
+                // Listen to master server connection status
+                Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
+                Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
             }
-
-            // Listen to master server connection status
-            Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
-            Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
         }
 
         private void OnConnectedToMasterEventHandler(IClientSocket client)
@@ -539,7 +536,7 @@ namespace MasterServerToolkit.MasterServer
             MstTimer.Instance.WaitForSeconds(2f, () =>
             {
                 Mst.Server.Notifications.NotifyRecipient(player.MasterPeerId,
-                            $"Hi, {player.Username.ToRed()}!\nWelcome to \"{RoomOptions.Name}\" server", null);
+                            $"Hi, {player.Username}!\nWelcome to \"{RoomOptions.Name}\" server", null);
             });
 
             Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
