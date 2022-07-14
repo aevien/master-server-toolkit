@@ -9,7 +9,6 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         public static event Action<PlayerCharacter> OnServerCharacterSpawnedEvent;
         public static event Action<PlayerCharacter> OnClientCharacterSpawnedEvent;
         public static event Action<PlayerCharacter> OnLocalCharacterSpawnedEvent;
-
         public static event Action<PlayerCharacter> OnCharacterDestroyedEvent;
 
         private void OnDestroy()
@@ -31,8 +30,10 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         public override void OnStartClient()
         {
             base.OnStartClient();
+
             OnClientCharacterSpawnedEvent?.Invoke(this);
-            if (base.IsOwner)
+
+            if (IsOwner)
                 OnLocalCharacterSpawnedEvent?.Invoke(this);
         }
 

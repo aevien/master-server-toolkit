@@ -99,7 +99,7 @@ namespace MasterServerToolkit.MasterServer
                 Password = password
             };
 
-            connection.SendMessage((ushort)MstOpCodes.GetRoomAccessRequest, roomAccessRequestPacket, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetRoomAccessRequest, roomAccessRequestPacket, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

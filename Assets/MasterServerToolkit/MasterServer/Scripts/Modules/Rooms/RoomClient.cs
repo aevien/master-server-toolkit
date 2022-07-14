@@ -2,7 +2,6 @@ using MasterServerToolkit.Games;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
-using System;
 using System.Linq;
 using UnityEngine;
 
@@ -104,6 +103,9 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void SignIn()
         {
             Mst.Client.Auth.SignInWithLoginAndPassword(username, password, (account, signInError) =>
@@ -120,6 +122,9 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void SignInAsGuest()
         {
             Mst.Client.Auth.SignInAsGuest((account, signInError) =>
@@ -136,6 +141,9 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void StartGame()
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Looking for available games...");
@@ -167,6 +175,10 @@ namespace MasterServerToolkit.MasterServer
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="access"></param>
         private void OnAccessReceivedEvent(RoomAccessPacket access)
         {
             Connect(access);

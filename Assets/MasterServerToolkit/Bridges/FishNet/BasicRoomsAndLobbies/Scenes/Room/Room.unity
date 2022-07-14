@@ -2177,7 +2177,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -2066, y: -24.999512}
+  m_AnchoredPosition: {x: -2066, y: -24.99945}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1606803806
@@ -2312,6 +2312,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
   m_HorizontalAxis: Horizontal
   m_VerticalAxis: Vertical
   m_SubmitButton: Submit
@@ -2688,7 +2689,7 @@ GameObject:
   - component: {fileID: 1796790545}
   - component: {fileID: 1796790546}
   m_Layer: 0
-  m_Name: --SPAWN_POINTS
+  m_Name: --PLAYER_SPAWNER
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3067,6 +3068,11 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6765359239931104730, guid: d5b37a12852ccb84295ed49c7944d4d6,
+        type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7054450932146086015, guid: d5b37a12852ccb84295ed49c7944d4d6,
         type: 3}
       propertyPath: m_AnchorMax.y
@@ -3340,7 +3346,7 @@ PrefabInstance:
     - target: {fileID: 9209378979658972488, guid: d5b37a12852ccb84295ed49c7944d4d6,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -24.999756
+      value: -24.999695
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d5b37a12852ccb84295ed49c7944d4d6, type: 3}
