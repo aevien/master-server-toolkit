@@ -49,20 +49,17 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
         private void _sceneManager_OnLoadStart(SceneLoadStartEventArgs obj)
         {
-            //Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene 0% ... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene 0% ... Please wait!");
         }
 
         private void _sceneManager_OnLoadPercentChange(SceneLoadPercentEventArgs obj)
         {
-            //Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(obj.Percent * 100f)}% ... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(obj.Percent * 100f)}% ... Please wait!");
         }
 
         private void _sceneManager_OnLoadEnd(SceneLoadEndEventArgs obj)
         {
-            //MstTimer.Instance.WaitForSeconds(1f, () =>
-            //{
-            //    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
-            //});
+            Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
         }
 
         private void ClientManager_OnClientConnectionState(ClientConnectionStateArgs state)

@@ -1,14 +1,15 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.MasterServer
 {
+    public delegate void EventHandler(EventMessage message);
+
     public class MstEventsChannel
     {
-        public delegate void EventHandler(EventMessage message);
-
         /// <summary>
         /// Use exception catching
         /// </summary>
@@ -17,7 +18,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of event handlers
         /// </summary>
-        private readonly Dictionary<string, List<EventHandler>> _handlers;
+        private readonly Dictionary<string, UnityEvent<EventMessage>> _handlers;
 
         /// <summary>
         /// Name of the events channel instance
@@ -30,7 +31,7 @@ namespace MasterServerToolkit.MasterServer
         public MstEventsChannel()
         {
             _catchExceptions = true;
-            _handlers = new Dictionary<string, List<EventHandler>>();
+            _handlers = new Dictionary<string, UnityEvent<EventMessage>>();
             Name = "default";
         }
 
@@ -41,7 +42,7 @@ namespace MasterServerToolkit.MasterServer
         public MstEventsChannel(string name)
         {
             _catchExceptions = true;
-            _handlers = new Dictionary<string, List<EventHandler>>();
+            _handlers = new Dictionary<string, UnityEvent<EventMessage>>();
             Name = name;
         }
 
@@ -53,7 +54,7 @@ namespace MasterServerToolkit.MasterServer
         public MstEventsChannel(string name, bool catchExceptions = false)
         {
             _catchExceptions = catchExceptions;
-            _handlers = new Dictionary<string, List<EventHandler>>();
+            _handlers = new Dictionary<string, UnityEvent<EventMessage>>();
             Name = name;
         }
 
@@ -86,24 +87,17 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool Invoke(string eventName, EventMessage message)
         {
-            if (_handlers.TryGetValue(eventName, out List<EventHandler> eventHandlersList))
+            if (_handlers.TryGetValue(eventName, out UnityEvent<EventMessage> eventHandler))
             {
-                if (eventHandlersList == null || eventHandlersList.Count == 0)
+                if (!_catchExceptions)
                 {
-                    return false;
+                    eventHandler?.Invoke(message);
                 }
-
-                foreach (var eventHandler in eventHandlersList)
+                else
                 {
-                    if (!_catchExceptions)
-                    {
-                        eventHandler.Invoke(message);
-                        continue;
-                    }
-
                     try
                     {
-                        eventHandler.Invoke(message);
+                        eventHandler?.Invoke(message);
                     }
                     catch (Exception e)
                     {
@@ -125,33 +119,12 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="eventName"></param>
         /// <param name="handler"></param>
         /// <param name="autoUnsubscribe">If true, handler will unsubscribe when scene unloads</param>
-        public void AddEventListener(string eventName, EventHandler handler, bool autoUnsubscribe = true)
+        public void AddEventListener(string eventName, UnityAction<EventMessage> handler, bool autoUnsubscribe = true)
         {
-            if (_handlers.TryGetValue(eventName, out List<EventHandler> handlersList))
-            {
-                handlersList.Add(handler);
-            }
-            else
-            {
-                handlersList = new List<EventHandler>
-                {
-                    handler
-                };
+            if (!_handlers.TryGetValue(eventName, out UnityEvent<EventMessage> handlersList))
+                _handlers[eventName] = new UnityEvent<EventMessage>();
 
-                _handlers.Add(eventName, handlersList);
-            }
-
-            if (autoUnsubscribe)
-            {
-                // Cleanup when scene unloads
-                void action(Scene scene)
-                {
-                    RemoveEventListener(eventName, handler);
-                    SceneManager.sceneUnloaded -= action;
-                }
-
-                SceneManager.sceneUnloaded += action;
-            }
+            _handlers[eventName].AddListener(handler);
         }
 
         /// <summary>
@@ -159,12 +132,10 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="eventName"></param>
         /// <param name="handler"></param>
-        public void RemoveEventListener(string eventName, EventHandler handler)
+        public void RemoveEventListener(string eventName, UnityAction<EventMessage> handler)
         {
-            if (_handlers.TryGetValue(eventName, out List<EventHandler> handlersList))
-            {
-                handlersList.Remove(handler);
-            }
+            if (_handlers.TryGetValue(eventName, out UnityEvent<EventMessage> handlersList))
+                handlersList.RemoveListener(handler);
         }
 
         /// <summary>
@@ -173,10 +144,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="eventName"></param>
         public void RemoveAllEventListeners(string eventName)
         {
-            if (_handlers.TryGetValue(eventName, out List<EventHandler> handlersList))
-            {
-                handlersList.Clear();
-            }
+            if (_handlers.TryGetValue(eventName, out UnityEvent<EventMessage> handlersList))
+                handlersList.RemoveAllListeners();
         }
 
         /// <summary>
@@ -185,7 +154,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="eventName"></param>
         public void RemoveAllEventListeners()
         {
-            _handlers.Clear();
+            foreach (UnityEvent<EventMessage> handler in _handlers.Values)
+                handler.RemoveAllListeners();
         }
     }
 }

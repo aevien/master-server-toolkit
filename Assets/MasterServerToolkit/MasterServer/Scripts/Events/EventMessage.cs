@@ -2,7 +2,7 @@
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class EventMessage
+    public class EventMessage : EventArgs
     {
         private object _data;
 
@@ -23,21 +23,25 @@ namespace MasterServerToolkit.MasterServer
             _data = data;
         }
 
+        [Obsolete("Will be removed in 4.13")]
         public T GetData<T>() where T : class
         {
             return (T)_data;
         }
 
+        public T As<T>()
+        {
+            return (T)_data;
+        }
+
+        public float AsFloat()
+        {
+            return As<float>();
+        }
+
         public int AsInt()
         {
-            try
-            {
-                return Convert.ToInt32(_data);
-            }
-            catch
-            {
-                return -1;
-            }
+            return As<int>();
         }
 
         public string AsString()
@@ -47,7 +51,7 @@ namespace MasterServerToolkit.MasterServer
 
         public bool AsBool()
         {
-            return Convert.ToBoolean(_data);
+            return As<bool>();
         }
     }
 }
