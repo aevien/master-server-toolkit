@@ -68,7 +68,7 @@ namespace MasterServerToolkit.MasterServer
 
             smtpClient = new SmtpClient(smtpHost, smtpPort)
             {
-                Credentials = new NetworkCredential(smtpUsername, smtpPassword) as ICredentialsByHost,
+                Credentials = new NetworkCredential(smtpUsername, smtpPassword),
                 EnableSsl = enableSsl,
                 Timeout = timeoutInSeconds * 1000
             };
@@ -95,6 +95,7 @@ namespace MasterServerToolkit.MasterServer
                 }
             };
 
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             ServicePointManager.ServerCertificateValidationCallback = delegate (object s, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) { return true; };
 #endif
         }
@@ -153,7 +154,5 @@ namespace MasterServerToolkit.MasterServer
             return true;
 #endif
         }
-
-        //public virtual async Task<bool> SendEmailConfirmation
     }
 }

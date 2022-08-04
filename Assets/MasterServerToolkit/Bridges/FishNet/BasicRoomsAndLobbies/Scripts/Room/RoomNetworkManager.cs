@@ -8,6 +8,7 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.Bridges.FishNetworking
 {
@@ -36,6 +37,10 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         /// 
         /// </summary>
         protected RoomServerManager roomServerManager;
+        /// <summary>
+        /// 
+        /// </summary>
+        protected DefaultScene defaultScene;
 
         private void Awake()
         {
@@ -45,6 +50,9 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
         private void Start()
         {
+            if (!defaultScene)
+                defaultScene = GetComponent<DefaultScene>();
+
             _networkManager = GetComponent<NetworkManager>();
             _networkManager.ServerManager.OnServerConnectionState += ServerManager_OnServerConnectionState;
             _networkManager.ServerManager.OnRemoteConnectionState += ServerManager_OnRemoteConnectionState;
@@ -53,7 +61,11 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         public void StartRoomServer()
         {
             // Find room server if it is not assigned in inspector
-            if (!roomServerManager) roomServerManager = GetComponent<RoomServerManager>();
+            if (!roomServerManager) 
+                roomServerManager = GetComponent<RoomServerManager>();
+
+            string onlineScene = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
+            defaultScene.SetOnlineScene(onlineScene);
 
             TransportManager transportManager = _networkManager.TransportManager;
             Transport transport = transportManager.Transport;
@@ -63,9 +75,10 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             // Set room IP just for information purpose only
             transport.SetClientAddress(roomServerManager.RoomOptions.RoomIp);
             // Set room port
-            transport.SetPort((ushort)roomServerManager.RoomOptions.RoomPort);
+            transport.SetPort(roomServerManager.RoomOptions.RoomPort);
 
             logger.Info($"Starting Room Server: {transport.GetServerBindAddress(IPAddressType.IPv4)}:{roomServerManager.RoomOptions.RoomPort}");
+            logger.Info($"Online Scene: {onlineScene}");
 
             // Start server
             _networkManager.ServerManager.StartConnection();

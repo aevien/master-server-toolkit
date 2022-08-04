@@ -21,7 +21,11 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void StartConnection(RoomAccessPacket access)
         {
-            roomConnection = Mst.Create.ClientSocket();
+            if (roomConnection != null)
+                roomConnection.Close(false);
+            else
+                roomConnection = Mst.Create.ClientSocket();
+
             roomConnection.AddConnectionOpenListener(OnConnectedToRoomEventHandler);
             roomConnection.AddConnectionCloseListener(OnDisconnectedFromRoomEventHandler, false);
             roomConnection.Connect(access.RoomIp, access.RoomPort, roomConnectionTimeout);

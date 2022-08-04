@@ -10,7 +10,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Gets current property value
         /// </summary>
-        T Value();
+        T Value { get; set; }
     }
 
     public interface IObservableProperty

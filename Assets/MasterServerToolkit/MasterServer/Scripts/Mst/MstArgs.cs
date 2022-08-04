@@ -53,7 +53,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Port, assigned to the spawned process (most likely a game server)
         /// </summary>
-        public int RoomPort { get; private set; }
+        public ushort RoomPort { get; private set; }
 
         /// <summary>
         /// Default room port. Set this cmd if you want a spawner to start creating room ports from your own specific value
@@ -63,7 +63,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Max number of connections allowed
         /// </summary>
-        public int RoomMaxConnections { get; private set; }
+        public ushort RoomMaxConnections { get; private set; }
 
         /// <summary>
         /// Path to the executable (used by the spawner)
@@ -183,11 +183,11 @@ namespace MasterServerToolkit.MasterServer
 
             RoomName = AsString(Names.RoomName, "Room_" + Mst.Helper.CreateID_16());
             RoomIp = AsString(Names.RoomIp, "127.0.0.1");
-            RoomPort = AsInt(Names.RoomPort, 7777);
+            RoomPort = (ushort)AsInt(Names.RoomPort, 7777);
             RoomDefaultPort = AsInt(Names.RoomDefaultPort, 1500);
             RoomExecutablePath = AsString(Names.RoomExecutablePath);
             RoomRegion = AsString(Names.RoomRegion);
-            RoomMaxConnections = AsInt(Names.RoomMaxConnections, 10);
+            RoomMaxConnections = (ushort)AsInt(Names.RoomMaxConnections, 10);
             RoomIsPrivate = AsBool(Names.RoomIsPrivate, false);
             RoomPassword = AsString(Names.RoomPassword);
 
@@ -195,7 +195,7 @@ namespace MasterServerToolkit.MasterServer
             SpawnTaskUniqueCode = AsString(Names.SpawnTaskUniqueCode);
             MaxProcesses = AsInt(Names.MaxProcesses, 0);
 
-            LoadScene = AsString(Names.LoadScene);
+            LoadScene = AsString(Names.RoomOnlineScene);
 
             DbConnectionString = AsString(Names.DbConnectionString);
 
@@ -266,7 +266,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string[] FindKeys(string keysFilter)
         {
-            return _args.Where(i => i.Contains(keysFilter)).ToArray();
+            return _args.Where(i => i.StartsWith(keysFilter)).ToArray();
         }
 
         /// <summary>

@@ -168,7 +168,7 @@ namespace MasterServerToolkit.MasterServer
             requestsInProgress.Add(peer.Id);
 
             // Send request to owner of the room to get access token
-            Peer.SendMessage((ushort)MstOpCodes.ProvideRoomAccessCheck, provideRoomAccessCheckPacket, (status, response) =>
+            Peer.SendMessage(MstOpCodes.ProvideRoomAccessCheck, provideRoomAccessCheckPacket, (status, response) =>
             {
                 // Remove requester peer id from pending list
                 requestsInProgress.Remove(peer.Id);

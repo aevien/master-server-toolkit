@@ -59,9 +59,9 @@ namespace MasterServerToolkit.Games
             base.Awake();
 
             // Listen to show/hide events
-            Mst.Events.AddEventListener(MstEventKeys.showSignUpView, OnShowSignUpEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hideSignUpView, OnHideSignUpEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.setSignUpDefaultCredentials, OnSetDefaultCredentialsEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showSignUpView, OnShowSignUpEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hideSignUpView, OnHideSignUpEventHandler);
+            Mst.Events.AddListener(MstEventKeys.setSignUpDefaultCredentials, OnSetDefaultCredentialsEventHandler);
         }
 
         private void OnShowSignUpEventHandler(EventMessage message)

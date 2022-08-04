@@ -7,7 +7,13 @@ namespace MasterServerToolkit.Examples.BasicSpawner
     {
         public void Disconnect()
         {
-            RoomClientManager.Disconnect();
+            Mst.Events.Invoke(MstEventKeys.leaveRoom);
+        }
+
+        public void ShowPlayersList()
+        {
+            if (Mst.Client.Rooms.HasAccess)
+                Mst.Events.Invoke(MstEventKeys.showPlayersListView, Mst.Client.Rooms.ReceivedAccess.RoomId);
         }
     }
 }

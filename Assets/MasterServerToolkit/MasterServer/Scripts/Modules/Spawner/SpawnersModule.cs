@@ -40,15 +40,15 @@ namespace MasterServerToolkit.MasterServer
         public override void Initialize(IServer server)
         {
             // Add handlers
-            server.RegisterMessageHandler((ushort)MstOpCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.RegisterSpawnedProcess, RegisterSpawnedProcessRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.CompleteSpawnProcess, CompleteSpawnProcessRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.ProcessStarted, SetProcessStartedRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.ProcessKilled, SetProcessKilledRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.AbortSpawnRequest, AbortSpawnRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.GetSpawnFinalizationData, GetCompletionDataRequestHandler);
-            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateSpawnerProcessesCount, SetSpawnedProcessesCountRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.RegisterSpawnedProcess, RegisterSpawnedProcessRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.CompleteSpawnProcess, CompleteSpawnProcessRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.ProcessStarted, SetProcessStartedRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.ProcessKilled, SetProcessKilledRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.AbortSpawnRequest, AbortSpawnRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetSpawnFinalizationData, GetCompletionDataRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.UpdateSpawnerProcessesCount, SetSpawnedProcessesCountRequestHandler);
 
             // Coroutines
             StartCoroutine(StartQueueUpdater());
@@ -135,7 +135,7 @@ namespace MasterServerToolkit.MasterServer
         public virtual RegisteredSpawner CreateSpawner(IPeer peer, SpawnerOptions options)
         {
             // Create registered spawner instance
-            var spawnerInstance = new RegisteredSpawner(GenerateSpawnerId(), peer, options);
+            var spawnerInstance = new RegisteredSpawner(GenerateSpawnerId(), peer, options, logger);
 
             // Find spawners in peer property
             Dictionary<int, RegisteredSpawner> peerSpawners = peer.GetProperty(MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
@@ -254,10 +254,9 @@ namespace MasterServerToolkit.MasterServer
             // Get registered spawner by options and region
             var spawners = GetFilteredSpawners(options, region);
 
-
             if (spawners.Count == 0)
             {
-                logger.Warn($"No spawner was returned after filtering. Region: {options.AsString(MstDictKeys.ROOM_REGION, string.IsNullOrEmpty(region) ? "International" : region)}");
+                logger.Warn($"No spawner was returned after filtering. Region: {options.AsString(Mst.Args.Names.RoomRegion, string.IsNullOrEmpty(region) ? "International" : region)}");
                 return null;
             }
 
@@ -447,7 +446,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Create a new spawn task
-            var task = Spawn(options, options.AsString(MstDictKeys.ROOM_REGION));
+            var task = Spawn(options, options.AsString(Mst.Args.Names.RoomRegion));
 
             // If spawn task is not created
             if (task == null)
@@ -569,7 +568,7 @@ namespace MasterServerToolkit.MasterServer
         {
             var data = message.Deserialize(new RegisterSpawnedProcessPacket());
 
-            // Try get psawn task by ID
+            // Try get spawn task by ID
             if (!spawnTasksList.TryGetValue(data.SpawnId, out SpawnTask task))
             {
                 message.Respond("Invalid spawn task", ResponseStatus.Failed);
@@ -592,7 +591,7 @@ namespace MasterServerToolkit.MasterServer
             OnSpawnedProcessRegisteredEvent?.Invoke(task, message.Peer);
 
             // Respon to requester
-            message.Respond(task.Options.ToDictionary().ToBytes(), ResponseStatus.Success);
+            message.Respond(task.Options.ToBytes(), ResponseStatus.Success);
         }
 
         protected virtual void CompleteSpawnProcessRequestHandler(IIncomingMessage message)

@@ -80,11 +80,11 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Set region to room by filter. If region is empty the room will be international
-            options.Set(MstDictKeys.ROOM_REGION, string.IsNullOrEmpty(region) ? string.Empty : region);
+            options.Set(Mst.Args.Names.RoomRegion, string.IsNullOrEmpty(region) ? string.Empty : region);
             options.Append(customOptions);
 
             // Send request to Master Server SpawnerModule
-            connection.SendMessage((ushort)MstOpCodes.ClientsSpawnRequest, options.ToBytes(), (status, response) =>
+            connection.SendMessage(MstOpCodes.ClientsSpawnRequest, options.ToBytes(), (status, response) =>
             {
                 // If spawn request failed
                 if (status != ResponseStatus.Success)

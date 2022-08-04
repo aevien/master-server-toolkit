@@ -1,5 +1,10 @@
+using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.CommandTerminal
 {
@@ -10,16 +15,12 @@ namespace MasterServerToolkit.CommandTerminal
         OpenFull
     }
 
-    public class Terminal : MonoBehaviour
+    public class Terminal : SingletonBehaviour<Terminal>
     {
         [Header("Window")]
         [Range(0, 1)]
         [SerializeField]
         float maxHeight = 0.7f;
-
-        [SerializeField]
-        [Range(0, 1)]
-        float smallTerminalRatio = 0.33f;
 
         [Range(100, 1000)]
         [SerializeField]
@@ -61,6 +62,7 @@ namespace MasterServerToolkit.CommandTerminal
         private GUIStyle window_style;
         private GUIStyle label_style;
         private GUIStyle input_style;
+        private Texture2D background_texture;
 
         public static CommandLog Buffer { get; private set; }
         public static CommandShell Shell { get; private set; } = new CommandShell();
@@ -77,70 +79,12 @@ namespace MasterServerToolkit.CommandTerminal
             get { return state == TerminalState.Close && Mathf.Approximately(current_open_t, open_target); }
         }
 
-        public static void Log(string format, params object[] message)
+        protected override void Awake()
         {
-            Log(TerminalLogType.ShellMessage, format, message);
-        }
+            base.Awake();
 
-        public static void Log(TerminalLogType type, string format, params object[] message)
-        {
-            Buffer.HandleLog(string.Format(format, message), type);
-        }
+            if (isNowDestroying) return;
 
-        public void SetState(TerminalState new_state)
-        {
-            input_fix = true;
-            cached_command_text = command_text;
-            command_text = "";
-
-            switch (new_state)
-            {
-                case TerminalState.Close:
-                    {
-                        open_target = 0;
-                        break;
-                    }
-                case TerminalState.OpenSmall:
-                    {
-                        open_target = Screen.height * maxHeight * smallTerminalRatio;
-                        if (current_open_t > open_target)
-                        {
-                            // Prevent resizing from OpenFull to OpenSmall if window y position
-                            // is greater than OpenSmall's target
-                            open_target = 0;
-                            state = TerminalState.Close;
-                            return;
-                        }
-                        real_window_size = open_target;
-                        scroll_position.y = int.MaxValue;
-                        break;
-                    }
-                case TerminalState.OpenFull:
-                default:
-                    {
-                        real_window_size = Screen.height * maxHeight;
-                        open_target = real_window_size;
-                        break;
-                    }
-            }
-
-            state = new_state;
-        }
-
-        public void ToggleState(TerminalState new_state)
-        {
-            if (state == new_state)
-            {
-                SetState(TerminalState.Close);
-            }
-            else
-            {
-                SetState(new_state);
-            }
-        }
-
-        private void Awake()
-        {
             Buffer = new CommandLog(bufferSize);
 
             // Hook Unity log events
@@ -152,7 +96,7 @@ namespace MasterServerToolkit.CommandTerminal
             if (consoleFont == null)
             {
                 consoleFont = Font.CreateDynamicFontFromOSFont("Courier New", 16);
-                Debug.LogWarning("Command Console Warning: Please assign a font.");
+                logger.Warn("Command Console Warning: Please assign a font.");
             }
 
             command_text = "";
@@ -208,13 +152,75 @@ namespace MasterServerToolkit.CommandTerminal
             window = GUILayout.Window(88, window, DrawConsole, "", window_style);
         }
 
+        public static void Log(string format, params object[] message)
+        {
+            Log(TerminalLogType.ShellMessage, format, message);
+        }
+
+        public static void Log(TerminalLogType type, string format, params object[] message)
+        {
+            Buffer.HandleLog(string.Format(format, message), type);
+        }
+
+        public void SetState(TerminalState new_state)
+        {
+            input_fix = true;
+            cached_command_text = command_text;
+            command_text = "";
+
+            switch (new_state)
+            {
+                case TerminalState.Close:
+                    {
+                        open_target = 0;
+                        break;
+                    }
+                case TerminalState.OpenSmall:
+                    {
+                        open_target = Screen.height * maxHeight;
+                        if (current_open_t > open_target)
+                        {
+                            // Prevent resizing from OpenFull to OpenSmall if window y position
+                            // is greater than OpenSmall's target
+                            open_target = 0;
+                            state = TerminalState.Close;
+                            return;
+                        }
+                        real_window_size = open_target;
+                        scroll_position.y = int.MaxValue;
+                        break;
+                    }
+                case TerminalState.OpenFull:
+                default:
+                    {
+                        real_window_size = Screen.height * maxHeight;
+                        open_target = real_window_size;
+                        break;
+                    }
+            }
+
+            state = new_state;
+        }
+
+        public void ToggleState(TerminalState new_state)
+        {
+            if (state == new_state)
+            {
+                SetState(TerminalState.Close);
+            }
+            else
+            {
+                SetState(new_state);
+            }
+        }
+
         void SetupWindow()
         {
-            real_window_size = Screen.height * maxHeight / 3;
+            real_window_size = Screen.height * maxHeight;
             window = new Rect(0, current_open_t - real_window_size, Screen.width, real_window_size);
 
             // Set background color
-            Texture2D background_texture = new Texture2D(1, 1);
+            background_texture = new Texture2D(1, 1);
             background_texture.SetPixel(0, 0, backgroundColor);
             background_texture.Apply();
 

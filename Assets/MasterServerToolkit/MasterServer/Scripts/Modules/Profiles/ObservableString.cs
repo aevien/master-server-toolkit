@@ -12,16 +12,16 @@ namespace MasterServerToolkit.MasterServer
             _value = defaultVal;
         }
 
-        /// <summary>
-        /// Just sets current value
-        /// </summary>
-        /// <param name="value"></param>
-        public void Set(string value)
+        public override string Value
         {
-            if (_value != value)
+            get => _value;
+            set
             {
-                _value = value;
-                MarkDirty();
+                if (_value != value)
+                {
+                    _value = value;
+                    MarkDirty();
+                }
             }
         }
 

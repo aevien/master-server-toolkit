@@ -22,7 +22,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
 
         private static void BuildRoomForWindows(bool isHeadless)
         {
-            string buildFolder = Path.Combine("Builds", "BasicFishNetRoomsAndLobbies", "Room");
+            string buildFolder = Path.Combine("Builds", "FishNet", "RoomsAndLobbies", "Room");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
@@ -67,7 +67,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
         [MenuItem(Mst.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Master Server and Spawner")]
         private static void BuildMasterAndSpawnerForWindows()
         {
-            string buildFolder = Path.Combine("Builds", "BasicFishNetRoomsAndLobbies", "MasterAndSpawner");
+            string buildFolder = Path.Combine("Builds", "FishNet", "RoomsAndLobbies", "MasterAndSpawner");
             string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicFishNetRoomsAndLobbies", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
@@ -112,7 +112,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
         [MenuItem(Mst.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Spawner")]
         private static void BuildSpawnerForWindows()
         {
-            string buildFolder = Path.Combine("Builds", "BasicFishNetRoomsAndLobbies", "Spawner");
+            string buildFolder = Path.Combine("Builds", "FishNet", "RoomsAndLobbies", "Spawner");
             string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicFishNetRoomsAndLobbies", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
@@ -160,7 +160,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
         [MenuItem(Mst.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Client")]
         private static void BuildClientForWindows()
         {
-            string buildFolder = Path.Combine("Builds", "BasicFishNetRoomsAndLobbies", "Client");
+            string buildFolder = Path.Combine("Builds", "FishNet", "RoomsAndLobbies", "Client");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {

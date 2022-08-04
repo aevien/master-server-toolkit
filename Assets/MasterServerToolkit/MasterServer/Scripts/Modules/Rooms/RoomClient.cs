@@ -56,9 +56,21 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
+        protected bool isChangingZone = false;
+
         protected override void Awake()
         {
             base.Awake();
+
+            Mst.Events.AddListener(MstEventKeys.leaveRoom, (message) =>
+            {
+                Disconnect();
+            });
+
+            Mst.Events.AddListener(MstEventKeys.goToZone, (message) =>
+            {
+                isChangingZone = message.AsBool();
+            });
 
             // Register access listener
             Mst.Client.Rooms.OnAccessReceivedEvent += OnAccessReceivedEvent;

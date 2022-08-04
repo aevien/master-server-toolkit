@@ -23,8 +23,8 @@ namespace MasterServerToolkit.Games
             base.Start();
 
             // Listen to show/hide events
-            Mst.Events.AddEventListener(MstEventKeys.showEmailConfirmationView, OnShowEmailConfirmationEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hideEmailConfirmationView, OnHideEmailConfirmationEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showEmailConfirmationView, OnShowEmailConfirmationEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hideEmailConfirmationView, OnHideEmailConfirmationEventHandler);
         }
 
         private void OnShowEmailConfirmationEventHandler(EventMessage message)

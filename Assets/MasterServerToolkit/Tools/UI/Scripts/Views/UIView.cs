@@ -22,6 +22,8 @@ namespace MasterServerToolkit.UI
         protected bool allwaysOnTop = false;
         [SerializeField]
         protected bool ignoreHideAll = false;
+        [SerializeField]
+        protected bool useRaycastBlock = true;
 
         [Header("Logger Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
@@ -289,7 +291,7 @@ namespace MasterServerToolkit.UI
             if (canvasGroup)
             {
                 canvasGroup.interactable = active;
-                canvasGroup.blocksRaycasts = active;
+                canvasGroup.blocksRaycasts = !useRaycastBlock ? false : active;
                 canvasGroup.alpha = active ? 1f : 0f;
             }
         }

@@ -127,7 +127,7 @@ namespace MasterServerToolkit.MasterServer
                 FinalizationData = finalizationData
             };
 
-            connection.SendMessage((ushort)MstOpCodes.CompleteSpawnProcess, packet, (status, response) =>
+            connection.SendMessage(MstOpCodes.CompleteSpawnProcess, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -173,7 +173,7 @@ namespace MasterServerToolkit.MasterServer
                 SpawnId = spawnId
             };
 
-            connection.SendMessage((ushort)MstOpCodes.RegisterSpawnedProcess, packet, (status, response) =>
+            connection.SendMessage(MstOpCodes.RegisterSpawnedProcess, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -182,7 +182,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // Read spawn task options received from master server
-                var options = new MstProperties(new Dictionary<string, string>().FromBytes(response.AsBytes()));
+                var options = MstProperties.FromBytes(response.AsBytes());
 
                 // Create spawn task controller
                 var process = new SpawnTaskController(spawnId, options, connection);
@@ -210,7 +210,7 @@ namespace MasterServerToolkit.MasterServer
                 B = count
             };
 
-            connection.SendMessage((ushort)MstOpCodes.UpdateSpawnerProcessesCount, packet);
+            connection.SendMessage(MstOpCodes.UpdateSpawnerProcessesCount, packet);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.ProcessStarted, new SpawnedProcessStartedPacket()
+            connection.SendMessage(MstOpCodes.ProcessStarted, new SpawnedProcessStartedPacket()
             {
                 CmdArgs = cmdArgs,
                 ProcessId = processId,
@@ -267,7 +267,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.ProcessKilled, spawnId);
+            connection.SendMessage(MstOpCodes.ProcessKilled, spawnId);
         }
 
         /// <summary>

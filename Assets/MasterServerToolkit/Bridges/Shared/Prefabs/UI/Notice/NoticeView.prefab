@@ -29,6 +29,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4465368499774140375}
   m_RootOrder: 0
@@ -117,6 +118,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4465368498838903730}
   m_Father: {fileID: 0}
@@ -216,6 +218,8 @@ MonoBehaviour:
   hideOnStart: 1
   allwaysOnTop: 1
   ignoreHideAll: 0
+  useRaycastBlock: 0
+  logLevel: 3
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -230,5 +234,6 @@ MonoBehaviour:
       m_Calls: []
   maxNotices: 5
   messagesContainer: {fileID: 4465368498838903730}
-  noticeItemPrefab: {fileID: 6506104944718174263, guid: bcfaaa174cec88747bdab00b1e08dc93, type: 3}
+  noticeItemPrefab: {fileID: 6506104944718174263, guid: bcfaaa174cec88747bdab00b1e08dc93,
+    type: 3}
   destroyAfter: 10

@@ -22,7 +22,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
 
         private static void BuildRoomForWindows(bool isHeadless)
         {
-            string buildFolder = Path.Combine("Builds", "BasicMirrorRoomsAndLobbies", "Room");
+            string buildFolder = Path.Combine("Builds", "Mirror", "RoomsAndLobbies", "Room");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
@@ -67,7 +67,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
         [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Master Server and Spawner")]
         private static void BuildMasterAndSpawnerForWindows()
         {
-            string buildFolder = Path.Combine("Builds", "BasicMirrorRoomsAndLobbies", "MasterAndSpawner");
+            string buildFolder = Path.Combine("Builds", "Mirror", "RoomsAndLobbies", "MasterAndSpawner");
             string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicMirrorRoomsAndLobbies", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
@@ -112,7 +112,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
         [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Spawner")]
         private static void BuildSpawnerForWindows()
         {
-            string buildFolder = Path.Combine("Builds", "BasicMirrorRoomsAndLobbies", "Spawner");
+            string buildFolder = Path.Combine("Builds", "Mirror", "RoomsAndLobbies", "Spawner");
             string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicMirrorRoomsAndLobbies", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
@@ -160,7 +160,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorRoomsAndLobbies
         [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Rooms And Lobbies/Client")]
         private static void BuildClientForWindows()
         {
-            string buildFolder = Path.Combine("Builds", "BasicMirrorRoomsAndLobbies", "Client");
+            string buildFolder = Path.Combine("Builds", "Mirror", "RoomsAndLobbies", "Client");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {

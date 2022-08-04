@@ -12,41 +12,51 @@ namespace MasterServerToolkit.MasterServer
             _value = defaultValue;
         }
 
+        public override int Value
+        {
+            get => _value;
+            set
+            {
+                if (_value != value)
+                {
+                    _value = value;
+                    MarkDirty();
+                }
+            }
+        }
+
         /// <summary>
         /// Increments current value by <paramref name="value"/>
         /// </summary>
         /// <param name="value"></param>
-        public void Add(int value)
+        public bool Add(int value, int max = int.MaxValue)
         {
-            _value += value;
-            MarkDirty();
-        }
-
-        /// <summary>
-        /// Just sets current value
-        /// </summary>
-        /// <param name="value"></param>
-        public void Set(int value)
-        {
-            if (_value != value)
+            if (_value + value <= max)
             {
-                _value = value;
+                _value += value;
                 MarkDirty();
-            }
-        }
-
-        /// <summary>
-        /// Tries to take given <paramref name="amount"/> away from current value
-        /// </summary>
-        /// <param name="amount"></param>
-        /// <returns></returns>
-        public bool TryTake(int amount)
-        {
-            if (_value >= amount)
-            {
-                Add(-amount);
                 return true;
             }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Decrements current value by <paramref name="value"/>
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="min"></param>
+        /// <returns></returns>
+        public bool Subtract(int value, int min = int.MinValue)
+        {
+            if (_value - value >= min)
+            {
+                _value -= value;
+                MarkDirty();
+
+                return true;
+            }
+
             return false;
         }
 

@@ -9,8 +9,8 @@ namespace MasterServerToolkit.Games
     {
         public override void OnOwnerStart()
         {
-            Mst.Events.AddEventListener(MstEventKeys.showOkDialogBox, OnShowDialogBoxEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hideOkDialogBox, OnHideDialogBoxEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showOkDialogBox, OnShowDialogBoxEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hideOkDialogBox, OnHideDialogBoxEventHandler);
         }
 
         private void OnShowDialogBoxEventHandler(EventMessage message)

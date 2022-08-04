@@ -105,7 +105,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             if (key == (short)ObservablePropertyCodes.DisplayName)
             {
-                DisplayName = property.As<ObservableString>().Value();
+                DisplayName = property.As<ObservableString>().Value;
             }
             else if (key == (short)ObservablePropertyCodes.Avatar)
             {
@@ -113,15 +113,15 @@ namespace MasterServerToolkit.Examples.BasicProfile
             }
             else if (key == (short)ObservablePropertyCodes.Bronze)
             {
-                Bronze = property.As<ObservableFloat>().Value().ToString("F2");
+                Bronze = property.As<ObservableFloat>().Value.ToString("F2");
             }
             else if (key == (short)ObservablePropertyCodes.Silver)
             {
-                Silver = property.As<ObservableFloat>().Value().ToString("F2");
+                Silver = property.As<ObservableFloat>().Value.ToString("F2");
             }
             else if (key == (short)ObservablePropertyCodes.Gold)
             {
-                Gold = property.As<ObservableFloat>().Value().ToString("F2");
+                Gold = property.As<ObservableFloat>().Value.ToString("F2");
             }
         }
     }

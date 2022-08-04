@@ -14,7 +14,7 @@ namespace MasterServerToolkit.MasterServer
 
         public MstNotificationClient(IClientSocket connection) : base(connection)
         {
-            connection.RegisterMessageHandler((ushort)MstOpCodes.Notification, OnNotificationMessageHandler);
+            connection.RegisterMessageHandler(MstOpCodes.Notification, OnNotificationMessageHandler);
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.SubscribeToNotifications, (status, response) =>
+            connection.SendMessage(MstOpCodes.SubscribeToNotifications, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -94,7 +94,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.UnsubscribeFromNotifications, (status, response) =>
+            connection.SendMessage(MstOpCodes.UnsubscribeFromNotifications, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

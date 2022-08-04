@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1182598396324832461
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1182598396324832456}
+  - component: {fileID: 1182598396324832457}
+  - component: {fileID: 1182598396324832458}
+  - component: {fileID: 1182598396324832459}
+  - component: {fileID: 4418077282172698758}
+  m_Layer: 0
+  m_Name: --ROOM_SERVER
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1182598396324832456
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182598396324832461}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1182598396324832457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182598396324832461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2c95dfde7d73b54dbbdc23155d35d36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _refreshDefaultPrefabs: 0
+  _runInBackground: 1
+  _dontDestroyOnLoad: 1
+  _persistence: 0
+  _logging: {fileID: 11400000, guid: 36d2500f6fd077d4691cbc09333202a4, type: 2}
+  _spawnablePrefabs: {fileID: 11400000, guid: d8910c11a56a448468126fadd5e483b3, type: 2}
+--- !u!114 &1182598396324832458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182598396324832461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37f9293ac5ed6ca4997283d324e73e4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 0
+--- !u!114 &1182598396324832459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182598396324832461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04b192eca766e184694d2f09fde55690, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 0
+  initModulesAtStart: 1
+  autoLoadUserProfile: 1
+  forceClientMode: 1
+  allowGuestUsers: 1
+  terminateRoomWhenDisconnected: 1
+  terminateRoomWhenLastPlayerQuits: 0
+  terminateRoomDelay: 60
+  OnBeforeRoomRegisterEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1182598396324832458}
+        m_TargetAssemblyTypeName: MasterServerToolkit.Bridges.FishNetworking.RoomNetworkManager,
+          MasterServerToolkit
+        m_MethodName: StartRoomServer
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnRoomRegisteredEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnRoomRegisterFailedEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1182598396324832458}
+        m_TargetAssemblyTypeName: MasterServerToolkit.Bridges.FishNetworking.RoomNetworkManager,
+          MasterServerToolkit
+        m_MethodName: StopRoomServer
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnPlayerJoinedRoomEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPlayerLeftRoomEvent:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4418077282172698758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182598396324832461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce8bbb58966cb45a7140f32da5327a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _startInOffline: 0
+  _offlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Client/Client.unity
+  _onlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room/Room.unity
+  _replaceScenes: 0

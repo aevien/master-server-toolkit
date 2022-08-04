@@ -27,7 +27,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Properties that are changed and waiting for to be sent
         /// </summary>
-        private readonly HashSet<IObservableProperty> propertiesToBeSent = new HashSet<IObservableProperty>();
+        private readonly ConcurrentDictionary<ushort, IObservableProperty> propertiesToBeSent = new ConcurrentDictionary<ushort, IObservableProperty>();
 
         /// <summary>
         /// Profile properties list
@@ -123,7 +123,7 @@ namespace MasterServerToolkit.MasterServer
 
             //Logs.Debug($"{GetType().Name} adds property with key {property.Key}".ToGreen());
 
-            if(Properties.TryAdd(property.Key, property))
+            if (Properties.TryAdd(property.Key, property))
             {
                 property.OnDirtyEvent += OnDirtyPropertyEventHandler;
             }
@@ -236,7 +236,7 @@ namespace MasterServerToolkit.MasterServer
             // Write values count
             writer.Write(propertiesToBeSent.Count);
 
-            foreach (var property in propertiesToBeSent)
+            foreach (var property in propertiesToBeSent.Values)
             {
                 // Write key
                 writer.Write(property.Key);
@@ -256,7 +256,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void ClearUpdates()
         {
-            foreach (var property in propertiesToBeSent)
+            foreach (var property in propertiesToBeSent.Values)
             {
                 property.ClearUpdates();
             }
@@ -376,8 +376,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="property"></param>
         protected virtual void OnDirtyPropertyEventHandler(IObservableProperty property)
         {
-            if (!propertiesToBeSent.Contains(property))
-                propertiesToBeSent.Add(property);
+            if (!propertiesToBeSent.ContainsKey(property.Key))
+                propertiesToBeSent.TryAdd(property.Key, property);
 
             //Logs.Info($"<color=#FF0000>{GetType().Name} OnDirtyPropertyEventHandler for {property.Key}</color>");
 

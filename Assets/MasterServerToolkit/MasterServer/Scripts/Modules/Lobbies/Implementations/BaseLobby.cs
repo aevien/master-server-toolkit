@@ -644,10 +644,10 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Extract the region if available
-            string region = propertiesList.AsString(MstDictKeys.ROOM_REGION);
+            string region = propertiesList.AsString(Mst.Args.Names.RoomRegion);
 
             // Set room as private because this one is created for lobby
-            propertiesList.Set(MstDictKeys.ROOM_IS_PUBLIC, false);
+            propertiesList.Set(Mst.Args.Names.RoomIsPrivate, false);
             propertiesList.Append(GenerateOptions());
 
             // Create start task

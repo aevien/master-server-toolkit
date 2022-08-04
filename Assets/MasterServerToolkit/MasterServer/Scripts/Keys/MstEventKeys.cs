@@ -2,6 +2,9 @@
 {
     public struct MstEventKeys
     {
+        public static string goToZone = "mst.goToZone";
+        public static string leaveRoom = "mst.leaveRoom";
+
         public static string showLoadingInfo = "mst.showLoadingInfo";
         public static string hideLoadingInfo = "mst.hideLoadingInfo";
 

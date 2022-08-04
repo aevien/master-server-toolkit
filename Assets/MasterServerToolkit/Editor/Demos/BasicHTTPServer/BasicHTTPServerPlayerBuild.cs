@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer.Examples.BasicHttpServer
 {
-    public class BasicHTTPServerPlayerBuild : MonoBehaviour
+    public class BasicHTTPServerPlayerBuild
     {
         [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Http Server/Master Server")]
         private static void BuildMasterForWindows()

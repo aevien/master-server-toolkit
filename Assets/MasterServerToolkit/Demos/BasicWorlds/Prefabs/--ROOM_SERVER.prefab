@@ -1,0 +1,118 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3598444188684031280
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3598444188684031282}
+  - component: {fileID: 3598444188684031283}
+  - component: {fileID: 3598444188684031281}
+  m_Layer: 0
+  m_Name: --ROOM_SERVER
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3598444188684031282
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3598444188684031280}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -87.27225, y: -7.358715, z: -37.179245}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3598444188684031283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3598444188684031280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 035b0573ca0d80c4a97125cce118a03b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lookForModules: 1
+  lookInChildrenOnly: 1
+  permissions: []
+  targetFrameRate: 30
+  logLevel: 0
+  serverIp: 127.0.0.1
+  serverPort: 5000
+  maxConnections: 0
+  inactivityTimeout: 5
+  validationTimeout: 5
+  autoStartInEditor: 1
+  roomServerManager: {fileID: 3598444188684031281}
+--- !u!114 &3598444188684031281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3598444188684031280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04b192eca766e184694d2f09fde55690, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 0
+  initModulesAtStart: 1
+  autoLoadUserProfile: 0
+  forceClientMode: 0
+  allowGuestUsers: 1
+  terminateRoomWhenDisconnected: 1
+  terminateRoomWhenLastPlayerQuits: 0
+  terminateRoomDelay: 5
+  OnBeforeRoomRegisterEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3598444188684031283}
+        m_TargetAssemblyTypeName: MasterServerToolkit.MasterServer.RoomServer, MasterServerToolkit
+        m_MethodName: StartServer
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnRoomRegisteredEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnRoomRegisterFailedEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3598444188684031283}
+        m_TargetAssemblyTypeName: MasterServerToolkit.MasterServer.RoomServer, MasterServerToolkit
+        m_MethodName: StopServer
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnPlayerJoinedRoomEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPlayerLeftRoomEvent:
+    m_PersistentCalls:
+      m_Calls: []

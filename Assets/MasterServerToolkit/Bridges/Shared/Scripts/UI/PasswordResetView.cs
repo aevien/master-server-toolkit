@@ -44,8 +44,8 @@ namespace MasterServerToolkit.Games
             base.Awake();
 
             // Listen to show/hide events
-            Mst.Events.AddEventListener(MstEventKeys.showPasswordResetView, OnShowPasswordResetEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hidePasswordResetView, OnHidePasswordResetEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showPasswordResetView, OnShowPasswordResetEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hidePasswordResetView, OnHidePasswordResetEventHandler);
         }
 
         private void OnShowPasswordResetEventHandler(EventMessage message)

@@ -1,5 +1,6 @@
 ﻿#if MIRROR
 using kcp2k;
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
@@ -7,6 +8,7 @@ using Mirror;
 using Mirror.SimpleWeb;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
@@ -24,6 +26,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         protected LogLevel logLevel = LogLevel.Info;
 
         #endregion
+
+        public static new RoomNetworkManager singleton { get; private set; }
 
         /// <summary>
         /// Logger assigned to this module
@@ -80,21 +84,33 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// </summary>
         public event Action<NetworkConnection> OnClientDisconnectedEvent;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public event Action OnClientSceneChangedEvent;
+
+        /// <summary>
+        /// Runs on both Server and Client
+        /// Networking is NOT initialized when this fires
+        /// </summary>
         public override void Awake()
         {
+            base.Awake();
+
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
             // Prevent start network manager in headless mode automatically
             autoStartServerBuild = false;
-
-            base.Awake();
         }
 
         public void StartRoomServer()
         {
             // Find room server if it is not assigned in inspector
             if (!roomServerManager) roomServerManager = GetComponent<RoomServerManager>();
+
+            // Set online scene
+            onlineScene = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
 
             // Set the max number of connections
             maxConnections = (ushort)roomServerManager.RoomOptions.MaxConnections;
@@ -105,6 +121,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             SetPort(roomServerManager.RoomOptions.RoomPort);
 
             logger.Info($"Starting Room Server: {networkAddress}:{roomServerManager.RoomOptions.RoomPort}");
+            logger.Info($"Online Scene: {onlineScene}");
 
 #if UNITY_EDITOR
             StartHost();
@@ -160,24 +177,20 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// </summary>
         public override void OnStartServer()
         {
-            base.OnStartServer();
-
             logger.Info($"Room Server started and listening to: {networkAddress}:{roomServerManager.RoomOptions.RoomPort}");
 
+            base.OnStartServer();
             NetworkServer.RegisterHandler<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler, false);
-
             if (roomServerManager) roomServerManager.OnServerStarted();
             OnServerStartedEvent?.Invoke();
         }
 
         public override void OnStopServer()
         {
-            base.OnStopServer();
-
             logger.Info("Room Server stopped");
 
+            base.OnStopServer();
             NetworkServer.UnregisterHandler<ValidateRoomAccessRequestMessage>();
-
             if (roomServerManager) roomServerManager.OnServerStopped();
             OnServerStoppedEvent?.Invoke();
         }
@@ -241,6 +254,28 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
             logger.Info($"You have left a room");
             OnDisconnectedEvent?.Invoke(NetworkClient.connection);
+        }
+
+        /// <summary>
+        /// Called from ClientChangeScene immediately before SceneManager.LoadSceneAsync is executed
+        /// <para>This allows client to do work / cleanup / prep before the scene changes.</para>
+        /// </summary>
+        /// <param name="newSceneName">Name of the scene that's about to be loaded</param>
+        /// <param name="sceneOperation">Scene operation that's about to happen</param>
+        /// <param name="customHandling">true to indicate that scene loading will be handled through overrides</param>
+        public override void OnClientChangeScene(string newSceneName, SceneOperation sceneOperation, bool customHandling)
+        {
+            logger.Info($"Client is loading scene {newSceneName}");
+        }
+
+        /// <summary>
+        /// Called on clients when a scene has completed loaded, when the scene load was initiated by the server.
+        /// <para>Scene changes can cause player objects to be destroyed. The default implementation of OnClientSceneChanged in the NetworkManager is to add a player object for the connection if no player object exists.</para>
+        /// </summary>
+        public override void OnClientSceneChanged()
+        {
+            logger.Info($"Client scene loaded");
+            OnClientSceneChangedEvent?.Invoke();
         }
 
         #endregion

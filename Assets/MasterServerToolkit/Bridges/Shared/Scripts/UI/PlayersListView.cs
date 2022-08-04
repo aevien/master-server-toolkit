@@ -27,8 +27,8 @@ namespace MasterServerToolkit.Games
             base.Awake();
 
             // Listen to show/hide events
-            Mst.Events.AddEventListener(MstEventKeys.showPlayersListView, OnShowPlayersListEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hidePlayersListView, OnHidePlayersListEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showPlayersListView, OnShowPlayersListEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hidePlayersListView, OnHidePlayersListEventHandler);
         }
 
         protected override void Start()

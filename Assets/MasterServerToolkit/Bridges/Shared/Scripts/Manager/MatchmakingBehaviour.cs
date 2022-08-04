@@ -51,10 +51,6 @@ namespace MasterServerToolkit.Games
         {
             // Set cliet mode
             Mst.Client.Rooms.IsClientMode = true;
-
-            // Set MSF global options
-            Mst.Options.Set(MstDictKeys.AUTOSTART_ROOM_CLIENT, true);
-            Mst.Options.Set(MstDictKeys.ROOM_OFFLINE_SCENE_NAME, SceneManager.GetActiveScene().name);
         }
 
         /// <summary>
@@ -165,7 +161,7 @@ namespace MasterServerToolkit.Games
             // Save room Id in buffer, may be very helpful
             Mst.Options.Set(MstDictKeys.ROOM_ID, gameInfo.Id);
             // Save max players to buffer, may be very helpful
-            Mst.Options.Set(MstDictKeys.ROOM_MAX_CONNECTIONS, gameInfo.MaxPlayers);
+            Mst.Options.Set(Mst.Args.Names.RoomMaxConnections, gameInfo.MaxPlayers);
 
             if (gameInfo.IsPasswordProtected)
             {
@@ -173,7 +169,7 @@ namespace MasterServerToolkit.Games
                     new PasswordInputDialoxBoxEventMessage("Room is required the password. Please enter room password below", () =>
                     {
                         // Get password if was set
-                        string password = Mst.Options.AsString(MstDictKeys.ROOM_PASSWORD, "");
+                        string password = Mst.Options.AsString(Mst.Args.Names.RoomPassword);
 
                         // Get access with password
                         GetAccess(gameInfo, password);

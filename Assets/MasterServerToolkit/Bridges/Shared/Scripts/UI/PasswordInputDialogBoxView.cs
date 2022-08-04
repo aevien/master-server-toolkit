@@ -21,8 +21,8 @@ namespace MasterServerToolkit.Games
         public override void OnOwnerStart()
         {
             passwordInputField = Owner.ChildComponent<TMP_InputField>("passwordInputField");
-            Mst.Events.AddEventListener(MstEventKeys.showPasswordDialogBox, OnShowPasswordDialogBoxEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hidePasswordDialogBox, OnHidePasswordDialogBoxEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showPasswordDialogBox, OnShowPasswordDialogBoxEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hidePasswordDialogBox, OnHidePasswordDialogBoxEventHandler);
         }
 
         private void OnHidePasswordDialogBoxEventHandler(EventMessage message)
@@ -32,7 +32,7 @@ namespace MasterServerToolkit.Games
 
         private void OnShowPasswordDialogBoxEventHandler(EventMessage message)
         {
-            var messageData = message.GetData<PasswordInputDialoxBoxEventMessage>();
+            var messageData = message.As<PasswordInputDialoxBoxEventMessage>();
 
             SetLables(messageData.Message);
             submitCallback = messageData.OkCallback;
@@ -42,7 +42,7 @@ namespace MasterServerToolkit.Games
 
         public void Submit()
         {
-            Mst.Options.Set(MstDictKeys.ROOM_PASSWORD, passwordInputField.text);
+            Mst.Options.Set(Mst.Args.Names.RoomPassword, passwordInputField.text);
             submitCallback?.Invoke();
             Owner.Hide();
         }

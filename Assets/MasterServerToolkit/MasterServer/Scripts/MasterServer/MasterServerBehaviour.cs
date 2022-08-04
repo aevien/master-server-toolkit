@@ -35,7 +35,7 @@ namespace MasterServerToolkit.MasterServer
             Instance = this;
 
             // Move to root, so that it won't be destroyed
-            // In case this MSF instance is a child of another gameobject
+            // In case this instance is a child of another gameobject
             if (transform.parent != null)
             {
                 transform.SetParent(null);

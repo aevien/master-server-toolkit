@@ -5,8 +5,8 @@ namespace MasterServerToolkit.MasterServer
     public class RoomAccessPacket : SerializablePacket
     {
         public string RoomIp { get; set; }
-        public int RoomPort { get; set; }
-        public int RoomMaxConnections { get; set; }
+        public ushort RoomPort { get; set; }
+        public ushort RoomMaxConnections { get; set; }
         public string Token { get; set; }
         public int RoomId { get; set; }
         public string SceneName { get; set; } = string.Empty;
@@ -27,8 +27,8 @@ namespace MasterServerToolkit.MasterServer
         {
             Token = reader.ReadString();
             RoomIp = reader.ReadString();
-            RoomPort = reader.ReadInt32();
-            RoomMaxConnections = reader.ReadInt32();
+            RoomPort = reader.ReadUInt16();
+            RoomMaxConnections = reader.ReadUInt16();
             RoomId = reader.ReadInt32();
             SceneName = reader.ReadString();
             CustomOptions = new MstProperties(reader.ReadDictionary());

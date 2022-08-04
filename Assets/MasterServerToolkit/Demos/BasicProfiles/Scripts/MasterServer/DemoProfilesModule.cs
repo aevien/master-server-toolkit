@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
-    public enum ObservablePropertyCodes { DisplayName, Avatar, Bronze, Silver, Gold }
+    public enum ObservablePropertyCodes { DisplayName, Avatar, Bronze, Silver, Gold, Items }
 
     public class DemoProfilesModule : ProfilesModule
     {
@@ -60,7 +60,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
                 new ObservableString((ushort)ObservablePropertyCodes.Avatar, avatarUrl),
                 new ObservableFloat((ushort)ObservablePropertyCodes.Bronze, bronze),
                 new ObservableFloat((ushort)ObservablePropertyCodes.Silver, silver),
-                new ObservableFloat((ushort)ObservablePropertyCodes.Gold, gold)
+                new ObservableFloat((ushort)ObservablePropertyCodes.Gold, gold),
+                new ObservableDictStringInt((ushort)ObservablePropertyCodes.Items, new Dictionary<string, int>())
             };
         }
 
@@ -94,8 +95,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
             {
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile))
                 {
-                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Set(newProfileData["displayName"]);
-                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Set(newProfileData["avatarUrl"]);
+                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Value = newProfileData["displayName"];
+                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Value = newProfileData["avatarUrl"];
 
                     message.Respond(ResponseStatus.Success);
                 }

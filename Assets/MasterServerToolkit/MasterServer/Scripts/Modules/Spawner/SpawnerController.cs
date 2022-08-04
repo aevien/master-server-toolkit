@@ -69,8 +69,8 @@ namespace MasterServerToolkit.MasterServer
             };
 
             // Add static handlers to listen one message for all controllers
-            connection.RegisterMessageHandler((ushort)MstOpCodes.SpawnProcessRequest, SpawnProcessRequestHandler);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.KillProcessRequest, KillProcessRequestHandler);
+            connection.RegisterMessageHandler(MstOpCodes.SpawnProcessRequest, SpawnProcessRequestHandler);
+            connection.RegisterMessageHandler(MstOpCodes.KillProcessRequest, KillProcessRequestHandler);
         }
 
         /// <summary>
@@ -79,20 +79,28 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         private static void SpawnProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.Deserialize(new SpawnRequestPacket());
-
-            if (!(Mst.Server.Spawners.GetSpawnerController(data.SpawnerId) is SpawnerController controller))
+            try
             {
-                if (message.IsExpectingResponse)
+                var data = message.Deserialize(new SpawnRequestPacket());
+                ISpawnerController controller = Mst.Server.Spawners.GetSpawnerController(data.SpawnerId);
+
+                if (controller == null)
                 {
-                    message.Respond("Couldn't find a spawn controller", ResponseStatus.NotHandled);
+                    if (message.IsExpectingResponse)
+                    {
+                        message.Respond("Couldn't find a spawn controller", ResponseStatus.NotHandled);
+                    }
+
+                    return;
                 }
 
-                return;
+                controller.Logger.Debug($"Spawn process requested for spawn controller [{controller.SpawnerId}]");
+                controller.SpawnRequestHandler(data, message);
             }
-
-            controller.Logger.Debug($"Spawn process requested for spawn controller [{controller.SpawnerId}]");
-            controller.SpawnRequestHandler(data, message);
+            catch (Exception e)
+            {
+                message.Respond(e.Message, ResponseStatus.Error);
+            }
         }
 
         /// <summary>
@@ -157,7 +165,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         public virtual void SpawnRequestHandler(SpawnRequestPacket data, IIncomingMessage message)
         {
-            Logger.Info($"Default spawn handler started handling a request to spawn process for spawn controller [{SpawnerId}]");
+            Logger.Info($"Spawn handler started handling a request to spawn process for spawn controller [{SpawnerId}]");
 
             /************************************************************************/
             // Create process args string
@@ -195,9 +203,6 @@ namespace MasterServerToolkit.MasterServer
             // Create spawn code arg
             processArguments.Set(Mst.Args.Names.SpawnTaskUniqueCode, data.SpawnTaskUniqueCode);
 
-            // 
-            processArguments.Set("-processLogFilePrefix", $"room_{DateTime.Now:MM_dd_yyyy_hh_mm}");
-
             /************************************************************************/
             // Path to executable
             var executablePath = SpawnSettings.ExecutablePath;
@@ -210,9 +215,9 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // In case a path is provided with the request
-            if (data.Options.Has(MstDictKeys.ROOM_EXE_PATH))
+            if (data.Options.Has(Mst.Args.Names.RoomExecutablePath))
             {
-                executablePath = data.Options.AsString(MstDictKeys.ROOM_EXE_PATH);
+                executablePath = data.Options.AsString(Mst.Args.Names.RoomExecutablePath);
             }
 
             if (!string.IsNullOrEmpty(data.OverrideExePath))
@@ -266,20 +271,18 @@ namespace MasterServerToolkit.MasterServer
                         }
 
                         Logger.Error("An exception was thrown while starting a process. Make sure that you have set a correct build path. " +
-                                     $"We've tried to start a process at [{executablePath}]. You can change it at 'SpawnerBehaviour' component");
+                                     $"We've tried to start a process at [{executablePath}]. You can change it at 'SpawnerBehaviour' component or in application.cfg");
                         Logger.Error(e);
                     }
                     finally
                     {
+                        // Remove the process
                         lock (processLock)
-                        {
-                            // Remove the process
                             processes.Remove(data.SpawnTaskId);
-                        }
 
                         // Release the port number
                         Mst.Server.Spawners.ReleasePort(machinePortArgument);
-                        Logger.Debug($"Notifying about killed process with spawn id [{data.SpawnTaskId}]");
+                        Logger.Info($"Notifying about killed process with spawn id [{data.SpawnTaskId}]");
                         NotifyProcessKilled(data.SpawnTaskId);
                     }
 
@@ -288,7 +291,7 @@ namespace MasterServerToolkit.MasterServer
             catch (Exception e)
             {
                 message.Respond(e.Message, ResponseStatus.Error);
-                Logs.Error(e);
+                Logger.Error(e);
             }
         }
 
@@ -298,7 +301,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="spawnId"></param>
         public virtual void KillRequestHandler(int spawnId)
         {
-            Logger.Debug($"Default kill request handler started handling a request to kill a process with id [{spawnId}] for spawn controller with id [{SpawnerId}]");
+            Logger.Info($"Kill request handler started handling a request to kill a process with id [{spawnId}] for spawn controller with id [{SpawnerId}]");
 
             try
             {

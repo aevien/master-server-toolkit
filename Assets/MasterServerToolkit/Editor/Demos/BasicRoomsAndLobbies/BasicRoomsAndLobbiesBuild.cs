@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
 {
-    public class BasicRoomsAndLobbiesBuild : MonoBehaviour
+    public class BasicRoomsAndLobbiesBuild
     {
         [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Rooms And Lobbies/Room(Headless)")]
         private static void BuildRoomForWindowsHeadless()

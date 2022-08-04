@@ -11,8 +11,8 @@ namespace MasterServerToolkit.Games
         {
             base.OnOwnerAwake();
 
-            Mst.Events.AddEventListener(MstEventKeys.showLoadingInfo, OnShowLoadingInfoEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hideLoadingInfo, OnHideLoadingInfoEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showLoadingInfo, OnShowLoadingInfoEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hideLoadingInfo, OnHideLoadingInfoEventHandler);
         }
 
         private void OnShowLoadingInfoEventHandler(EventMessage message)

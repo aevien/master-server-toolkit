@@ -96,6 +96,11 @@ namespace MasterServerToolkit.MasterServer
         public RoomController RoomController { get; protected set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public bool IsActive => RoomController != null && RoomController.IsActive;
+
+        /// <summary>
         /// Spawner task controller
         /// </summary>
         public SpawnTaskController SpawnTaskController { get; protected set; }
@@ -219,41 +224,38 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomPeerId"></param>
         public virtual void OnPeerDisconnected(int roomPeerId)
         {
-            MstTimer.Instance.WaitForSeconds(0.2f, () =>
+            // Try to find player in filtered list
+            if (playersByRoomPeerId.TryGetValue(roomPeerId, out RoomPlayer player))
             {
-                // Try to find player in filtered list
-                if (playersByRoomPeerId.TryGetValue(roomPeerId, out RoomPlayer player))
-                {
-                    logger.Debug($"Room server player {player.Username} with room client Id {roomPeerId} left the room");
+                logger.Debug($"Room server player {player.Username} with room client Id {roomPeerId} left the room");
 
-                    // Remove thisplayer from filtered list
-                    playersByRoomPeerId.Remove(player.RoomPeerId);
-                    playersByMasterPeerId.Remove(player.MasterPeerId);
-                    playersByUsername.Remove(player.Username);
+                // Remove thisplayer from filtered list
+                playersByRoomPeerId.Remove(player.RoomPeerId);
+                playersByMasterPeerId.Remove(player.MasterPeerId);
+                playersByUsername.Remove(player.Username);
 
-                    // Notify master server about disconnected player
-                    if (RoomController.IsActive)
-                        RoomController.NotifyPlayerLeft(player.MasterPeerId);
+                // Notify master server about disconnected player
+                if (RoomController.IsActive)
+                    RoomController.NotifyPlayerLeft(player.MasterPeerId);
 
-                    // Dispose profile
-                    player.Profile?.Dispose();
+                // Dispose profile
+                player.Profile?.Dispose();
 
-                    OnPlayerLeftRoom(player);
+                OnPlayerLeftRoom(player);
 
-                    // Inform subscribers about this bad guy
-                    OnPlayerLeftRoomEvent?.Invoke(player);
-                }
-                else
-                {
-                    logger.Debug($"Room server client {roomPeerId} left the room");
-                }
+                // Inform subscribers about this bad guy
+                OnPlayerLeftRoomEvent?.Invoke(player);
+            }
+            else
+            {
+                logger.Debug($"Room server client {roomPeerId} left the room");
+            }
 
-                if (terminateRoomWhenLastPlayerQuits && playersByRoomPeerId.Count == 0)
-                {
-                    terminateRoomDelay = 0.1f;
-                    StartCoroutine(TerminateRoomAfterDelay());
-                }
-            });
+            if (terminateRoomWhenLastPlayerQuits && playersByRoomPeerId.Count == 0)
+            {
+                terminateRoomDelay = 0.1f;
+                StartCoroutine(TerminateRoomAfterDelay());
+            }
         }
 
         /// <summary>
@@ -373,24 +375,16 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void BeforeRoomRegistering()
         {
-            // If room is public or provate
-            bool isPublic = !Mst.Args.RoomIsPrivate;
-
             // If room using lobby
             bool isUsingLobby = Mst.Args.IsProvided(Mst.Args.Names.LobbyId);
 
+            // If room is public or provate
+            bool isPublic = !Mst.Args.RoomIsPrivate || isUsingLobby;
+
             RoomOptions = new RoomOptions
             {
-                IsPublic = !isUsingLobby && isPublic,
-
-                // This is for controlling max number of players that may be connected
-                MaxConnections = Mst.Args.RoomMaxConnections,
-
                 // Just the name of the room
                 Name = Mst.Args.RoomName,
-
-                // If room uses the password
-                Password = Mst.Args.RoomPassword,
 
                 // Room IP that will be used by players to connect to this room
                 RoomIp = Mst.Args.RoomIp,
@@ -398,46 +392,29 @@ namespace MasterServerToolkit.MasterServer
                 // Room port that will be used by players to connect to this room
                 RoomPort = Mst.Args.RoomPort,
 
+                // 
+                IsPublic = isPublic,
+
+                // This is for controlling max number of players that may be connected
+                MaxConnections = Mst.Args.RoomMaxConnections,
+
+                // If room uses the password
+                Password = Mst.Args.RoomPassword,
+
                 // Region that this room may use to filter it in games list
                 Region = Mst.Args.RoomRegion
             };
 
-            // If room was spawned by task
-            if (SpawnTaskController != null)
+            string[] keys = Mst.Args.FindKeys("-room.");
+            var properties = new MstProperties();
+
+            foreach (string key in keys)
             {
-                // If max players param was given from spawner task
-                if (SpawnTaskController.Options.Has(MstDictKeys.ROOM_MAX_CONNECTIONS))
-                {
-                    RoomOptions.MaxConnections = SpawnTaskController.Options.AsInt(MstDictKeys.ROOM_MAX_CONNECTIONS);
-                }
-
-                // If password was given from spawner task
-                if (SpawnTaskController.Options.Has(MstDictKeys.ROOM_PASSWORD))
-                {
-                    RoomOptions.Password = SpawnTaskController.Options.AsString(MstDictKeys.ROOM_PASSWORD);
-                }
-
-                // If max players was given from spawner task
-                if (SpawnTaskController.Options.Has(MstDictKeys.ROOM_NAME))
-                {
-                    RoomOptions.Name = SpawnTaskController.Options.AsString(MstDictKeys.ROOM_NAME);
-                }
-
-                RoomOptions.CustomOptions = SpawnTaskController.Options.FindByKey("-room.");
+                if (Mst.Args.IsProvided(key))
+                    properties.Set(key, Mst.Args.AsString(key));
             }
-            else
-            {
-                string[] keys = Mst.Args.FindKeys("-room.");
-                var properties = new MstProperties();
 
-                foreach (string key in keys)
-                {
-                    if (Mst.Args.IsProvided(key))
-                        properties.Set(key, Mst.Args.AsString(key));
-                }
-
-                RoomOptions.CustomOptions = properties;
-            }
+            RoomOptions.CustomOptions.Append(properties);
         }
 
         /// <summary>
@@ -445,7 +422,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void RegisterRoom()
         {
-            logger.Info($"Registering room to list...");
+            logger.Info($"Registering room {RoomOptions.Name} to list...");
 
             Mst.Server.Rooms.RegisterRoom(RoomOptions, (controller, error) =>
             {
@@ -485,7 +462,7 @@ namespace MasterServerToolkit.MasterServer
         {
             var properties = new MstProperties();
             properties.Set(MstDictKeys.ROOM_ID, RoomController.RoomId);
-            properties.Set(MstDictKeys.ROOM_PASSWORD, RoomController.RoomId);
+            properties.Set(Mst.Args.Names.RoomPassword, RoomController.Options.Password);
             return properties;
         }
 
@@ -496,6 +473,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="giveAccess"></param>
         protected virtual void CreateAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallbackDelegate giveAccess)
         {
+            string sceneName = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
+
             // Use accessCheckOptions to check user that requested access to room
             giveAccess.Invoke(new RoomAccessPacket()
             {
@@ -505,7 +484,7 @@ namespace MasterServerToolkit.MasterServer
                 RoomMaxConnections = RoomController.Options.MaxConnections,
                 CustomOptions = RoomController.Options.CustomOptions,
                 Token = Mst.Helper.CreateGuidString(),
-                SceneName = SceneManager.GetActiveScene().name
+                SceneName = sceneName
             }, null);
         }
 

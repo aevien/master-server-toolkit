@@ -11,5 +11,6 @@
         Failed,
         NotConnected,
         NotHandled,
+        NotFound
     }
 }

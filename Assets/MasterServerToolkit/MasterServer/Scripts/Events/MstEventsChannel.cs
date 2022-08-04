@@ -119,7 +119,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="eventName"></param>
         /// <param name="handler"></param>
         /// <param name="autoUnsubscribe">If true, handler will unsubscribe when scene unloads</param>
-        public void AddEventListener(string eventName, UnityAction<EventMessage> handler, bool autoUnsubscribe = true)
+        public void AddListener(string eventName, UnityAction<EventMessage> handler, bool autoUnsubscribe = true)
         {
             if (!_handlers.TryGetValue(eventName, out UnityEvent<EventMessage> handlersList))
                 _handlers[eventName] = new UnityEvent<EventMessage>();
@@ -132,7 +132,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="eventName"></param>
         /// <param name="handler"></param>
-        public void RemoveEventListener(string eventName, UnityAction<EventMessage> handler)
+        public void RemoveListener(string eventName, UnityAction<EventMessage> handler)
         {
             if (_handlers.TryGetValue(eventName, out UnityEvent<EventMessage> handlersList))
                 handlersList.RemoveListener(handler);
@@ -142,7 +142,7 @@ namespace MasterServerToolkit.MasterServer
         /// Remove all handlers of given event
         /// </summary>
         /// <param name="eventName"></param>
-        public void RemoveAllEventListeners(string eventName)
+        public void RemoveAllListeners(string eventName)
         {
             if (_handlers.TryGetValue(eventName, out UnityEvent<EventMessage> handlersList))
                 handlersList.RemoveAllListeners();
@@ -152,7 +152,7 @@ namespace MasterServerToolkit.MasterServer
         /// Remove all handlers
         /// </summary>
         /// <param name="eventName"></param>
-        public void RemoveAllEventListeners()
+        public void RemoveAllListeners()
         {
             foreach (UnityEvent<EventMessage> handler in _handlers.Values)
                 handler.RemoveAllListeners();

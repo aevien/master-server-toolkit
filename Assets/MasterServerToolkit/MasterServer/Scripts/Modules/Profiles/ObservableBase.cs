@@ -32,9 +32,17 @@ namespace MasterServerToolkit.MasterServer
             return Serialize();
         }
 
-        public T Value()
+        /// <summary>
+        /// Sets a value of this property
+        /// </summary>
+        public virtual T Value
         {
-            return _value;
+            get { return _value; }
+            set
+            {
+                _value = value;
+                MarkDirty();
+            }
         }
 
         public virtual void MarkDirty()

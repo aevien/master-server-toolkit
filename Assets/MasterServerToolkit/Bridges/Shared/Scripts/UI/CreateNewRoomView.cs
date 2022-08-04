@@ -2,6 +2,7 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Linq;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 
@@ -23,8 +24,8 @@ namespace MasterServerToolkit.Games
             base.Awake();
 
             // Listen to show/hide events
-            Mst.Events.AddEventListener(MstEventKeys.showCreateNewRoomView, OnShowCreateNewRoomEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hideCreateNewRoomView, OnHideCreateNewRoomEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showCreateNewRoomView, OnShowCreateNewRoomEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hideCreateNewRoomView, OnHideCreateNewRoomEventHandler);
         }
 
         private void OnShowCreateNewRoomEventHandler(EventMessage message)
@@ -114,14 +115,19 @@ namespace MasterServerToolkit.Games
 
             Logs.Debug("Starting room... Please wait!");
 
+            Regex roomNameRe = new Regex(@"\s+");
+
             // Spawn options for spawner controller
             var spawnOptions = new MstProperties();
-            spawnOptions.Add(MstDictKeys.ROOM_MAX_CONNECTIONS, MaxConnections);
-            spawnOptions.Add(MstDictKeys.ROOM_NAME, RoomName);
-            spawnOptions.Add(MstDictKeys.ROOM_PASSWORD, Password);
+            spawnOptions.Add(Mst.Args.Names.RoomMaxConnections, MaxConnections);
+            spawnOptions.Add(Mst.Args.Names.RoomName, roomNameRe.Replace(RoomName, "_"));
 
+            if (!string.IsNullOrEmpty(Password))
+                spawnOptions.Add(Mst.Args.Names.RoomPassword, Password);
+
+            // TODO
             // You can send scene name to load that one in online mode
-            spawnOptions.Add(MstDictKeys.ROOM_ONLINE_SCENE_NAME, "");
+            //spawnOptions.Add(Mst.Args.Names.RoomOnlineScene);
 
             MatchmakingBehaviour.Instance.CreateNewRoom(RegionName, spawnOptions, () =>
             {

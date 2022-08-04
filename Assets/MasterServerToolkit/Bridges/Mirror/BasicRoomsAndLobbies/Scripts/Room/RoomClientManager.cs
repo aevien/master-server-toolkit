@@ -1,11 +1,12 @@
 #if MIRROR
-using kcp2k;
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using Mirror;
-using Mirror.SimpleWeb;
+using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking
 {
@@ -21,20 +22,28 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
         #endregion
 
+        private string currentOnlineRoomScene = string.Empty;
+        private string currentOfflineRoomScene = string.Empty;
+
         /// <summary>
         /// Mirror network manager
         /// </summary>
-        public NetworkManager RoomNetworkManager => NetworkManager.singleton;
+        protected RoomNetworkManager networkManager => NetworkManager.singleton as RoomNetworkManager;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            currentOfflineRoomScene = offlineRoomScene;
+        }
 
         protected override void Start()
         {
             base.Start();
 
-            // Start listening to OnServerStartedEvent of our MirrorNetworkManager
-            if (NetworkManager.singleton is RoomNetworkManager manager)
+            if (networkManager)
             {
-                manager.OnConnectedEvent += Manager_OnConnectedEvent;
-                manager.OnDisconnectedEvent += Manager_OnDisconnectedEvent;
+                networkManager.OnConnectedEvent += NetworkManager_OnConnectedEvent;
+                networkManager.OnDisconnectedEvent += NetworkManager_OnDisconnectedEvent;
             }
             else
             {
@@ -46,38 +55,35 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             base.OnDestroy();
 
-            if (RoomNetworkManager is RoomNetworkManager manager)
+            if (networkManager)
             {
-                manager.OnConnectedEvent -= Manager_OnConnectedEvent;
-                manager.OnDisconnectedEvent -= Manager_OnDisconnectedEvent;
+                networkManager.OnConnectedEvent -= NetworkManager_OnConnectedEvent;
+                networkManager.OnDisconnectedEvent -= NetworkManager_OnDisconnectedEvent;
             }
         }
 
         protected override void StartConnection(RoomAccessPacket access)
         {
-            if (RoomNetworkManager is RoomNetworkManager manager)
+            if (isChangingZone)
+                StartDisconnection();
+
+            if (networkManager && !NetworkClient.isConnected)
             {
+                currentOnlineRoomScene = access.SceneName;
+
                 // Set room IP
-                manager.SetAddress(access.RoomIp);
-                manager.SetPort(access.RoomPort);
+                networkManager.SetAddress(access.RoomIp);
+                networkManager.SetPort(access.RoomPort);
 
-                // Set max connections(This is for Unet and Mirror only
-                manager.maxConnections = access.RoomMaxConnections;
+                logger.Info($"Start joining a room at {access.RoomIp}:{access.RoomPort}. Scene: {access.SceneName}");
+                logger.Info($"Custom info: {access.CustomOptions}");
 
-                // Start client
-                if (!NetworkClient.isConnected)
-                {
-                    logger.Info($"Start connection to room server at {access.RoomIp}:{access.RoomPort}");
-                    manager.StartClient();
-                }
-                else
-                {
-                    logger.Info("Already connected");
-                }
+                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Start joining a room at {access.RoomIp}:{access.RoomPort}");
+                networkManager.StartClient();
             }
             else
             {
-                logger.Error("Connection error");
+                logger.Info("Already connected");
             }
         }
 
@@ -86,17 +92,24 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// </summary>
         protected override void StartDisconnection()
         {
-            // Stop mirror client
-            if (RoomNetworkManager) RoomNetworkManager.StopClient();
+            if (isChangingZone)
+                currentOfflineRoomScene = SceneManager.GetActiveScene().name;
+            else
+                currentOfflineRoomScene = offlineRoomScene;
+
+            if (networkManager)
+                networkManager.StopClient();
+
+            isChangingZone = false;
         }
 
         /// <summary>
         /// Invoked when client connected to room server
         /// </summary>
         /// <param name="conn"></param>
-        protected virtual void Manager_OnConnectedEvent(NetworkConnection conn)
+        protected virtual void NetworkManager_OnConnectedEvent(NetworkConnection conn)
         {
-            logger.Info($"Waitin for access data. Timeout in {roomConnectionTimeout} sec.");
+            logger.Info($"Waiting for access data. Timeout in {roomConnectionTimeout} sec.");
 
             MstTimer.Instance.WaitWhile(() => !Mst.Client.Rooms.HasAccess, (isSuccess) =>
             {
@@ -118,7 +131,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                     Token = Mst.Client.Rooms.ReceivedAccess.Token
                 });
 
-                //logger.Info($"You have joined a room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
+                logger.Info($"You have joined the room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
             }, roomConnectionTimeout);
         }
 
@@ -126,9 +139,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// Invoked when client disconnected from room server
         /// </summary>
         /// <param name="conn"></param>
-        protected virtual void Manager_OnDisconnectedEvent(NetworkConnection conn)
+        protected virtual void NetworkManager_OnDisconnectedEvent(NetworkConnection conn)
         {
-            logger.Info("Room client was disconnected from room server");
+            logger.Info("You have just been disconnected from the server");
 
             NetworkClient.UnregisterHandler<ValidateRoomAccessResultMessage>();
             LoadOfflineScene();
@@ -148,7 +161,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             }
 
             logger.Debug("Access to server room is successfully validated");
-
             LoadOnlineScene();
         }
 
@@ -157,18 +169,19 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// </summary>
         protected virtual void LoadOnlineScene()
         {
-            ScenesLoader.LoadSceneByName(Mst.Client.Rooms.ReceivedAccess.SceneName, (progressValue) =>
+            logger.Info($"Loading online scene {currentOnlineRoomScene}".ToGreen());
+
+            ScenesLoader.LoadSceneByName(currentOnlineRoomScene, (progressValue) =>
             {
-                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
+                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% Please wait!");
             },
             () =>
             {
-                if (!NetworkClient.ready) NetworkClient.Ready();
+                if (!NetworkClient.ready)
+                    NetworkClient.Ready();
 
-                if (RoomNetworkManager.autoCreatePlayer)
-                {
+                if (networkManager.autoCreatePlayer)
                     NetworkClient.AddPlayer();
-                }
             });
         }
 
@@ -177,9 +190,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// </summary>
         protected virtual void LoadOfflineScene()
         {
-            if (!string.IsNullOrEmpty(offlineRoomScene))
+            if (!string.IsNullOrEmpty(currentOfflineRoomScene))
             {
-                ScenesLoader.LoadSceneByName(offlineRoomScene, (progressValue) =>
+                ScenesLoader.LoadSceneByName(currentOfflineRoomScene, (progressValue) =>
                 {
                     Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
                 }, null);

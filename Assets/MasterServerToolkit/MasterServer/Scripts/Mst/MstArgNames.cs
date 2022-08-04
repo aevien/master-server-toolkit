@@ -103,15 +103,15 @@
         public string RoomRegion => "-mstRoomRegion";
 
         /// <summary>
+        /// Send this cmd to load room gameplay scene or another one when connected to room server
+        /// </summary>
+        public string RoomOnlineScene => "-mstRoomOnlineScene";
+
+        /// <summary>
         /// Use this cmd to setup WebSockets mode on room server if you use WebGL version of client
         /// this feature works only is you server supports web sockets
         /// </summary>
         public string UseWebSockets => "-mstUseWebSockets";
-
-        /// <summary>
-        /// Send this cmd to load room gameplay scene or another one when connected to room server
-        /// </summary>
-        public string LoadScene => "-mstLoadScene";
 
         /// <summary>
         /// Use this cmd if youwant to connect to you database with some connection string

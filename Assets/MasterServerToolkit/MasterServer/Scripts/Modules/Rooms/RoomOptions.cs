@@ -22,7 +22,7 @@ namespace MasterServerToolkit.MasterServer
         /// Port, required to access the room 
         /// (Only used in the <see cref="RoomController.DefaultAccessProvider"/>)
         /// </summary>
-        public int RoomPort { get; set; } = -1;
+        public ushort RoomPort { get; set; } = 0;
 
         /// <summary>
         /// If true, room will appear in public listings
@@ -32,7 +32,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// If 0 - player number is not limited
         /// </summary>
-        public int MaxConnections { get; set; } = 0;
+        public ushort MaxConnections { get; set; } = 0;
 
         /// <summary>
         /// Room password
@@ -77,9 +77,9 @@ namespace MasterServerToolkit.MasterServer
         {
             Name = reader.ReadString();
             RoomIp = reader.ReadString();
-            RoomPort = reader.ReadInt32();
+            RoomPort = reader.ReadUInt16();
             IsPublic = reader.ReadBoolean();
-            MaxConnections = reader.ReadInt32();
+            MaxConnections = reader.ReadUInt16();
             Password = reader.ReadString();
             AccessTimeoutPeriod = reader.ReadSingle();
             Region = reader.ReadString();

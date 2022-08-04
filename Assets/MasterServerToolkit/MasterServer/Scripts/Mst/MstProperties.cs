@@ -503,7 +503,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public MstProperties FindByKey(string keyFilter)
         {
-            return new MstProperties(properties.Where(kvp => kvp.Key.Contains(keyFilter)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+            return new MstProperties(properties.Where(kvp => kvp.Key.StartsWith(keyFilter)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
         }
 
         /// <summary>

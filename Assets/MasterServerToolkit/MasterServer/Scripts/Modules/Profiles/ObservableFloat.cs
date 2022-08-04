@@ -12,41 +12,51 @@ namespace MasterServerToolkit.MasterServer
             _value = defaultValue;
         }
 
+        public override float Value
+        {
+            get => _value;
+            set
+            {
+                if (_value != value)
+                {
+                    _value = value;
+                    MarkDirty();
+                }
+            }
+        }
+
         /// <summary>
         /// Increments current value by <paramref name="value"/>
         /// </summary>
         /// <param name="value"></param>
-        public void Add(float value)
+        public bool Add(float value, float max = float.MaxValue)
         {
-            _value += value;
-            MarkDirty();
-        }
-
-        /// <summary>
-        /// Just sets current value
-        /// </summary>
-        /// <param name="value"></param>
-        public void Set(float value)
-        {
-            if (_value != value)
+            if (_value + value <= max)
             {
-                _value = value;
+                _value += value;
                 MarkDirty();
-            }
-        }
-
-        /// <summary>
-        /// Tries to take given <paramref name="amount"/> away from current value
-        /// </summary>
-        /// <param name="amount"></param>
-        /// <returns></returns>
-        public bool TryTake(float amount)
-        {
-            if (_value >= amount)
-            {
-                Add(-amount);
                 return true;
             }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Decrements current value by <paramref name="value"/>
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="min"></param>
+        /// <returns></returns>
+        public bool Subtract(float value, float min = float.MinValue)
+        {
+            if (_value - value >= min)
+            {
+                _value -= value;
+                MarkDirty();
+
+                return true;
+            }
+
             return false;
         }
 

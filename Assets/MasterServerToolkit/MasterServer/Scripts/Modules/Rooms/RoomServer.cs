@@ -1,18 +1,55 @@
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class RoomServer : ServerBehaviour
     {
+        #region INSPECTOR
+
         [Header("Components"), SerializeField]
         private RoomServerManager roomServerManager;
+
+        #endregion
+
+        /// <summary>
+        /// Singleton instance of the room server behaviour
+        /// </summary>
+        public static RoomServer Instance { get; private set; }
+
+        private void Awake()
+        {
+            // If instance of the server is already running
+            if (Instance != null)
+            {
+                // Destroy, if this is not the first instance
+                Destroy(gameObject);
+                return;
+            }
+
+            // Create new instance
+            Instance = this;
+
+            // Move to root, so that it won't be destroyed
+            // In case this instance is a child of another gameobject
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
+
+            // Set server behaviour to be able to use in all levels
+            DontDestroyOnLoad(gameObject);
+
+            autoStartInEditor = false;
+        }
 
         protected override void Start()
         {
             base.Start();
 
-            autoStartInEditor = false;
             RegisterMessageHandler(MstOpCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
         }
 
@@ -40,9 +77,19 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnStartedServer()
         {
-            logger.Info($"Room Server started and listening to: {serverIp}:{serverPort}");
             base.OnStartedServer();
-            if (roomServerManager) roomServerManager.OnServerStarted();
+
+            string sceneName = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
+
+            logger.Info($"Loading server online scene... Scene: {sceneName}");
+
+            ScenesLoader.LoadSceneByName(sceneName, null, () =>
+            {
+                logger.Info($"Room Server started and listening to: {serverIp}:{serverPort}");
+
+                if (roomServerManager)
+                    roomServerManager.OnServerStarted();
+            });
         }
 
         protected override void OnStoppedServer()
@@ -54,7 +101,10 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnPeerDisconnected(IPeer peer)
         {
-            if (roomServerManager) roomServerManager.OnPeerDisconnected(peer.Id);
+            logger.Info($"Peer {peer.Id} disconnected");
+
+            if (roomServerManager) 
+                roomServerManager.OnPeerDisconnected(peer.Id);
         }
 
         #region MESSAGE_HANDLERS

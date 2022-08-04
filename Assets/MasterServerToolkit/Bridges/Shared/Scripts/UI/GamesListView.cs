@@ -30,8 +30,8 @@ namespace MasterServerToolkit.Games
             base.Awake();
 
             // Listen to show/hide events
-            Mst.Events.AddEventListener(MstEventKeys.showGamesListView, OnShowGamesListEventHandler);
-            Mst.Events.AddEventListener(MstEventKeys.hideGamesListView, OnHideGamesListEventHandler);
+            Mst.Events.AddListener(MstEventKeys.showGamesListView, OnShowGamesListEventHandler);
+            Mst.Events.AddListener(MstEventKeys.hideGamesListView, OnHideGamesListEventHandler);
         }
 
         protected override void Start()
@@ -153,7 +153,7 @@ namespace MasterServerToolkit.Games
                     gamePlayersBtn.name = $"gamePlayersLable_{index}";
                     gamePlayersBtn.AddOnClickListener(() =>
                     {
-                        Mst.Events.Invoke(MstEventKeys.showPlayersListView, new EventMessage(gameInfo.Id));
+                        Mst.Events.Invoke(MstEventKeys.showPlayersListView, gameInfo.Id);
                         Hide();
                     });
 

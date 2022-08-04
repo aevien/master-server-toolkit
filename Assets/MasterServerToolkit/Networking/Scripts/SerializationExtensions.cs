@@ -462,7 +462,7 @@ namespace MasterServerToolkit.Networking
 
             if (dictionary != null && dictionary.Count > 0)
             {
-                readableString = string.Join(itemsSeparator, dictionary.Select(p => p.Key + $"{kvpSeparator}" + (!string.IsNullOrEmpty(p.Value) ? p.Value : "-")).ToArray());
+                readableString = string.Join(itemsSeparator, dictionary.Select(p => p.Key + $"{kvpSeparator}" + (!string.IsNullOrEmpty(p.Value) ? p.Value : string.Empty)).ToArray());
             }
 
             return readableString;

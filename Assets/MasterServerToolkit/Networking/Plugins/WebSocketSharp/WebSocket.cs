@@ -221,7 +221,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="buffer"></param>
         public void Send(byte[] buffer)
         {
-            socket.SendAsync(buffer, null);
+            if (socket != null && socket.IsAlive)
+                socket.SendAsync(buffer, null);
         }
 
         /// <summary>
@@ -262,7 +263,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="reason"></param>
         public void Close(ushort code, string reason = "")
         {
-            socket.CloseAsync(code, reason);
+            socket?.CloseAsync(code, reason);
         }
 #endif
     }

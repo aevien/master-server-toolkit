@@ -87,6 +87,9 @@ namespace MasterServerToolkit.MasterServer
         public static ushort GetLobbyMemberData = nameof(GetLobbyMemberData).ToUint16Hash();
         public static ushort GetLobbyInfo = nameof(GetLobbyInfo).ToUint16Hash();
 
+        public static ushort GetZoneRoomInfo = nameof(GetZoneRoomInfo).ToUint16Hash();
+        public static ushort GetZoneRoomAccess = nameof(GetZoneRoomAccess).ToUint16Hash();
+
         public static ushort ClientProfileRequest = nameof(ClientProfileRequest).ToUint16Hash();
         public static ushort ServerProfileRequest = nameof(ServerProfileRequest).ToUint16Hash();
         public static ushort UpdateServerProfile = nameof(UpdateServerProfile).ToUint16Hash();

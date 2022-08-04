@@ -6,7 +6,6 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.MasterServer
 {
-    [AddComponentMenu("Master Server Toolkit/SpawnerBehaviour")]
     public class SpawnerBehaviour : MonoBehaviour
     {
         #region INSPECTOR

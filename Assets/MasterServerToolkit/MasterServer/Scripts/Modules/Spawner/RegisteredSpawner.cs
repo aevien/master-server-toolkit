@@ -23,19 +23,21 @@ namespace MasterServerToolkit.MasterServer
 
         private readonly Queue<SpawnTask> _queue;
         private readonly HashSet<SpawnTask> _startingProcesses;
+        private Logger logger;
 
         public int ProcessesRunning { get; private set; }
 
         private HashSet<SpawnTask> _beingSpawned;
 
-        public RegisteredSpawner(int spawnerId, IPeer peer, SpawnerOptions options)
+        public RegisteredSpawner(int spawnerId, IPeer peer, SpawnerOptions options, Logger logger)
         {
+            this.logger = logger;
+            _queue = new Queue<SpawnTask>();
+            _beingSpawned = new HashSet<SpawnTask>();
+
             SpawnerId = spawnerId;
             Peer = peer;
             Options = options;
-
-            _queue = new Queue<SpawnTask>();
-            _beingSpawned = new HashSet<SpawnTask>();
         }
 
         public int CalculateFreeSlotsCount()
@@ -107,14 +109,14 @@ namespace MasterServerToolkit.MasterServer
                 SpawnTaskUniqueCode = task.UniqueCode
             };
 
-            var msg = Mst.Create.Message((ushort)MstOpCodes.SpawnProcessRequest, data);
+            var msg = Mst.Create.Message(MstOpCodes.SpawnProcessRequest, data);
 
             Peer.SendMessage(msg, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
                     task.Abort();
-                    Logs.Error("Spawn request was not handled. Status: " + status + " | " + response.AsString("Unknown Error"));
+                    logger.Error($"Spawn request was not handled. Status: {status} | {response.AsString()}");
                     return;
                 }
             });

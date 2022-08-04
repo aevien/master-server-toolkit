@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -231,6 +231,75 @@ MonoBehaviour:
   resolutionMultiplier: 1
   screenshoKey: 107
   format: 3
+--- !u!1001 &277505142
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832461, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: m_Name
+      value: --ROOM_SERVER
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7eac22982fe8d5547be9015c7bdb378e, type: 3}
 --- !u!1001 &398029753
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -762,6 +831,7 @@ MonoBehaviour:
   signInAsGuest: 1
   username: qwerty
   password: qwerty12345
+  offlineRoomScene: Client
 --- !u!1 &515854429
 GameObject:
   m_ObjectHideFlags: 0
@@ -1550,149 +1620,6 @@ MonoBehaviour:
   OnRoomStartAbortedEvent:
     m_PersistentCalls:
       m_Calls: []
---- !u!1 &864259082
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 864259087}
-  - component: {fileID: 864259086}
-  - component: {fileID: 864259085}
-  - component: {fileID: 864259084}
-  - component: {fileID: 864259088}
-  m_Layer: 0
-  m_Name: --ROOM_SERVER
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &864259084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 864259082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 04b192eca766e184694d2f09fde55690, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 0
-  initModulesAtStart: 1
-  autoLoadUserProfile: 1
-  forceClientMode: 1
-  allowGuestUsers: 1
-  terminateRoomWhenDisconnected: 1
-  terminateRoomWhenLastPlayerQuits: 0
-  terminateRoomDelay: 60
-  OnBeforeRoomRegisterEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 864259085}
-        m_TargetAssemblyTypeName: MasterServerToolkit.Bridges.FishNetworking.RoomNetworkManager,
-          MasterServerToolkit
-        m_MethodName: StartRoomServer
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnRoomRegisteredEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  OnRoomRegisterFailedEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 864259085}
-        m_TargetAssemblyTypeName: MasterServerToolkit.Bridges.FishNetworking.RoomNetworkManager,
-          MasterServerToolkit
-        m_MethodName: StopRoomServer
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnPlayerJoinedRoomEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  OnPlayerLeftRoomEvent:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &864259085
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 864259082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 37f9293ac5ed6ca4997283d324e73e4b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 0
---- !u!114 &864259086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 864259082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2c95dfde7d73b54dbbdc23155d35d36, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _refreshDefaultPrefabs: 0
-  _runInBackground: 1
-  _dontDestroyOnLoad: 1
-  _persistence: 0
-  _logging: {fileID: 11400000, guid: 36d2500f6fd077d4691cbc09333202a4, type: 2}
-  _spawnablePrefabs: {fileID: 11400000, guid: d8910c11a56a448468126fadd5e483b3, type: 2}
---- !u!4 &864259087
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 864259082}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 9
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &864259088
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 864259082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce8bbb58966cb45a7140f32da5327a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _startInOffline: 0
-  _offlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Client/Client.unity
-  _onlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room/Room.unity
-  _replaceScenes: 0
 --- !u!1001 &867986845
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1965,6 +1892,7 @@ MonoBehaviour:
   hideOnStart: 1
   allwaysOnTop: 0
   ignoreHideAll: 0
+  useRaycastBlock: 1
   logLevel: 3
   OnShowEvent:
     m_PersistentCalls:
@@ -3318,8 +3246,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7c6ece3147f0984e8f2adb725fe7382, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  logLevel: 3
   maxHeight: 1
-  smallTerminalRatio: 1
   toggleSpeed: 1000
   toggleHotkey: '`'
   toggleFullHotkey: '#`'
@@ -5336,7 +5264,7 @@ PrefabInstance:
     - target: {fileID: 801973862098218387, guid: 90d980f89194758419eb2a3aba567aac,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -25.000275
+      value: -25.000336
       objectReference: {fileID: 0}
     - target: {fileID: 801973863724863208, guid: 90d980f89194758419eb2a3aba567aac,
         type: 3}
@@ -7079,7 +7007,7 @@ PrefabInstance:
     - target: {fileID: 9209378979658972488, guid: d5b37a12852ccb84295ed49c7944d4d6,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -25.000275
+      value: -25.000336
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d5b37a12852ccb84295ed49c7944d4d6, type: 3}

@@ -39,7 +39,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                     { "avatarUrl", profileSettingsView.AvatarUrl }
                 };
 
-                Connection.SendMessage((ushort)MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), OnSaveProfileResponseCallback);
+                Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), OnSaveProfileResponseCallback);
             });
         }
 
