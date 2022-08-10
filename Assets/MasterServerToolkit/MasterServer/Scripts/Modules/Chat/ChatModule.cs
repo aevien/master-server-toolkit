@@ -641,7 +641,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var packet = message.Deserialize(new ChatMessagePacket());
+                var packet = message.AsPacket(new ChatMessagePacket());
 
                 if (!TryHandleChatMessage(packet, chatUser, message))
                 {

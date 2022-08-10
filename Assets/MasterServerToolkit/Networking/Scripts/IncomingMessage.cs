@@ -183,7 +183,7 @@ namespace MasterServerToolkit.Networking
         /// <typeparam name="T"></typeparam>
         /// <param name="packetToBeFilled"></param>
         /// <returns></returns>
-        public T Deserialize<T>(T packetToBeFilled) where T : ISerializablePacket
+        public T AsPacket<T>(T packetToBeFilled) where T : ISerializablePacket
         {
             return MessageHelper.Deserialize(_data, packetToBeFilled);
         }
@@ -194,7 +194,7 @@ namespace MasterServerToolkit.Networking
         /// <typeparam name="T"></typeparam>
         /// <param name="packetCreator"></param>
         /// <returns></returns>
-        public IEnumerable<T> DeserializeList<T>(Func<T> packetCreator) where T : ISerializablePacket
+        public IEnumerable<T> AsPacketsList<T>(Func<T> packetCreator) where T : ISerializablePacket
         {
             return MessageHelper.DeserializeList(_data, packetCreator);
         }

@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Linq;
@@ -22,6 +23,8 @@ namespace MasterServerToolkit.Games
         protected override void Awake()
         {
             base.Awake();
+
+            RoomName = $"Room-{Mst.Helper.CreateFriendlyId()}";
 
             // Listen to show/hide events
             Mst.Events.AddListener(MstEventKeys.showCreateNewRoomView, OnShowCreateNewRoomEventHandler);

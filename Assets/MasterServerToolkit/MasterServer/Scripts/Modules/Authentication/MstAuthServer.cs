@@ -39,7 +39,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var data = response.Deserialize(new PeerAccountInfoPacket());
+                var data = response.AsPacket(new PeerAccountInfoPacket());
 
                 callback.Invoke(data, null);
             });

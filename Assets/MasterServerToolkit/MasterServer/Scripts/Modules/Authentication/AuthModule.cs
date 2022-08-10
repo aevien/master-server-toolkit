@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Networking;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -216,8 +217,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual string GenerateGuestUsername()
         {
-            string prefix = string.IsNullOrEmpty(guestPrefix) ? "user_" : guestPrefix;
-            return $"{prefix}{Mst.Helper.CreateGuidString()}";
+            string prefix = string.IsNullOrEmpty(guestPrefix) ? "user-" : guestPrefix;
+            return $"{prefix}{Mst.Helper.CreateFriendlyId()}";
         }
 
         /// <summary>

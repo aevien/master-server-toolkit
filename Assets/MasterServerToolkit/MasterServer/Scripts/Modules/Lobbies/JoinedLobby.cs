@@ -281,7 +281,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void HandleMemberPropertyChanged(IIncomingMessage message)
         {
-            var data = message.Deserialize(new LobbyMemberPropChangePacket());
+            var data = message.AsPacket(new LobbyMemberPropChangePacket());
 
             if (Id != data.LobbyId)
             {
@@ -316,7 +316,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void HandleLobbyChatMessageMsg(IIncomingMessage message)
         {
-            var msg = message.Deserialize(new LobbyChatPacket());
+            var msg = message.AsPacket(new LobbyChatPacket());
             OnChatMessageReceivedEvent?.Invoke(msg);
         }
 
@@ -337,7 +337,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void HandleLobbyMemberJoinedMsg(IIncomingMessage message)
         {
-            var member = message.Deserialize(new LobbyMemberData());
+            var member = message.AsPacket(new LobbyMemberData());
             Members[member.Username] = member;
             OnMemberJoinedEvent?.Invoke(member);
         }
@@ -351,7 +351,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void HandleLobbyMemberReadyStatusChangeMsg(IIncomingMessage message)
         {
-            var data = message.Deserialize(new StringPairPacket());
+            var data = message.AsPacket(new StringPairPacket());
             Members.TryGetValue(data.A, out LobbyMemberData member);
 
             if (member == null)
@@ -365,7 +365,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void HandlePlayerTeamChangeMsg(IIncomingMessage message)
         {
-            var data = message.Deserialize(new StringPairPacket());
+            var data = message.AsPacket(new StringPairPacket());
             Members.TryGetValue(data.A, out LobbyMemberData member);
 
             if (member == null)
@@ -393,7 +393,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void HandleLobbyPropertyChanged(IIncomingMessage message)
         {
-            var data = message.Deserialize(new StringPairPacket());
+            var data = message.AsPacket(new StringPairPacket());
             Properties[data.A] = data.B;
             OnLobbyPropertyChangeEvent?.Invoke(data.A, data.B);
         }

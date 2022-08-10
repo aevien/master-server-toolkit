@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   serverIp: 127.0.0.1
-  serverPort: 5001
+  serverPort: 5000
   timeout: 5
   maxAttemptsToConnect: 5
   waitAndConnect: 0.3
@@ -241,6 +241,8 @@ MonoBehaviour:
   hideOnStart: 1
   allwaysOnTop: 0
   ignoreHideAll: 0
+  useRaycastBlock: 1
+  logLevel: 3
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -4028,6 +4030,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
   m_MoveRepeatRate: 0.1
   m_XRTrackingOrigin: {fileID: 0}

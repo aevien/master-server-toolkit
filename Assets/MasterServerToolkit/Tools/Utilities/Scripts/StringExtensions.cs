@@ -4,29 +4,48 @@ namespace MasterServerToolkit.Extensions
 {
     public static class StringExtensions
     {
+        const uint FNV_offset_basis = 0x01000193;
+        const uint FNV_prime = 0x811c9dc5;
+
+        private static uint FNV_1a_hash(string value)
+        {
+            unchecked
+            {
+                uint result = FNV_offset_basis;
+
+                foreach (char c in value)
+                {
+                    result ^= c;
+                    result *= FNV_prime;
+                }
+
+                return result;
+            }
+        }
+
         public static ushort ToUint16Hash(this string value)
         {
             return (ushort)(value.ToUint32Hash() & 0xFFFF);
         }
 
+        /// <summary>
+        /// https://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static uint ToUint32Hash(this string value)
         {
-            unchecked
-            {
-                uint result = 3;
-                uint multiplier = 33;
+            return FNV_1a_hash(value);
+        }
 
-                // hash += 13 + 2   [41]
-                // hash += 13 + 25  [558]
-                // hash += 13 + 89  [7343]
-                // hash += 13 + 23  [95482]
-                // etc.
-
-                foreach (char c in value)
-                    result = result * multiplier + c;
-
-                return result;
-            }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public static uint ToUint32Hash(params string[] values)
+        {
+            return string.Join('_', values).ToUint32Hash();
         }
 
         public static string SplitByUppercase(this string value)

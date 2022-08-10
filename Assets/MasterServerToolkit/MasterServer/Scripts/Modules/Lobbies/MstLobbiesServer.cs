@@ -44,7 +44,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var memberData = response.Deserialize(new LobbyMemberData());
+                var memberData = response.AsPacket(new LobbyMemberData());
                 callback.Invoke(memberData, null);
             });
         }
@@ -70,7 +70,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var memberData = response.Deserialize(new LobbyDataPacket());
+                var memberData = response.AsPacket(new LobbyDataPacket());
                 callback.Invoke(memberData, null);
             });
         }

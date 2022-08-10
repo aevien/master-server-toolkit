@@ -2,7 +2,7 @@
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class MstClient : MstBaseClient
+    public partial class MstClient : MstBaseClient
     {
         public MstRoomsClient Rooms { get; private set; }
 

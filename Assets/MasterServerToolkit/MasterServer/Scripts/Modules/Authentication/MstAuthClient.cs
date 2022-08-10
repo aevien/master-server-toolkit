@@ -386,7 +386,7 @@ namespace MasterServerToolkit.MasterServer
 
                     Logs.Debug("Successfully signed in!".ToGreen());
 
-                    AccountInfo = response.Deserialize(new AccountInfoPacket());
+                    AccountInfo = response.AsPacket(new AccountInfoPacket());
 
                     // If RememberMe is checked on and we are not guset, then save auth token
                     if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
@@ -517,34 +517,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="callback"></param>
-        /// <param name="connection"></param>
-        private void UpdateAccount(SuccessCallback callback, IClientSocket connection)
-        {
-            if (!connection.IsConnected)
-            {
-                callback.Invoke(false, "Not connected to server");
-                return;
-            }
-
-            var data = AccountInfo.Properties.ToBytes();
-
-            connection.SendMessage(MstOpCodes.UpdateAccountInfo, data, (status, response) =>
-            {
-                if (status != ResponseStatus.Success)
-                {
-                    callback.Invoke(false, response.AsString("Unknown error"));
-                    return;
-                }
-
-                callback.Invoke(true, null);
-                OnPasswordChangedEvent?.Invoke();
-            });
-        }
-
-        /// <summary>
         /// Sends a new password to server
         /// </summary>
         /// <param name="email"></param>
@@ -573,6 +545,43 @@ namespace MasterServerToolkit.MasterServer
             }
 
             connection.SendMessage(MstOpCodes.ChangePassword, data.ToBytes(), (status, response) =>
+            {
+                if (status != ResponseStatus.Success)
+                {
+                    callback.Invoke(false, response.AsString("Unknown error"));
+                    return;
+                }
+
+                callback.Invoke(true, null);
+                OnPasswordChangedEvent?.Invoke();
+            });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="callback"></param>
+        public void SaveAccountProperties(SuccessCallback callback)
+        {
+            SaveAccountProperties(callback, Connection);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void SaveAccountProperties(SuccessCallback callback, IClientSocket connection)
+        {
+            if (!connection.IsConnected)
+            {
+                callback.Invoke(false, "Not connected to server");
+                return;
+            }
+
+            var data = AccountInfo.Properties.ToBytes();
+
+            connection.SendMessage(MstOpCodes.UpdateAccountInfo, data, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

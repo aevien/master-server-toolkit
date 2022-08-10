@@ -308,7 +308,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1005001217}
   - component: {fileID: 1005001216}
-  - component: {fileID: 1005001218}
   m_Layer: 0
   m_Name: --MASTER_SERVER
   m_TagString: Untagged
@@ -333,12 +332,11 @@ MonoBehaviour:
   permissions: []
   targetFrameRate: 60
   logLevel: 0
-  serverIP: 127.0.0.1
-  serverPort: 5001
+  serverIp: 127.0.0.1
+  serverPort: 5000
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  accessProviderTimeout: 5
   autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:
@@ -359,18 +357,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1005001218
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1005001215}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cc81ea37c15a4184d8799cdee76f80eb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1977181801
 GameObject:
   m_ObjectHideFlags: 0

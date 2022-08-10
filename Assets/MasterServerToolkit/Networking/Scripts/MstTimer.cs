@@ -77,9 +77,15 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
         {
+#if !UNITY_WEBGL
             StartCoroutine(WaitPingCoroutine(address, callback, timeout));
+#else
+            logger.Warn("You cannot use Ping in WebGL. Ping time will always be zero");
+            callback?.Invoke(0);
+#endif
         }
 
+#if !UNITY_WEBGL
         /// <summary>
         /// 
         /// </summary>
@@ -109,6 +115,7 @@ namespace MasterServerToolkit.Networking
             else
                 callback?.Invoke((int)(DateTime.Now - startTime).TotalMilliseconds);
         }
+#endif
 
         /// <summary>
         /// Waits while condition is false

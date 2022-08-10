@@ -56,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                Regions = response.Deserialize(new RegionsPacket()).Regions;
+                Regions = response.AsPacket(new RegionsPacket()).Regions;
 
                 int totalRegions = Regions.Count;
 
@@ -126,7 +126,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                Games = response.DeserializeList(() => new GameInfoPacket()).ToList();
+                Games = response.AsPacketsList(() => new GameInfoPacket()).ToList();
                 callback?.Invoke(Games);
             });
         }

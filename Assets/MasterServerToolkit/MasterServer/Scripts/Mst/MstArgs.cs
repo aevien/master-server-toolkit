@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MasterServerToolkit.Extensions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -181,7 +182,7 @@ namespace MasterServerToolkit.MasterServer
             WebAddress = AsString(Names.WebAddress, "127.0.0.1");
             WebPort = AsInt(Names.WebPort, 8080);
 
-            RoomName = AsString(Names.RoomName, "Room_" + Mst.Helper.CreateID_16());
+            RoomName = AsString(Names.RoomName, $"Room-{Mst.Helper.CreateFriendlyId()}");
             RoomIp = AsString(Names.RoomIp, "127.0.0.1");
             RoomPort = (ushort)AsInt(Names.RoomPort, 7777);
             RoomDefaultPort = AsInt(Names.RoomDefaultPort, 1500);

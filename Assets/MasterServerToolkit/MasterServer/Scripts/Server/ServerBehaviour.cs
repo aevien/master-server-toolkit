@@ -867,7 +867,7 @@ namespace MasterServerToolkit.MasterServer
         private void ServerAccessRequestHandler(IIncomingMessage message)
         {
             // Get access check options
-            var accessCheckOptions = message.Deserialize(new ProvideServerAccessCheckPacket());
+            var accessCheckOptions = message.AsPacket(new ProvideServerAccessCheckPacket());
 
             // Request access code from client
             Mst.Security.ValidateConnection(accessCheckOptions, (isSuccess, error) =>

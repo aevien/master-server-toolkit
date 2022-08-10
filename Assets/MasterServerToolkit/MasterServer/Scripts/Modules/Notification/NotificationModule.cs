@@ -333,7 +333,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // Parse notification
-                var notification = message.Deserialize(new NotificationPacket());
+                var notification = message.AsPacket(new NotificationPacket());
 
                 if (string.IsNullOrEmpty(notification.Message))
                 {

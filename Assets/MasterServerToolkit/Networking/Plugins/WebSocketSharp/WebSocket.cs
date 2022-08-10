@@ -1,5 +1,6 @@
 using MasterServerToolkit.MasterServer;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using WebSocketSharp;
@@ -80,7 +81,7 @@ namespace MasterServerToolkit.Networking
         private static extern int MstSocketRecvLength(int socketInstance);
 
         [DllImport("__Internal")]
-        private static extern void MstSocketClose(int socketInstance, string reason);
+        private static extern void MstSocketClose(int socketInstance, ushort code, string reason);
 
         [DllImport("__Internal")]
         private static extern int MstSocketError(int socketInstance, byte[] ptr, int length);
@@ -114,11 +115,22 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        /// Close web socket connection
+        /// Close websocket client connection
         /// </summary>
+        /// <param name="reason"></param>
         public void Close(string reason = "")
         {
-            MstSocketClose(m_NativeRef, reason);
+            MstSocketClose(m_NativeRef, 1000, reason);
+        }
+
+        /// <summary>
+        /// Close websocket client connection
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="reason"></param>
+        public void Close(ushort code, string reason = "")
+        {
+            MstSocketClose(m_NativeRef, code, reason);
         }
 
         /// <summary>

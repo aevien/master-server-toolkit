@@ -120,7 +120,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var data = response.Deserialize(new LobbyDataPacket());
+                var data = response.AsPacket(new LobbyDataPacket());
 
                 var joinedLobby = new JoinedLobby(data, connection);
 
@@ -341,7 +341,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var access = response.Deserialize(new RoomAccessPacket());
+                var access = response.AsPacket(new RoomAccessPacket());
 
                 Mst.Client.Rooms.TriggerAccessReceivedEvent(access);
 

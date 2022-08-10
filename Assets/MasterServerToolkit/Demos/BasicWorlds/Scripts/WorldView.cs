@@ -31,7 +31,7 @@ namespace MasterServerToolkit.Examples.BasicWorlds
                     return;
                 }
 
-                var game = response.Deserialize(new GameInfoPacket());
+                var game = response.AsPacket(new GameInfoPacket());
                 logger.Info(game);
 
                 Mst.Events.Invoke(MstEventKeys.goToZone, true);

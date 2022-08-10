@@ -548,7 +548,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Read options
-            var options = message.Deserialize(new SpawnerOptions());
+            var options = message.AsPacket(new SpawnerOptions());
 
             // Create new spawner
             var spawner = CreateSpawner(message.Peer, options);
@@ -566,7 +566,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         protected virtual void RegisterSpawnedProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.Deserialize(new RegisterSpawnedProcessPacket());
+            var data = message.AsPacket(new RegisterSpawnedProcessPacket());
 
             // Try get spawn task by ID
             if (!spawnTasksList.TryGetValue(data.SpawnId, out SpawnTask task))
@@ -596,7 +596,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void CompleteSpawnProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.Deserialize(new SpawnFinalizationPacket());
+            var data = message.AsPacket(new SpawnFinalizationPacket());
 
             if (spawnTasksList.TryGetValue(data.SpawnTaskId, out SpawnTask task))
             {
@@ -642,7 +642,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void SetSpawnedProcessesCountRequestHandler(IIncomingMessage message)
         {
-            var packet = message.Deserialize(new IntPairPacket());
+            var packet = message.AsPacket(new IntPairPacket());
 
             if (spawnersList.TryGetValue(packet.A, out RegisteredSpawner spawner))
             {

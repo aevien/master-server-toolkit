@@ -232,7 +232,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void ProvideRoomAccessCheckHandler(IIncomingMessage message)
         {
-            var provideRoomAccessCheckPacket = message.Deserialize(new ProvideRoomAccessCheckPacket());
+            var provideRoomAccessCheckPacket = message.AsPacket(new ProvideRoomAccessCheckPacket());
             var roomController = Mst.Server.Rooms.GetRoomController(provideRoomAccessCheckPacket.RoomId);
 
             if (roomController == null)

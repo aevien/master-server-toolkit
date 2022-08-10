@@ -81,7 +81,7 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                var data = message.Deserialize(new SpawnRequestPacket());
+                var data = message.AsPacket(new SpawnRequestPacket());
                 ISpawnerController controller = Mst.Server.Spawners.GetSpawnerController(data.SpawnerId);
 
                 if (controller == null)
@@ -109,7 +109,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         private static void KillProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.Deserialize(new KillSpawnedProcessRequestPacket());
+            var data = message.AsPacket(new KillSpawnedProcessRequestPacket());
             var controller = Mst.Server.Spawners.GetSpawnerController(data.SpawnerId) as SpawnerController;
 
             if (controller == null)

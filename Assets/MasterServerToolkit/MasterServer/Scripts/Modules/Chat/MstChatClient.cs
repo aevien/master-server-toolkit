@@ -191,7 +191,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var data = response.Deserialize(new ChatChannelsListPacket());
+                var data = response.AsPacket(new ChatChannelsListPacket());
                 callback.Invoke(data.Channels, null);
             });
         }
@@ -307,7 +307,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnChatMessageHandler(IIncomingMessage message)
         {
-            var packet = message.Deserialize(new ChatMessagePacket());
+            var packet = message.AsPacket(new ChatMessagePacket());
 
             if (OnMessageReceivedEvent != null)
                 OnMessageReceivedEvent?.Invoke(packet);

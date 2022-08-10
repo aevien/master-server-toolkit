@@ -96,14 +96,21 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string CreateFriendlyId()
         {
-            string id = string.Empty;
+            string rawValue = Mst.Helper.CreateGuidString().ToUint32Hash().ToString("X");
+            string result = "";
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < rawValue.Length; i++)
             {
-                id = $"{id}{Random.Next(0, 16):X}";
+                if (i % 4 == 0 && result.Length > 0)
+                    result += "-";
+
+                result += rawValue[i];
             }
 
-            return id.Insert(3, "-");
+            if (result.EndsWith("-"))
+                result = result.Substring(0, result.Length - 1);
+
+            return result;
         }
 
         /// <summary>

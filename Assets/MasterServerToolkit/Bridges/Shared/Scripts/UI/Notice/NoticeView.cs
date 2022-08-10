@@ -1,3 +1,4 @@
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Collections.Generic;
@@ -33,7 +34,7 @@ namespace MasterServerToolkit.Games
             base.Awake();
             Mst.Client.Notifications.OnNotificationReceivedEvent += Notifications_OnNotificationReceivedEvent;
 
-            Clear();
+            messagesContainer.RemoveChildren();
         }
 
         protected override void Start()
@@ -78,17 +79,6 @@ namespace MasterServerToolkit.Games
 
             noticeItems.RemoveAt(0);
             noticeItems.Add(noticeItem);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Clear()
-        {
-            foreach (NoticeItem i in noticeItems)
-            {
-                i.gameObject.SetActive(false);
-            }
         }
     }
 }

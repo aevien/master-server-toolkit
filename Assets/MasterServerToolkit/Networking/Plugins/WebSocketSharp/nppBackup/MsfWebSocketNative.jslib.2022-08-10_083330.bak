@@ -105,10 +105,10 @@ var LibraryWebSockets = {
         socket.messages = socket.messages.slice(1);
     },
 
-    MstSocketClose: function (socketInstance, code, reason) {
+    MstSocketClose: function (socketInstance, reason) {
         var socket = webSocketInstances[socketInstance];
         socket.socket.close();
-		console.log('Client closed connection with ' + code + ' by reason: ' + reason);
+		console.log('Client closed connection by reason: ' + reason); 
     },
 	
 	MstAlert:function(msg){

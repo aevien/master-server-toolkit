@@ -180,7 +180,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // Parse access data from message
-                var accessData = response.Deserialize(new RoomAccessPacket());
+                var accessData = response.AsPacket(new RoomAccessPacket());
 
                 // Create new access info
                 var access = new RoomAccessData()
