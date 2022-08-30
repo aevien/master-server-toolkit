@@ -202,5 +202,45 @@
         /// 
         /// </summary>
         public string ClientValidationTimeout => "-mstClientValidationTimeout";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpHost => "-mstSmtpHost";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpUsername => "-mstSmtpUsername";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpPassword => "-mstSmtpPassword";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpPort => "-mstSmtpPort";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpEnableSSL => "-mstSmtpEnableSSL";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpTimeout => "-mstSmtpTimeout";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpMailFrom => "-mstSmtpMailFrom";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string SmtpSenderDisplayName => "-mstSmtpSenderDisplayName";
     }
 }

@@ -62,65 +62,46 @@ namespace MasterServerToolkit.Games
             FindGames();
         }
 
-        /// <summary>
-        /// Sends request to master server to find games list
-        /// </summary>
-        public void FindGames()
-        {
-            ClearGamesList();
-
-            canvasGroup.interactable = false;
-
-            if (statusInfoText)
-            {
-                statusInfoText.text = "Finding rooms... Please wait!";
-                statusInfoText.gameObject.SetActive(true);
-            }
-
-            MstTimer.Instance.WaitForSeconds(0.2f, () =>
-            {
-                Mst.Client.Matchmaker.FindGames((games) =>
-                {
-                    canvasGroup.interactable = true;
-
-                    if (games.Count == 0)
-                    {
-                        statusInfoText.text = "No games found! Try to create your own one.";
-                        return;
-                    }
-
-                    statusInfoText.gameObject.SetActive(false);
-                    DrawGamesList(games);
-                });
-            });
-        }
-
         private void DrawGamesList(IEnumerable<GameInfoPacket> games)
         {
             if (listContainer)
             {
                 int index = 0;
 
+                var gameNumberCol = Instantiate(uiColLablePrefab, listContainer, false);
+                gameNumberCol.Text = "#";
+                gameNumberCol.name = "gameNumberCol";
+
                 var gameNameCol = Instantiate(uiColLablePrefab, listContainer, false);
                 gameNameCol.Text = "Name";
+                gameNameCol.name = "gameNameCol";
 
                 var gameAddressCol = Instantiate(uiColLablePrefab, listContainer, false);
                 gameAddressCol.Text = "Address";
+                gameAddressCol.name = "gameAddressCol";
 
                 var gameRegionCol = Instantiate(uiColLablePrefab, listContainer, false);
                 gameRegionCol.Text = "Region";
+                gameRegionCol.name = "gameRegionCol";
 
                 var pingRegionCol = Instantiate(uiColLablePrefab, listContainer, false);
                 pingRegionCol.Text = "Ping";
+                pingRegionCol.name = "pingRegionCol";
 
                 var gamePlayersCol = Instantiate(uiColLablePrefab, listContainer, false);
                 gamePlayersCol.Text = "Players";
+                gamePlayersCol.name = "gamePlayersCol";
 
-                var ConnectBtnCol = Instantiate(uiColLablePrefab, listContainer, false);
-                ConnectBtnCol.Text = "#";
+                var connectBtnCol = Instantiate(uiColLablePrefab, listContainer, false);
+                connectBtnCol.Text = "Action";
+                connectBtnCol.name = "connectBtnCol";
 
                 foreach (GameInfoPacket gameInfo in games)
                 {
+                    var gameNumberLable = Instantiate(uiLablePrefab, listContainer, false);
+                    gameNumberLable.Text = $"{index + 1}";
+                    gameNumberLable.name = $"gameNumberLable_{index}";
+
                     var gameNameLable = Instantiate(uiLablePrefab, listContainer, false);
                     gameNameLable.Text = gameInfo.IsPasswordProtected ? $"{gameInfo.Name} <color=yellow>[Password]</color>" : gameInfo.Name;
                     gameNameLable.name = $"gameNameLable_{index}";
@@ -167,12 +148,12 @@ namespace MasterServerToolkit.Games
 
                     index++;
 
-                    Logs.Info(gameInfo);
+                    logger.Info(gameInfo);
                 }
             }
             else
             {
-                Logs.Error("Not all components are setup");
+                logger.Error("Not all components are setup");
             }
         }
 
@@ -185,6 +166,44 @@ namespace MasterServerToolkit.Games
                     Destroy(tr.gameObject);
                 }
             }
+        }
+
+        public void ShowCreateNewRoomView()
+        {
+            Mst.Events.Invoke(MstEventKeys.showCreateNewRoomView);
+        }
+
+        /// <summary>
+        /// Sends request to master server to find games list
+        /// </summary>
+        public void FindGames()
+        {
+            ClearGamesList();
+
+            canvasGroup.interactable = false;
+
+            if (statusInfoText)
+            {
+                statusInfoText.text = "Finding rooms... Please wait!";
+                statusInfoText.gameObject.SetActive(true);
+            }
+
+            MstTimer.Instance.WaitForSeconds(0.2f, () =>
+            {
+                Mst.Client.Matchmaker.FindGames((games) =>
+                {
+                    canvasGroup.interactable = true;
+
+                    if (games.Count == 0)
+                    {
+                        statusInfoText.text = "No games found! Try to create your own one.";
+                        return;
+                    }
+
+                    statusInfoText.gameObject.SetActive(false);
+                    DrawGamesList(games);
+                });
+            });
         }
     }
 }

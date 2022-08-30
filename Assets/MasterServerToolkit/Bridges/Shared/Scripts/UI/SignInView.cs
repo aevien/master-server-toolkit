@@ -53,7 +53,7 @@ namespace MasterServerToolkit.Games
         {
             if (!message.HasData()) throw new Exception("No message data defined");
 
-            var credentials = message.GetData<MstProperties>();
+            var credentials = message.As<MstProperties>();
 
             if (credentials.Has(MstDictKeys.USER_NAME) && credentials.Has(MstDictKeys.USER_PASSWORD))
                 SetInputFieldsValues(credentials.AsString(MstDictKeys.USER_NAME), credentials.AsString(MstDictKeys.USER_PASSWORD));
@@ -78,7 +78,10 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void SignIn()
         {
-            AuthBehaviour.Instance.SignIn(Username, Password);
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.SignIn(Username, Password);
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>
@@ -86,7 +89,10 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void SignInAsGuest()
         {
-            AuthBehaviour.Instance.SignInAsGuest();
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.SignInAsGuest();
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>
@@ -95,6 +101,7 @@ namespace MasterServerToolkit.Games
         public void ShowSignUpView()
         {
             Mst.Events.Invoke(MstEventKeys.showSignUpView);
+            Hide();
         }
 
         /// <summary>
@@ -103,6 +110,7 @@ namespace MasterServerToolkit.Games
         public void ShowResetPasswordCodeView()
         {
             Mst.Events.Invoke(MstEventKeys.showPasswordResetCodeView);
+            Hide();
         }
 
         /// <summary>

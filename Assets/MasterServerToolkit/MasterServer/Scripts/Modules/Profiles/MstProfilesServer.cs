@@ -41,14 +41,14 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void FillProfileValues(ObservableServerProfile profile, SuccessCallback callback)
         {
-            FillProfileValues(profile, callback, Connection);
+            FillInProfileValues(profile, callback, Connection);
         }
 
         /// <summary>
         /// Sends a request to server, retrieves all profile values, and applies them to a provided
         /// profile
         /// </summary>
-        public void FillProfileValues(ObservableServerProfile profile, SuccessCallback callback, IClientSocket connection)
+        public void FillInProfileValues(ObservableServerProfile profile, SuccessCallback callback, IClientSocket connection)
         {
             if (!connection.IsConnected)
             {
@@ -56,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.ServerProfileRequest, profile.UserId, (status, response) =>
+            connection.SendMessage(MstOpCodes.ServerFillInProfileValues, profile.UserId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -139,7 +139,7 @@ namespace MasterServerToolkit.MasterServer
                             profile.ClearUpdates();
                         }
 
-                        connection.SendMessage(MstOpCodes.UpdateServerProfile, ms.ToArray());
+                        connection.SendMessage(MstOpCodes.ServerUpdateProfileValues, ms.ToArray());
                     }
                 }
 

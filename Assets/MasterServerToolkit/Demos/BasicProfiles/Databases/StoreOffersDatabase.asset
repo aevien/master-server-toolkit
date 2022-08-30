@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68e2bba493f8d3643a18fbcd22b8f691, type: 3}
+  m_Name: StoreOffersDatabase
+  m_EditorClassIdentifier: 
+  offers:
+  - id: shield
+    name: Shield
+    iconSprite: {fileID: 8180670326437456799, guid: 18576976932cd9b47b060636a751bd1f,
+      type: 3}
+    price: 1000
+    currency: silver
+  - id: sword
+    name: Sword
+    iconSprite: {fileID: 98000571096203240, guid: 041ee6d92b0409840ab12c6eca56f221,
+      type: 3}
+    price: 500
+    currency: bronze
+  - id: helmet
+    name: Helmet
+    iconSprite: {fileID: 9181046262538206353, guid: 041ee6d92b0409840ab12c6eca56f221,
+      type: 3}
+    price: 200
+    currency: silver
+  - id: craft-book
+    name: Craft book
+    iconSprite: {fileID: -1965123881641317283, guid: 041ee6d92b0409840ab12c6eca56f221,
+      type: 3}
+    price: 50
+    currency: gold

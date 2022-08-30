@@ -42,13 +42,13 @@ namespace MasterServerToolkit.Games
             switch (status)
             {
                 case ConnectionStatus.Connected:
-                    RepaintStatus($"Client is connected\n{address}", onlineStatusColor);
+                    RepaintStatus($"Client is connected to\n{address}", onlineStatusColor);
                     break;
                 case ConnectionStatus.Disconnected:
                     RepaintStatus("Client is offline", offlineStatusColor);
                     break;
                 case ConnectionStatus.Connecting:
-                    RepaintStatus($"Client is connecting\n{address}", connectingStatusColor);
+                    RepaintStatus($"Client is connecting to\n{address}", connectingStatusColor);
                     break;
                 default:
                     RepaintStatus($"Unknown status", unknownStatusColor);
@@ -60,9 +60,6 @@ namespace MasterServerToolkit.Games
         {
             if (changeStatusColor && statusImage != null)
                 statusImage.color = statusColor;
-
-            if (changeStatusColor && statusText != null)
-                statusText.color = statusColor;
 
             if (statusText != null)
                 statusText.text = statusMsg;

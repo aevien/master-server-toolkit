@@ -166,7 +166,7 @@ namespace MasterServerToolkit.Games
             if (gameInfo.IsPasswordProtected)
             {
                 Mst.Events.Invoke(MstEventKeys.showPasswordDialogBox,
-                    new PasswordInputDialoxBoxEventMessage("Room is required the password. Please enter room password below", () =>
+                    new PasswordInputDialoxBoxEventMessage("Room requires the password. Please enter room password below", () =>
                     {
                         // Get password if was set
                         string password = Mst.Options.AsString(Mst.Args.Names.RoomPassword);

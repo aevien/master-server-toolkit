@@ -5,7 +5,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class ChatChannel
     {
-        private Dictionary<string, ChatUserPeerExtension> channelUsers;
+        private readonly Dictionary<string, ChatUserPeerExtension> channelUsers = new Dictionary<string, ChatUserPeerExtension>();
 
         /// <summary>
         /// Name of the channel
@@ -20,7 +20,6 @@ namespace MasterServerToolkit.MasterServer
         public ChatChannel(string name)
         {
             Name = name;
-            channelUsers = new Dictionary<string, ChatUserPeerExtension>();
         }
 
         /// <summary>
@@ -137,7 +136,7 @@ namespace MasterServerToolkit.MasterServer
             // Override name to be in a "standard" format (uppercase letters and etc.)
             packet.Receiver = Name;
 
-            var msg = Mst.Create.Message((ushort)MstOpCodes.ChatMessage, packet);
+            var msg = Mst.Create.Message(MstOpCodes.ChatMessage, packet);
 
             foreach (var user in channelUsers.Values)
             {

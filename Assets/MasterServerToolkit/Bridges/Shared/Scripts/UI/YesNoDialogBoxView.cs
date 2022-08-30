@@ -4,37 +4,38 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Games
 {
-    [RequireComponent(typeof(UIView))]
     public class YesNoDialogBoxView : PopupViewComponent
     {
-        public override void OnOwnerStart()
+        protected override void Awake()
         {
+            base.Awake();
+
             Mst.Events.AddListener(MstEventKeys.showYesNoDialogBox, OnShowDialogBoxEventHandler);
             Mst.Events.AddListener(MstEventKeys.hideYesNoDialogBox, OnHideDialogBoxEventHandler);
         }
 
         private void OnShowDialogBoxEventHandler(EventMessage message)
         {
-            var messageData = message.GetData<YesNoDialogBoxEventMessage>();
+            var messageData = message.As<YesNoDialogBoxEventMessage>();
 
             SetLables(messageData.Message);
 
             SetButtonsClick(() =>
             {
                 messageData.YesCallback?.Invoke();
-                Owner.Hide();
+                Hide();
             }, () =>
             {
                 messageData.NoCallback?.Invoke();
-                Owner.Hide();
+                Hide();
             });
 
-            Owner.Show();
+            Show();
         }
 
         private void OnHideDialogBoxEventHandler(EventMessage message)
         {
-            Owner.Hide();
+            Hide();
         }
     }
 }

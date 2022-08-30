@@ -538,7 +538,6 @@ MonoBehaviour:
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  accessProviderTimeout: 5
   autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:

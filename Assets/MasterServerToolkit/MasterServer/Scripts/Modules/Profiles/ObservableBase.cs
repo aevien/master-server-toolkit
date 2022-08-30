@@ -2,6 +2,8 @@
 
 namespace MasterServerToolkit.MasterServer
 {
+    public delegate void ObservablePropertyDelegate(IObservableProperty property);
+
     /// <summary>
     /// Base observable value class, which should help out with some things
     /// </summary>
@@ -21,7 +23,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         public ushort Key { get; private set; }
-        public event Action<IObservableProperty> OnDirtyEvent;
+        public event ObservablePropertyDelegate OnDirtyEvent;
 
         /// <summary>
         /// Converts property value to readable string

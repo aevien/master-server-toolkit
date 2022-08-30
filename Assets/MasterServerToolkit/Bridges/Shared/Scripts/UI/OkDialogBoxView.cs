@@ -4,33 +4,34 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Games
 {
-    [RequireComponent(typeof(UIView))]
     public class OkDialogBoxView : PopupViewComponent
     {
-        public override void OnOwnerStart()
+        protected override void Awake()
         {
+            base.Awake();
+
             Mst.Events.AddListener(MstEventKeys.showOkDialogBox, OnShowDialogBoxEventHandler);
             Mst.Events.AddListener(MstEventKeys.hideOkDialogBox, OnHideDialogBoxEventHandler);
         }
 
         private void OnShowDialogBoxEventHandler(EventMessage message)
         {
-            var messageData = message.GetData<OkDialogBoxEventMessage>();
+            var messageData = message.As<OkDialogBoxEventMessage>();
 
             SetLables(messageData.Message);
 
             SetButtonsClick(() =>
             {
                 messageData.OkCallback?.Invoke();
-                Owner.Hide();
+                Hide();
             });
 
-            Owner.Show();
+            Show();
         }
 
         private void OnHideDialogBoxEventHandler(EventMessage message)
         {
-            Owner.Hide();
+            Hide();
         }
     }
 }

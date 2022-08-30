@@ -55,9 +55,6 @@ namespace MasterServerToolkit.Games
             if (changeStatusColor && statusImage != null)
                 statusImage.color = statusColor;
 
-            if (changeStatusColor && statusText != null)
-                statusText.color = statusColor;
-
             if (statusText != null)
                 statusText.text = statusMsg;
         }

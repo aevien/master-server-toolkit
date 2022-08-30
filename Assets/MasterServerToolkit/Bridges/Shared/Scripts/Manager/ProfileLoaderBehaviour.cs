@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.Games
@@ -25,6 +26,11 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public ObservableProfile Profile { get; protected set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool HasProfile => Profile != null;
+
         protected override void Awake()
         {
             base.Awake();
@@ -47,7 +53,7 @@ namespace MasterServerToolkit.Games
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Loading profile... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.2f, () =>
+            Tweener.DelayedCall(0.1f, () =>
             {
                 Mst.Client.Profiles.FillInProfileValues(Profile, (isSuccessful, error) =>
                 {
@@ -61,6 +67,7 @@ namespace MasterServerToolkit.Games
                     else
                     {
                         logger.Error($"Could not load user profile. Error: {error}");
+
                         OnProfileLoadFailed();
                         OnProfileLoadFailedEvent?.Invoke();
                     }

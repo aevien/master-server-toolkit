@@ -4,12 +4,11 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Games
 {
-    [RequireComponent(typeof(UIView))]
     public class LoadingInfoView : PopupViewComponent
     {
-        public override void OnOwnerAwake()
+        protected override void Awake()
         {
-            base.OnOwnerAwake();
+            base.Awake();
 
             Mst.Events.AddListener(MstEventKeys.showLoadingInfo, OnShowLoadingInfoEventHandler);
             Mst.Events.AddListener(MstEventKeys.hideLoadingInfo, OnHideLoadingInfoEventHandler);
@@ -17,13 +16,13 @@ namespace MasterServerToolkit.Games
 
         private void OnShowLoadingInfoEventHandler(EventMessage message)
         {
-            SetLables(message.GetData<string>());
-            Owner.Show();
+            SetLables(message.As<string>());
+            Show();
         }
 
         private void OnHideLoadingInfoEventHandler(EventMessage message)
         {
-            Owner.Hide();
+            Hide();
         }
     }
 }

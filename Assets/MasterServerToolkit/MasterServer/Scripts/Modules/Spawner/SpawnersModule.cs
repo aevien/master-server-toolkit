@@ -466,7 +466,7 @@ namespace MasterServerToolkit.MasterServer
             task.OnStatusChangedEvent += (status) =>
             {
                 // Send status update
-                var msg = Mst.Create.Message((ushort)MstOpCodes.SpawnRequestStatusChange, new SpawnStatusUpdatePacket()
+                var msg = Mst.Create.Message(MstOpCodes.SpawnRequestStatusChange, new SpawnStatusUpdatePacket()
                 {
                     SpawnId = task.Id,
                     Status = status

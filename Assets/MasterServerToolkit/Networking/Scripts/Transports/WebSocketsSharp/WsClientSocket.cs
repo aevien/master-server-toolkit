@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
@@ -68,12 +69,13 @@ namespace MasterServerToolkit.Networking
 
                     if (Status != ConnectionStatus.Connected)
                     {
-                        Status = ConnectionStatus.Connected;
                         _peer.SendDelayedMessages();
 
                         // Client should be validated
                         Mst.Security.AuthenticateConnection(this, (isSuccess, error) =>
                         {
+                            Status = ConnectionStatus.Connected;
+
                             if (isSuccess && fireEvent)
                                 OnConnectionOpenEvent?.Invoke(this);
                         });

@@ -68,7 +68,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "RoomsAndLobbies", "MasterAndSpawner");
-            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicFishNetRoomsAndLobbies", "Room", "Room.exe");
+            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "FishNet", "RoomsAndLobbies", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
@@ -113,7 +113,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
         private static void BuildSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "RoomsAndLobbies", "Spawner");
-            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicFishNetRoomsAndLobbies", "Room", "Room.exe");
+            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "FishNet", "RoomsAndLobbies", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {

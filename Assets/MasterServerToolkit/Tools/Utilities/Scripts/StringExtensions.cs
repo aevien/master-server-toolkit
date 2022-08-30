@@ -23,6 +23,11 @@ namespace MasterServerToolkit.Extensions
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static ushort ToUint16Hash(this string value)
         {
             return (ushort)(value.ToUint32Hash() & 0xFFFF);
@@ -48,6 +53,11 @@ namespace MasterServerToolkit.Extensions
             return string.Join('_', values).ToUint32Hash();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string SplitByUppercase(this string value)
         {
             return Regex.Replace(value, "[A-Z]", (match) =>
@@ -57,6 +67,11 @@ namespace MasterServerToolkit.Extensions
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string ToRed(this string value)
         {
 #if !UNITY_SERVER
@@ -66,6 +81,11 @@ namespace MasterServerToolkit.Extensions
 #endif
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string ToGreen(this string value)
         {
 #if !UNITY_SERVER
@@ -75,6 +95,11 @@ namespace MasterServerToolkit.Extensions
 #endif
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static string ToBlue(this string value)
         {
 #if !UNITY_SERVER

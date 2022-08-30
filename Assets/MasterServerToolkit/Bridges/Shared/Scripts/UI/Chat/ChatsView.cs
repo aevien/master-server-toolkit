@@ -20,9 +20,9 @@ namespace MasterServerToolkit.Games
         [SerializeField]
         private TMP_Text chatTitleText;
         [SerializeField]
-        private MessageItem incomingMessageItemPrefab;
+        private ChatMessageItemUI incomingMessageItemPrefab;
         [SerializeField]
-        private MessageItem outgoingMessageItemPrefab;
+        private ChatMessageItemUI outgoingMessageItemPrefab;
         [SerializeField]
         private ChatChannelItemUI chatChannelItemPrefab;
         [SerializeField]
@@ -62,20 +62,23 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// Sends message to anybody
         /// </summary>
-        private void TrySendMessage()
+        public void TrySendMessage()
         {
             if (!string.IsNullOrEmpty(messageInputField.text))
             {
                 if (string.IsNullOrEmpty(username))
                 {
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Username cannot be empty! Set username in UsernamePickView and try again"));
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Username cannot be empty! Set username in UsernamePickView and try again", () =>
+                    {
+                        Mst.Events.Invoke(MstEventKeys.showPickUsernameView);
+                    }));
+
                     return;
                 }
 
                 var message = new ChatMessagePacket()
                 {
                     Receiver = defaultChannelName,
-                    Sender = username,
                     Message = messageInputField.text.Length > 200 ? $"{messageInputField.text.Substring(0, 200)}..." : messageInputField.text,
                     MessageType = ChatMessageType.ChannelMessage
                 };

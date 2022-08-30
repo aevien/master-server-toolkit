@@ -65,7 +65,10 @@ namespace MasterServerToolkit.Games
         {
             if (!Mst.Options.Has(MstDictKeys.RESET_PASSWORD_EMAIL)) throw new Exception("You have no reset email");
 
-            AuthBehaviour.Instance.ResetPassword(Mst.Options.AsString(MstDictKeys.RESET_PASSWORD_EMAIL), ResetCode, NewPassword);
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.ResetPassword(Mst.Options.AsString(MstDictKeys.RESET_PASSWORD_EMAIL), ResetCode, NewPassword);
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>

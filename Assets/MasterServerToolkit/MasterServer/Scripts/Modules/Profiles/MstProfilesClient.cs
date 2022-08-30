@@ -31,7 +31,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage(MstOpCodes.ClientProfileRequest, profile.PropertyCount, (status, response) =>
+            connection.SendMessage(MstOpCodes.ClientFillInProfileValues, profile.PropertyCount, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

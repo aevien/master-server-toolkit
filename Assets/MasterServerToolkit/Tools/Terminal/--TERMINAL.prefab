@@ -50,7 +50,7 @@ MonoBehaviour:
   toggleHotkey: '`'
   toggleFullHotkey: '#`'
   bufferSize: 512
-  consoleFont: {fileID: 12800000, guid: dc65740991f13e34696f269a9a6af012, type: 3}
+  consoleFont: {fileID: 0}
   inputCaret: '>'
   showGUIButtons: 0
   rightAlignButtons: 0

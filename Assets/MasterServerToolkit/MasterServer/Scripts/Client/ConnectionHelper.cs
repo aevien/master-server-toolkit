@@ -91,11 +91,6 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        protected virtual void OnDestroy()
-        {
-            Connection?.Close();
-        }
-
         protected virtual void OnValidate()
         {
             maxAttemptsToConnect = Mathf.Clamp(maxAttemptsToConnect, 1, int.MaxValue);
@@ -109,7 +104,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual IClientSocket ConnectionFactory()
         {
-            return Mst.Connection;
+            return Mst.Client.Connection;
         }
 
         /// <summary>
@@ -145,13 +140,16 @@ namespace MasterServerToolkit.MasterServer
 
         public void StartConnection(string serverIp, int serverPort, int numberOfAttempts = 5)
         {
-            currentAttemptToConnect = 0;
-            maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
+            if(Connection != null)
+            {
+                currentAttemptToConnect = 0;
+                maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
 
-            Connection.AddConnectionOpenListener(OnConnectedEventHandler);
-            Connection.AddConnectionCloseListener(OnDisconnectedEventHandler, false);
+                Connection.AddConnectionOpenListener(OnConnectedEventHandler);
+                Connection.AddConnectionCloseListener(OnDisconnectedEventHandler, false);
 
-            StartConnectionProcess(serverIp, serverPort, numberOfAttempts);
+                StartConnectionProcess(serverIp, serverPort, numberOfAttempts);
+            }
         }
 
         protected virtual void StartConnectionProcess(string serverIp, int serverPort, int numberOfAttempts)

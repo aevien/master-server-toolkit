@@ -59,7 +59,7 @@ namespace MasterServerToolkit.MasterServer
             if (!roomServerManager) roomServerManager = GetComponent<RoomServerManager>();
 
             // Set the max number of connections
-            maxConnections = (ushort)roomServerManager.RoomOptions.MaxConnections;
+            maxConnections = roomServerManager.RoomOptions.MaxConnections;
 
             // Start server with room options
             StartServer(roomServerManager.RoomOptions.RoomIp, roomServerManager.RoomOptions.RoomPort);

@@ -24,7 +24,7 @@ namespace MasterServerToolkit.Games
         {
             base.Awake();
 
-            RoomName = $"Room-{Mst.Helper.CreateFriendlyId()}";
+            RoomName = $"Room#{Mst.Helper.CreateFriendlyId()}";
 
             // Listen to show/hide events
             Mst.Events.AddListener(MstEventKeys.showCreateNewRoomView, OnShowCreateNewRoomEventHandler);
@@ -112,8 +112,6 @@ namespace MasterServerToolkit.Games
 
         public void CreateNewMatch()
         {
-            Hide();
-
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room... Please wait!");
 
             Logs.Debug("Starting room... Please wait!");

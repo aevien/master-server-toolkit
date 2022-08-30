@@ -42,7 +42,10 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void RequestConfirmationCode()
         {
-            AuthBehaviour.Instance.RequestConfirmationCode();
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.RequestConfirmationCode();
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>
@@ -50,7 +53,10 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void ConfirmAccount()
         {
-            AuthBehaviour.Instance.ConfirmAccount(ConfirmationCode);
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.ConfirmAccount(ConfirmationCode);
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>
@@ -58,7 +64,10 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void SignOut()
         {
-            AuthBehaviour.Instance.SignOut();
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.SignOut();
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
     }
 }

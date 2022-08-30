@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System.Collections;
+using UnityEditor;
 using UnityEngine;
 
 namespace MasterServerToolkit.Utils
@@ -21,7 +22,6 @@ namespace MasterServerToolkit.Utils
         /// Logger assigned to this module
         /// </summary>
         protected Logging.Logger logger;
-
         /// <summary>
         /// Check if this object is not currently being destroyed
         /// </summary>
@@ -29,7 +29,7 @@ namespace MasterServerToolkit.Utils
         /// <summary>
         /// Current instance of this singleton
         /// </summary>
-        private static T _instance { get; set; }
+        protected static T _instance;
         /// <summary>
         /// 
         /// </summary>
@@ -60,7 +60,7 @@ namespace MasterServerToolkit.Utils
         {
             get
             {
-                if (!_instance && !isQuitting && !isNowDestroying)
+                if (_instance == null && !isQuitting && !isNowDestroying)
                     Create();
 
                 return _instance;

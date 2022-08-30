@@ -199,11 +199,7 @@ namespace MasterServerToolkit.MasterServer
 
             if (IsAllowedToBeStartedInEditor())
             {
-                // Start the server on next frame
-                MstTimer.Instance.WaitForEndOfFrame(() =>
-                {
-                    StartServer();
-                });
+                StartServer();
             }
         }
 
@@ -214,11 +210,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnDestroy()
         {
-            if (socket != null)
-            {
-                socket.OnPeerConnectedEvent -= OnPeerConnectedEventHandle;
-                socket.OnPeerDisconnectedEvent -= OnPeerDisconnectedEventHandler;
-            }
+            StopServer();
         }
 
         /// <summary>
@@ -420,7 +412,14 @@ namespace MasterServerToolkit.MasterServer
         {
             MstTimer.Instance.OnTickEvent -= Instance_OnTickEvent;
             IsRunning = false;
-            socket?.Stop();
+
+            if (socket != null)
+            {
+                socket.OnPeerConnectedEvent -= OnPeerConnectedEventHandle;
+                socket.OnPeerDisconnectedEvent -= OnPeerDisconnectedEventHandler;
+                socket.Stop();
+            }
+
             OnServerStoppedEvent?.Invoke();
             OnStoppedServer();
         }

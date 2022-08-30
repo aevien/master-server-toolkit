@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Logging;
+using MasterServerToolkit.Networking;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
@@ -50,7 +51,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected");
+                callback?.Invoke(false, "Not connected");
                 return;
             }
 
@@ -58,11 +59,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback?.Invoke(false, response.AsString("Unknown error"));
                     return;
                 }
 
-                callback.Invoke(true, null);
+                callback?.Invoke(true, null);
             });
         }
 
@@ -83,7 +84,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected");
+                callback?.Invoke(false, "Not connected");
                 return;
             }
 
@@ -91,11 +92,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback?.Invoke(false, response.AsString("Unknown error"));
                     return;
                 }
 
-                callback.Invoke(true, null);
+                callback?.Invoke(true, null);
             });
         }
 
@@ -114,7 +115,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected");
+                callback?.Invoke(false, "Not connected");
                 return;
             }
 
@@ -122,11 +123,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback?.Invoke(false, response.AsString("Unknown error"));
                     return;
                 }
 
-                callback.Invoke(true, null);
+                callback?.Invoke(true, null);
             });
         }
 
@@ -147,7 +148,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected");
+                callback?.Invoke(false, "Not connected");
                 return;
             }
 
@@ -155,11 +156,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback?.Invoke(false, response.AsString("Unknown error"));
                     return;
                 }
 
-                callback.Invoke(true, null);
+                callback?.Invoke(true, null);
             });
         }
 
@@ -179,7 +180,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(new List<ChatChannelInfo>(), "Not connected");
+                callback?.Invoke(new List<ChatChannelInfo>(), "Not connected");
                 return;
             }
 
@@ -187,12 +188,12 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(new List<ChatChannelInfo>(), response.AsString("Unknown error"));
+                    callback?.Invoke(new List<ChatChannelInfo>(), response.AsString("Unknown error"));
                     return;
                 }
 
                 var data = response.AsPacket(new ChatChannelsListPacket());
-                callback.Invoke(data.Channels, null);
+                callback?.Invoke(data.Channels, null);
             });
         }
 
@@ -211,7 +212,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(new List<string>(), "Not connected");
+                callback?.Invoke(new List<string>(), "Not connected");
                 return;
             }
 
@@ -219,13 +220,13 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(new List<string>(), response.AsString("Unknown error"));
+                    callback?.Invoke(new List<string>(), response.AsString("Unknown error"));
                     return;
                 }
 
                 var list = new List<string>().FromBytes(response.AsBytes());
 
-                callback.Invoke(list, null);
+                callback?.Invoke(list, null);
             });
         }
 
@@ -236,12 +237,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         public void SendToDefaultChannel(string message, SuccessCallback callback)
         {
-            SendMessage(new ChatMessagePacket()
-            {
-                Receiver = "",
-                Message = message,
-                MessageType = ChatMessageType.ChannelMessage
-            }, callback, Connection);
+            SendChannelMessage(string.Empty, message, callback);
         }
 
         /// <summary>
@@ -295,11 +291,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback?.Invoke(false, response.AsString("Unknown error"));
                     return;
                 }
 
-                callback.Invoke(true, null);
+                callback?.Invoke(true, null);
             });
         }
 
@@ -308,9 +304,7 @@ namespace MasterServerToolkit.MasterServer
         private void OnChatMessageHandler(IIncomingMessage message)
         {
             var packet = message.AsPacket(new ChatMessagePacket());
-
-            if (OnMessageReceivedEvent != null)
-                OnMessageReceivedEvent?.Invoke(packet);
+            OnMessageReceivedEvent?.Invoke(packet);
         }
 
         private void OnUserLeftChannelHandler(IIncomingMessage message)

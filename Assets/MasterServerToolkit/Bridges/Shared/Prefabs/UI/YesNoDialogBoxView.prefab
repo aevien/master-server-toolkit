@@ -67,7 +67,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 5
+  m_Spacing: 15
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -228,7 +228,6 @@ GameObject:
   - component: {fileID: 8043076935379391331}
   - component: {fileID: 8043076935379391328}
   - component: {fileID: 8043076935379391329}
-  - component: {fileID: 8043076935379391334}
   - component: {fileID: 532399012214945197}
   m_Layer: 5
   m_Name: YesNoDialogBoxView
@@ -309,7 +308,7 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &8043076935379391334
+--- !u!114 &532399012214945197
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -318,14 +317,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 8043076935379391333}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: db428ea3aafb7a542bc09c4dbe34c575, type: 3}
+  m_Script: {fileID: 11500000, guid: 3d88787f65ce7b6428c326e64fd48161, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  id: OkDialogBoxView
+  id: YesNoDialogBoxView
   hideOnStart: 1
   allwaysOnTop: 1
   ignoreHideAll: 0
   useRaycastBlock: 1
+  blockInput: 0
   logLevel: 3
   OnShowEvent:
     m_PersistentCalls:
@@ -339,18 +339,6 @@ MonoBehaviour:
   OnHideFinishedEvent:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &532399012214945197
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8043076935379391333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d88787f65ce7b6428c326e64fd48161, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
   lables:
   - {fileID: 8043076936005938256}
   buttons:
@@ -792,7 +780,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 8043076935379391334}
+      objectReference: {fileID: 0}
     - target: {fileID: 4180842736270822485, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
@@ -969,6 +957,11 @@ PrefabInstance:
       propertyPath: m_textInfo.characterCount
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: No
+      objectReference: {fileID: 0}
     - target: {fileID: 8783516876090211286, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
       propertyPath: m_text
@@ -1025,7 +1018,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 8043076935379391334}
+      objectReference: {fileID: 0}
     - target: {fileID: 4180842736270822485, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
@@ -1206,6 +1199,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_firstOverflowCharacterIndex
       value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Yes
       objectReference: {fileID: 0}
     - target: {fileID: 8783516876090211286, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}

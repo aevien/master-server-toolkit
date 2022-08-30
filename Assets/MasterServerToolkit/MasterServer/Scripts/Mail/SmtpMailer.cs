@@ -31,10 +31,25 @@ namespace MasterServerToolkit.MasterServer
         [Header("E-mail template"), SerializeField]
         protected TextAsset emailBodyTemplate;
 
+        string htmlTemplate = string.Empty;
+
         protected virtual void Awake()
         {
+            if (emailBodyTemplate)
+                htmlTemplate = emailBodyTemplate.text;
+
             logger = Mst.Create.Logger(typeof(SmtpMailer).Name);
             sendMailExceptions = new List<Exception>();
+
+            smtpHost = Mst.Args.AsString(Mst.Args.Names.SmtpHost, smtpHost);
+            smtpUsername = Mst.Args.AsString(Mst.Args.Names.SmtpUsername, smtpUsername);
+            smtpPassword = Mst.Args.AsString(Mst.Args.Names.SmtpPassword, smtpPassword);
+            smtpPort = Mst.Args.AsInt(Mst.Args.Names.SmtpPort, smtpPort);
+            enableSsl = Mst.Args.AsBool(Mst.Args.Names.SmtpEnableSSL, enableSsl);
+            timeoutInSeconds = Mst.Args.AsInt(Mst.Args.Names.SmtpTimeout, timeoutInSeconds);
+            mailFrom = Mst.Args.AsString(Mst.Args.Names.SmtpMailFrom, mailFrom);
+            senderDisplayName = Mst.Args.AsString(Mst.Args.Names.SmtpSenderDisplayName, senderDisplayName);
+
             SetupSmtpClient();
         }
 
@@ -114,11 +129,10 @@ namespace MasterServerToolkit.MasterServer
             try
             {
                 string messageBody = body;
+                string generatedMessageBody = htmlTemplate;
 
-                if (emailBodyTemplate)
+                if (!string.IsNullOrEmpty(htmlTemplate))
                 {
-                    string generatedMessageBody = emailBodyTemplate.text;
-
                     generatedMessageBody = generatedMessageBody.Replace("#{MESSAGE_SUBJECT}", subject);
                     generatedMessageBody = generatedMessageBody.Replace("#{MESSAGE_BODY}", body);
                     generatedMessageBody = generatedMessageBody.Replace("#{MESSAGE_YEAR}", DateTime.Now.Year.ToString());

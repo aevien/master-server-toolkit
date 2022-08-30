@@ -73,9 +73,9 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomId"></param>
         /// <param name="message"></param>
         /// <param name="callback"></param>
-        public void NotifyRoom(int roomId, IEnumerable<int> ignoreRecipients, string message, SuccessCallback callback)
+        public void NotifyRoom(int roomId, string message, SuccessCallback callback)
         {
-            NotifyRoom(roomId, ignoreRecipients, message, callback, Connection);
+            NotifyRoom(roomId, message, callback, Connection);
         }
 
         /// <summary>
@@ -84,9 +84,21 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomId"></param>
         /// <param name="message"></param>
         /// <param name="callback"></param>
-        public void NotifyRoom(int roomId, string message, SuccessCallback callback)
+        /// <param name="connection"></param>
+        public void NotifyRoom(int roomId, string message, SuccessCallback callback, IClientSocket connection)
         {
-            NotifyRoom(roomId, new List<int>(), message, callback, Connection);
+            NotifyRoom(roomId, new List<int>(), message, callback, connection);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="roomId"></param>
+        /// <param name="message"></param>
+        /// <param name="callback"></param>
+        public void NotifyRoom(int roomId, IEnumerable<int> ignoreRecipients, string message, SuccessCallback callback)
+        {
+            NotifyRoom(roomId, ignoreRecipients, message, callback, Connection);
         }
 
         /// <summary>

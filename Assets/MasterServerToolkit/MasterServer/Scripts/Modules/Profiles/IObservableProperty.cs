@@ -23,7 +23,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Invoked, when value gets dirty
         /// </summary>
-        event Action<IObservableProperty> OnDirtyEvent;
+        event ObservablePropertyDelegate OnDirtyEvent;
 
         /// <summary>
         /// Inform that property is changed

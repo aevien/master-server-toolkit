@@ -46,7 +46,10 @@ namespace MasterServerToolkit.Networking
 
             // Create list of main thread actions
             _mainThreadActions = new Queue<Action>();
+        }
 
+        protected virtual void Start()
+        {
             // Start timer
             StartCoroutine(StartTicker());
         }
@@ -77,6 +80,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="callback"></param>
         public void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
         {
+            if (_instance == null) return;
+
 #if !UNITY_WEBGL
             StartCoroutine(WaitPingCoroutine(address, callback, timeout));
 #else

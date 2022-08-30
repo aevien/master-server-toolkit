@@ -63,7 +63,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            Connection.SendMessage(MstOpCodes.RegisterRoomRequest, options, (status, response) =>
+            connection.SendMessage(MstOpCodes.RegisterRoomRequest, options, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -74,7 +74,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var roomId = response.AsInt();
 
-                var controller = new RoomController(roomId, Connection, options);
+                var controller = new RoomController(roomId, connection, options);
 
                 // Save the reference
                 _localCreatedRooms[roomId] = controller;
@@ -236,7 +236,15 @@ namespace MasterServerToolkit.MasterServer
 
             connection.SendMessage(MstOpCodes.PlayerLeftRoomRequest, packet, (status, response) =>
             {
-                callback.Invoke(status == ResponseStatus.Success, null);
+                if (status > ResponseStatus.Success)
+                {
+                    if (response != null)
+                        callback?.Invoke(false, response?.AsString("Unhandled error"));
+                }
+                else
+                {
+                    callback?.Invoke(true, string.Empty);
+                }
             });
         }
 

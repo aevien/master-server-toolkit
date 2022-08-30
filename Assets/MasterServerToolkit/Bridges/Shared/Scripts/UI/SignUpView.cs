@@ -78,7 +78,7 @@ namespace MasterServerToolkit.Games
         {
             if (!message.HasData()) throw new Exception("No message data defined");
 
-            var credentials = message.GetData<MstProperties>();
+            var credentials = message.As<MstProperties>();
 
             if (credentials.Has(MstDictKeys.USER_NAME) && credentials.Has(MstDictKeys.USER_PASSWORD))
                 SetInputFieldsValues(credentials.AsString(MstDictKeys.USER_NAME), credentials.AsString(MstDictKeys.USER_EMAIL), credentials.AsString(MstDictKeys.USER_PASSWORD));
@@ -103,7 +103,10 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void SignUp()
         {
-            AuthBehaviour.Instance.SignUp(Username, Email, Password);
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.SignUp(Username, Email, Password);
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>
@@ -112,6 +115,7 @@ namespace MasterServerToolkit.Games
         public void ShowSignInView()
         {
             Mst.Events.Invoke(MstEventKeys.showSignInView);
+            Hide();
         }
 
         /// <summary>

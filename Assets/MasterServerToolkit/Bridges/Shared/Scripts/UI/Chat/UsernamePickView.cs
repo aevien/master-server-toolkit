@@ -11,8 +11,17 @@ namespace MasterServerToolkit.Games
     {
         [Header("Components"), SerializeField]
         private TMP_InputField usernameInputField;
-        [SerializeField]
-        private TMP_Text messageText;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            Mst.Events.AddListener(MstEventKeys.showPickUsernameView, (message) =>
+            {
+                usernameInputField.text = SimpleNameGenerator.GenerateFirstName(Gender.Male);
+
+                Show();
+            });
+        }
 
         protected override void Start()
         {

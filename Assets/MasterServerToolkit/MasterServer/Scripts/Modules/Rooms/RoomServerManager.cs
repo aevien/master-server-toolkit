@@ -149,13 +149,24 @@ namespace MasterServerToolkit.MasterServer
         {
             base.OnInitialize();
 
-            // If we are on client side. It can be main menu, etc.
+            // Init anly if we are on server side.
             if (!Mst.Client.Rooms.IsClientMode)
             {
                 // Listen to master server connection status
                 Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
                 Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
             }
+        }
+
+        protected override IClientSocket ConnectionFactory()
+        {
+            if (!RoomToMasterConnector.Instance)
+            {
+                var connectorObject = new GameObject("--ROOM_CONNECTION_TO_MASTER");
+                connectorObject.AddComponent<RoomToMasterConnector>();
+            }
+
+            return RoomToMasterConnector.Instance.Connection;
         }
 
         private void OnConnectedToMasterEventHandler(IClientSocket client)
@@ -333,13 +344,13 @@ namespace MasterServerToolkit.MasterServer
                             logger.Error(e.Message);
                             callback?.Invoke(false, e.Message);
                         }
-                    });
+                    }, Connection);
                 }
                 catch (Exception e)
                 {
                     callback?.Invoke(false, e.Message);
                 }
-            });
+            }, Connection);
         }
 
         /// <summary>
@@ -366,7 +377,7 @@ namespace MasterServerToolkit.MasterServer
 
                 // Invoke notification
                 OnBeforeRoomRegisterEvent?.Invoke(RoomOptions);
-            });
+            }, Connection);
         }
 
         /// <summary>
@@ -450,7 +461,7 @@ namespace MasterServerToolkit.MasterServer
 
                 // Notify listeners
                 OnRoomRegisteredEvent?.Invoke(RoomController);
-            });
+            }, Connection);
         }
 
         /// <summary>
@@ -521,7 +532,7 @@ namespace MasterServerToolkit.MasterServer
             Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
                     new int[] { player.MasterPeerId },
                     $"Player {player.Username} has just joined the room",
-                    null);
+                    null, Connection);
         }
 
         /// <summary>
@@ -533,7 +544,7 @@ namespace MasterServerToolkit.MasterServer
             Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
                     new int[] { player.MasterPeerId },
                     $"Player {player.Username} has just left the room",
-                    null);
+                    null, Connection);
         }
 
         /// <summary>
@@ -544,7 +555,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (playersByUsername.TryGetValue(username, out RoomPlayer player))
             {
-                Mst.Server.Profiles.FillProfileValues(player.Profile, (isSuccess, error) =>
+                Mst.Server.Profiles.FillInProfileValues(player.Profile, (isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {

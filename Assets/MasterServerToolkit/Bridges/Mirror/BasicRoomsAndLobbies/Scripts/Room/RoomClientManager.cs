@@ -62,6 +62,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             }
         }
 
+        private void OnApplicationQuit()
+        {
+            StartDisconnection();
+        }
+
         protected override void StartConnection(RoomAccessPacket access)
         {
             if (isChangingZone)
@@ -69,8 +74,6 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
             if (networkManager && !NetworkClient.isConnected)
             {
-                currentOnlineRoomScene = access.SceneName;
-
                 // Set room IP
                 networkManager.SetAddress(access.RoomIp);
                 networkManager.SetPort(access.RoomPort);
@@ -169,6 +172,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// </summary>
         protected virtual void LoadOnlineScene()
         {
+            currentOnlineRoomScene = Mst.Client.Rooms.ReceivedAccess.SceneName;
+
             logger.Info($"Loading online scene {currentOnlineRoomScene}".ToGreen());
 
             ScenesLoader.LoadSceneByName(currentOnlineRoomScene, (progressValue) =>

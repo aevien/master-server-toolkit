@@ -69,7 +69,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorWorlds
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "Mirror", "BasicWorlds", "MasterAndSpawner");
-            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicWorlds", "Room", "Room.exe");
+            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "Mirror", "BasicWorlds", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
@@ -114,7 +114,7 @@ namespace MasterServerToolkit.MasterServer.Examples.BasicMirrorWorlds
         private static void BuildSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "Mirror", "BasicWorlds", "Spawner");
-            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "BasicWorlds", "Room", "Room.exe");
+            string roomExePath = Path.Combine(Directory.GetCurrentDirectory(), "Builds", "Mirror", "BasicWorlds", "Room", "Room.exe");
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {

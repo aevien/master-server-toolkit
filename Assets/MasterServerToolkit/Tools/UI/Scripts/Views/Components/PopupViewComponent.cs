@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.UI
 {
-    public class PopupViewComponent : MonoBehaviour, IUIViewComponent
+    public class PopupViewComponent : UIView
     {
         [Header("Lables Settings"), SerializeField]
         protected TextMeshProUGUI[] lables;
@@ -13,21 +13,11 @@ namespace MasterServerToolkit.UI
         [Header("Buttons Settings"), SerializeField]
         protected UIButton[] buttons;
 
-        public IUIView Owner { get; set; }
-
-        public virtual void OnOwnerAwake() { }
-
-        public virtual void OnOwnerStart() { }
-
-        public virtual void OnOwnerHide(IUIView owner) { }
-
-        public virtual void OnOwnerShow(IUIView owner) { }
-
         public virtual void SetLables(params string[] values)
         {
             if (values.Length == 0)
             {
-                Logs.Warn($"There is no need to use SetLables method of {name} because of you do not pass any values as its parameters");
+                logger.Warn($"There is no need to use SetLables method of {name} because of you do not pass any values as its parameters");
                 return;
             }
 
@@ -39,7 +29,7 @@ namespace MasterServerToolkit.UI
                 }
                 catch
                 {
-                    Logs.Warn($"There is no lable assigned to {name} for value at index {i}");
+                    logger.Warn($"There is no lable assigned to {name} for value at index {i}");
                 }
             }
         }
@@ -48,7 +38,7 @@ namespace MasterServerToolkit.UI
         {
             if (actions.Length == 0)
             {
-                Debug.LogWarning($"There is no need to use SetButtonsClick method of {name} because of you do not pass any action as its parameters");
+                logger.Warn($"There is no need to use SetButtonsClick method of {name} because of you do not pass any action as its parameters");
                 return;
             }
 
@@ -61,7 +51,7 @@ namespace MasterServerToolkit.UI
                 }
                 catch
                 {
-                    Debug.LogWarning($"There is no button assigned to {name} for action at index {i}");
+                    logger.Warn($"There is no button assigned to {name} for action at index {i}");
                 }
             }
         }

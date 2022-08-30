@@ -1035,6 +1035,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual async Task<IAccountInfoData> SignInByToken(IPeer peer, MstProperties userCredentials, IIncomingMessage message)
         {
+            logger.Info("Token auth ".ToGreen());
             // Trying to get user extension from peer
             var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
 

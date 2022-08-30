@@ -23,12 +23,6 @@ namespace MasterServerToolkit.MasterServer
             _data = data;
         }
 
-        [Obsolete("Will be removed in 4.13")]
-        public T GetData<T>() where T : class
-        {
-            return (T)_data;
-        }
-
         public T As<T>()
         {
             return (T)_data;

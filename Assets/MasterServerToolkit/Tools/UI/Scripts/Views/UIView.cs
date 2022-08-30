@@ -24,6 +24,8 @@ namespace MasterServerToolkit.UI
         protected bool ignoreHideAll = false;
         [SerializeField]
         protected bool useRaycastBlock = true;
+        [SerializeField]
+        protected bool blockInput = false;
 
         [Header("Logger Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
@@ -45,13 +47,13 @@ namespace MasterServerToolkit.UI
         protected Dictionary<string, IUIViewComponent> uiViewComponents;
         protected IUIViewTweener uiViewTweener;
         protected CanvasGroup canvasGroup;
+        protected bool isVisible = true;
 
-        public bool IsVisible { get; private set; } = true;
+        public virtual bool IsVisible => isVisible;
         public string Id => id;
-
         public RectTransform Rect => transform as RectTransform;
-
         public bool IgnoreHideAll { get => ignoreHideAll; set => ignoreHideAll = value; }
+        public bool BlockInput { get => blockInput; set => blockInput = value; }
 
         protected virtual void Awake()
         {
@@ -179,7 +181,7 @@ namespace MasterServerToolkit.UI
         {
             if (uiViewTweener != null && !instantly)
             {
-                IsVisible = true;
+                isVisible = true;
 
                 OnShowEvent?.Invoke();
 
@@ -197,7 +199,7 @@ namespace MasterServerToolkit.UI
             }
             else
             {
-                IsVisible = true;
+                isVisible = true;
 
                 OnShowEvent?.Invoke();
 
@@ -215,7 +217,7 @@ namespace MasterServerToolkit.UI
         {
             if (uiViewTweener != null && !instantly)
             {
-                IsVisible = false;
+                isVisible = false;
 
                 OnHideEvent?.Invoke();
 
@@ -231,7 +233,7 @@ namespace MasterServerToolkit.UI
             }
             else
             {
-                IsVisible = false;
+                isVisible = false;
 
                 OnHideEvent?.Invoke();
 
@@ -245,7 +247,7 @@ namespace MasterServerToolkit.UI
 
         public virtual void Toggle(bool instantly = false)
         {
-            if (IsVisible)
+            if (isVisible)
             {
                 Hide(instantly);
             }

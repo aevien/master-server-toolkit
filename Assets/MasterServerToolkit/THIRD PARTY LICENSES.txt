@@ -1,0 +1,8 @@
+WebSockets Sharp https://github.com/sta/websocket-sharp
+path "Assets\MasterServerToolkit\Networking\Plugins\WebSocketSharp"
+
+LiteDB https://www.litedb.org/
+path "Assets\MasterServerToolkit\Bridges\LiteDB\Plugins"
+
+MongoDB https://www.mongodb.com/
+path "Assets\MasterServerToolkit\Bridges\MongoDB\Plugins"

@@ -90,9 +90,9 @@ namespace MasterServerToolkit.MasterServer
         public static ushort GetZoneRoomInfo = nameof(GetZoneRoomInfo).ToUint16Hash();
         public static ushort GetZoneRoomAccess = nameof(GetZoneRoomAccess).ToUint16Hash();
 
-        public static ushort ClientProfileRequest = nameof(ClientProfileRequest).ToUint16Hash();
-        public static ushort ServerProfileRequest = nameof(ServerProfileRequest).ToUint16Hash();
-        public static ushort UpdateServerProfile = nameof(UpdateServerProfile).ToUint16Hash();
+        public static ushort ClientFillInProfileValues = nameof(ClientFillInProfileValues).ToUint16Hash();
+        public static ushort ServerFillInProfileValues = nameof(ServerFillInProfileValues).ToUint16Hash();
+        public static ushort ServerUpdateProfileValues = nameof(ServerUpdateProfileValues).ToUint16Hash();
         public static ushort UpdateClientProfile = nameof(UpdateClientProfile).ToUint16Hash();
         public static ushort UpdateDisplayNameRequest = nameof(UpdateDisplayNameRequest).ToUint16Hash();
         public static ushort UpdateAvatarRequest = nameof(UpdateAvatarRequest).ToUint16Hash();

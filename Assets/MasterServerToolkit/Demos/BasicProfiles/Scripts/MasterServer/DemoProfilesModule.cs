@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.MasterServer;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using Newtonsoft.Json.Linq;
@@ -8,16 +9,14 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
-    public enum ObservablePropertyCodes { DisplayName, Avatar, Bronze, Silver, Gold, Items }
-
     public class DemoProfilesModule : ProfilesModule
     {
         [Header("Start Values"), SerializeField]
-        private float bronze = 100;
+        private int bronze = 100;
         [SerializeField]
-        private float silver = 50;
+        private int silver = 50;
         [SerializeField]
-        private float gold = 50;
+        private int gold = 50;
         [SerializeField]
         private string avatarUrl = "https://i.imgur.com/JQ9pRoD.png";
 
@@ -33,7 +32,9 @@ namespace MasterServerToolkit.Examples.BasicProfile
             // Set the new factory in ProfilesModule
             ProfileFactory = CreateProfileInServer;
 
-            server.RegisterMessageHandler((ushort)MstOpCodes.UpdateDisplayNameRequest, UpdateDisplayNameRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.UpdateDisplayNameRequest, UpdateDisplayNameRequestHandler);
+            server.RegisterMessageHandler(MessageOpCodes.BuyDemoItem, BuyDemoItemMessageHandler);
+            server.RegisterMessageHandler(MessageOpCodes.SellDemoItem, SellDemoItemMessageHandler);
 
             //Update profile resources each 5 sec
             InvokeRepeating(nameof(IncreaseResources), 1f, 1f);
@@ -54,28 +55,37 @@ namespace MasterServerToolkit.Examples.BasicProfile
         /// <returns></returns>
         private ObservableServerProfile CreateProfileInServer(string userId, IPeer clientPeer)
         {
-            return new ObservableServerProfile(userId, clientPeer)
-            {
-                new ObservableString((ushort)ObservablePropertyCodes.DisplayName, SimpleNameGenerator.Generate(Gender.Male)),
-                new ObservableString((ushort)ObservablePropertyCodes.Avatar, avatarUrl),
-                new ObservableFloat((ushort)ObservablePropertyCodes.Bronze, bronze),
-                new ObservableFloat((ushort)ObservablePropertyCodes.Silver, silver),
-                new ObservableFloat((ushort)ObservablePropertyCodes.Gold, gold),
-                new ObservableDictStringInt((ushort)ObservablePropertyCodes.Items, new Dictionary<string, int>())
-            };
+            var profile = new ObservableServerProfile(userId, clientPeer);
+
+            ProfileProperties.Fill(profile);
+
+            profile.Get<ObservableString>(ProfilePropertyKeys.displayName).Value = SimpleNameGenerator.Generate(Gender.Male);
+            profile.Get<ObservableString>(ProfilePropertyKeys.avatarUrl).Value = avatarUrl;
+
+            if (profile.TryGet(ProfilePropertyKeys.gold, out ObservableInt goldProperty))
+                goldProperty.Add(gold);
+
+            if (profile.TryGet(ProfilePropertyKeys.silver, out ObservableInt silverProperty))
+                silverProperty.Add(silver);
+
+            if (profile.TryGet(ProfilePropertyKeys.bronze, out ObservableInt bronzeProperty))
+                bronzeProperty.Add(bronze);
+
+            return profile;
         }
 
         private void IncreaseResources()
         {
             foreach (var profile in Profiles)
             {
-                var bronzeProperty = profile.Get<ObservableFloat>((ushort)ObservablePropertyCodes.Bronze);
-                var silverProperty = profile.Get<ObservableFloat>((ushort)ObservablePropertyCodes.Silver);
-                var goldProperty = profile.Get<ObservableFloat>((ushort)ObservablePropertyCodes.Gold);
+                if (profile.TryGet(ProfilePropertyKeys.gold, out ObservableInt goldProperty))
+                    goldProperty.Add(1);
 
-                bronzeProperty.Add(1f);
-                silverProperty.Add(0.1f);
-                goldProperty.Add(0.01f);
+                if (profile.TryGet(ProfilePropertyKeys.silver, out ObservableInt silverProperty))
+                    silverProperty.Add(5);
+
+                if (profile.TryGet(ProfilePropertyKeys.bronze, out ObservableInt bronzeProperty))
+                    bronzeProperty.Add(10);
             }
         }
 
@@ -95,10 +105,104 @@ namespace MasterServerToolkit.Examples.BasicProfile
             {
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile))
                 {
-                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.DisplayName).Value = newProfileData["displayName"];
-                    profile.Get<ObservableString>((ushort)ObservablePropertyCodes.Avatar).Value = newProfileData["avatarUrl"];
+                    profile.Get<ObservableString>(ProfilePropertyKeys.displayName).Value = newProfileData["displayName"];
+                    profile.Get<ObservableString>(ProfilePropertyKeys.avatarUrl).Value = newProfileData["avatarUrl"];
 
                     message.Respond(ResponseStatus.Success);
+                }
+                else
+                {
+                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                message.Respond($"Internal Server Error: {e}", ResponseStatus.Error);
+            }
+        }
+
+        private void BuyDemoItemMessageHandler(IIncomingMessage message)
+        {
+            try
+            {
+                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+
+                if (userExtension == null || userExtension.Account == null)
+                {
+                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                    return;
+                }
+
+                var data = message.AsPacket(new BuySellItemPacket());
+
+                if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
+                        && profile.TryGet(ProfilePropertyKeys.items, out ObservableDictStringInt items))
+                {
+                    if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty)
+                        && currencyProperty.Subtract(data.Price, 0))
+                    {
+                        if (items.ContainsKey(data.Id))
+                        {
+                            items[data.Id]++;
+                        }
+                        else
+                        {
+                            items[data.Id] = 1;
+                        }
+
+                        message.Respond(ResponseStatus.Success);
+                    }
+                    else
+                    {
+                        message.Respond($"You don't have enough {data.Currency}", ResponseStatus.Failed);
+                    }
+                }
+                else
+                {
+                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                message.Respond($"Internal Server Error: {e}", ResponseStatus.Error);
+            }
+        }
+
+        private void SellDemoItemMessageHandler(IIncomingMessage message)
+        {
+            try
+            {
+                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+
+                if (userExtension == null || userExtension.Account == null)
+                {
+                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                    return;
+                }
+
+                var data = message.AsPacket(new BuySellItemPacket());
+
+                if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
+                        && profile.TryGet(ProfilePropertyKeys.items, out ObservableDictStringInt items))
+                {
+                    if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty))
+                    {
+                        if (items.ContainsKey(data.Id))
+                        {
+                            items[data.Id]--;
+
+                            if (items[data.Id] <= 0)
+                                items.Remove(data.Id);
+
+                            currencyProperty.Add(data.Price);
+                        }
+
+                        message.Respond(ResponseStatus.Success);
+                    }
+                    else
+                    {
+                        message.Respond($"Our store does not accept {data.Currency} as currency", ResponseStatus.Failed);
+                    }
                 }
                 else
                 {

@@ -63,10 +63,7 @@ namespace MasterServerToolkit.Networking
                 // Stop listening when application closes
                 MstTimer.Instance.OnApplicationQuitEvent += Stop;
 
-                if (server != null)
-                {
-                    server.Stop();
-                }
+                server?.Stop();
 
                 if (ip == "127.0.0.1".Trim() || ip == "localhost".Trim())
                 {

@@ -44,16 +44,16 @@ namespace MasterServerToolkit.Bridges.Dashboard
 
             // Set server behaviour to be able to use in all levels
             DontDestroyOnLoad(gameObject);
-        }
-
-        protected override void Start()
-        {
-            base.Start();
 
             // If IP is provided via cmd arguments
             serverIp = Mst.Args.AsString(Mst.Args.Names.DashboardIp, serverIp);
             // If port is provided via cmd arguments
             serverPort = Mst.Args.AsInt(Mst.Args.Names.DashboardPort, serverPort);
+        }
+
+        protected override void Start()
+        {
+            base.Start();
 
             // Start server at start
             if (Mst.Args.StartMaster && !Mst.Runtime.IsEditor)

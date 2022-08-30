@@ -32,14 +32,14 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5623797114455825938}
+  - {fileID: 6467542713551942039}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 200, y: 45}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &2778929153212471957
 CanvasRenderer:
@@ -91,7 +91,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 719a6bd17a2ef9948bb60d0128aa9419, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lableText: {fileID: 7798748059753615552}
+  lableText: {fileID: 8930733114482622277}
   lable: LableWithBg
 --- !u!114 &6242758480855457550
 MonoBehaviour:
@@ -113,7 +113,7 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!1001 &126676450521415347
+--- !u!1001 &1587771716196634934
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -237,37 +237,37 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
         type: 3}
-      propertyPath: m_fontSize
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
-        type: 3}
       propertyPath: m_margin.w
-      value: 0
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
         type: 3}
       propertyPath: m_margin.x
-      value: 15
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
+        type: 3}
+      propertyPath: m_margin.y
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
         type: 3}
       propertyPath: m_margin.z
-      value: 15
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ff504d2d5864d6241b0aa7db65bda4b5, type: 3}
---- !u!224 &5623797114455825938 stripped
+--- !u!224 &6467542713551942039 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5749326658385338529, guid: ff504d2d5864d6241b0aa7db65bda4b5,
     type: 3}
-  m_PrefabInstance: {fileID: 126676450521415347}
+  m_PrefabInstance: {fileID: 1587771716196634934}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7798748059753615552 stripped
+--- !u!114 &8930733114482622277 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
     type: 3}
-  m_PrefabInstance: {fileID: 126676450521415347}
+  m_PrefabInstance: {fileID: 1587771716196634934}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1

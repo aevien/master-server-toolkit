@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
+using UnityEngine;
 using WebSocketSharp;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -233,8 +235,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="buffer"></param>
         public void Send(byte[] buffer)
         {
-            if (socket != null && socket.IsAlive)
-                socket.SendAsync(buffer, null);
+            socket?.SendAsync(buffer, null);
         }
 
         /// <summary>

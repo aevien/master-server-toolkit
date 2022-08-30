@@ -1,6 +1,8 @@
 ﻿using MasterServerToolkit.MasterServer.Web;
+using MasterServerToolkit.Utils;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -50,12 +52,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of http request handlers
         /// </summary>
-        private Dictionary<string, OnHttpRequestDelegate> httpRequestActions;
+        private readonly ConcurrentDictionary<string, OnHttpRequestDelegate> httpRequestActions = new ConcurrentDictionary<string, OnHttpRequestDelegate>();
 
         /// <summary>
         /// List of surface controllers
         /// </summary>
-        public Dictionary<Type, IHttpController> Controllers { get; protected set; }
+        public Dictionary<Type, IHttpController> Controllers { get; protected set; } = new Dictionary<Type, IHttpController>();
 
         /// <summary>
         /// Invokes before server frame is updated
@@ -91,15 +93,7 @@ namespace MasterServerToolkit.MasterServer
 
             // Set heartbeat check interval
             heatBeatCheckInterval = Mathf.Clamp(Mst.Args.AsFloat(Mst.Args.Names.WebServerHeartbeatCheckInterval, heatBeatCheckInterval), 2f, 120f);
-
-            //
             checkHeartBeatUrl = Mst.Args.AsString($"live-{Mst.Args.Names.WebServerHeartbeatCheckPage}", $"live-{Mst.Helper.CreateGuidString()}");
-
-            // Initialize controllers lists
-            Controllers = new Dictionary<Type, IHttpController>();
-
-            // Initialize handlers list
-            httpRequestActions = new Dictionary<string, OnHttpRequestDelegate>();
         }
 
         private void Start()
@@ -131,7 +125,10 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
-            Listen();
+            Tweener.DelayedCall(0.1f, () =>
+            {
+                Listen();
+            });
         }
 
         [ContextMenu("Restart")]
@@ -152,8 +149,10 @@ namespace MasterServerToolkit.MasterServer
             Stop();
 
             // Initialize server
-            httpServer = new HttpListener();
-            httpServer.AuthenticationSchemes = AuthenticationSchemes.Basic;
+            httpServer = new HttpListener
+            {
+                AuthenticationSchemes = AuthenticationSchemes.Basic
+            };
 
             // Registers default pages
             RegisterDefaultControllers();
@@ -268,7 +267,7 @@ namespace MasterServerToolkit.MasterServer
 
                 HttpWebRequest hbWebRequest = (HttpWebRequest)WebRequest.Create(url);
                 hbWebRequest.Credentials = new NetworkCredential(username, password);
-                hbWebRequest.Timeout = 2000;
+                hbWebRequest.Timeout = 5000;
                 hbWebRequest.Method = "GET";
                 hbWebRequest.ContentType = "text/html";
 
@@ -280,9 +279,7 @@ namespace MasterServerToolkit.MasterServer
                 if (hbWebResponse != null)
                     hbWebResponse.Close();
 
-                logger.Error($"Web server is dead: {e}");
-                logger.Info($"Web server is restarting");
-
+                logger.Error($"Web server is dead: {e.Message}. Restarting...");
                 Restart();
             }
         }
@@ -608,9 +605,9 @@ namespace MasterServerToolkit.MasterServer
                 // Let's ceate url key
                 string urlKey = CreateHttpRequestHandlerKey(cleanRawUrl, HttpMethod.GET);
 
-                if (httpRequestActions.ContainsKey(urlKey))
+                if (httpRequestActions.TryGetValue(urlKey, out var action) && action != null)
                 {
-                    httpRequestActions[urlKey].Invoke(request, response);
+                    action.Invoke(request, response);
                 }
                 else
                 {
@@ -650,9 +647,9 @@ namespace MasterServerToolkit.MasterServer
             // Let's ceate url key
             string urlKey = CreateHttpRequestHandlerKey(cleanRawUrl, HttpMethod.POST);
 
-            if (httpRequestActions.ContainsKey(urlKey))
+            if (httpRequestActions.TryGetValue(urlKey, out var action) && action != null)
             {
-                httpRequestActions[urlKey].Invoke(request, response);
+                action.Invoke(request, response);
             }
             else
             {
@@ -681,9 +678,9 @@ namespace MasterServerToolkit.MasterServer
             // Let's ceate url key
             string urlKey = CreateHttpRequestHandlerKey(cleanRawUrl, HttpMethod.PUT);
 
-            if (httpRequestActions.ContainsKey(urlKey))
+            if (httpRequestActions.TryGetValue(urlKey, out var action) && action != null)
             {
-                httpRequestActions[urlKey].Invoke(request, response);
+                action.Invoke(request, response);
             }
             else
             {
@@ -779,7 +776,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             httpServer.Prefixes.Add(prefix);
-            httpRequestActions[url] = handler;
+            httpRequestActions.TryAdd(url, handler);
         }
 
         public override JObject JsonInfo()

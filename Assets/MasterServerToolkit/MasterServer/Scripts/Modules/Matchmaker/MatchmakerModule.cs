@@ -23,7 +23,7 @@ namespace MasterServerToolkit.MasterServer
 
             AddOptionalDependency<LobbiesModule>();
             AddOptionalDependency<RoomsModule>();
-            AddDependency<SpawnersModule>();
+            AddOptionalDependency<SpawnersModule>();
         }
 
         public override void Initialize(IServer server)
@@ -40,14 +40,10 @@ namespace MasterServerToolkit.MasterServer
 
             // Dependencies
             if (roomsModule != null)
-            {
                 AddProvider(roomsModule);
-            }
 
             if (lobbiesModule != null)
-            {
                 AddProvider(lobbiesModule);
-            }
 
             // Add handlers
             server.RegisterMessageHandler(MstOpCodes.FindGamesRequest, FindGamesRequestHandler);

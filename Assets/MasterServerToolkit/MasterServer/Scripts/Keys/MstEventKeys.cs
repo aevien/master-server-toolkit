@@ -11,6 +11,9 @@
         public static string showOkDialogBox = "mst.showOkDialog";
         public static string hideOkDialogBox = "mst.hideOkDialog";
 
+        public static string showPickUsernameView = "mst.showPickUsernameView";
+        public static string hidePickUsernameView = "mst.hidePickUsernameView";
+
         public static string showYesNoDialogBox = "mst.showYesNoDialog";
         public static string hideYesNoDialogBox = "mst.hideYesNoDialog";
 

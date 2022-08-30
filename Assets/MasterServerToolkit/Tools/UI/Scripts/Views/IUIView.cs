@@ -7,6 +7,7 @@ namespace MasterServerToolkit.UI
         string Id { get; }
         RectTransform Rect { get; }
         bool IsVisible { get; }
+        bool BlockInput { get; set; }
         bool IgnoreHideAll { get; set; }
         T ViewComponent<T>() where T : class, IUIViewComponent;
         T ChildComponent<T>(string childName) where T : Component;

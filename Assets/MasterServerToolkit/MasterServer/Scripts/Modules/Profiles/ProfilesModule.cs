@@ -153,10 +153,9 @@ namespace MasterServerToolkit.MasterServer
                 }
             }
 
-            // Games dependency setup
-            server.RegisterMessageHandler(MstOpCodes.ServerProfileRequest, GameServerProfileRequestHandler);
-            server.RegisterMessageHandler(MstOpCodes.ClientProfileRequest, ClientProfileRequestHandler);
-            server.RegisterMessageHandler(MstOpCodes.UpdateServerProfile, ProfileUpdateHandler);
+            server.RegisterMessageHandler(MstOpCodes.ServerFillInProfileValues, GameServerProfileRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.ServerUpdateProfileValues, ServerUpdateProfileValuesHandler);
+            server.RegisterMessageHandler(MstOpCodes.ClientFillInProfileValues, ClientFillInProfileValuesHandler);
         }
 
         public override MstProperties Info()
@@ -370,7 +369,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a message from game server, which includes player profiles updates
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void ProfileUpdateHandler(IIncomingMessage message)
+        protected virtual void ServerUpdateProfileValuesHandler(IIncomingMessage message)
         {
             if (!HasPermissionToEditProfiles(message.Peer))
             {
@@ -420,11 +419,20 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a request from client to get profile
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void ClientProfileRequestHandler(IIncomingMessage message)
+        protected virtual async void ClientFillInProfileValuesHandler(IIncomingMessage message)
         {
-            var clientPropCount = message.AsInt();
+            int totalTime = 0;
+            ProfilePeerExtension profileExt = null;
 
-            var profileExt = message.Peer.GetExtension<ProfilePeerExtension>();
+            // Wait for user profile
+            while (totalTime < 10 * 1000)
+            {
+                await Task.Delay(10);
+                totalTime += 100;
+
+                if (message.Peer.TryGetExtension(out profileExt))
+                    break;
+            }
 
             if (profileExt == null)
             {
@@ -432,11 +440,13 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
+            var clientPropertiesCount = message.AsInt();
+
             profileExt.Profile.ClientPeer = message.Peer;
 
-            if (!ignoreProfileMissmatchError && clientPropCount != profileExt.Profile.PropertyCount)
+            if (!ignoreProfileMissmatchError && clientPropertiesCount != profileExt.Profile.PropertyCount)
             {
-                logger.Error(string.Format($"Client requested a profile with {clientPropCount} properties, but server " +
+                logger.Error(string.Format($"Client requested a profile with {clientPropertiesCount} properties, but server " +
                                            $"constructed a profile with {profileExt.Profile.PropertyCount}. Make sure that you've changed the " +
                                            "profile factory on the ProfilesModule"));
             }

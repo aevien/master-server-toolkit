@@ -734,27 +734,6 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: unity_logo
-      rect:
-        serializedVersion: 2
-        x: 1047
-        y: 1621
-        width: 507
-        height: 184
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 48b878d9466041f70800000000000000
-      internalID: 9156950971560463236
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: unlock
       rect:
         serializedVersion: 2

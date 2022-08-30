@@ -85,7 +85,7 @@ namespace MasterServerToolkit.MasterServer
                 logger.Info($"Registering in dashboard as {dashboardInfoId}");
 
                 // Trying to join dashboard
-                connectionHelper.Connection.SendMessage((ushort)MstOpCodes.JoinDashboard, dashboardInfoId, (status, respond) =>
+                connectionHelper.Connection.SendMessage(MstOpCodes.JoinDashboard, dashboardInfoId, (status, respond) =>
                 {
                     if (status != ResponseStatus.Success)
                     {
@@ -111,7 +111,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (connectionHelper.IsConnected)
             {
-                connectionHelper.Connection.SendMessage((ushort)MstOpCodes.SystemInfo, systemInfoPacket, (status, respond) =>
+                connectionHelper.Connection.SendMessage(MstOpCodes.SystemInfo, systemInfoPacket, (status, respond) =>
                 {
                     if (status != ResponseStatus.Success)
                     {
@@ -136,7 +136,7 @@ namespace MasterServerToolkit.MasterServer
                 var serverInfoPacket = ServerInfoPacket.FromJobject(Server.JsonInfo());
                 serverInfoPacket.Id = dashboardInfoId;
 
-                connectionHelper.Connection.SendMessage((ushort)MstOpCodes.ServerInfo, serverInfoPacket, (status, respond) =>
+                connectionHelper.Connection.SendMessage(MstOpCodes.ServerInfo, serverInfoPacket, (status, respond) =>
                 {
                     if (status != ResponseStatus.Success)
                     {

@@ -1,16 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.UI
 {
     public static class ViewsManager
     {
-        private static Dictionary<string, IUIView> views;
+        private readonly static Dictionary<string, IUIView> views = new Dictionary<string, IUIView>();
 
-        static ViewsManager()
-        {
-            views = new Dictionary<string, IUIView>();
-        }
+        public static bool IsInputBlocked => views.Values.Where(i => i != null && i.BlockInput && i.IsVisible).Count() > 0;
 
         public static void Register(string viewId, IUIView view)
         {

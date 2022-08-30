@@ -42,7 +42,10 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public void RequestResetPasswordCode()
         {
-            AuthBehaviour.Instance.RequestResetPasswordCode(Email);
+            if (AuthBehaviour.Instance)
+                AuthBehaviour.Instance.RequestResetPasswordCode(Email);
+            else
+                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>

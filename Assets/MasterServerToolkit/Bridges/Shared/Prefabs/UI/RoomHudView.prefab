@@ -206,6 +206,7 @@ MonoBehaviour:
   allwaysOnTop: 0
   ignoreHideAll: 0
   useRaycastBlock: 1
+  blockInput: 0
   logLevel: 3
   OnShowEvent:
     m_PersistentCalls:
@@ -375,6 +376,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Leave game
       objectReference: {fileID: 0}
     - target: {fileID: 8783516876090211286, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
@@ -595,6 +601,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_text
       value: Leave game
+      objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Players list
       objectReference: {fileID: 0}
     - target: {fileID: 8783516876090211286, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}

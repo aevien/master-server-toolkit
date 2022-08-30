@@ -17,47 +17,33 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             profileSettingsView = ViewsManager.GetView<ProfileSettingsView>("ProfileSettingsView");
 
-            Profile = new ObservableProfile
-            {
-                new ObservableString((ushort)ObservablePropertyCodes.DisplayName),
-                new ObservableString((ushort)ObservablePropertyCodes.Avatar),
-                new ObservableFloat((ushort)ObservablePropertyCodes.Bronze),
-                new ObservableFloat((ushort)ObservablePropertyCodes.Silver),
-                new ObservableFloat((ushort)ObservablePropertyCodes.Gold)
-            };
+            Profile = new ObservableProfile();
+            ProfileProperties.Fill(Profile);
         }
 
-        public void UpdateProfile()
+        public void UpdateProfile(MstProperties data)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Saving profile data... Please wait!");
 
             MstTimer.Instance.WaitForSeconds(1f, () =>
             {
-                var data = new Dictionary<string, string>
+                Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), (status, response) =>
                 {
-                    { "displayName", profileSettingsView.DisplayName },
-                    { "avatarUrl", profileSettingsView.AvatarUrl }
-                };
+                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), OnSaveProfileResponseCallback);
+                    if (status == ResponseStatus.Success)
+                    {
+                        OnProfileSavedEvent?.Invoke();
+
+                        logger.Debug("Your profile is successfuly updated and saved");
+                    }
+                    else
+                    {
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(response.AsString()));
+                        logger.Error(response.AsString());
+                    }
+                });
             });
-        }
-
-        private void OnSaveProfileResponseCallback(ResponseStatus status, IIncomingMessage response)
-        {
-            Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
-
-            if (status == ResponseStatus.Success)
-            {
-                OnProfileSavedEvent?.Invoke();
-
-                logger.Debug("Your profile is successfuly updated and saved");
-            }
-            else
-            {
-                Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(response.AsString()));
-                logger.Error(response.AsString());
-            }
         }
     }
 }

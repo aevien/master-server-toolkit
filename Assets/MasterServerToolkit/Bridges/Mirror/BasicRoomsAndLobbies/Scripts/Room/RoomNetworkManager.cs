@@ -113,10 +113,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             onlineScene = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
 
             // Set the max number of connections
-            maxConnections = (ushort)roomServerManager.RoomOptions.MaxConnections;
+            maxConnections = roomServerManager.RoomOptions.MaxConnections;
 
             // Set room IP just for information purpose only
             SetAddress(roomServerManager.RoomOptions.RoomIp);
+
             // Set room port
             SetPort(roomServerManager.RoomOptions.RoomPort);
 

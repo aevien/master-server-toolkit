@@ -79,7 +79,7 @@ namespace MasterServerToolkit.MasterServer
             Options = options;
 
             // Add handlers
-            connection.RegisterMessageHandler((ushort)MstOpCodes.ProvideRoomAccessCheck, ProvideRoomAccessCheckHandler);
+            connection.RegisterMessageHandler(MstOpCodes.ProvideRoomAccessCheck, ProvideRoomAccessCheckHandler);
         }
 
         /// <summary>
@@ -128,9 +128,17 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SaveOptions(RoomOptions options)
         {
-            SaveOptions(options, (successful, error) =>
+            SaveOptions(options, null);
+        }
+
+        /// <summary>
+        /// Send's new options to master server
+        /// </summary>
+        public void SaveOptions(RoomOptions options, SuccessCallback callback)
+        {
+            Mst.Server.Rooms.SaveOptions(RoomId, options, (isSuccessful, error) =>
             {
-                if (!successful)
+                if (!isSuccessful)
                 {
                     Logger.Error(error);
                 }
@@ -139,22 +147,8 @@ namespace MasterServerToolkit.MasterServer
                     Logger.Debug("Room " + RoomId + " options changed successfully");
                     Options = options;
                 }
-            });
-        }
 
-        /// <summary>
-        /// Send's new options to master server
-        /// </summary>
-        public void SaveOptions(RoomOptions options, SuccessCallback callback)
-        {
-            Mst.Server.Rooms.SaveOptions(RoomId, options, (successful, error) =>
-            {
-                if (successful)
-                {
-                    Options = options;
-                }
-
-                callback.Invoke(successful, error);
+                callback?.Invoke(isSuccessful, error);
 
             }, Connection);
         }
@@ -185,7 +179,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 Logger.Info($"Player {peerId} left room");
-            });
+            }, Connection);
         }
 
         /// <summary>

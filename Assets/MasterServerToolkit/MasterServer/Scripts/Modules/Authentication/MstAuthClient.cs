@@ -347,13 +347,22 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SignIn(MstProperties data, SignInCallback callback, IClientSocket connection)
         {
-            Logs.Debug("Signing in...".ToGreen());
+            if (IsNowSigningIn)
+                return;
+
+            if (IsSignedIn)
+            {
+                callback.Invoke(AccountInfo, string.Empty);
+                return;
+            }
 
             if (!connection.IsConnected)
             {
                 callback.Invoke(null, "Not connected to server");
                 return;
             }
+
+            Logs.Debug("Signing in...".ToGreen());
 
             IsNowSigningIn = true;
 
