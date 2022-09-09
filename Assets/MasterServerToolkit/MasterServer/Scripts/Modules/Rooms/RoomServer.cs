@@ -20,8 +20,10 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static RoomServer Instance { get; private set; }
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             // If instance of the server is already running
             if (Instance != null)
             {
@@ -36,9 +38,7 @@ namespace MasterServerToolkit.MasterServer
             // Move to root, so that it won't be destroyed
             // In case this instance is a child of another gameobject
             if (transform.parent != null)
-            {
                 transform.SetParent(null);
-            }
 
             // Set server behaviour to be able to use in all levels
             DontDestroyOnLoad(gameObject);
@@ -63,16 +63,6 @@ namespace MasterServerToolkit.MasterServer
 
             // Start server with room options
             StartServer(roomServerManager.RoomOptions.RoomIp, roomServerManager.RoomOptions.RoomPort);
-        }
-
-        public override void StopServer()
-        {
-            base.StopServer();
-
-            MstTimer.Instance.WaitForSeconds(1f, () =>
-            {
-                Mst.Runtime.Quit();
-            });
         }
 
         protected override void OnStartedServer()
@@ -103,7 +93,7 @@ namespace MasterServerToolkit.MasterServer
         {
             logger.Info($"Peer {peer.Id} disconnected");
 
-            if (roomServerManager) 
+            if (roomServerManager)
                 roomServerManager.OnPeerDisconnected(peer.Id);
         }
 

@@ -19,6 +19,17 @@ namespace MasterServerToolkit.MasterServer
 
         protected IClientSocket roomConnection;
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            if(roomConnection != null)
+            {
+                roomConnection.RemoveConnectionOpenListener(OnConnectedToRoomEventHandler);
+                roomConnection.RemoveConnectionCloseListener(OnDisconnectedFromRoomEventHandler);
+            }
+        }
+
         protected override void StartConnection(RoomAccessPacket access)
         {
             if (roomConnection != null)
@@ -28,6 +39,7 @@ namespace MasterServerToolkit.MasterServer
 
             roomConnection.AddConnectionOpenListener(OnConnectedToRoomEventHandler);
             roomConnection.AddConnectionCloseListener(OnDisconnectedFromRoomEventHandler, false);
+
             roomConnection.Connect(access.RoomIp, access.RoomPort, roomConnectionTimeout);
 
             roomConnection.WaitForConnection((socket) =>

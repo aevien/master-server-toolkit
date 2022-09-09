@@ -64,15 +64,15 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(null, "Not connected");
+                callback?.Invoke(null, "Not connected");
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.RegisterSpawner, options, (status, response) =>
+            connection.SendMessage(MstOpCodes.RegisterSpawner, options, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(null, response.AsString("Unknown Error"));
+                    callback?.Invoke(null, response.AsString("Unknown Error"));
                     return;
                 }
 
@@ -82,7 +82,7 @@ namespace MasterServerToolkit.MasterServer
                 // Save reference
                 createdSpawnerControllers[spawnerId] = controller;
 
-                callback.Invoke(controller, null);
+                callback?.Invoke(controller, null);
 
                 // Invoke the event
                 OnSpawnerRegisteredEvent?.Invoke(controller);
@@ -117,7 +117,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected");
+                callback?.Invoke(false, "Not connected");
                 return;
             }
 
@@ -131,11 +131,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown Error"));
+                    callback?.Invoke(false, response.AsString("Unknown Error"));
                     return;
                 }
 
-                callback.Invoke(true, null);
+                callback?.Invoke(true, null);
             });
         }
 
@@ -163,7 +163,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(null, "Not connected");
+                callback?.Invoke(null, "Not connected");
                 return;
             }
 
@@ -177,7 +177,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(null, response.AsString("Unknown Error"));
+                    callback?.Invoke(null, response.AsString("Unknown Error"));
                     return;
                 }
 
@@ -187,7 +187,7 @@ namespace MasterServerToolkit.MasterServer
                 // Create spawn task controller
                 var process = new SpawnTaskController(spawnId, options, connection);
 
-                callback.Invoke(process, null);
+                callback?.Invoke(process, null);
             });
         }
 

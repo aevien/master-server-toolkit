@@ -131,11 +131,6 @@ namespace MasterServerToolkit.Games
             // Listen to connection events
             Connection.AddConnectionOpenListener(OnClientConnectedToServer);
             Connection.AddConnectionCloseListener(OnClientDisconnectedFromServer, false);
-
-            if (!Connection.IsConnected && !Connection.IsConnecting)
-            {
-                Connector.StartConnection();
-            }
         }
 
         /// <summary>
@@ -147,7 +142,7 @@ namespace MasterServerToolkit.Games
 
             if (Mst.Client.Auth.IsSignedIn)
             {
-                OnSignedInEvent?.Invoke();
+                Auth_OnSignedInEvent();
             }
             else
             {
@@ -233,7 +228,7 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Signing in... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.SignInWithLoginAndPassword(username, password, (accountInfo, error) =>
                 {
@@ -275,7 +270,7 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Signing in as guest... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.SignInAsGuest((accountInfo, error) =>
                 {
@@ -310,7 +305,7 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Signing in... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.SignInWithToken((accountInfo, error) =>
                 {
@@ -352,7 +347,7 @@ namespace MasterServerToolkit.Games
             credentials.Set(MstDictKeys.USER_EMAIL, useremail);
             credentials.Set(MstDictKeys.USER_PASSWORD, userpassword);
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.SignUp(credentials, (isSuccessful, error) =>
                 {
@@ -392,7 +387,7 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Changing password... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.ChangePassword(userEmail, resetCode, newPassword, (isSuccessful, error) =>
                 {
@@ -428,7 +423,7 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Sending reset password code... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.RequestPasswordReset(userEmail, (isSuccessful, error) =>
                 {
@@ -464,7 +459,7 @@ namespace MasterServerToolkit.Games
             logger.Debug("Sign out");
             Mst.Client.Auth.SignOut(true);
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 ViewsManager.HideAllViews();
                 Mst.Events.Invoke(MstEventKeys.showSignInView);
@@ -480,7 +475,7 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Sending confirmation code... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.RequestEmailConfirmationCode((isSuccessful, error) =>
                 {
@@ -509,7 +504,7 @@ namespace MasterServerToolkit.Games
 
             logger.Debug("Sending confirmation code... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(0.1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Mst.Client.Auth.ConfirmEmail(confirmationCode, (isSuccessful, error) =>
                 {

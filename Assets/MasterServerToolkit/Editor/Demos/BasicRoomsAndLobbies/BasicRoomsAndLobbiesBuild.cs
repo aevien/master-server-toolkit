@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using MasterServerToolkit.MasterServer;
+using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.MasterServer.Examples.BasicRoomsAndLobbies
+namespace MasterServerToolkit.Examples.BasicRoomsAndLobbies
 {
-    public class BasicRoomsAndLobbiesBuild
+    public class BasicRoomsAndLobbiesAndLobbiesBuild
     {
         [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Rooms And Lobbies/Room(Headless)")]
         private static void BuildRoomForWindowsHeadless()

@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,23 +10,14 @@ namespace MasterServerToolkit.MasterServer
     {
         public ObservableDictionaryInt(ushort key) : base(key) { }
 
-        public ObservableDictionaryInt(ushort key, Dictionary<int, int> defaultValues) : base(key, defaultValues) { }
+        public ObservableDictionaryInt(ushort key, ConcurrentDictionary<int, int> defaultValues) : base(key, defaultValues) { }
 
         public override string Serialize()
         {
-            IEnumerable<string> propertyStringArray = _value.Select(i => i.Key + ":" + i.Value.ToString());
-            return propertyStringArray != null ? string.Join(",", propertyStringArray) : "0";
+            return string.Empty;
         }
 
-        public override void Deserialize(string value)
-        {
-            string[] kvpArray = value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            _value = kvpArray.Select(i =>
-            {
-                return i.Split(':');
-            }).ToDictionary(k => Convert.ToInt32(k[0]), v => Convert.ToInt32(v[1]));
-        }
+        public override void Deserialize(string value) { }
 
         protected override void WriteValue(int value, EndianBinaryWriter writer)
         {

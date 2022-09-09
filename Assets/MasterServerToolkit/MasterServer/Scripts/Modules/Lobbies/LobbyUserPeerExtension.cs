@@ -13,7 +13,7 @@ namespace MasterServerToolkit.MasterServer
 
         public LobbyUserPeerExtension(IPeer peer)
         {
-            this.Peer = peer;
+            Peer = peer;
         }
     }
 }

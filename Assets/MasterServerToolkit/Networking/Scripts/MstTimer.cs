@@ -25,17 +25,17 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Current tick of scaled time
         /// </summary>
-        public long CurrentTick { get; protected set; }
+        public static long CurrentTick { get; protected set; }
 
         /// <summary>
         /// Event, which is invoked every second
         /// </summary>
-        public event TickActionHandler OnTickEvent;
+        public static event TickActionHandler OnTickEvent;
 
         /// <summary>
         /// Invokes when application shuts down
         /// </summary>
-        public event Action OnApplicationQuitEvent;
+        public static event Action OnApplicationQuitEvent;
 
         protected override void Awake()
         {
@@ -59,10 +59,16 @@ namespace MasterServerToolkit.Networking
             lock (_mainThreadActions)
             {
                 while (_mainThreadActions.Count > 0)
-                {
                     _mainThreadActions.Dequeue()?.Invoke();
-                }
             }
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            _mainThreadActions.Clear();
+            CurrentTick = 0;
         }
 
         /// <summary>
@@ -78,12 +84,12 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="address"></param>
         /// <param name="callback"></param>
-        public void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
+        public static void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
         {
-            if (_instance == null) return;
 
 #if !UNITY_WEBGL
-            StartCoroutine(WaitPingCoroutine(address, callback, timeout));
+            if (TryGetOrCreate(out var instance))
+                instance.StartCoroutine(instance.WaitPingCoroutine(address, callback, timeout));
 #else
             logger.Warn("You cannot use Ping in WebGL. Ping time will always be zero");
             callback?.Invoke(0);
@@ -129,9 +135,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="condition"></param>
         /// <param name="completeCallback"></param>
         /// <param name="timeoutSeconds"></param>
-        public void WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
+        public static void WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
+            if (TryGetOrCreate(out var instance))
+                instance.StartCoroutine(instance.WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
         }
 
         /// <summary>
@@ -141,9 +148,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="condition"></param>
         /// <param name="completeCallback"></param>
         /// <param name="timeoutSeconds"></param>
-        public void WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
+        public static void WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
-            StartCoroutine(WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
+            if (TryGetOrCreate(out var instance))
+                instance.StartCoroutine(instance.WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
         }
 
         /// <summary>
@@ -170,9 +178,10 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="time"></param>
         /// <param name="callback"></param>
-        public void WaitForSeconds(float time, Action callback)
+        public static void WaitForSeconds(float time, Action callback)
         {
-            StartCoroutine(StartWaitingForSeconds(time, callback));
+            if (TryGetOrCreate(out var instance))
+                instance.StartCoroutine(instance.StartWaitingForSeconds(time, callback));
         }
 
         /// <summary>
@@ -192,9 +201,10 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="time"></param>
         /// <param name="callback"></param>
-        public void WaitForRealtimeSeconds(float time, Action callback)
+        public static void WaitForRealtimeSeconds(float time, Action callback)
         {
-            StartCoroutine(StartWaitingForRealtimeSeconds(time, callback));
+            if (TryGetOrCreate(out var instance))
+                instance.StartCoroutine(instance.StartWaitingForRealtimeSeconds(time, callback));
         }
 
         /// <summary>
@@ -213,9 +223,10 @@ namespace MasterServerToolkit.Networking
         /// 
         /// </summary>
         /// <param name="callback"></param>
-        public void WaitForEndOfFrame(Action callback)
+        public static void WaitForEndOfFrame(Action callback)
         {
-            StartCoroutine(StartWaitingForEndOfFrame(callback));
+            if (TryGetOrCreate(out var instance))
+                instance.StartCoroutine(instance.StartWaitingForEndOfFrame(callback));
         }
 
         /// <summary>
@@ -233,9 +244,10 @@ namespace MasterServerToolkit.Networking
         /// 
         /// </summary>
         /// <param name="action"></param>
-        public void RunInMainThread(Action action)
+        public static void RunInMainThread(Action action)
         {
-            AddToMainThread(action);
+            if (TryGetOrCreate(out var instance))
+                instance.AddToMainThread(action);
         }
 
         /// <summary>
@@ -245,9 +257,7 @@ namespace MasterServerToolkit.Networking
         private void AddToMainThread(Action action)
         {
             lock (_mainThreadActions)
-            {
                 _mainThreadActions.Enqueue(action);
-            }
         }
 
         /// <summary>

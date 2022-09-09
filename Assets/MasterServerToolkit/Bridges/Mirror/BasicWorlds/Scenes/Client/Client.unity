@@ -370,12 +370,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: MenuView
+  title: MenuView
   hideOnStart: 1
   allwaysOnTop: 0
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 0}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -2035,6 +2037,11 @@ PrefabInstance:
     - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
         type: 3}
       propertyPath: autoLoadUserProfile
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
+        type: 3}
+      propertyPath: OnRoomRegisteredEvent.m_PersistentCalls.m_Calls.Array.size
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

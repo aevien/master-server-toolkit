@@ -15,25 +15,21 @@ MonoBehaviour:
   offers:
   - id: shield
     name: Shield
-    iconSprite: {fileID: 8180670326437456799, guid: 18576976932cd9b47b060636a751bd1f,
-      type: 3}
+    iconSprite: {fileID: 21300000, guid: 80a0f46a6178b524faf81c6f0d804eac, type: 3}
     price: 1000
     currency: silver
   - id: sword
     name: Sword
-    iconSprite: {fileID: 98000571096203240, guid: 041ee6d92b0409840ab12c6eca56f221,
-      type: 3}
+    iconSprite: {fileID: 21300000, guid: 3bf1bfd3e0f50e647a395bdc1d9d4c51, type: 3}
     price: 500
     currency: bronze
   - id: helmet
     name: Helmet
-    iconSprite: {fileID: 9181046262538206353, guid: 041ee6d92b0409840ab12c6eca56f221,
-      type: 3}
+    iconSprite: {fileID: 21300000, guid: cb86885a885938f4a9c568045c3aa655, type: 3}
     price: 200
     currency: silver
   - id: craft-book
     name: Craft book
-    iconSprite: {fileID: -1965123881641317283, guid: 041ee6d92b0409840ab12c6eca56f221,
-      type: 3}
+    iconSprite: {fileID: 2103797088, guid: 416056e89e6001e4f8e71275cf669cce, type: 3}
     price: 50
     currency: gold

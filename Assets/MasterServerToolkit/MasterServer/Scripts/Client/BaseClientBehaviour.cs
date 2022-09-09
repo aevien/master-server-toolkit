@@ -141,14 +141,15 @@ namespace MasterServerToolkit.MasterServer
             // Change connections
             Connection = socket;
 
-            // Override packet handlers
-            foreach (var packetHandler in handlers.Values)
+            if (Connection != null)
             {
-                socket.RegisterMessageHandler(packetHandler);
-            }
+                // Override packet handlers
+                foreach (var packetHandler in handlers.Values)
+                    socket.RegisterMessageHandler(packetHandler);
 
-            Connection.OnStatusChangedEvent += OnConnectionStatusChanged;
-            OnConnectionSocketChanged(Connection);
+                Connection.OnStatusChangedEvent += OnConnectionStatusChanged;
+                OnConnectionSocketChanged(Connection);
+            }
         }
 
         /// <summary>

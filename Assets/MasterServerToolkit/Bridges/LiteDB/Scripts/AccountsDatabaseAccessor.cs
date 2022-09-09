@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 namespace MasterServerToolkit.Bridges.LiteDB
 {
-    public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor, IDisposable
+    public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor
     {
         private ILiteCollection<AccountInfoData> accountsCollection;
         private ILiteCollection<PasswordResetData> resetCodesCollection;
@@ -250,6 +250,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
 
         public void Dispose()
         {
+            CustomProperties?.Clear();
             database?.Dispose();
         }
     }

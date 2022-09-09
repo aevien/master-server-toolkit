@@ -1,13 +1,10 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace MasterServerToolkit.Examples.BasicSpawner
+namespace MasterServerToolkit.Examples.BasicRoomsAndLobbies
 {
     public class RoomInfoPanel : MonoBehaviour
     {
@@ -28,7 +25,7 @@ namespace MasterServerToolkit.Examples.BasicSpawner
 
             if (roomManager)
             {
-                MstTimer.Instance.WaitWhile(() => !Mst.Client.Rooms.HasAccess, (isSuccess) =>
+                MstTimer.WaitWhile(() => !Mst.Client.Rooms.HasAccess, (isSuccess) =>
                 {
                     if (isSuccess)
                     {

@@ -46,7 +46,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.GetRegionsRequest, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetRegionsRequest, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -64,7 +64,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     foreach (var region in Regions)
                     {
-                        MstTimer.Instance.WaitPing(region.Ip, (time) =>
+                        MstTimer.WaitPing(region.Ip, (time) =>
                         {
                             totalRegions--;
 
@@ -117,7 +117,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.FindGamesRequest, filter.ToBytes(), (status, response) =>
+            connection.SendMessage(MstOpCodes.FindGamesRequest, filter.ToBytes(), (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

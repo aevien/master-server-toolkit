@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Utils;
+using System;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.Networking
@@ -26,13 +27,9 @@ namespace MasterServerToolkit.Networking
                 IUpdatable runnable = _updatebles[i];
 
                 if (runnable != null)
-                {
                     runnable.Update();
-                }
                 else
-                {
                     _updatebles.RemoveAt(i);
-                }
             }
         }
 
@@ -40,19 +37,23 @@ namespace MasterServerToolkit.Networking
         /// Adds <see cref="IUpdatable"/> to list of updates that are running in main Unity thread
         /// </summary>
         /// <param name="updatable"></param>
-        public void Add(IUpdatable updatable)
+        public static void Add(IUpdatable updatable)
         {
-            if (!_updatebles.Contains(updatable))
-                _updatebles.Add(updatable);
+            if (TryGetOrCreate(out var instance))
+            {
+                if (!instance._updatebles.Contains(updatable))
+                    instance._updatebles.Add(updatable);
+            }
         }
 
         /// <summary>
         /// Removes <see cref="IUpdatable"/> from list of updates that are running in main Unity thread
         /// </summary>
         /// <param name="updatable"></param>
-        public void Remove(IUpdatable updatable)
+        public static void Remove(IUpdatable updatable)
         {
-            _updatebles.Remove(updatable);
+            if (TryGetOrCreate(out var instance))
+                instance._updatebles.Remove(updatable);
         }
     }
 }

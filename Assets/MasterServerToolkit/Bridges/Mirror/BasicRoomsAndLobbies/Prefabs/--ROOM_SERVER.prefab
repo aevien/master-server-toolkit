@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 643701551274921288}
   - component: {fileID: 643701551274921334}
   - component: {fileID: 643701551274921289}
-  - component: {fileID: 643701551274921335}
   - component: {fileID: 643701551274921291}
   - component: {fileID: 643701551274921332}
   m_Layer: 0
@@ -94,20 +93,6 @@ MonoBehaviour:
   debugLog: 0
   statisticsGUI: 0
   statisticsLog: 0
---- !u!114 &643701551274921335
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 643701551274921290}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6442dc8070ceb41f094e44de0bf87274, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  offsetX: 0
-  offsetY: 0
 --- !u!114 &643701551274921291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,20 +131,7 @@ MonoBehaviour:
         m_CallState: 2
   OnRoomRegisteredEvent:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 643701551274921332}
-        m_TargetAssemblyTypeName: MasterServerToolkit.Bridges.MirrorNetworking.FakeNoticeManager,
-          MasterServerToolkit
-        m_MethodName: Initialize
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   OnRoomRegisterFailedEvent:
     m_PersistentCalls:
       m_Calls:

@@ -5,12 +5,9 @@ namespace MasterServerToolkit.MasterServer
     public class MstLobbiesServer : MstBaseClient
     {
         public delegate void LobbyMemberDataCallback(LobbyMemberData memberData, string error);
-
         public delegate void LobbyInfoCallback(LobbyDataPacket info, string error);
 
-        public MstLobbiesServer(IClientSocket connection) : base(connection)
-        {
-        }
+        public MstLobbiesServer(IClientSocket connection) : base(connection) { }
 
         /// <summary>
         /// Retrieves lobby member data of user, who has connected to master server with
@@ -36,7 +33,7 @@ namespace MasterServerToolkit.MasterServer
                 B = peerId
             };
 
-            connection.SendMessage((ushort)MstOpCodes.GetLobbyMemberData, packet, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetLobbyMemberData, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -62,7 +59,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void GetLobbyInfo(int lobbyId, LobbyInfoCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((ushort)MstOpCodes.GetLobbyInfo, lobbyId, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetLobbyInfo, lobbyId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

@@ -775,6 +775,27 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: book
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 12
+        width: 512
+        height: 436
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 154dab8b988444b4cb4f55b7838154d9
+      internalID: 2103797088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -787,6 +808,7 @@ TextureImporter:
     secondaryTextures: []
     nameFileIdTable:
       menu: 6934154925517905568
+      book: 2103797088
       silver_coins: 9129354605046137251
       gradient_bg: 2176595490370957018
       ip_address: 4139023523627789917

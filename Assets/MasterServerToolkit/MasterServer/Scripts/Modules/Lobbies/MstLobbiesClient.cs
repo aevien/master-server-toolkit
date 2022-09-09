@@ -13,12 +13,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Invoked, when user joins a lobby
         /// </summary>
-        public event JoinLobbyEventHandler OnLobbyJoinedEvent;
+        public event JoinLobbyEventHandler OnJoinedLobbyEvent;
 
         /// <summary>
         /// Invoked, when user left a lobby
         /// </summary>
-        public event Action OnLobbyLeftEvent;
+        public event Action OnLeftLobbyEvent;
 
         /// <summary>
         /// Instance of a lobby that was joined the last
@@ -82,7 +82,7 @@ namespace MasterServerToolkit.MasterServer
 
             options.Set(MstDictKeys.LOBBY_FACTORY_ID, factory);
 
-            connection.SendMessage((ushort)MstOpCodes.CreateLobby, options.ToBytes(), (status, response) =>
+            connection.SendMessage(MstOpCodes.CreateLobby, options.ToBytes(), (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -112,7 +112,7 @@ namespace MasterServerToolkit.MasterServer
         public void JoinLobby(int lobbyId, JoinLobbyCallbackHandler callback, IClientSocket connection)
         {
             // Send the message
-            connection.SendMessage((ushort)MstOpCodes.JoinLobby, lobbyId, (status, response) =>
+            connection.SendMessage(MstOpCodes.JoinLobby, lobbyId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -127,7 +127,7 @@ namespace MasterServerToolkit.MasterServer
                 JoinedLobby = joinedLobby;
 
                 callback?.Invoke(joinedLobby, null);
-                OnLobbyJoinedEvent?.Invoke(joinedLobby);
+                OnJoinedLobbyEvent?.Invoke(joinedLobby);
             });
         }
 
@@ -152,7 +152,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void LeaveLobby(int lobbyId, Action callback, IClientSocket connection)
         {
-            connection.SendMessage((ushort)MstOpCodes.LeaveLobby, lobbyId, (status, response) =>
+            connection.SendMessage(MstOpCodes.LeaveLobby, lobbyId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -160,7 +160,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 callback?.Invoke();
-                OnLobbyLeftEvent?.Invoke();
+                OnLeftLobbyEvent?.Invoke();
             });
         }
 
@@ -185,7 +185,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.SetLobbyAsReady, isReady ? 1 : 0, (status, response) =>
+            connection.SendMessage(MstOpCodes.SetLobbyAsReady, isReady ? 1 : 0, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -219,7 +219,7 @@ namespace MasterServerToolkit.MasterServer
                 Properties = properties
             };
 
-            connection.SendMessage((ushort)MstOpCodes.SetLobbyProperties, packet, (status, response) =>
+            connection.SendMessage(MstOpCodes.SetLobbyProperties, packet, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -248,7 +248,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SetMyProperties(MstProperties properties, SuccessCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((ushort)MstOpCodes.SetMyProperties, properties.ToBytes(), Mst.Create.SuccessCallback(callback));
+            connection.SendMessage(MstOpCodes.SetMyProperties, properties.ToBytes(), Mst.Create.SuccessCallback(callback));
         }
 
         /// <summary>
@@ -273,7 +273,7 @@ namespace MasterServerToolkit.MasterServer
                 TeamName = teamName
             };
 
-            connection.SendMessage((ushort)MstOpCodes.JoinLobbyTeam, packet, Mst.Create.SuccessCallback(callback));
+            connection.SendMessage(MstOpCodes.JoinLobbyTeam, packet, Mst.Create.SuccessCallback(callback));
         }
 
         /// <summary>
@@ -289,7 +289,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void SendChatMessage(string message, IClientSocket connection)
         {
-            connection.SendMessage((ushort)MstOpCodes.SendMessageToLobbyChat, message);
+            connection.SendMessage(MstOpCodes.SendMessageToLobbyChat, message);
         }
 
         /// <summary>
@@ -297,7 +297,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void StartGame(SuccessCallback callback, IClientSocket connection)
         {
-            connection.SendMessage((ushort)MstOpCodes.StartLobbyGame, (status, response) =>
+            connection.SendMessage(MstOpCodes.StartLobbyGame, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -333,7 +333,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.GetLobbyRoomAccess, properties.ToBytes(), (status, response) =>
+            connection.SendMessage(MstOpCodes.GetLobbyRoomAccess, properties.ToBytes(), (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

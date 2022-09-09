@@ -107,7 +107,7 @@ namespace MasterServerToolkit.Games
 
                 // Wait for spawning status until it is finished
                 // This status must be send by room
-                MstTimer.Instance.WaitWhile(() =>
+                MstTimer.WaitWhile(() =>
                 {
                     return controller.Status != SpawnStatus.Finalized;
                 }, (isSuccess) =>

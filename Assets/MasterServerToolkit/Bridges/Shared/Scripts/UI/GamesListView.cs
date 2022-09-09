@@ -121,7 +121,7 @@ namespace MasterServerToolkit.Games
                     var rx = new Regex(@":\d+");
                     string ip = rx.Replace(gameInfo.Address.Trim(), "");
 
-                    MstTimer.Instance.WaitPing(ip, (time) =>
+                    MstTimer.WaitPing(ip, (time) =>
                     {
                         pingRegionLable.Text = $"{time} ms.";
                     });
@@ -188,7 +188,7 @@ namespace MasterServerToolkit.Games
                 statusInfoText.gameObject.SetActive(true);
             }
 
-            MstTimer.Instance.WaitForSeconds(0.2f, () =>
+            MstTimer.WaitForSeconds(0.2f, () =>
             {
                 Mst.Client.Matchmaker.FindGames((games) =>
                 {

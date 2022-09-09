@@ -14,6 +14,14 @@ namespace MasterServerToolkit.Examples.BasicNetworking
             Mst.Client.Connection.AddConnectionCloseListener(Connection_OnDisconnectedEvent);
         }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            Mst.Client.Connection.RemoveConnectionOpenListener(Connection_OnConnectedEvent);
+            Mst.Client.Connection.RemoveConnectionCloseListener(Connection_OnDisconnectedEvent);
+        }
+
         /// <summary>
         /// Sends message to server
         /// </summary>
@@ -31,7 +39,7 @@ namespace MasterServerToolkit.Examples.BasicNetworking
             string text = "Hello from client and waiting for response from server";
             Mst.Client.Connection.SendMessage(MessageCodes.MessageWithResponse, text, (status, message) =>
             {
-                if (status == Networking.ResponseStatus.Error)
+                if (status == ResponseStatus.Error)
                 {
                     Logs.Error(message.AsString());
                     return;

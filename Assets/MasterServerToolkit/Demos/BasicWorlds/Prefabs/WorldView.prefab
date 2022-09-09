@@ -169,7 +169,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &3025740707313735632
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,12 +200,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: WorldView
+  title: WorldView
   hideOnStart: 1
   allwaysOnTop: 1
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 0}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []

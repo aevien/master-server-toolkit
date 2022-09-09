@@ -20,7 +20,7 @@ namespace MasterServerToolkit.Games
         {
             if (!string.IsNullOrEmpty(url))
             {
-                MstTimer.Instance.WaitForRealtimeSeconds(delayTime, () =>
+                MstTimer.WaitForRealtimeSeconds(delayTime, () =>
                 {
                     Application.OpenURL(url);
                 });

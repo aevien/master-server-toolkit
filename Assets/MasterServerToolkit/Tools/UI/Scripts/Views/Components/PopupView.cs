@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.UI
 {
-    public class PopupViewComponent : UIView
+    public class PopupView : UIView
     {
         [Header("Lables Settings"), SerializeField]
         protected TextMeshProUGUI[] lables;

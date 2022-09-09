@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,7 +23,7 @@ namespace MasterServerToolkit.Networking
 
         public void SendDelayedMessages()
         {
-            MstTimer.Instance.StartCoroutine(SendDelayedMessagesCoroutine());
+            SafeCoroutine.PermanentRunner.StartCoroutine(SendDelayedMessagesCoroutine());
         }
 
         public IEnumerator SendDelayedMessagesCoroutine()

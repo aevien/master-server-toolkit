@@ -1,9 +1,10 @@
-﻿using System.IO;
+﻿using MasterServerToolkit.MasterServer;
+using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.MasterServer.Examples.BasicAuthorization
+namespace MasterServerToolkit.Examples.BasicAuthorization
 {
     public class BasicAuthorizationPlayerBuild
     {

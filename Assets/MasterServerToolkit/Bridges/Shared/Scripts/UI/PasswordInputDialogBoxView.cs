@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.Games
 {
-    public class PasswordInputDialogBoxView : PopupViewComponent
+    public class PasswordInputDialogBoxView : PopupView
     {
         #region INSPECTOR
 

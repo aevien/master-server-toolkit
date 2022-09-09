@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -10,7 +11,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of the db/api accessors
         /// </summary>
-        private readonly Dictionary<Type, IDatabaseAccessor> _accessors = new Dictionary<Type, IDatabaseAccessor>();
+        private Dictionary<Type, IDatabaseAccessor> _accessors;
+
+        public MstDbAccessor()
+        {
+            _accessors = new Dictionary<Type, IDatabaseAccessor>();
+        }
 
         /// <summary>
         /// Adds a database accessor to the list of available accessors
@@ -22,6 +28,9 @@ namespace MasterServerToolkit.MasterServer
             if (_accessors.ContainsKey(access.GetType()))
             {
                 Logs.Warn($"Database accessor of type {access.GetType()} was overwriten");
+
+                _accessors[access.GetType()].Dispose();
+                _accessors.Remove(access.GetType());
             }
 
             _accessors[access.GetType()] = access;
@@ -37,7 +46,7 @@ namespace MasterServerToolkit.MasterServer
             _accessors.TryGetValue(typeof(T), out IDatabaseAccessor accessor);
 
             if (accessor == null)
-            	accessor = _accessors.Values.FirstOrDefault(m => m is T);
+                accessor = _accessors.Values.FirstOrDefault(m => m is T);
 
             return accessor as T;
         }

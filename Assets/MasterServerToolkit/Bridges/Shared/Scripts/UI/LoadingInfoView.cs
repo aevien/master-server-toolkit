@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Games
 {
-    public class LoadingInfoView : PopupViewComponent
+    public class LoadingInfoView : PopupView
     {
         protected override void Awake()
         {

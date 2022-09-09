@@ -1,23 +1,30 @@
 ﻿using MasterServerToolkit.Networking;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public abstract class ObservableBaseDictionary<TKey, TValue> : ObservableBase<Dictionary<TKey, TValue>>
+    public abstract class ObservableBaseDictionary<TKey, TValue> : ObservableBase<ConcurrentDictionary<TKey, TValue>>
     {
+        public delegate void ObservableBaseDictionarySetEventDelegate(TKey key, TValue oldValue, TValue newValue);
+        public delegate void ObservableBaseDictionaryAddEventDelegate(TKey newKey, TValue newValue);
+        public delegate void ObservableBaseDictionaryRemoveEventDelegate(TKey key, TValue removedValue);
+
         private const int _setOperation = 0;
         private const int _removeOperation = 1;
         private Queue<DictionaryUpdateEntry> _updates;
 
+        public event ObservableBaseDictionarySetEventDelegate OnSetEvent;
+        public event ObservableBaseDictionaryAddEventDelegate OnAddEvent;
+        public event ObservableBaseDictionaryRemoveEventDelegate OnRemoveEvent;
+
         protected ObservableBaseDictionary(ushort key) : this(key, null) { }
 
-        protected ObservableBaseDictionary(ushort key, Dictionary<TKey, TValue> defaultValues) : base(key)
+        protected ObservableBaseDictionary(ushort key, ConcurrentDictionary<TKey, TValue> defaultValues) : base(key)
         {
             _updates = new Queue<DictionaryUpdateEntry>();
-            _value = defaultValues == null ? new Dictionary<TKey, TValue>() : defaultValues.ToDictionary(k => k.Key, k => k.Value);
+            _value = defaultValues == null ? new ConcurrentDictionary<TKey, TValue>() : defaultValues;
         }
 
         public TValue this[TKey key]
@@ -50,17 +57,35 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Returns an immutable list of keys
         /// </summary>
-        public IEnumerable<TKey> Keys => _value.Keys;
+        public IEnumerable<TKey> Keys
+        {
+            get
+            {
+                return _value.Keys;
+            }
+        }
 
         /// <summary>
         /// Returns an immutable list of values
         /// </summary>
-        public ICollection<TValue> Values => _value.Values;
+        public ICollection<TValue> Values
+        {
+            get
+            {
+                return _value.Values;
+            }
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        public int Count => _value.Count;
+        public int Count
+        {
+            get
+            {
+                return _value.Count;
+            }
+        }
 
         /// <summary>
         /// 
@@ -69,16 +94,17 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="item"></param>
         public void Add(TKey key, TValue item)
         {
-            _value.Add(key, item);
-
-            _updates.Enqueue(new DictionaryUpdateEntry()
+            if (_value.TryAdd(key, item))
             {
-                key = key,
-                operation = _setOperation,
-                value = item
-            });
+                _updates.Enqueue(new DictionaryUpdateEntry()
+                {
+                    key = key,
+                    operation = _setOperation,
+                    value = item
+                });
 
-            MarkDirty();
+                MarkDirty();
+            }
         }
 
         /// <summary>
@@ -88,7 +114,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool Remove(TKey key)
         {
-            if (_value.Remove(key))
+            if (_value.TryRemove(key, out _))
             {
                 _updates.Enqueue(new DictionaryUpdateEntry()
                 {
@@ -111,8 +137,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool TryGetValue(TKey key, out TValue result)
         {
-            _value.TryGetValue(key, out result);
-            return result != null;
+            return _value.TryGetValue(key, out result);
         }
 
         /// <summary>
@@ -176,14 +201,11 @@ namespace MasterServerToolkit.MasterServer
                     {
                         var key = ReadKey(reader);
                         var value = ReadValue(reader);
+
                         if (_value.ContainsKey(key))
-                        {
                             _value[key] = value;
-                        }
                         else
-                        {
-                            _value.Add(key, value);
-                        }
+                            _value.TryAdd(key, value);
                     }
                 }
 
@@ -228,9 +250,10 @@ namespace MasterServerToolkit.MasterServer
                         var operation = reader.ReadByte();
                         var key = ReadKey(reader);
 
-                        if (operation == _removeOperation)
+                        if (operation == _removeOperation
+                            && _value.TryRemove(key, out var valueToBeRemoved))
                         {
-                            Remove(key);
+                            OnRemoveEvent?.Invoke(key, valueToBeRemoved);
                             continue;
                         }
 
@@ -238,11 +261,14 @@ namespace MasterServerToolkit.MasterServer
 
                         if (ContainsKey(key))
                         {
+                            var oldValue = this[key];
                             this[key] = value;
+                            OnSetEvent?.Invoke(key, oldValue, value);
                         }
                         else
                         {
                             Add(key, value);
+                            OnAddEvent?.Invoke(key, value);
                         }
                     }
                 }

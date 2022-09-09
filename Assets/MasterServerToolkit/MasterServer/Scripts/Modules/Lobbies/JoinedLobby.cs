@@ -109,17 +109,18 @@ namespace MasterServerToolkit.MasterServer
         {
             _connection = connection;
             Data = data;
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyMemberPropertyChanged, HandleMemberPropertyChanged);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LeftLobby, HandleLeftLobbyMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyChatMessage, HandleLobbyChatMessageMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyMemberJoined, HandleLobbyMemberJoinedMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyMemberLeft, HandleLobbyMemberLeftMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyStateChange, HandleLobbyStateChangeMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyStatusTextChange, HandleLobbyStatusTextChangeMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyMemberChangedTeam, HandlePlayerTeamChangeMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyMemberReadyStatusChange, HandleLobbyMemberReadyStatusChangeMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyMasterChange, HandleGameMasterChangeMsg);
-            connection.RegisterMessageHandler((ushort)MstOpCodes.LobbyPropertyChanged, HandleLobbyPropertyChanged);
+
+            connection.RegisterMessageHandler(MstOpCodes.LobbyMemberPropertyChanged, HandleMemberPropertyChanged);
+            connection.RegisterMessageHandler(MstOpCodes.LeftLobby, HandleLeftLobbyMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyChatMessage, HandleLobbyChatMessageMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyMemberJoined, HandleLobbyMemberJoinedMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyMemberLeft, HandleLobbyMemberLeftMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyStateChange, HandleLobbyStateChangeMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyStatusTextChange, HandleLobbyStatusTextChangeMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyMemberChangedTeam, HandlePlayerTeamChangeMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyMemberReadyStatusChange, HandleLobbyMemberReadyStatusChangeMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyMasterChange, HandleGameMasterChangeMsg);
+            connection.RegisterMessageHandler(MstOpCodes.LobbyPropertyChanged, HandleLobbyPropertyChanged);
 
             Properties = data.LobbyProperties;
             Members = data.Members;

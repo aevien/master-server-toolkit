@@ -114,7 +114,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             logger.Info($"Waiting for access data. Timeout in {roomConnectionTimeout} sec.");
 
-            MstTimer.Instance.WaitWhile(() => !Mst.Client.Rooms.HasAccess, (isSuccess) =>
+            MstTimer.WaitWhile(() => !Mst.Client.Rooms.HasAccess, (isSuccess) =>
             {
                 if (!isSuccess)
                 {

@@ -132,19 +132,15 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void OnValidate()
         {
             if (usernameMaxChars <= usernameMinChars)
-            {
                 usernameMaxChars = usernameMinChars + 1;
-            }
 
             if (tokenExpiresInDays < 0)
-            {
                 tokenExpiresInDays = 1;
-            }
         }
 
         public override void Initialize(IServer server)
         {
-            if (databaseAccessorFactory)
+            if (databaseAccessorFactory != null)
                 databaseAccessorFactory.CreateAccessors();
 
             authDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();

@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -96,7 +97,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            sendUpdatesCoroutine = MstTimer.Instance.StartCoroutine(KeepSendingUpdates(connection));
+            sendUpdatesCoroutine = SafeCoroutine.PermanentRunner.StartCoroutine(KeepSendingUpdates(connection));
         }
 
         private void OnProfileDisposed(ObservableServerProfile profile)

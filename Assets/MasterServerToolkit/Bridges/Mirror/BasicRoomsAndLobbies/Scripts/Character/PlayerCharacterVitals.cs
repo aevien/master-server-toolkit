@@ -112,7 +112,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 
             if (dieEffectPrefab)
             {
-                MstTimer.Instance.WaitForSeconds(1f, () =>
+                MstTimer.WaitForSeconds(1f, () =>
                 {
                     Instantiate(dieEffectPrefab, transform.position, Quaternion.identity);
                 });

@@ -1,15 +1,11 @@
 #if FISHNET
 using FishNet;
-using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Client;
 using FishNet.Managing.Scened;
-using FishNet.Managing.Transporting;
 using FishNet.Transporting;
-using MasterServerToolkit.Extensions;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnitySceneManager = UnityEngine.SceneManagement.SceneManager;
 
@@ -132,7 +128,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Start joining a room at {access.RoomIp}:{access.RoomPort}");
 
-                MstTimer.Instance.WaitWhile(() => connectionState != LocalConnectionState.Stopped, (isSuccess) =>
+                MstTimer.WaitWhile(() => connectionState != LocalConnectionState.Stopped, (isSuccess) =>
                 {
                     _clientManager.StartConnection(access.RoomIp, access.RoomPort);
                 }, 10f);

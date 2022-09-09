@@ -1,9 +1,10 @@
+using MasterServerToolkit.MasterServer;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.MasterServer.Examples.BasicHttpServer
+namespace MasterServerToolkit.Examples.BasicHTTPServer
 {
     public class BasicHTTPServerPlayerBuild
     {

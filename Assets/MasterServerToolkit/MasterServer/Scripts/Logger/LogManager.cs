@@ -1,14 +1,15 @@
-﻿using System;
+﻿using log4net.Appender;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace MasterServerToolkit.Logging
 {
-    public static class LogManager
+    public class LogManager
     {
         private static LogHandler _appenders;
         private static readonly Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
-        private static readonly Queue<PooledLog> _pooledLogs;
+        private static readonly Queue<PooledLog> _pooledLogs = new Queue<PooledLog>();
 
         /// <summary>
         /// 
@@ -35,12 +36,6 @@ namespace MasterServerToolkit.Logging
         /// </summary>
         public static int InitializationPoolSize = 100;
 
-        static LogManager()
-        {
-            LogLevel = LogLevel.Off;
-            _pooledLogs = new Queue<PooledLog>();
-        }
-
         /// <summary>
         /// 
         /// </summary>
@@ -48,6 +43,10 @@ namespace MasterServerToolkit.Logging
         /// <param name="globalLogLevel"></param>
         public static void Initialize(IEnumerable<LogHandler> appenders, LogLevel globalLogLevel)
         {
+            _appenders = null;
+            _loggers.Clear();
+            _pooledLogs.Clear();
+
             GlobalLogLevel = globalLogLevel;
 
             foreach (var appender in appenders)

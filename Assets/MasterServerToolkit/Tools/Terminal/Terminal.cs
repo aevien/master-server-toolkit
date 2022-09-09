@@ -82,7 +82,6 @@ namespace MasterServerToolkit.CommandTerminal
         protected override void Awake()
         {
             base.Awake();
-
             if (isNowDestroying) return;
 
             Buffer = new CommandLog(bufferSize);
@@ -120,8 +119,10 @@ namespace MasterServerToolkit.CommandTerminal
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
             Application.logMessageReceived -= HandleUnityLog;
         }
 

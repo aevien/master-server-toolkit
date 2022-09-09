@@ -135,7 +135,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             StopServer();
 
-            MstTimer.Instance.WaitForSeconds(1f, () =>
+            MstTimer.WaitForSeconds(1f, () =>
             {
                 Mst.Runtime.Quit();
             });
@@ -301,7 +301,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                                 Status = ResponseStatus.Failed
                             });
 
-                            MstTimer.Instance.WaitForSeconds(1f, () => conn.Disconnect());
+                            MstTimer.WaitForSeconds(1f, () => conn.Disconnect());
                             return;
                         }
 
@@ -321,7 +321,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                             Status = ResponseStatus.Error
                         });
 
-                        MstTimer.Instance.WaitForSeconds(1f, () => conn.Disconnect());
+                        MstTimer.WaitForSeconds(1f, () => conn.Disconnect());
                     }
                 });
             }

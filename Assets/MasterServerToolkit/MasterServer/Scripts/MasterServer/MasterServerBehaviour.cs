@@ -1,15 +1,22 @@
 ﻿using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Networking;
+using MongoDB.Driver.Core.Servers;
 using System;
+using UnityEditor.PackageManager;
+using UnityEngine.Analytics;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MasterServerBehaviour : ServerBehaviour
     {
+        [NonSerialized]
+        private static MasterServerBehaviour instance;
+
         /// <summary>
         /// Singleton instance of the master server behaviour
         /// </summary>
-        public static MasterServerBehaviour Instance { get; private set; }
+        public static MasterServerBehaviour Instance => instance;
 
         /// <summary>
         /// Invoked when master server started
@@ -21,10 +28,22 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static event Action<MasterServerBehaviour> OnMasterStoppedEvent;
 
-        protected void Awake()
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void RunOnStart()
         {
+            instance = null;
+            OnMasterStartedEvent = null;
+            OnMasterStoppedEvent = null;
+        }
+#endif
+
+        protected override void Awake()
+        {
+            base.Awake();
+
             // If instance of the server is already running
-            if (Instance != null)
+            if (instance != null)
             {
                 // Destroy, if this is not the first instance
                 Destroy(gameObject);
@@ -32,7 +51,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Create new instance
-            Instance = this;
+            instance = this;
 
             // Move to root, so that it won't be destroyed
             // In case this instance is a child of another gameobject
@@ -58,7 +77,7 @@ namespace MasterServerToolkit.MasterServer
             if (Mst.Args.StartMaster && !Mst.Runtime.IsEditor)
             {
                 // Start the server on next frame
-                MstTimer.Instance.WaitForEndOfFrame(() =>
+                MstTimer.WaitForEndOfFrame(() =>
                 {
                     StartServer();
                 });

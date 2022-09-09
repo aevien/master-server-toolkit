@@ -24,7 +24,7 @@ namespace MasterServerToolkit.Networking
         private static readonly object idGenerationLock = new object();
         private static int peerIdGenerator;
         private bool disposedValue = false;
-        protected readonly Logging.Logger logger;
+        protected readonly Logger logger;
         protected LogLevel logLevel = LogLevel.Info;
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace MasterServerToolkit.Networking
             ackTimeoutQueue = new List<long[]>();
             extensionsList = new Dictionary<Type, IPeerExtension>();
 
-            MstTimer.Instance.OnTickEvent += HandleAckDisposalTick;
+            MstTimer.OnTickEvent += HandleAckDisposalTick;
 
             timeoutMessage = new IncomingMessage("-1".ToUint16Hash(), 0, "Time out".ToBytes(), DeliveryMethod.ReliableFragmentedSequenced, this)
             {
@@ -540,7 +540,7 @@ namespace MasterServerToolkit.Networking
         private void StartAckTimeout(int ackId, int timeoutSecs)
         {
             // +1, because it might be about to tick in a few miliseconds
-            ackTimeoutQueue.Add(new[] { ackId, MstTimer.Instance.CurrentTick + timeoutSecs + 1 });
+            ackTimeoutQueue.Add(new[] { ackId, MstTimer.CurrentTick + timeoutSecs + 1 });
         }
 
         /// <summary>
@@ -635,7 +635,7 @@ namespace MasterServerToolkit.Networking
             {
                 if (disposing)
                 {
-                    MstTimer.Instance.OnTickEvent -= HandleAckDisposalTick;
+                    MstTimer.OnTickEvent -= HandleAckDisposalTick;
                 }
 
                 disposedValue = true;

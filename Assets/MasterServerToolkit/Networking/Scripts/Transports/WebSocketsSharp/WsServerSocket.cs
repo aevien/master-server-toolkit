@@ -61,7 +61,7 @@ namespace MasterServerToolkit.Networking
             try
             {
                 // Stop listening when application closes
-                MstTimer.Instance.OnApplicationQuitEvent += Stop;
+                MstTimer.OnApplicationQuitEvent += Stop;
 
                 server?.Stop();
 

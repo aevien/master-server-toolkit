@@ -272,7 +272,7 @@ namespace MasterServerToolkit.MasterServer
             });
 
             // Timeout the access provider
-            MstTimer.Instance.WaitForRealtimeSeconds(Mst.Server.Rooms.AccessProviderTimeout, () =>
+            MstTimer.WaitForRealtimeSeconds(Mst.Server.Rooms.AccessProviderTimeout, () =>
             {
                 if (!isProviderDone)
                 {

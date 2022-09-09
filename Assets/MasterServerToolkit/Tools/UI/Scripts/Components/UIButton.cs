@@ -11,7 +11,11 @@ namespace MasterServerToolkit.UI
         private Button button;
 
         [Header("Components"), SerializeField]
+        private Image iconImage;
+        [SerializeField]
         private TextMeshProUGUI lableText;
+        [SerializeField]
+        private Sprite iconValue;
         [SerializeField]
         private string lableValue = "Click me";
 
@@ -37,12 +41,22 @@ namespace MasterServerToolkit.UI
         private void OnValidate()
         {
             SetLable(lableValue);
+            SetIcon(iconValue);
         }
 
         public void SetLable(string lableValue)
         {
             if (lableText)
                 lableText.text = lableValue;
+        }
+
+        public void SetIcon(Sprite icon)
+        {
+            if(iconImage)
+            {
+                iconImage.sprite = null;
+                iconImage.sprite = icon;
+            }    
         }
 
         public void SetInteractable(bool value)

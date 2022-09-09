@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Games
 {
-    public class OkDialogBoxView : PopupViewComponent
+    public class OkDialogBoxView : PopupView
     {
         protected override void Awake()
         {

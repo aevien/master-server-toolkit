@@ -7,16 +7,21 @@ namespace MasterServerToolkit.MasterServer
 {
     public abstract class ObservableBaseList<T> : ObservableBase<List<T>>
     {
+        public delegate void ObservableBaseListSetEventDelegate(T oldItem, T item);
+        public delegate void ObservableBaseListAddEventDelegate(T newItem);
+        public delegate void ObservableBaseListInsertEventDelegate(int index, T insertedItem);
+        public delegate void ObservableBaseListRemoveEventDelegate(T removedItem);
+
         private const byte _setOperation = 0;
         private const byte _removeOperation = 1;
         private const byte _insertOperation = 2;
         private Queue<ListUpdateEntry> _updates;
         public int Count => _value.Count;
 
-        public event Action<T, T> OnSetEvent;
-        public event Action<T> OnAddEvent;
-        public event Action<int, T> OnInsertEvent;
-        public event Action<T> OnRemoveEvent;
+        public event ObservableBaseListSetEventDelegate OnSetEvent;
+        public event ObservableBaseListAddEventDelegate OnAddEvent;
+        public event ObservableBaseListInsertEventDelegate OnInsertEvent;
+        public event ObservableBaseListRemoveEventDelegate OnRemoveEvent;
 
         protected ObservableBaseList(ushort key) : this(key, null) { }
 

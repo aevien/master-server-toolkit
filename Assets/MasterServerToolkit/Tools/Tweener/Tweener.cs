@@ -1,7 +1,5 @@
-using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -52,9 +50,9 @@ namespace MasterServerToolkit.Utils
         {
             if (!_tweenerInstance && !_wasCreated)
             {
-                var weenerInstanceObj = new GameObject("--MST_TWEENER");
-                _tweenerInstance = weenerInstanceObj.AddComponent<TweenerBehaviour>();
-                UnityEngine.Object.DontDestroyOnLoad(_tweenerInstance);
+                var tweenerInstanceObj = new GameObject("--MSTTWEENER");
+                _tweenerInstance = tweenerInstanceObj.AddComponent<TweenerBehaviour>();
+                Object.DontDestroyOnLoad(_tweenerInstance);
                 _wasCreated = true;
             }
 
@@ -92,11 +90,19 @@ namespace MasterServerToolkit.Utils
             return _tweener;
         }
 
-        public static TweenerActionInfo Start(IEnumerator action)
-        {
-            return Start(NextId, action);
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static TweenerActionInfo Start(IEnumerator action) => Start(NextId, action);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
         public static TweenerActionInfo Start(int id, IEnumerator action)
         {
             var info = new TweenerActionInfo()
@@ -145,31 +151,45 @@ namespace MasterServerToolkit.Utils
             callback?.Invoke();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="callback"></param>
         public static void AddOnStartListener(int id, TweenerActionInfoCallback callback)
         {
             RemoveOnStartListener(id);
             onStart.TryAdd(id, callback);
         }
 
-        public static void RemoveOnStartListener(int id)
-        {
-            onStart.TryRemove(id, out _);
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        public static void RemoveOnStartListener(int id) => onStart.TryRemove(id, out _);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="callback"></param>
         public static void AddOnCompleteListener(int id, TweenerActionInfoCallback callback)
         {
             RemoveOnCompleteListener(id);
             onComplete.TryAdd(id, callback);
         }
 
-        public static void RemoveOnCompleteListener(int id)
-        {
-            onComplete.TryRemove(id, out _);
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        public static void RemoveOnCompleteListener(int id) => onComplete.TryRemove(id, out _);
 
-        public static bool IsRunning(int id)
-        {
-            return coroutines.ContainsKey(id);
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public static bool IsRunning(int id) => coroutines.ContainsKey(id);
     }
 }

@@ -9,6 +9,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -31,6 +32,8 @@ namespace MasterServerToolkit.MasterServer
         protected string[] defaultIndexPage = new string[] { "index", "home" };
 
         [Header("User Credentials Settings"), SerializeField]
+        protected bool useCredentials = true;
+        [SerializeField]
         protected string username = "admin";
         [SerializeField]
         protected string password = "admin";
@@ -149,10 +152,10 @@ namespace MasterServerToolkit.MasterServer
             Stop();
 
             // Initialize server
-            httpServer = new HttpListener
-            {
-                AuthenticationSchemes = AuthenticationSchemes.Basic
-            };
+            httpServer = new HttpListener();
+
+            if (useCredentials)
+                httpServer.AuthenticationSchemes = AuthenticationSchemes.Basic;
 
             // Registers default pages
             RegisterDefaultControllers();
@@ -224,7 +227,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void ValidateRequest(HttpListenerContext context, Action successCallback)
         {
-            if (context.User != null)
+            if (useCredentials && context.User != null)
             {
                 var identity = (HttpListenerBasicIdentity)context.User.Identity;
 

@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -128,6 +127,14 @@ namespace MasterServerToolkit.MasterServer
 
             Mst.Client.Rooms.IsClientMode = forceClientMode;
 
+            if (forceClientMode)
+            {
+                autoLoadUserProfile = false;
+                allowGuestUsers = false;
+                terminateRoomWhenDisconnected = false;
+                terminateRoomWhenLastPlayerQuits = false;
+            }
+
             playersByUsername = new Dictionary<string, RoomPlayer>();
             playersByMasterPeerId = new Dictionary<int, RoomPlayer>();
             playersByRoomPeerId = new Dictionary<int, RoomPlayer>();
@@ -138,8 +145,10 @@ namespace MasterServerToolkit.MasterServer
         protected override void OnDestroy()
         {
             base.OnDestroy();
+
             StopAllCoroutines();
             CancelInvoke();
+
             Connection?.RemoveConnectionOpenListener(OnConnectedToMasterEventHandler);
             Connection?.RemoveConnectionCloseListener(OnDisconnectedFromMasterEventHandler);
             Connection?.Close();
@@ -150,7 +159,7 @@ namespace MasterServerToolkit.MasterServer
             base.OnInitialize();
 
             // Init anly if we are on server side.
-            if (!Mst.Client.Rooms.IsClientMode)
+            if (!forceClientMode)
             {
                 // Listen to master server connection status
                 Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
@@ -160,13 +169,20 @@ namespace MasterServerToolkit.MasterServer
 
         protected override IClientSocket ConnectionFactory()
         {
-            if (!RoomToMasterConnector.Instance)
+            if (!forceClientMode)
             {
-                var connectorObject = new GameObject("--ROOM_CONNECTION_TO_MASTER");
-                connectorObject.AddComponent<RoomToMasterConnector>();
-            }
+                if (!RoomToMasterConnector.Instance)
+                {
+                    var connectorObject = new GameObject("--ROOM_CONNECTION_TO_MASTER");
+                    connectorObject.AddComponent<RoomToMasterConnector>();
+                }
 
-            return RoomToMasterConnector.Instance.Connection;
+                return RoomToMasterConnector.Instance.Connection;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private void OnConnectedToMasterEventHandler(IClientSocket client)
@@ -178,31 +194,26 @@ namespace MasterServerToolkit.MasterServer
                 StopCoroutine(TerminateRoomAfterDelay());
             }
 
-            MstTimer.Instance.WaitForEndOfFrame(() =>
+            // If this room was spawned
+            if (Mst.Server.Spawners.IsSpawnedProccess)
             {
-                // If this room was spawned
-                if (Mst.Server.Spawners.IsSpawnedProccess)
-                {
-                    // Try to register spawned process first
-                    RegisterSpawnedProcess();
-                }
-                else
-                {
-                    // 
-                    BeforeRoomRegistering();
+                // Try to register spawned process first
+                RegisterSpawnedProcess();
+            }
+            else
+            {
+                // 
+                BeforeRoomRegistering();
 
-                    // Invoke notification
-                    OnBeforeRoomRegisterEvent?.Invoke(RoomOptions);
-                }
-            });
+                // Invoke notification
+                OnBeforeRoomRegisterEvent?.Invoke(RoomOptions);
+            }
         }
 
         private void OnDisconnectedFromMasterEventHandler(IClientSocket client)
         {
             if (terminateRoomWhenDisconnected)
-            {
                 StartCoroutine(TerminateRoomAfterDelay());
-            }
         }
 
         /// <summary>
@@ -282,9 +293,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     // If token is not valid
                     if (usernameAndPeerId == null)
-                    {
                         throw new Exception(error);
-                    }
 
                     logger.Debug($"Client {roomPeerId} is successfully validated");
                     logger.Debug("Getting his account info...");
@@ -294,9 +303,7 @@ namespace MasterServerToolkit.MasterServer
                         try
                         {
                             if (accountInfo == null)
-                            {
                                 throw new Exception(accountError);
-                            }
 
                             var accountProperties = new MstProperties(accountInfo.Properties);
 
@@ -523,10 +530,10 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="player"></param>
         protected virtual void OnPlayerJoinedRoom(RoomPlayer player)
         {
-            MstTimer.Instance.WaitForSeconds(2f, () =>
+            MstTimer.WaitForSeconds(2f, () =>
             {
                 Mst.Server.Notifications.NotifyRecipient(player.MasterPeerId,
-                            $"Hi, {player.Username}!\nWelcome to \"{RoomOptions.Name}\" server", null);
+                            $"Hi, {player.Username}!\nWelcome to \"{RoomOptions.Name}\" server", null, Connection);
             });
 
             Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,

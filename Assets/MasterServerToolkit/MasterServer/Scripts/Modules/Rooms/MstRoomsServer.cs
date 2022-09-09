@@ -57,7 +57,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void RegisterRoom(RoomOptions options, RoomCreationCallback callback, IClientSocket connection)
         {
-            if (!Connection.IsConnected)
+            if (!connection.IsConnected)
             {
                 callback.Invoke(null, "Not connected");
                 return;

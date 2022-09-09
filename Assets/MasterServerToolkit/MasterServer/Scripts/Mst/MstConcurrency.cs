@@ -12,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="action"></param>
         public void RunInMainThread(Action action)
         {
-            MstTimer.Instance.RunInMainThread(action);
+            MstTimer.RunInMainThread(action);
         }
 
         /// <summary>

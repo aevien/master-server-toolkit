@@ -98,7 +98,7 @@ namespace MasterServerToolkit.MasterServer
 
                     Mst.Concurrency.RunInMainThread(() =>
                     {
-                        MstTimer.Instance.WaitForRealtimeSeconds(10f, () =>
+                        MstTimer.WaitForRealtimeSeconds(10f, () =>
                         {
                             if (sourcesToRemove.Contains(dashdoardPeerExtension.SourceId))
                             {

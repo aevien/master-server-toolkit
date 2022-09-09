@@ -80,15 +80,17 @@ namespace MasterServerToolkit.MasterServer
         {
             if (Mst.Runtime.IsEditor && autoStartInEditor)
             {
-                MstTimer.Instance.WaitForSeconds(autoStartDelay, () =>
+                MstTimer.WaitForSeconds(autoStartDelay, () =>
                 {
                     AutostartInEditor();
                 });
             }
         }
 
-        protected virtual void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
             // Register access listener
             Mst.Client.Rooms.OnAccessReceivedEvent -= OnAccessReceivedEvent;
         }
@@ -100,7 +102,7 @@ namespace MasterServerToolkit.MasterServer
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room in editor...");
 
-            MstTimer.Instance.WaitForSeconds(1f, () =>
+            MstTimer.WaitForSeconds(1f, () =>
             {
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in...");
 

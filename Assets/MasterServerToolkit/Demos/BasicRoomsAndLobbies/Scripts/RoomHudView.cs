@@ -1,7 +1,7 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 
-namespace MasterServerToolkit.Examples.BasicSpawner
+namespace MasterServerToolkit.Examples.BasicRoomsAndLobbies
 {
     public class RoomHudView : UIView
     {

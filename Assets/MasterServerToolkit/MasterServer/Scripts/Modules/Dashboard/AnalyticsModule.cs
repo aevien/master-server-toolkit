@@ -80,7 +80,7 @@ namespace MasterServerToolkit.MasterServer
         {
             analyticsSendInterval = Mathf.Clamp(Mst.Args.AsFloat(Mst.Args.Names.AnalyticsSendInterval, analyticsSendInterval), 2f, 120f);
 
-            MstTimer.Instance.WaitForRealtimeSeconds(1f, () =>
+            MstTimer.WaitForRealtimeSeconds(1f, () =>
             {
                 logger.Info($"Registering in dashboard as {dashboardInfoId}");
 
@@ -120,7 +120,7 @@ namespace MasterServerToolkit.MasterServer
                         return;
                     }
 
-                    MstTimer.Instance.WaitForRealtimeSeconds(0.5f, () =>
+                    MstTimer.WaitForRealtimeSeconds(0.5f, () =>
                     {
                         SendServerInfo();
                     });
@@ -145,7 +145,7 @@ namespace MasterServerToolkit.MasterServer
                         return;
                     }
 
-                    MstTimer.Instance.WaitForRealtimeSeconds(0.5f, () =>
+                    MstTimer.WaitForRealtimeSeconds(0.5f, () =>
                     {
                         SendModulesInfo();
                     });

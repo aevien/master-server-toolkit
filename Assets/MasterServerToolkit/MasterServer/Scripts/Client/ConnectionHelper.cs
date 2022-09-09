@@ -30,7 +30,7 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField]
         protected float waitAndConnect = 0.2f;
         [Tooltip("If true, will try to connect on the Start()"), SerializeField]
-        protected bool connectOnStart = false;
+        protected bool connectOnStart = true;
 
         [Header("Events")]
         /// <summary>
@@ -41,7 +41,6 @@ namespace MasterServerToolkit.MasterServer
         /// Triggers when failed connect to server
         /// </summary>
         public UnityEvent OnFailedConnectEvent;
-
         /// <summary>
         /// triggers when disconnected from server
         /// </summary>
@@ -85,7 +84,8 @@ namespace MasterServerToolkit.MasterServer
         {
             if (connectOnStart)
             {
-                MstTimer.Instance.WaitForSeconds(waitAndConnect, () => {
+                MstTimer.WaitForSeconds(waitAndConnect, () =>
+                {
                     StartConnection();
                 });
             }
@@ -96,6 +96,17 @@ namespace MasterServerToolkit.MasterServer
             maxAttemptsToConnect = Mathf.Clamp(maxAttemptsToConnect, 1, int.MaxValue);
             waitAndConnect = Mathf.Clamp(waitAndConnect, 0.2f, 60f);
             timeout = Mathf.Clamp(timeout, 2f, 60f);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            if (Connection != null)
+            {
+                Connection.RemoveConnectionOpenListener(OnConnectedEventHandler);
+                Connection.RemoveConnectionCloseListener(OnDisconnectedEventHandler);
+            }
         }
 
         /// <summary>
@@ -140,7 +151,7 @@ namespace MasterServerToolkit.MasterServer
 
         public void StartConnection(string serverIp, int serverPort, int numberOfAttempts = 5)
         {
-            if(Connection != null)
+            if (Connection != null)
             {
                 currentAttemptToConnect = 0;
                 maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;

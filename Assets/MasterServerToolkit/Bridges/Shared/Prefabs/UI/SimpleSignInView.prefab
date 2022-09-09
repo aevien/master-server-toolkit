@@ -538,12 +538,12 @@ PrefabInstance:
     - target: {fileID: 688187166830483550, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
       propertyPath: m_text
-      value: Sign in
+      value: Sign In
       objectReference: {fileID: 0}
     - target: {fileID: 1438952054369909395, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
       propertyPath: lable
-      value: Sign in
+      value: Sign In
       objectReference: {fileID: 0}
     - target: {fileID: 8249671916789168024, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
@@ -779,12 +779,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: SimpleSignInView
+  title: Sign In
   hideOnStart: 1
   allwaysOnTop: 0
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 7762033320785802155}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -799,3 +801,15 @@ MonoBehaviour:
       m_Calls: []
   usernameInputField: {fileID: 0}
   passwordInputField: {fileID: 0}
+--- !u!114 &7762033320785802155 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1438952054369909395, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+    type: 3}
+  m_PrefabInstance: {fileID: 8665039392951732536}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 719a6bd17a2ef9948bb60d0128aa9419, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

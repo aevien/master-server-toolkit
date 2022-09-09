@@ -22,7 +22,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public void InitCollections()
         {
             profiles = database.GetCollection<ProfileInfoData>("profiles");
-            profiles?.EnsureIndex(a => a.UserId, true);
+            profiles.EnsureIndex(a => a.UserId, true);
         }
 
         /// <summary>

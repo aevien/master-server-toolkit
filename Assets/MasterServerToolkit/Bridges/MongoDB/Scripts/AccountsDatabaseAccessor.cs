@@ -229,6 +229,10 @@ namespace MasterServerToolkit.Bridges.MongoDB
         {
             throw new NotImplementedException();
         }
+
+        public void Dispose()
+        {
+        }
     }
 }
 #endif

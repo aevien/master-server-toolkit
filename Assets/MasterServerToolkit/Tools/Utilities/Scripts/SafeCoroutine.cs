@@ -55,7 +55,9 @@ namespace MasterServerToolkit.Utils
     {
         public delegate void InvokeCallbackHandler(Exception exception);
 
+        [NonSerialized]
         private static SafeCoroutine _runner;
+        [NonSerialized]
         private static SafeCoroutine _permanentRunner;
 
         /// <summary>

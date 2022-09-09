@@ -163,6 +163,13 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event Action OnServerStoppedEvent;
 
+        protected virtual void Awake()
+        {
+            // 
+            logger = Mst.Create.Logger(GetType().Name);
+            logger.LogLevel = logLevel;
+        }
+
         protected virtual void Start()
         {
             if (!Mst.Settings.HasApplicationKey)
@@ -174,10 +181,6 @@ namespace MasterServerToolkit.MasterServer
             // Set timeout
             inactivityTimeout = Mst.Args.AsFloat(Mst.Args.Names.ClientInactivityTimeout, inactivityTimeout);
             validationTimeout = Mst.Args.AsFloat(Mst.Args.Names.ClientValidationTimeout, validationTimeout);
-
-            // 
-            logger = Mst.Create.Logger(GetType().Name);
-            logger.LogLevel = logLevel;
 
             // Create the server 
             socket = Mst.Create.ServerSocket();
@@ -329,10 +332,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="listenToPort"></param>
         public virtual void StartServer(string listenToIp, int listenToPort)
         {
-            if (IsRunning)
-            {
-                return;
-            }
+            if (IsRunning) return;
 
             serverIp = listenToIp;
             serverPort = listenToPort;
@@ -352,7 +352,7 @@ namespace MasterServerToolkit.MasterServer
             OnStartedServer();
             OnServerStartedEvent?.Invoke();
 
-            MstTimer.Instance.OnTickEvent += Instance_OnTickEvent;
+            MstTimer.OnTickEvent += Instance_OnTickEvent;
         }
 
         /// <summary>
@@ -410,7 +410,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void StopServer()
         {
-            MstTimer.Instance.OnTickEvent -= Instance_OnTickEvent;
+            MstTimer.OnTickEvent -= Instance_OnTickEvent;
             IsRunning = false;
 
             if (socket != null)

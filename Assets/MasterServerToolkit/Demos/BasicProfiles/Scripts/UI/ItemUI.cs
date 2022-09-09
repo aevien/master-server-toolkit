@@ -12,7 +12,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
     {
         #region INSPECTOR
 
-        [Header("Components"),SerializeField]
+        [Header("Components"), SerializeField]
         private Button button;
 
         #endregion
@@ -24,6 +24,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         public void OnClick(UnityAction callback)
         {
+            button.onClick.RemoveAllListeners();
             button.onClick.AddListener(callback);
         }
     }

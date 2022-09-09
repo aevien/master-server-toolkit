@@ -34,6 +34,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         #endregion
 
         private ProfileLoaderBehaviour profileLoader;
+        private readonly Dictionary<string, ItemUI> itemUis = new Dictionary<string, ItemUI>();
 
         protected override void Start()
         {
@@ -57,15 +58,76 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             profileLoader.Profile.OnPropertyUpdatedEvent += Profile_OnPropertyUpdatedEvent;
 
+            if (profileLoader.Profile.TryGet(ProfilePropertyKeys.items, out ObservableDictStringInt items))
+            {
+                DrawBackpackItems(items);
+
+                items.OnAddEvent += Items_OnAddEvent;
+                items.OnRemoveEvent += Items_OnRemoveEvent;
+                items.OnSetEvent += Items_OnSetEvent;
+            }
+
             foreach (var property in profileLoader.Profile.Properties)
                 Profile_OnPropertyUpdatedEvent(property.Key, property.Value);
         }
 
+        private void Items_OnAddEvent(string newKey, int newValue)
+        {
+            if (!itemUis.TryGetValue(newKey, out var itemUI))
+            {
+                itemUI = Instantiate(backpackItemUIPrefab, backpackItemsContainer, false);
+                itemUis.Add(newKey, itemUI);
+            }
+
+            if (storeOffers.TryGetOffer(newKey, out var storeOffer))
+            {
+                itemUI.Lable = $"{storeOffer.name} [{newValue}]";
+                itemUI.SetButtonLable($"{storeOffer.price * 0.7f} {storeOffer.currency}");
+                itemUI.Icon = storeOffer.iconSprite;
+                itemUI.OnClick(() =>
+                {
+                    logger.Info($"Click on {storeOffer.name}");
+                    SellItem(storeOffer);
+                });
+
+                itemUI.gameObject.SetActive(true);
+            }
+        }
+
+        private void Items_OnRemoveEvent(string key, int removedValue)
+        {
+            if (itemUis.TryGetValue(key, out var itemUI))
+            {
+                itemUI.gameObject.SetActive(false);
+            }
+        }
+
+        private void Items_OnSetEvent(string key, int oldValue, int newValue)
+        {
+            if (!itemUis.TryGetValue(key, out var itemUI))
+            {
+                itemUI = Instantiate(backpackItemUIPrefab, backpackItemsContainer, false);
+                itemUis.Add(key, itemUI);
+            }
+
+            if (storeOffers.TryGetOffer(key, out var storeOffer))
+            {
+                itemUI.Lable = $"{storeOffer.name} [{newValue}]";
+                itemUI.SetButtonLable($"{storeOffer.price * 0.7f} {storeOffer.currency}");
+                itemUI.Icon = storeOffer.iconSprite;
+                itemUI.OnClick(() =>
+                {
+                    logger.Info($"Click on {storeOffer.name}");
+                    SellItem(storeOffer);
+                });
+
+                itemUI.gameObject.SetActive(true);
+            }
+        }
+
         private void Profile_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
         {
-            if (key == ProfilePropertyKeys.items)
-                DrawBackpackItems(property.As<ObservableDictStringInt>().Value);
-            else if (key == ProfilePropertyKeys.bronze)
+            if (key == ProfilePropertyKeys.bronze)
             {
                 bronzeUIProperty.Lable = "Bronze";
                 bronzeUIProperty.SetValue(property.As<ObservableInt>().Value);
@@ -90,34 +152,35 @@ namespace MasterServerToolkit.Examples.BasicProfile
             {
                 var storeOfferUIInstance = Instantiate(storeItemUIPrefab, storeItemsContainer, false);
                 storeOfferUIInstance.Lable = storeOffer.name;
-                storeOfferUIInstance.SetButtonLable($"Buy for {storeOffer.price} {storeOffer.currency}");
+                storeOfferUIInstance.SetButtonLable($"{storeOffer.price} {storeOffer.currency}");
                 storeOfferUIInstance.Icon = storeOffer.iconSprite;
                 storeOfferUIInstance.OnClick(() =>
                 {
-                    logger.Info($"Click on {storeOffer.name}");
-
                     BuyItem(storeOffer);
                 });
             }
         }
 
-        private void DrawBackpackItems(Dictionary<string, int> value)
+        private void DrawBackpackItems(IObservableProperty property)
         {
+            itemUis.Clear();
             backpackItemsContainer.RemoveChildren();
 
-            foreach (var itemKvp in value)
+            foreach (var itemKvp in property.As<ObservableDictStringInt>())
             {
                 if (storeOffers.TryGetOffer(itemKvp.Key, out var storeOffer))
                 {
                     var backpackItemUIInstance = Instantiate(backpackItemUIPrefab, backpackItemsContainer, false);
                     backpackItemUIInstance.Lable = $"{storeOffer.name} [{itemKvp.Value}]";
-                    backpackItemUIInstance.SetButtonLable($"Sell for {storeOffer.price * 0.7f} {storeOffer.currency}");
+                    backpackItemUIInstance.SetButtonLable($"{storeOffer.price * 0.7f} {storeOffer.currency}");
                     backpackItemUIInstance.Icon = storeOffer.iconSprite;
                     backpackItemUIInstance.OnClick(() =>
                     {
                         logger.Info($"Click on {storeOffer.name}");
                         SellItem(storeOffer);
                     });
+
+                    itemUis.Add(itemKvp.Key, backpackItemUIInstance);
                 }
             }
         }

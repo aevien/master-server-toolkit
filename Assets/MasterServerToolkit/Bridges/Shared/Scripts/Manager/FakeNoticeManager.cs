@@ -93,11 +93,11 @@ namespace MasterServerToolkit.Games
         {
             float timeToWait = Random.Range(3f, 10f);
 
-            MstTimer.Instance.WaitWhile(() => tasks == null || users == null, (isSuccess) =>
+            MstTimer.WaitWhile(() => tasks == null || users == null, (isSuccess) =>
             {
                 if (isSuccess)
                 {
-                    MstTimer.Instance.WaitForRealtimeSeconds(timeToWait, () =>
+                    MstTimer.WaitForRealtimeSeconds(timeToWait, () =>
                     {
                         var task = tasks[Random.Range(0, tasks.Count)];
                         var user = users.Where(i => i.Value<string>("id") == task.Value<string>("userId")).FirstOrDefault();

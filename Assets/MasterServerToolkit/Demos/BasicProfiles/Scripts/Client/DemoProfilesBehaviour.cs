@@ -1,22 +1,16 @@
 ﻿using MasterServerToolkit.Games;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using MasterServerToolkit.UI;
-using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class DemoProfilesBehaviour : ProfileLoaderBehaviour
     {
-        private ProfileSettingsView profileSettingsView;
-
         public UnityEvent OnProfileSavedEvent;
 
         protected override void OnInitialize()
         {
-            profileSettingsView = ViewsManager.GetView<ProfileSettingsView>("ProfileSettingsView");
-
             Profile = new ObservableProfile();
             ProfileProperties.Fill(Profile);
         }
@@ -25,7 +19,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Saving profile data... Please wait!");
 
-            MstTimer.Instance.WaitForSeconds(1f, () =>
+            MstTimer.WaitForSeconds(1f, () =>
             {
                 Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), (status, response) =>
                 {
@@ -34,7 +28,6 @@ namespace MasterServerToolkit.Examples.BasicProfile
                     if (status == ResponseStatus.Success)
                     {
                         OnProfileSavedEvent?.Invoke();
-
                         logger.Debug("Your profile is successfuly updated and saved");
                     }
                     else

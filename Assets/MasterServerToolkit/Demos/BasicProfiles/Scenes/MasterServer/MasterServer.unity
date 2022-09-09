@@ -465,9 +465,9 @@ MonoBehaviour:
   editProfilePermissionLevel: 0
   ignoreProfileMissmatchError: 0
   databaseAccessorFactory: {fileID: 1428928145}
-  bronze: 100
-  silver: 20
-  gold: 50
+  bronze: 2000
+  silver: 1000
+  gold: 100
   avatarUrl: https://i.imgur.com/JQ9pRoD.png
 --- !u!1 &1428928143
 GameObject:

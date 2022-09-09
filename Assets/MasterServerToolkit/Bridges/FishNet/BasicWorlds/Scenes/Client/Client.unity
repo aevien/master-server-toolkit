@@ -370,12 +370,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: MenuView
+  title: MenuView
   hideOnStart: 1
   allwaysOnTop: 0
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 0}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -3177,6 +3179,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: --ROOM_SERVER
+      objectReference: {fileID: 0}
+    - target: {fileID: 4418077282172698758, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: _onlineScene
+      value: Assets/MasterServerToolkit/Bridges/FishNet/BasicWorlds/Scenes/Room/Zone1.unity
+      objectReference: {fileID: 0}
+    - target: {fileID: 4418077282172698758, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: _offlineScene
+      value: Assets/MasterServerToolkit/Bridges/FishNet/BasicWorlds/Scenes/Client/Client.unity
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7eac22982fe8d5547be9015c7bdb378e, type: 3}

@@ -46,6 +46,8 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         {
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
+
+            _networkManager = GetComponent<NetworkManager>();
         }
 
         private void Start()
@@ -53,7 +55,6 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             if (!defaultScene)
                 defaultScene = GetComponent<DefaultScene>();
 
-            _networkManager = GetComponent<NetworkManager>();
             _networkManager.ServerManager.OnServerConnectionState += ServerManager_OnServerConnectionState;
             _networkManager.ServerManager.OnRemoteConnectionState += ServerManager_OnRemoteConnectionState;
         }
@@ -87,11 +88,6 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         public void StopRoomServer()
         {
             _networkManager.ServerManager.StopConnection(true);
-
-            MstTimer.Instance.WaitForSeconds(1f, () =>
-            {
-                Mst.Runtime.Quit();
-            });
         }
 
         #region FISHNET CALLBACKS
@@ -152,7 +148,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
                                 Status = ResponseStatus.Error
                             });
 
-                            MstTimer.Instance.WaitForSeconds(1f, () => conn.Disconnect(true));
+                            MstTimer.WaitForSeconds(1f, () => conn.Disconnect(true));
 
                             return;
                         }
@@ -173,7 +169,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
                             Status = ResponseStatus.Error
                         });
 
-                        MstTimer.Instance.WaitForSeconds(1f, () => conn.Disconnect(true));
+                        MstTimer.WaitForSeconds(1f, () => conn.Disconnect(true));
                     }
                 });
             }

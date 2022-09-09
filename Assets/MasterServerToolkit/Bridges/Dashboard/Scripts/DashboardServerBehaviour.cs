@@ -22,8 +22,10 @@ namespace MasterServerToolkit.Bridges.Dashboard
         /// </summary>
         public static event Action<DashboardServerBehaviour> OnDashboardStoppedEvent;
 
-        protected void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             // If instance of the server is already running
             if (Instance != null)
             {
@@ -59,7 +61,7 @@ namespace MasterServerToolkit.Bridges.Dashboard
             if (Mst.Args.StartMaster && !Mst.Runtime.IsEditor)
             {
                 // Start the server on next frame
-                MstTimer.Instance.WaitForEndOfFrame(() =>
+                MstTimer.WaitForEndOfFrame(() =>
                 {
                     StartServer();
                 });

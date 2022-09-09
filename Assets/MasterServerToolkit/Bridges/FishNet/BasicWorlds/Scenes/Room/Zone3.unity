@@ -1916,7 +1916,7 @@ RectTransform:
   - {fileID: 685080572}
   - {fileID: 348121982}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -2415,66 +2415,6 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!1 &514148627
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 514148629}
-  - component: {fileID: 514148628}
-  m_Layer: 0
-  m_Name: --CONNECTION_TO_MASTER
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &514148628
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 514148627}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2f4cb439243992949b9b12a35c4760c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 0
-  serverIp: 127.0.0.1
-  serverPort: 5000
-  timeout: 5
-  maxAttemptsToConnect: 5
-  waitAndConnect: 0.2
-  connectOnStart: 1
-  OnConnectedEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  OnFailedConnectEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  OnDisconnectedEvent:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!4 &514148629
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 514148627}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &544950508
 Mesh:
   m_ObjectHideFlags: 0
@@ -2997,7 +2937,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &602210576
 MonoBehaviour:
@@ -5678,7 +5618,7 @@ PrefabInstance:
     - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
         type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 1182598396324832456, guid: 7eac22982fe8d5547be9015c7bdb378e,
         type: 3}
@@ -5735,10 +5675,30 @@ PrefabInstance:
       propertyPath: forceClientMode
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832459, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: terminateRoomWhenDisconnected
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1182598396324832461, guid: 7eac22982fe8d5547be9015c7bdb378e,
         type: 3}
       propertyPath: m_Name
       value: --ROOM_SERVER
+      objectReference: {fileID: 0}
+    - target: {fileID: 4418077282172698758, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: _onlineScene
+      value: Assets/MasterServerToolkit/Bridges/FishNet/BasicWorlds/Scenes/Room/Zone1.unity
+      objectReference: {fileID: 0}
+    - target: {fileID: 4418077282172698758, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: _offlineScene
+      value: Assets/MasterServerToolkit/Bridges/FishNet/BasicWorlds/Scenes/Room/Zone1.unity
+      objectReference: {fileID: 0}
+    - target: {fileID: 5068188183937466392, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: _startOnHeadless
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7eac22982fe8d5547be9015c7bdb378e, type: 3}
@@ -6582,7 +6542,7 @@ PrefabInstance:
     - target: {fileID: 7900704462852736171, guid: e226e1f60aca533438a0d1665b2283fa,
         type: 3}
       propertyPath: m_RootOrder
-      value: 8
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 7900704462852736171, guid: e226e1f60aca533438a0d1665b2283fa,
         type: 3}
@@ -6942,7 +6902,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &1730304532
 Mesh:
@@ -7467,7 +7427,7 @@ Transform:
   m_Children:
   - {fileID: 703154919}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1796790546
 MonoBehaviour:
@@ -7814,6 +7774,66 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!1 &1895082158
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1895082160}
+  - component: {fileID: 1895082159}
+  m_Layer: 0
+  m_Name: --ROOM_TO_MASTER_CONNECTOR
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1895082159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895082158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdc032b7e97a9a44197efe56af53b207, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  serverIp: 127.0.0.1
+  serverPort: 5000
+  timeout: 5
+  maxAttemptsToConnect: 5
+  waitAndConnect: 0.2
+  connectOnStart: 1
+  OnConnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnFailedConnectEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDisconnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1895082160
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895082158}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -843.29803, y: -1071.1871, z: 4.9675117}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &1956414450
 Mesh:
   m_ObjectHideFlags: 0
@@ -8380,7 +8400,7 @@ PrefabInstance:
     - target: {fileID: 1253548101907331468, guid: 27d1bedb7fca6cb4c98455c89b0f86bd,
         type: 3}
       propertyPath: m_RootOrder
-      value: 9
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 1253548101907331468, guid: 27d1bedb7fca6cb4c98455c89b0f86bd,
         type: 3}

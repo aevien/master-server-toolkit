@@ -2,7 +2,7 @@
 
 namespace MasterServerToolkit.MasterServer
 {
-    public struct MstOpCodes
+    public partial struct MstOpCodes
     {
         public static ushort Error = "mst.error".ToUint16Hash();
 
@@ -100,17 +100,6 @@ namespace MasterServerToolkit.MasterServer
         public static ushort SubscribeToNotifications = nameof(SubscribeToNotifications).ToUint16Hash();
         public static ushort UnsubscribeFromNotifications = nameof(UnsubscribeFromNotifications).ToUint16Hash();
         public static ushort Notification = nameof(Notification).ToUint16Hash();
-
-        public static ushort FriendAdded = nameof(FriendAdded).ToUint16Hash();
-        public static ushort GetFriends = nameof(GetFriends).ToUint16Hash();
-        public static ushort RemoveFriends = nameof(RemoveFriends).ToUint16Hash();
-        public static ushort InspectFriend = nameof(InspectFriend).ToUint16Hash();
-        public static ushort BlockFriends = nameof(BlockFriends).ToUint16Hash();
-        public static ushort RequestFriendship = nameof(RequestFriendship).ToUint16Hash();
-        public static ushort AcceptFriendship = nameof(AcceptFriendship).ToUint16Hash();
-        public static ushort IgnoreFriendship = nameof(IgnoreFriendship).ToUint16Hash();
-        public static ushort GetDeclinedFriendships = nameof(GetDeclinedFriendships).ToUint16Hash();
-        public static ushort DeclineFriendship = nameof(DeclineFriendship).ToUint16Hash();
 
         public static ushort PlayerDied = nameof(PlayerDied).ToUint16Hash();
 

@@ -170,7 +170,7 @@ namespace MasterServerToolkit.Networking
             OnConnectionOpenEvent += onConnected;
 
             // Wait for some seconds
-            MstTimer.Instance.WaitForSeconds(timeoutSeconds, () =>
+            MstTimer.WaitForSeconds(timeoutSeconds, () =>
             {
                 if (!isConnected)
                 {
@@ -310,7 +310,7 @@ namespace MasterServerToolkit.Networking
 
             Peer = _peer;
 
-            MstUpdateRunner.Instance.Add(this);
+            MstUpdateRunner.Add(this);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
             MstUpdateRunner.Instance.StartCoroutine(webSocket.Connect());
@@ -332,7 +332,7 @@ namespace MasterServerToolkit.Networking
 
         public void Close(ushort code, string reason, bool fireEvent = true)
         {
-            MstUpdateRunner.Instance.Remove(this);
+            //MstUpdateRunner.Remove(this);
 
             if (webSocket != null)
                 webSocket.Close(code, reason);

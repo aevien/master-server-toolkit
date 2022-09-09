@@ -15,6 +15,8 @@ namespace MasterServerToolkit.UI
 
         [Header("Identity Settings"), SerializeField]
         protected string id = "New View Id";
+        [SerializeField]
+        protected string title = "";
 
         [Header("Shared Settings"), SerializeField]
         protected bool hideOnStart = true;
@@ -29,6 +31,9 @@ namespace MasterServerToolkit.UI
 
         [Header("Logger Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
+
+        [Header("Components"), SerializeField]
+        protected UILable titleLable;
 
         [Header("Events")]
         public UnityEvent OnShowEvent;
@@ -100,15 +105,14 @@ namespace MasterServerToolkit.UI
 
         protected virtual void OnValidate()
         {
-            if (string.IsNullOrEmpty(Id))
-            {
-                id = name;
-            }
+            if (string.IsNullOrEmpty(title))
+                title = name;
 
-            if (!GetComponent<CanvasGroup>())
-            {
-                gameObject.AddComponent<CanvasGroup>();
-            }
+            if (string.IsNullOrEmpty(Id))
+                id = name;
+
+            if (titleLable)
+                titleLable.Text = title;
         }
 
         protected virtual void OnDestroy()
