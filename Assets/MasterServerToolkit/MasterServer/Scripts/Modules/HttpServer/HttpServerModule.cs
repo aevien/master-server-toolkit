@@ -245,7 +245,8 @@ namespace MasterServerToolkit.MasterServer
 
             try
             {
-                string url = CreateHttpRequestPrefix(checkHeartBeatUrl);
+                IPAddress.TryParse(httpAddress, out IPAddress address);
+                string url = CreateHttpRequestPrefix(checkHeartBeatUrl, address != null ? address.ToString() : "127.0.0.1");
 
                 if (url.EndsWith("/"))
                     url = url.Substring(0, url.Length - 1);
@@ -714,8 +715,31 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
         public string CreateHttpRequestPrefix(string path)
+        {
+            return CreateHttpRequestPrefix(path, httpAddress);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="httpAddress"></param>
+        /// <returns></returns>
+        public string CreateHttpRequestPrefix(string path, string httpAddress)
+        {
+            return CreateHttpRequestPrefix(path, httpAddress, httpPort);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="httpAddress"></param>
+        /// <param name="httpPort"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public string CreateHttpRequestPrefix(string path, string httpAddress, int httpPort)
         {
             path = path.Trim();
 
