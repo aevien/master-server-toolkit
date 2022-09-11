@@ -1,5 +1,5 @@
-﻿using MasterServerToolkit.MasterServer.Web;
-using MasterServerToolkit.Utils;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.MasterServer.Web;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -9,7 +9,6 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -63,11 +62,6 @@ namespace MasterServerToolkit.MasterServer
         public Dictionary<Type, IHttpController> Controllers { get; protected set; } = new Dictionary<Type, IHttpController>();
 
         /// <summary>
-        /// Invokes before server frame is updated
-        /// </summary>
-        public event Action OnUpdateEvent;
-
-        /// <summary>
         /// 
         /// </summary>
         public bool UseSecure { get; set; }
@@ -97,28 +91,12 @@ namespace MasterServerToolkit.MasterServer
             // Set heartbeat check interval
             heatBeatCheckInterval = Mathf.Clamp(Mst.Args.AsFloat(Mst.Args.Names.WebServerHeartbeatCheckInterval, heatBeatCheckInterval), 2f, 120f);
             checkHeartBeatUrl = Mst.Args.AsString($"live-{Mst.Args.Names.WebServerHeartbeatCheckPage}", $"live-{Mst.Helper.CreateGuidString()}");
-        }
-
-        private void Start()
-        {
-            // Setup secure connection
-            UseSecure = Mst.Settings.UseSecure;
-            CertificatePath = Mst.Settings.CertificatePath;
-            CertificatePassword = Mst.Settings.CertificatePassword;
 
             // Set port
             httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);
 
             // Set port
             httpAddress = Mst.Args.AsString(Mst.Args.Names.WebAddress, httpAddress);
-
-            // Start heartbeat checking
-            InvokeRepeating(nameof(CheckHeartBeat), heatBeatCheckInterval, heatBeatCheckInterval);
-        }
-
-        private void Update()
-        {
-            OnUpdateEvent?.Invoke();
         }
 
         private void OnDestroy()
@@ -128,28 +106,32 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
-            Tweener.DelayedCall(0.1f, () =>
-            {
-                Listen();
-            });
+            CancelInvoke();
+
+            // Setup secure connection
+            UseSecure = Mst.Settings.UseSecure;
+            CertificatePath = Mst.Settings.CertificatePath;
+            CertificatePassword = Mst.Settings.CertificatePassword;
+
+            // Start heartbeat checking
+            InvokeRepeating(nameof(CheckHeartBeat), heatBeatCheckInterval, heatBeatCheckInterval);
+
+            // Start
+            Listen();
         }
 
         [ContextMenu("Restart")]
         private void Restart()
         {
-            if (httpThread != null)
-                httpThread.Abort();
-
             Listen();
         }
 
         public void Listen()
         {
-            Controllers.Clear();
-            httpRequestActions.Clear();
-
             // Stop if started
             Stop();
+
+            logger.Info($"Starting http server: {httpAddress}:{httpPort}");
 
             // Initialize server
             httpServer = new HttpListener();
@@ -702,8 +684,14 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Stop()
         {
+            if (httpThread != null)
+                httpThread.Abort();
+
             foreach (var controller in Controllers.Values)
                 controller.Dispose();
+
+            Controllers.Clear();
+            httpRequestActions.Clear();
 
             httpServer?.Stop();
             httpServer?.Close();

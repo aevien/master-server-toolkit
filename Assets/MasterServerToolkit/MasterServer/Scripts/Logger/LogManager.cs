@@ -1,4 +1,4 @@
-﻿using log4net.Appender;
+﻿using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,11 +10,6 @@ namespace MasterServerToolkit.Logging
         private static LogHandler _appenders;
         private static readonly Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
         private static readonly Queue<PooledLog> _pooledLogs = new Queue<PooledLog>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public static bool EnableCurrentClassLogger = true;
 
         /// <summary>
         /// Overrides logging set
@@ -106,23 +101,6 @@ namespace MasterServerToolkit.Logging
         public static Logger GetLogger(string name)
         {
             return GetLogger(name, true);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public static Logger GetCurrentClassLogger()
-        {
-            if (EnableCurrentClassLogger)
-            {
-                var frame = new StackFrame(1, false);
-                return GetLogger(frame.GetMethod().DeclaringType.FullName);
-            }
-            else
-            {
-                return Logs.Logger;
-            }
         }
 
         /// <summary>

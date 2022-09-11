@@ -82,7 +82,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Message factory
         /// </summary>
-        public IMessageFactory MessageFactory = new MessageFactory();
+        public IMessageFactory MessageFactory => new MessageFactory();
 
         /// <summary>
         /// Global logging settings

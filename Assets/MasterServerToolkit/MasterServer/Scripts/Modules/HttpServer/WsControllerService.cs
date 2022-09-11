@@ -16,7 +16,7 @@ namespace MasterServerToolkit.MasterServer
         public void SetHttpServer(HttpServerModule httpServerModule)
         {
             this.httpServerModule = httpServerModule;
-            this.httpServerModule.OnUpdateEvent += HttpServerModule_OnUpdateEvent;
+            //this.httpServerModule.OnUpdateEvent += HttpServerModule_OnUpdateEvent;
         }
 
         private void HttpServerModule_OnUpdateEvent()
@@ -85,7 +85,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnClose(CloseEventArgs e)
         {
-            httpServerModule.OnUpdateEvent -= HttpServerModule_OnUpdateEvent;
+            //httpServerModule.OnUpdateEvent -= HttpServerModule_OnUpdateEvent;
 
             if (!e.WasClean)
             {
@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnError(ErrorEventArgs e)
         {
-            httpServerModule.OnUpdateEvent -= HttpServerModule_OnUpdateEvent;
+            //httpServerModule.OnUpdateEvent -= HttpServerModule_OnUpdateEvent;
             Logs.Error(e.Exception);
         }
 

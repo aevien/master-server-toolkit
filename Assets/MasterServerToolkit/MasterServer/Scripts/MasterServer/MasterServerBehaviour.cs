@@ -56,9 +56,7 @@ namespace MasterServerToolkit.MasterServer
             // Move to root, so that it won't be destroyed
             // In case this instance is a child of another gameobject
             if (transform.parent != null)
-            {
                 transform.SetParent(null);
-            }
 
             // Set server behaviour to be able to use in all levels
             DontDestroyOnLoad(gameObject);

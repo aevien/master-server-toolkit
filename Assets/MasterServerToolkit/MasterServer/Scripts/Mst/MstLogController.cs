@@ -9,45 +9,30 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class MstLogController
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        private DateTime realtimeSinceStartup;
-
         public MstLogController(LogLevel globalLogLevel)
         {
-            realtimeSinceStartup = DateTime.Now;
-
             // Add default appender
             var appenders = new List<LogHandler>()
-                {
-                    LogAppenders.UnityConsoleAppender
-                };
+            {
+                LogAppenders.UnityConsoleAppender
+            };
 
             // Initialize the log manager
             LogManager.Initialize(appenders, globalLogLevel);
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        public double Time
-        {
-            get
-            {
-                return (DateTime.Now - realtimeSinceStartup).TotalSeconds;
-            }
-        }
-
-        /// <summary>
         /// Overrides log levels of all the loggers
         /// </summary>
         /// <param name="logLevel"></param>
-        public void ForceLogging(LogLevel logLevel)
+        public void ForceLogLevel(LogLevel logLevel)
         {
             LogManager.LogLevel = logLevel;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public LogLevel GlobalLogLevel
         {
             get { return LogManager.GlobalLogLevel; }
