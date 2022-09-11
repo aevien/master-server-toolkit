@@ -1,5 +1,4 @@
 ﻿#if FISHNET
-using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.FishNetworking.Character
 {

@@ -52,11 +52,11 @@ namespace MasterServerToolkit.UI
 
         public void SetIcon(Sprite icon)
         {
-            if(iconImage)
+            if (iconImage)
             {
                 iconImage.sprite = null;
                 iconImage.sprite = icon;
-            }    
+            }
         }
 
         public void SetInteractable(bool value)

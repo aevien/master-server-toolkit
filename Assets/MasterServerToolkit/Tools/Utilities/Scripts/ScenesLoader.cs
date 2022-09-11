@@ -13,7 +13,7 @@ namespace MasterServerToolkit.Utils
 
         public static void LoadSceneByName(string sceneName, UnityAction<float> onProgress, UnityAction onLoaded)
         {
-            if(TryGetOrCreate(out var instance))
+            if (TryGetOrCreate(out var instance))
                 instance.StartCoroutine(instance.LoadAsyncScene(sceneName, false, onProgress, onLoaded));
         }
 

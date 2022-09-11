@@ -1,10 +1,6 @@
-﻿using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Games;
+﻿using MasterServerToolkit.Games;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile

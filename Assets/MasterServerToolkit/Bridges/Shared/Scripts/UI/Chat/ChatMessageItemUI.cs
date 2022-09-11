@@ -12,7 +12,7 @@ namespace MasterServerToolkit.Games
 
         public void Set(string sender, string message)
         {
-            if(senderNameText)
+            if (senderNameText)
                 senderNameText.text = sender;
 
             if (messageText)

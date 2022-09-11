@@ -1,9 +1,7 @@
-﻿using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
-using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Events;
 

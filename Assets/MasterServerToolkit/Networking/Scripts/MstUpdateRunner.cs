@@ -1,5 +1,4 @@
 ﻿using MasterServerToolkit.Utils;
-using System;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.Networking

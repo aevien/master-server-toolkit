@@ -1,5 +1,4 @@
 ﻿#if FISHNET
-using MasterServerToolkit.MasterServer;
 using System;
 
 namespace MasterServerToolkit.Bridges.FishNetworking.Character

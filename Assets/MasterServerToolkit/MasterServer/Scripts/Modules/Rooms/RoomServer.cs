@@ -1,4 +1,3 @@
-using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using UnityEngine;

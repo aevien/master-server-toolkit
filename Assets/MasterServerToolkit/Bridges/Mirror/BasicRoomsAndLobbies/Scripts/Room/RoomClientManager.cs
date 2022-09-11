@@ -4,7 +4,6 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using Mirror;
-using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 

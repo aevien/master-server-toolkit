@@ -23,7 +23,7 @@ namespace MasterServerToolkit.MasterServer
         {
             base.OnDestroy();
 
-            if(roomConnection != null)
+            if (roomConnection != null)
             {
                 roomConnection.RemoveConnectionOpenListener(OnConnectedToRoomEventHandler);
                 roomConnection.RemoveConnectionCloseListener(OnDisconnectedFromRoomEventHandler);

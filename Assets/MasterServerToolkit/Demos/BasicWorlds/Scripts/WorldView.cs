@@ -2,10 +2,6 @@ using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Games;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
-using System;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 namespace MasterServerToolkit.Examples.BasicWorlds
 {

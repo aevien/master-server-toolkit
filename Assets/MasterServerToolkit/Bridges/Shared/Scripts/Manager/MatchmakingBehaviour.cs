@@ -4,7 +4,6 @@ using MasterServerToolkit.Networking;
 using System;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.Games
 {

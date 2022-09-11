@@ -112,7 +112,8 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
 
             if (dieEffectPrefab)
             {
-                MstTimer.WaitForSeconds(1f, () => {
+                MstTimer.WaitForSeconds(1f, () =>
+                {
                     Instantiate(dieEffectPrefab, transform.position, Quaternion.identity);
                 });
             }

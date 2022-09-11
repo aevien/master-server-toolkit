@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Extensions;
-using MasterServerToolkit.MasterServer.Web;
+﻿using MasterServerToolkit.MasterServer.Web;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;

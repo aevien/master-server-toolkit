@@ -1,6 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
-using UnityEngine;
 
 namespace MasterServerToolkit.Games
 {

@@ -1,6 +1,5 @@
 ﻿#if MIRROR
 using kcp2k;
-using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;

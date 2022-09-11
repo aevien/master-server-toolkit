@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MasterServerToolkit.MasterServer
+﻿namespace MasterServerToolkit.MasterServer
 {
     /// <summary>
     /// Represents basic functionality of observable property

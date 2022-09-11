@@ -1,13 +1,10 @@
 using MasterServerToolkit.Networking;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
     public class BuySellItemPacket : SerializablePacket
     {
-        public string Id{get;set;}
+        public string Id { get; set; }
         public int Price { get; set; }
         public string Currency { get; set; }
 

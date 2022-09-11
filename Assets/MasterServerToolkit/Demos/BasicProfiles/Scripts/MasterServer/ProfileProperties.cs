@@ -1,8 +1,4 @@
-using MasterServerToolkit.Examples.BasicProfile;
 using MasterServerToolkit.MasterServer;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {

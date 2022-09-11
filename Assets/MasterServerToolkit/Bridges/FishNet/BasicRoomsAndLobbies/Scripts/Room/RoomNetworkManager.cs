@@ -62,7 +62,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         public void StartRoomServer()
         {
             // Find room server if it is not assigned in inspector
-            if (!roomServerManager) 
+            if (!roomServerManager)
                 roomServerManager = GetComponent<RoomServerManager>();
 
             string onlineScene = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);

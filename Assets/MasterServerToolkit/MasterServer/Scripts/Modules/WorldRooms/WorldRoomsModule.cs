@@ -1,4 +1,3 @@
-using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using System.Linq;
 using System.Threading.Tasks;
