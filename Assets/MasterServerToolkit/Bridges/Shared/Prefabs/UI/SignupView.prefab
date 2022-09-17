@@ -2051,12 +2051,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: SignupView
+  title: Sign up
   hideOnStart: 1
   allwaysOnTop: 1
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 8010390098179707783}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -2115,3 +2117,15 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &8010390098179707783 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1438952054369909395, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+    type: 3}
+  m_PrefabInstance: {fileID: 8994445055079459092}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 719a6bd17a2ef9948bb60d0128aa9419, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

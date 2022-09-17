@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 namespace MasterServerToolkit.Utils
@@ -9,36 +8,37 @@ namespace MasterServerToolkit.Utils
     {
         public static TweenerActionInfo Tween(string to, float time, StringTweenCallback callback)
         {
-            return Start(TweenAction(to, time, callback));
-        }
-
-        private static IEnumerator TweenAction(string to, float time, StringTweenCallback callback)
-        {
-            if (string.IsNullOrEmpty(to))
-            {
-                callback?.Invoke(to);
-                yield break;
-            }
-
-            float curTime = 0f;
+            float currentTime = 0f;
             int lastLength = 0;
             int newLength = 0;
 
-            while (curTime < time)
+            return Start(() =>
             {
-                yield return new WaitForEndOfFrame();
-                curTime += Time.deltaTime;
-
-                newLength = (int)(to.Length * (curTime / time));
-
-                if (lastLength != newLength)
+                if (string.IsNullOrEmpty(to))
                 {
-                    callback?.Invoke(to.Substring(0, newLength - 1));
-                    lastLength = newLength;
+                    callback?.Invoke(to);
+                    return true;
                 }
-            }
 
-            callback?.Invoke(to);
+                if (currentTime / time < 1f)
+                {
+                    currentTime += Time.deltaTime;
+                    newLength = (int)(to.Length * (currentTime / time));
+
+                    if (lastLength != newLength)
+                    {
+                        callback?.Invoke(to.Substring(0, newLength - 1));
+                        lastLength = newLength;
+                    }
+
+                    return false;
+                }
+                else
+                {
+                    callback.Invoke(to);
+                    return true;
+                }
+            });
         }
 
         /// <summary>

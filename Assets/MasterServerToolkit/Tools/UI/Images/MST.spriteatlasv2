@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!612988286 &1
+SpriteAtlasAsset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_MasterAtlas: {fileID: 0}
+  m_ImporterData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 8
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 1
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 2800000, guid: 51ac31dc1fb7f9c429fe3207893f54a3, type: 3}
+    - {fileID: 2800000, guid: 80a0f46a6178b524faf81c6f0d804eac, type: 3}
+    - {fileID: 2800000, guid: 3bf1bfd3e0f50e647a395bdc1d9d4c51, type: 3}
+    - {fileID: 2800000, guid: cb86885a885938f4a9c568045c3aa655, type: 3}
+    - {fileID: 2800000, guid: c04a09781dcb53a4d828cfd27ec1702f, type: 3}
+    - {fileID: 2800000, guid: feb73903b8d840244a6dd426032db5c5, type: 3}
+    - {fileID: 2800000, guid: dff1dfb658a3d4f47ada5b0ef7850b95, type: 3}
+    - {fileID: 2800000, guid: 72b46f40b95be9047945cdde7b9bc088, type: 3}
+    - {fileID: 2800000, guid: 5d33ee6c1a4c89f43ac20e602b0f4656, type: 3}
+    - {fileID: 2800000, guid: 8343202341772024c81c53756b17e7bf, type: 3}
+    - {fileID: 2800000, guid: cb3a7ddc6b69fd9449f1a7cf0ba9c8d8, type: 3}
+    - {fileID: 2800000, guid: 89bc8a7cbdb66f54a8fa868df5850d62, type: 3}
+    - {fileID: 2800000, guid: e799d4a70928ba747a687ab180da9094, type: 3}
+    - {fileID: 2800000, guid: 36446854e3a1bb04ca7c9c64a3b702db, type: 3}
+    - {fileID: 2800000, guid: df7c472d7d971ee4590407755498239b, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 1
+    cachedData: {fileID: 0}
+  m_IsVariant: 0

@@ -232,7 +232,8 @@ namespace MasterServerToolkit.Networking
         /// <param name="buffer"></param>
         public void Send(byte[] buffer)
         {
-            socket?.SendAsync(buffer, null);
+            if (IsConnected)
+                socket?.SendAsync(buffer, null);
         }
 
         /// <summary>

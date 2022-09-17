@@ -224,7 +224,7 @@ MonoBehaviour:
   timeoutInSeconds: 60
   mailFrom: yourgame@mail.com
   senderDisplayName: Awesome Game
-  emailBodyTemplate: {fileID: 0}
+  emailBodyTemplate: {fileID: 4900000, guid: 6397dd8c110436a4ea30b256b0493b84, type: 3}
 --- !u!1 &505681163
 GameObject:
   m_ObjectHideFlags: 0
@@ -632,7 +632,7 @@ GameObject:
   - component: {fileID: 1131464260}
   - component: {fileID: 1131464259}
   m_Layer: 0
-  m_Name: --MSTAPPLICATIONCONFIG
+  m_Name: --MST_APPLICATION_CONFIG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -721,7 +721,7 @@ MonoBehaviour:
   saveGuestInfo: 1
   tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
-  mailer: {fileID: 0}
+  mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
   serviceCodeMinChars: 6
   databaseAccessorFactory: {fileID: 674311275}

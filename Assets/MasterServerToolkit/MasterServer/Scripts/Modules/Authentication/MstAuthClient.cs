@@ -72,16 +72,23 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string DeviceId()
         {
-            if (PlayerPrefs.HasKey(MstDictKeys.USER_DEVICE_ID))
+            if (!string.IsNullOrEmpty(SystemInfo.deviceUniqueIdentifier))
             {
-                return PlayerPrefs.GetString(MstDictKeys.USER_DEVICE_ID);
+                return SystemInfo.deviceUniqueIdentifier;
             }
             else
             {
-                string deviceId = Mst.Helper.CreateGuidStringN();
-                PlayerPrefs.SetString(MstDictKeys.USER_DEVICE_ID, deviceId);
-                PlayerPrefs.Save();
-                return deviceId;
+                if (PlayerPrefs.HasKey(MstDictKeys.USER_DEVICE_ID))
+                {
+                    return PlayerPrefs.GetString(MstDictKeys.USER_DEVICE_ID);
+                }
+                else
+                {
+                    string deviceId = Mst.Helper.CreateGuidStringN();
+                    PlayerPrefs.SetString(MstDictKeys.USER_DEVICE_ID, deviceId);
+                    PlayerPrefs.Save();
+                    return deviceId;
+                }
             }
         }
 

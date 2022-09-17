@@ -9,34 +9,35 @@ namespace MasterServerToolkit.Utils
     {
         public static TweenerActionInfo Tween(float from, float to, float time, FloatTweenCallback callback)
         {
-            return Start(TweenAction(from, to, time, callback));
-        }
-
-        private static IEnumerator TweenAction(float from, float to, float time, FloatTweenCallback callback)
-        {
-            if (from == to)
-            {
-                callback?.Invoke(to);
-                yield break;
-            }
-
+            float currentTime = 0f;
+            float difference = Mathf.Abs(from - to);
             bool negative = to < from;
-            float curTime = 0f;
-            float dif = Mathf.Abs(from - to);
 
-            while (curTime < time)
+            return Start(() =>
             {
-                yield return new WaitForEndOfFrame();
+                if (from == to)
+                {
+                    callback?.Invoke(to);
+                    return true;
+                }
 
-                curTime += Time.deltaTime;
+                if (currentTime / time < 1f)
+                {
+                    currentTime += Time.deltaTime;
 
-                if (negative)
-                    callback?.Invoke(from - (dif * (curTime / time)));
+                    if (negative)
+                        callback?.Invoke(from - (difference * (currentTime / time)));
+                    else
+                        callback?.Invoke(from + (difference * (currentTime / time)));
+
+                    return false;
+                }
                 else
-                    callback?.Invoke(from + (dif * (curTime / time)));
-            }
-
-            callback?.Invoke(to);
+                {
+                    callback.Invoke(to);
+                    return true;
+                }
+            });
         }
     }
 }

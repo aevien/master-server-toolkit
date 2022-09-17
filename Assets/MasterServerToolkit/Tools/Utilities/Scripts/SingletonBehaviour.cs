@@ -14,6 +14,8 @@ namespace MasterServerToolkit.Utils
         /// </summary>
         [Header("Base Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
+        [SerializeField]
+        protected bool isGlobal = true;
 
         #endregion
 
@@ -24,9 +26,7 @@ namespace MasterServerToolkit.Utils
         /// <summary>
         /// Check if this object is not currently being destroyed
         /// </summary>
-        [NonSerialized]
         protected bool isNowDestroying = false;
-
         /// <summary>
         /// Instance of this object/>
         /// </summary>
@@ -42,7 +42,11 @@ namespace MasterServerToolkit.Utils
             }
 
             Instance = this as T;
-            DontDestroyOnLoad(gameObject);
+
+            if (isGlobal)
+            {
+                DontDestroyOnLoad(gameObject);
+            }    
 
             logger = Mst.Create.Logger(typeof(T).Name);
             logger.LogLevel = logLevel;
@@ -50,8 +54,10 @@ namespace MasterServerToolkit.Utils
 
         protected virtual void OnDestroy()
         {
-            Instance = null;
-            isNowDestroying = false;
+            if(Instance == this)
+            {
+                Instance = null;
+            }
         }
     }
 }

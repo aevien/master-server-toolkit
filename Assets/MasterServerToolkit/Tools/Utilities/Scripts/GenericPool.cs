@@ -32,24 +32,47 @@ namespace MasterServerToolkit.Utils
             return Object.Instantiate(_prefab);
         }
 
-        public T GetResource()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="active"></param>
+        /// <returns></returns>
+        public T Get(bool active = true)
         {
-            if (_freeObjects.Count > 0)
-            {
-                return _freeObjects.Pop();
-            }
+            if (!_freeObjects.TryPop(out T obj))
+                obj = InstantiateNew();
 
-            return InstantiateNew();
+            obj.gameObject.SetActive(active);
+
+            return obj;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
         public void Store(T obj)
         {
-            obj.gameObject.SetActive(false);
-            _freeObjects.Push(obj);
+            if (obj != null)
+            {
+                obj.gameObject.SetActive(false);
+                _freeObjects.Push(obj);
+            }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Cleanup()
         {
+            int count = _freeObjects.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (_freeObjects.TryPop(out T obj))
+                    Object.Destroy(obj.gameObject);
+            }
+
             _freeObjects.Clear();
         }
     }

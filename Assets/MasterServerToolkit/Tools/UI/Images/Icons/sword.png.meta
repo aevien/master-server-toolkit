@@ -3,7 +3,7 @@ guid: 3bf1bfd3e0f50e647a395bdc1d9d4c51
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
-  serializedVersion: 11
+  serializedVersion: 12
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -52,7 +52,7 @@ TextureImporter:
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
-  spriteTessellationDetail: -1
+  spriteTessellationDetail: 0
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
@@ -63,6 +63,7 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
+  cookieLightType: 1
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
@@ -115,11 +116,52 @@ TextureImporter:
   spriteSheet:
     serializedVersion: 2
     sprites: []
-    outline: []
+    outline:
+    - - {x: -239, y: 247}
+      - {x: -244, y: 230}
+      - {x: -240, y: 214}
+      - {x: -226, y: 201}
+      - {x: -204, y: 184}
+      - {x: -174, y: 157}
+      - {x: -147, y: 127}
+      - {x: -166, y: 97}
+      - {x: -179, y: 68}
+      - {x: -190, y: 38}
+      - {x: -196, y: 9}
+      - {x: -164, y: -19}
+      - {x: -143, y: -12}
+      - {x: -142, y: 17}
+      - {x: -138, y: 45}
+      - {x: -128, y: 69}
+      - {x: -120, y: 85}
+      - {x: -110, y: 75}
+      - {x: 156, y: -237}
+      - {x: 198, y: -245}
+      - {x: 237, y: -250}
+      - {x: 229, y: -210}
+      - {x: 219, y: -168}
+      - {x: -68, y: 108}
+      - {x: -80, y: 122}
+      - {x: -60, y: 131}
+      - {x: -35, y: 138}
+      - {x: -10, y: 142}
+      - {x: 19, y: 143}
+      - {x: 27, y: 157}
+      - {x: -5, y: 191}
+      - {x: -40, y: 185}
+      - {x: -70, y: 176}
+      - {x: -93, y: 167}
+      - {x: -120, y: 152}
+      - {x: -147, y: 180}
+      - {x: -174, y: 218}
+      - {x: -185, y: 237}
+      - {x: -192, y: 248}
+      - {x: -204, y: 255}
+      - {x: -222, y: 256}
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []

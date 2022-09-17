@@ -15,7 +15,7 @@ namespace MasterServerToolkit.Games
         /// Time to wait before match creation process will be aborted
         /// </summary>
         [SerializeField, Tooltip("Time to wait before match creation process will be aborted")]
-        protected uint matchCreationTimeout = 60;
+        protected uint matchCreationTimeout = 20;
 
         public UnityEvent OnRoomStartedEvent;
         public UnityEvent OnRoomStartAbortedEvent;

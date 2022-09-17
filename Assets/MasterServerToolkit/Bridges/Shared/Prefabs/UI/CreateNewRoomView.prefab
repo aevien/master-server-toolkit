@@ -536,6 +536,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d2a62c3519b48fe40a37aa32c7fe124f, type: 3}
+--- !u!114 &1987784094443232112 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1438952054369909395, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+    type: 3}
+  m_PrefabInstance: {fileID: 607467388882690531}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 719a6bd17a2ef9948bb60d0128aa9419, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8796252147345687068 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8249671915748336639, guid: d2a62c3519b48fe40a37aa32c7fe124f,
@@ -635,12 +647,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: CreateNewRoomView
+  title: Create new room
   hideOnStart: 1
   allwaysOnTop: 1
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 1987784094443232112}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []

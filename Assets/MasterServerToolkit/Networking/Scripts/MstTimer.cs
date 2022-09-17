@@ -41,6 +41,8 @@ namespace MasterServerToolkit.Networking
         {
             base.Awake();
 
+            if (isNowDestroying) return;
+
             // Framework requires applications to run in background
             Application.runInBackground = true;
 

@@ -165,8 +165,6 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.GetEmailConfirmationCode, GetEmailConfirmationCodeMessageHandler);
             server.RegisterMessageHandler(MstOpCodes.ConfirmEmail, ConfirmEmailMessageHandler);
 
-            server.RegisterMessageHandler(MstOpCodes.GetLoggedInUsersCount, GetLoggedInUsersCountMessageHandler);
-
             server.RegisterMessageHandler(MstOpCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
         }
 
@@ -419,15 +417,6 @@ namespace MasterServerToolkit.MasterServer
             await authDatabaseAccessor.UpdateAccountAsync(account);
 
             message.Respond(ResponseStatus.Success);
-        }
-
-        /// <summary>
-        /// Handles a request to retrieve a number of logged in users
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void GetLoggedInUsersCountMessageHandler(IIncomingMessage message)
-        {
-            message.Respond(LoggedInUsersById.Count, ResponseStatus.Success);
         }
 
         /// <summary>

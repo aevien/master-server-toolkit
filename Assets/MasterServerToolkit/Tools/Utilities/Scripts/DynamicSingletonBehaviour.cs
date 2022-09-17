@@ -20,6 +20,10 @@ namespace MasterServerToolkit.Utils
         /// Logger assigned to this module
         /// </summary>
         protected Logging.Logger logger;
+        /// <summary>
+        /// Check if this object is not currently being destroyed
+        /// </summary>
+        protected bool isNowDestroying = false;
 
         protected static bool _wasCreated = false;
         protected static T _instance;
@@ -30,13 +34,19 @@ namespace MasterServerToolkit.Utils
             logger.LogLevel = logLevel;
 
             if (_instance != null && _instance != this)
+            {
+                isNowDestroying = true;
                 Destroy(gameObject);
+            }
         }
 
         protected virtual void OnDestroy()
         {
-            _wasCreated = false;
-            _instance = null;
+            if (_instance == this)
+            {
+                _wasCreated = false;
+                _instance = null;
+            }
         }
 
         protected static bool TryGetOrCreate(out T instance)

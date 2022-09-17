@@ -929,6 +929,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d2a62c3519b48fe40a37aa32c7fe124f, type: 3}
+--- !u!114 &3995021587191297954 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1438952054369909395, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+    type: 3}
+  m_PrefabInstance: {fileID: 2632641721636523313}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 719a6bd17a2ef9948bb60d0128aa9419, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &6266122627660033743 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8249671915748336638, guid: d2a62c3519b48fe40a37aa32c7fe124f,
@@ -966,12 +978,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: PlayersListView
+  title: Room players list
   hideOnStart: 1
   allwaysOnTop: 0
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 3995021587191297954}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []

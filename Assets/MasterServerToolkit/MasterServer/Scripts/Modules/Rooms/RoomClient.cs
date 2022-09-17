@@ -62,6 +62,8 @@ namespace MasterServerToolkit.MasterServer
         {
             base.Awake();
 
+            if (isNowDestroying) return;
+
             Mst.Events.AddListener(MstEventKeys.leaveRoom, (message) =>
             {
                 Disconnect();
