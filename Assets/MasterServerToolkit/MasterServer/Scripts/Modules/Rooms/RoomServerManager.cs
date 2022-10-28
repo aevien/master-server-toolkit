@@ -125,9 +125,10 @@ namespace MasterServerToolkit.MasterServer
         {
             base.Awake();
 
-            Mst.Client.Rooms.IsClientMode = forceClientMode;
-
             if (forceClientMode)
+                Mst.Client.Rooms.IsClientMode = true;
+
+            if (Mst.Client.Rooms.IsClientMode)
             {
                 autoLoadUserProfile = false;
                 allowGuestUsers = false;
@@ -159,7 +160,7 @@ namespace MasterServerToolkit.MasterServer
             base.OnInitialize();
 
             // Init anly if we are on server side.
-            if (!forceClientMode)
+            if (!Mst.Client.Rooms.IsClientMode)
             {
                 // Listen to master server connection status
                 Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
@@ -169,7 +170,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected override IClientSocket ConnectionFactory()
         {
-            if (!forceClientMode)
+            if (!Mst.Client.Rooms.IsClientMode)
             {
                 if (!RoomToMasterConnector.Instance)
                 {

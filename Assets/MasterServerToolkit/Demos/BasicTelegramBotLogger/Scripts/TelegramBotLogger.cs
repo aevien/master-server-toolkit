@@ -1,12 +1,12 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Utils;
-using Newtonsoft.Json.Linq;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace MasterServerToolkit.Examples.BasicTelegramBotLogger
 {
-    public delegate void TelegramBotWebRequestHandler(JObject response, string error);
+    public delegate void TelegramBotWebRequestHandler(MstJson response, string error);
 
     public class TelegramBotLogger : SingletonBehaviour<TelegramBotLogger>
     {
@@ -25,13 +25,13 @@ namespace MasterServerToolkit.Examples.BasicTelegramBotLogger
                     return;
                 }
 
-                if (response.ContainsKey("ok") && response.Value<bool>("ok") == true)
+                if (response.HasField("ok") && response.GetField("ok").boolValue == true)
                 {
                     Application.logMessageReceived += Application_logMessageReceived;
                 }
                 else
                 {
-                    logger.Error(response.Value<string>("description"));
+                    logger.Error(response.GetField("description"));
                 }
             });
         }
@@ -104,7 +104,7 @@ namespace MasterServerToolkit.Examples.BasicTelegramBotLogger
                 }
                 else if (www.result == UnityWebRequest.Result.Success)
                 {
-                    callback?.Invoke(JObject.Parse(www.downloadHandler.text), string.Empty);
+                    callback?.Invoke(new MstJson(www.downloadHandler.text), string.Empty);
                 }
             }
         }
@@ -124,7 +124,7 @@ namespace MasterServerToolkit.Examples.BasicTelegramBotLogger
                 }
                 else if (www.result == UnityWebRequest.Result.Success)
                 {
-                    callback?.Invoke(JObject.Parse(www.downloadHandler.text), string.Empty);
+                    callback?.Invoke(new MstJson(www.downloadHandler.text), string.Empty);
                 }
             }
         }

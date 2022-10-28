@@ -16,9 +16,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public string Password { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public string Facebook { get; set; }
-        public string Google { get; set; }
-        public string Apple { get; set; }
         public string Token { get; set; }
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
@@ -36,9 +33,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
             Password = string.Empty;
             Email = string.Empty;
             PhoneNumber = string.Empty;
-            Facebook = string.Empty;
-            Google = string.Empty;
-            Apple = string.Empty;
             Token = string.Empty;
             IsAdmin = false;
             IsGuest = true;
@@ -51,32 +45,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
             OnChangedEvent?.Invoke(this);
         }
 
-        public bool HasToken()
-        {
-            return !string.IsNullOrEmpty(Token);
-        }
-
-        public bool IsTokenExpired()
-        {
-            Properties.TryGetValue(MstDictKeys.USER_AUTH_TOKEN_EXPIRES, out string expireTime);
-
-            if (!string.IsNullOrEmpty(expireTime))
-            {
-                long filetime = Convert.ToInt64(expireTime);
-                return DateTime.FromFileTime(filetime) <= DateTime.Now;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public void SetToken(int tokenExpiresInDays)
-        {
-            Token = Mst.Helper.CreateRandomAlphanumericString(64);
-            Properties[MstDictKeys.USER_AUTH_TOKEN_EXPIRES] = DateTime.Now.AddDays(tokenExpiresInDays).ToFileTime().ToString();
-        }
-
         public override string ToString()
         {
             var properties = new MstProperties();
@@ -85,12 +53,13 @@ namespace MasterServerToolkit.Bridges.MongoDB
             properties.Set("Password", Password);
             properties.Set("Email", Email);
             properties.Set("PhoneNumber", PhoneNumber);
-            properties.Set("Facebook", Facebook);
-            properties.Set("Google", Google);
-            properties.Set("Apple", Apple);
+            properties.Set("Token", Token);
+            properties.Set("DeviceId", DeviceId);
+            properties.Set("DeviceName", DeviceName);
             properties.Set("IsAdmin", IsAdmin);
             properties.Set("IsGuest", IsGuest);
             properties.Set("IsEmailConfirmed", IsEmailConfirmed);
+            properties.Set("LastLogin", LastLogin);
             properties.Append(Properties);
 
             return properties.ToString();

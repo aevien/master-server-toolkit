@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -8,14 +9,14 @@ namespace MasterServerToolkit.Examples.BasicProfiles
 {
     public class BasicProfilesBuild
     {
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Profiles/All")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Profiles/All")]
         private static void BuildBoth()
         {
             BuildMasterForWindows();
             BuildClientForWindows();
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Profiles/Master Server")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Profiles/Master Server")]
         private static void BuildMasterForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicProfiles", "MasterServer");
@@ -56,7 +57,7 @@ namespace MasterServerToolkit.Examples.BasicProfiles
             }
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Profiles/Client")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Profiles/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicProfiles", "Client");

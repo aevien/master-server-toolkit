@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 namespace MasterServerToolkit.Bridges.LiteDB
 {
     public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor
@@ -89,26 +90,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
             });
         }
 
-        public async Task<IEnumerable<IAccountInfoData>> GetAccountsByIdAsync(IEnumerable<string> ids)
-        {
-            return await Task.Run(() =>
-            {
-                return accountsCollection.FindAll().Where(i => ids.Any(id => id == i.Id));
-            });
-        }
-
-        public async Task<IEnumerable<IAccountInfoData>> GetPagedAccounts(int pageIndex = 0, int pageSize = 100)
-        {
-            IEnumerable<IAccountInfoData> accounts = default;
-
-            await Task.Run(() =>
-            {
-                accounts = accountsCollection.FindAll().Skip(pageSize * pageIndex).Take(pageSize);
-            });
-
-            return accounts;
-        }
-
         public async Task SavePasswordResetCodeAsync(IAccountInfoData account, string code)
         {
             await Task.Run(() =>
@@ -122,16 +103,16 @@ namespace MasterServerToolkit.Bridges.LiteDB
             });
         }
 
-        public async Task<IPasswordResetData> GetPasswordResetDataAsync(string email)
+        public async Task<string> GetPasswordResetDataAsync(string email)
         {
-            IPasswordResetData data = default;
+            PasswordResetData data = default;
 
             await Task.Run(() =>
             {
                 data = resetCodesCollection.FindOne(i => i.Email == email.ToLower());
             });
 
-            return data;
+            return data != null ? data.Code : "";
         }
 
         public async Task SaveEmailConfirmationCodeAsync(string email, string code)

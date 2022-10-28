@@ -1,5 +1,5 @@
-﻿using MasterServerToolkit.Logging;
-using Newtonsoft.Json.Linq;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -96,35 +96,34 @@ namespace MasterServerToolkit.MasterServer
             OptionalDependencies.Add(typeof(T));
         }
 
-        public virtual JObject JsonInfo()
+        public virtual MstJson JsonInfo()
         {
-            var json = new JObject() {
-                { "name", GetType().Name },
-                { "description", GetType().Name },
-            };
+            MstJson json = new MstJson();
+            json.AddField("name", GetType().Name);
+            json.AddField("description", GetType().Name);
 
             if (Dependencies.Count > 0)
             {
-                var dependenciesArray = new JArray();
+                var dependenciesArray = MstJson.EmptyArray;
 
                 for (int i = 0; i < Dependencies.Count; i++)
                 {
                     dependenciesArray.Add(Dependencies[i].Name);
                 }
 
-                json.Add("dependencies", dependenciesArray);
+                json.AddField("dependencies", dependenciesArray);
             }
 
             if (OptionalDependencies.Count > 0)
             {
-                var optionalDependenciesArray = new JArray();
+                var optionalDependenciesArray = MstJson.EmptyArray;
 
                 for (int i = 0; i < OptionalDependencies.Count; i++)
                 {
                     optionalDependenciesArray.Add(OptionalDependencies[i].Name);
                 }
 
-                json.Add("optionalDependencies", optionalDependenciesArray);
+                json.AddField("optionalDependencies", optionalDependenciesArray);
             }
 
             return json;

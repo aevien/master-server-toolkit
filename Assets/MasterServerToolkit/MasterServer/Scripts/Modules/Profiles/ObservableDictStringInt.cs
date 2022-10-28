@@ -1,5 +1,7 @@
 ﻿using MasterServerToolkit.Networking;
 using System.Collections.Concurrent;
+using System.Linq;
+using System.Text;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -10,10 +12,19 @@ namespace MasterServerToolkit.MasterServer
 
         public override string Serialize()
         {
-            return string.Empty;
+            return new MstProperties().Append(_value).ToReadableString();
         }
 
-        public override void Deserialize(string value) { }
+        public override void Deserialize(string value)
+        {
+            var properties = new MstProperties();
+            properties.FromReadableString(value);
+
+            foreach (var property in properties)
+            {
+                _value[property.Key] = properties.AsUInt16(property.Key);
+            }
+        }
 
         protected override string ReadKey(EndianBinaryReader reader)
         {

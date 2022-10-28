@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using MasterServerToolkit.Json;
 using System;
 using System.IO;
 using System.Net;
@@ -26,28 +26,28 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnNotifyHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            var jsonResponse = new JObject();
+            var jsonResponse = new MstJson();
 
             try
             {
-                var jsonRequest = new JObject();
+                var jsonRequest = new MstJson();
 
                 using (StreamReader stream = new StreamReader(request.InputStream))
                 {
-                    jsonRequest = JObject.Parse(stream.ReadToEnd());
+                    jsonRequest = new MstJson(stream.ReadToEnd());
                 }
 
-                if (!jsonRequest.ContainsKey("message")) throw new Exception("[message] parameter is not defined");
+                if (!jsonRequest.HasField("message")) throw new Exception("[message] parameter is not defined");
                 if (!notificationModule) throw new Exception("[NotificationModule] not found");
 
                 // Read message
-                string message = jsonRequest.Value<string>("message");
+                string message = jsonRequest.GetField("message").stringValue;
 
                 // Send message to all recipients
                 notificationModule.NoticeToAll(message, true);
 
                 // Respond OK
-                jsonResponse.Add("message", "ok");
+                jsonResponse.AddField("message", "ok");
 
                 byte[] contents = Encoding.UTF8.GetBytes(jsonResponse.ToString());
 
@@ -58,7 +58,7 @@ namespace MasterServerToolkit.MasterServer
             }
             catch (Exception e)
             {
-                jsonResponse.Add("error", e.Message);
+                jsonResponse.AddField("error", e.Message);
 
                 byte[] contents = Encoding.UTF8.GetBytes(jsonResponse.ToString());
 

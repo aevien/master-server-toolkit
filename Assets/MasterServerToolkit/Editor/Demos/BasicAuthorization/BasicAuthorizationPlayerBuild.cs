@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -8,14 +9,14 @@ namespace MasterServerToolkit.Examples.BasicAuthorization
 {
     public class BasicAuthorizationPlayerBuild
     {
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Authorization/All")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Authorization/All")]
         private static void BuildBoth()
         {
             BuildMaster();
             BuildClient();
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Authorization/Master Server")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Authorization/Master Server")]
         private static void BuildMaster()
         {
             string buildFolder = Path.Combine("Builds", "BasicAuthorization", "MasterServer");
@@ -56,7 +57,7 @@ namespace MasterServerToolkit.Examples.BasicAuthorization
             }
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Authorization/Client")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Authorization/Client")]
         private static void BuildClient()
         {
             string buildFolder = Path.Combine("Builds", "BasicAuthorization", "Client");

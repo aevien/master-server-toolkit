@@ -13,13 +13,13 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Deserialize(string value)
         {
-            var splitted = value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var splitted = value.Split(";", StringSplitOptions.RemoveEmptyEntries);
             _value = splitted.ToList();
         }
 
         public override string Serialize()
         {
-            return string.Join(",", _value);
+            return string.Join(";", _value);
         }
 
         protected override string ReadValue(EndianBinaryReader reader)

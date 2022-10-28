@@ -37,7 +37,7 @@ namespace MasterServerToolkit.Games
 
         protected virtual void OnStatusChangedEventHandler(ConnectionStatus status)
         {
-            string address = $"{Connection.ConnectionIp}:{Connection.ConnectionPort}";
+            string address = $"{Connection.Address}:{Connection.Port}";
 
             switch (status)
             {

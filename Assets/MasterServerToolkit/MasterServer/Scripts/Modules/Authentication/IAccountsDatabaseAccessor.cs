@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -47,19 +46,6 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId);
         /// <summary>
-        /// Gets user accounts from database by ids
-        /// </summary>
-        /// <param name="ids"></param>
-        /// <returns></returns>
-        Task<IEnumerable<IAccountInfoData>> GetAccountsByIdAsync(IEnumerable<string> ids);
-        /// <summary>
-        /// Get accounts list
-        /// </summary>
-        /// <param name="pageIndex"></param>
-        /// <param name="pageSize"></param>
-        /// <returns></returns>
-        Task<IEnumerable<IAccountInfoData>> GetPagedAccounts(int pageIndex = 0, int pageSize = 100);
-        /// <summary>
         /// Saves code that user gets when reset pasword request
         /// </summary>
         /// <param name="account"></param>
@@ -70,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
-        Task<IPasswordResetData> GetPasswordResetDataAsync(string email);
+        Task<string> GetPasswordResetDataAsync(string email);
         /// <summary>
         /// Email confirmation code user gets after successful registration
         /// </summary>

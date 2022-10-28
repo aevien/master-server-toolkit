@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using WebSocketSharp;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -231,7 +232,6 @@ namespace MasterServerToolkit.MasterServer
             string path = AppConfigFile();
 
             string[] lines = File.ReadAllLines(path);
-            char[] splitters = new char[] { '=' };
             List<string> newArgs = new List<string>();
             newArgs.AddRange(_args);
 
@@ -246,17 +246,39 @@ namespace MasterServerToolkit.MasterServer
             {
                 foreach (string line in lines)
                 {
-                    string[] kvp = line.Split(splitters, StringSplitOptions.RemoveEmptyEntries);
-
-                    if (kvp != null && kvp.Length > 1 && !newArgs.Contains(kvp[0]))
+                    if (!IsComment(line))
                     {
-                        newArgs.Add(kvp[0]);
-                        newArgs.Add(kvp[1]);
+                        var kvp = Parse(line, "=");
+
+                        if (!string.IsNullOrEmpty(kvp.Key) && !newArgs.Contains(kvp.Key))
+                        {
+                            newArgs.Add(kvp.Key);
+                            newArgs.Add(kvp.Value);
+                        }
                     }
                 }
             }
 
             _args = newArgs.ToArray();
+        }
+
+        private KeyValuePair<string, string> Parse(string input, string splitter)
+        {
+            int splitterIndex = input.IndexOf(splitter);
+
+            if (splitterIndex >= 0)
+            {
+                string key = input.Substring(0, splitterIndex);
+                string value = input.Substring(splitterIndex + 1);
+                return new KeyValuePair<string, string>(key, value);
+            }
+
+            return default;
+        }
+
+        private bool IsComment(string line)
+        {
+            return line.StartsWith("#");
         }
 
         /// <summary>

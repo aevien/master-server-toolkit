@@ -444,10 +444,10 @@ namespace MasterServerToolkit.MasterServer
 
             profileExt.Profile.ClientPeer = message.Peer;
 
-            if (!ignoreProfileMissmatchError && clientPropertiesCount != profileExt.Profile.PropertyCount)
+            if (!ignoreProfileMissmatchError && clientPropertiesCount != profileExt.Profile.Count)
             {
                 logger.Error(string.Format($"Client requested a profile with {clientPropertiesCount} properties, but server " +
-                                           $"constructed a profile with {profileExt.Profile.PropertyCount}. Make sure that you've changed the " +
+                                           $"constructed a profile with {profileExt.Profile.Count}. Make sure that you've changed the " +
                                            "profile factory on the ProfilesModule"));
             }
 

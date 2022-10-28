@@ -137,7 +137,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0caa14608ae8d148b5cb724fcd55461, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  iconImage: {fileID: 0}
   lableText: {fileID: 6721385568205909569}
+  iconValue: {fileID: 0}
   lableValue: Click Me
 --- !u!114 &4180842736270822484
 MonoBehaviour:

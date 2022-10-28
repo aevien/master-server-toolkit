@@ -1,4 +1,5 @@
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -8,7 +9,7 @@ namespace MasterServerToolkit.Bridges.Dashboard
 {
     public class DashboardBuild
     {
-        [MenuItem(Mst.ToolMenu + "Build/Dashboard Service")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Dashboard Service")]
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "Dashboard");

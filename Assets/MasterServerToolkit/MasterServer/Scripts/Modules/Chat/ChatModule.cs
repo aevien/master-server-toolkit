@@ -20,8 +20,8 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, Tooltip("If true, chat module will subscribe to auth module, and automatically setup chat users when they log in")]
         protected bool useAuthModule = true;
 
-        [SerializeField, Tooltip("If false, chat channel name will be checked through CensorModule to find use of forbidden word in it")]
-        protected bool ignoreForbiddenChannelNames = false;
+        [SerializeField, Tooltip("If false, chats will be checked through CensorModule to find use of forbidden words in messages")]
+        protected bool useCensorModule = true;
 
         /// <summary>
         /// If true, the first channel that user joins will be set as hist local channel
@@ -118,6 +118,11 @@ namespace MasterServerToolkit.MasterServer
                     logger.Error($"{GetType().Name} was set to use {nameof(AuthModule)}, but {nameof(AuthModule)} was not found");
                 }
             }
+
+            if (useCensorModule && censorModule == null)
+            {
+                logger.Error($"{GetType().Name} was set to use {nameof(CensorModule)}, but {nameof(CensorModule)} was not found");
+            }
         }
 
         /// <summary>
@@ -194,7 +199,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual ChatChannel GetOrCreateChannel(string channelName)
         {
-            return GetOrCreateChannel(channelName, ignoreForbiddenChannelNames);
+            return GetOrCreateChannel(channelName, useCensorModule);
         }
 
         /// <summary>
@@ -304,6 +309,15 @@ namespace MasterServerToolkit.MasterServer
             {
                 // Set a true sender
                 chatMessage.Sender = sender.Username;
+
+                // Check if message contains a forbidden word
+                if (useCensorModule && censorModule != null && censorModule.HasCensoredWord(chatMessage.Message))
+                {
+                    chatMessage.Receiver = chatMessage.Sender;
+                    chatMessage.Sender = "Admin";
+                    chatMessage.MessageType = ChatMessageType.PrivateMessage;
+                    chatMessage.Message = "Your text message contains forbidden word. Please be kind to all chat users";
+                }
 
                 switch (chatMessage.MessageType)
                 {
@@ -487,15 +501,9 @@ namespace MasterServerToolkit.MasterServer
                 // Trying to create channel with given name
                 var channel = GetOrCreateChannel(channelName);
 
-                if (channel == null)
+                if (channel == null || !channel.AddUser(chatUser))
                 {
-                    message.Respond("This channel is forbidden", ResponseStatus.Failed);
-                    return;
-                }
-
-                if (!channel.AddUser(chatUser))
-                {
-                    message.Respond("Failed to join a channel", ResponseStatus.Failed);
+                    message.Respond($"Failed to join a channel \"{channelName}\"", ResponseStatus.Failed);
                     return;
                 }
 
@@ -642,6 +650,8 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 var packet = message.AsPacket(new ChatMessagePacket());
+
+
 
                 if (!TryHandleChatMessage(packet, chatUser, message))
                 {

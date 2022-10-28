@@ -3,7 +3,7 @@ using MasterServerToolkit.MasterServer;
 
 namespace MasterServerToolkit.Bridges.LiteDB
 {
-    public class PasswordResetData : IPasswordResetData
+    public class PasswordResetData
     {
         [BsonId]
         public string Email { get; set; }

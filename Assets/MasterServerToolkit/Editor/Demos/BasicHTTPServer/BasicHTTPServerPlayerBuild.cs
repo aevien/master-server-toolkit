@@ -1,4 +1,5 @@
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -8,7 +9,7 @@ namespace MasterServerToolkit.Examples.BasicHTTPServer
 {
     public class BasicHTTPServerPlayerBuild
     {
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Http Server/Master Server")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Http Server/Master Server")]
         private static void BuildMasterForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicHTTPServer", "MasterServer");

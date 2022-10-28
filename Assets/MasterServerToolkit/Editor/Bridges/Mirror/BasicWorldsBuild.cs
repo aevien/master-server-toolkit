@@ -1,4 +1,5 @@
 #if MIRROR
+using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -8,13 +9,13 @@ namespace MasterServerToolkit.MasterServer.Examples.Mirror
 {
     public class BasicWorldsBuild
     {
-        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Room Zones(Headless)")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Room Zones(Headless)")]
         private static void BuildRoomForWindowsHeadless()
         {
             BuildRoomForWindows(true);
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Room Zones(Normal)")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Room Zones(Normal)")]
         private static void BuildRoomForWindowsNormal()
         {
             BuildRoomForWindows(false);
@@ -66,7 +67,7 @@ namespace MasterServerToolkit.MasterServer.Examples.Mirror
             }
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Master Server and Spawner")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Master Server and Spawner")]
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "Mirror", "BasicWorlds", "MasterAndSpawner");
@@ -111,7 +112,7 @@ namespace MasterServerToolkit.MasterServer.Examples.Mirror
             }
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Spawner")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Spawner")]
         private static void BuildSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "Mirror", "BasicWorlds", "Spawner");
@@ -159,7 +160,7 @@ namespace MasterServerToolkit.MasterServer.Examples.Mirror
             }
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Client")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos for Mirror/Basic Worlds/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "Mirror", "BasicWorlds", "Client");

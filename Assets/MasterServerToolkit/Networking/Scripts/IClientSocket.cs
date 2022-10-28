@@ -28,12 +28,12 @@
         /// <summary>
         /// Ip of the server to which we're connected
         /// </summary>
-        string ConnectionIp { get; }
+        string Address { get; }
 
         /// <summary>
         /// Port of the server to which we're connected
         /// </summary>
-        int ConnectionPort { get; }
+        int Port { get; }
 
         /// <summary>
         /// Whether or not to use secure connection

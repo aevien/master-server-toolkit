@@ -1,4 +1,5 @@
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -8,14 +9,14 @@ namespace MasterServerToolkit.Examples.BasicChat
 {
     public class BasicChatPlayerBuild
     {
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Chat/All")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Chat/All")]
         private static void BuildBoth()
         {
             BuildMaster();
             BuildClient();
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Chat/Master Server")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Chat/Master Server")]
         private static void BuildMaster()
         {
             string buildFolder = Path.Combine("Builds", "BasicChat", "MasterServer");
@@ -56,7 +57,7 @@ namespace MasterServerToolkit.Examples.BasicChat
             }
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Chat/Client")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Chat/Client")]
         private static void BuildClient()
         {
             string buildFolder = Path.Combine("Builds", "BasicChat", "Client");

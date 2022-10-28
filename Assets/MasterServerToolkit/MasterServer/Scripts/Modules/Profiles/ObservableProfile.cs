@@ -49,7 +49,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// The number of properties the profile has
         /// </summary>
-        public int PropertyCount { get { return Properties.Count; } }
+        public int Count { get { return Properties.Count; } }
 
         /// <summary>
         /// Returns an observable value of given type
@@ -144,7 +144,7 @@ namespace MasterServerToolkit.MasterServer
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, stream))
                 {
                     // Write count
-                    writer.Write(PropertyCount);
+                    writer.Write(Count);
 
                     foreach (var value in Properties)
                     {

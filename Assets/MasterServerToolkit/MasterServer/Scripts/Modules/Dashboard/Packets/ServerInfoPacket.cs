@@ -1,52 +1,30 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class ServerInfoPacket : SerializablePacket
     {
-        [JsonProperty("id")]
         public string Id { get; set; } = string.Empty;
-        [JsonProperty("initializedModules")]
         public byte InitializedModules { get; set; }
-        [JsonProperty("unitializedModules")]
         public byte UnitializedModules { get; set; }
-        [JsonProperty("activeClients")]
         public ushort ActiveClients { get; set; }
-        [JsonProperty("inactiveClients")]
         public ushort InactiveClients { get; set; }
-        [JsonProperty("totalClients")]
         public int TotalClients { get; set; }
-        [JsonProperty("highestClients")]
         public ushort HighestClients { get; set; }
-        [JsonProperty("updatebles")]
         public short Updatebles { get; set; }
-        [JsonProperty("useAuth")]
         public bool UseAuth { get; set; }
-        [JsonProperty("peersAccepted")]
         public int PeersAccepted { get; set; }
-        [JsonProperty("peersRejected")]
         public int PeersRejected { get; set; }
-        [JsonProperty("useSecure")]
         public bool UseSecure { get; set; }
-        [JsonProperty("certificatePath")]
         public string CertificatePath { get; set; } = string.Empty;
-        [JsonProperty("certificatePassword")]
         public string CertificatePassword { get; set; } = string.Empty;
-        [JsonProperty("applicationKey")]
         public string ApplicationKey { get; set; } = string.Empty;
-        [JsonProperty("localIp")]
         public string LocalIp { get; set; } = string.Empty;
-        [JsonProperty("publicIp")]
         public string PublicIp { get; set; } = string.Empty;
-        [JsonProperty("port")]
         public string Port { get; set; } = string.Empty;
-        [JsonProperty("incomingTraffic")]
         public long IncomingTraffic { get; set; }
-        [JsonProperty("outgoingTraffic")]
         public long OutgoingTraffic { get; set; }
-        [JsonProperty("error")]
         public string Error { get; set; } = string.Empty;
 
         public override void FromBinaryReader(EndianBinaryReader reader)
@@ -99,14 +77,14 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(Error);
         }
 
-        public JObject ToJObject()
+        public MstJson ToJson()
         {
-            return JObject.FromObject(this);
+            return MstJson.EmptyObject;
         }
 
-        public static ServerInfoPacket FromJobject(JObject json)
+        public static ServerInfoPacket FromJobject(MstJson json)
         {
-            return json.ToObject<ServerInfoPacket>();
+            return new ServerInfoPacket();
         }
     }
 }

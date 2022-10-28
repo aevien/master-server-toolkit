@@ -1,5 +1,4 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using MasterServerToolkit.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -138,11 +137,11 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                JObject json = new JObject();
+                MstJson json = new MstJson();
 
                 foreach (var kvp in dashboardModule.ServerInfo)
                 {
-                    json.Add(kvp.Key, kvp.Value.ToJObject());
+                    json.AddField(kvp.Key, kvp.Value.ToJson());
                 }
 
                 byte[] contents = Encoding.UTF8.GetBytes(json.ToString());
@@ -180,11 +179,11 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                JObject json = new JObject();
+                MstJson json = new MstJson();
 
                 foreach (var kvp in dashboardModule.SystemInfo)
                 {
-                    json.Add(kvp.Key, kvp.Value.ToJObject());
+                    json.AddField(kvp.Key, kvp.Value.ToJson());
                 }
 
                 byte[] contents = Encoding.UTF8.GetBytes(json.ToString());
@@ -221,21 +220,21 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                JObject json = new JObject();
+                MstJson json = new MstJson();
 
                 foreach (var kvp in dashboardModule.ModulesInfo)
                 {
-                    JArray modules = new JArray();
+                    MstJson modules = new MstJson();
 
                     foreach (var item in kvp.Value)
                     {
                         modules.Add(item.Data);
                     }
 
-                    json.Add(kvp.Key, modules);
+                    json.AddField(kvp.Key, modules);
                 }
 
-                byte[] contents = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(json));
+                byte[] contents = Encoding.UTF8.GetBytes(json.ToString());
 
                 response.ContentType = "application/json";
                 response.ContentEncoding = Encoding.UTF8;

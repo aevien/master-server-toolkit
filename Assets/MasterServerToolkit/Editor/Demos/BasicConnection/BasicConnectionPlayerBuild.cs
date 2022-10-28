@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -8,14 +9,14 @@ namespace MasterServerToolkit.Examples.BasicConnection
 {
     public class BasicConnectionPlayerBuild
     {
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Connection/All")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Connection/All")]
         private static void BuildBoth()
         {
             BuildMasterForWindows();
             BuildClientForWindows();
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Connection/Master Server")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Connection/Master Server")]
         private static void BuildMasterForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicConnection", "MasterServer");
@@ -58,7 +59,7 @@ namespace MasterServerToolkit.Examples.BasicConnection
             }
         }
 
-        [MenuItem(Mst.ToolMenu + "Build/Demos/Basic Connection/Client")]
+        [MenuItem(MstConstants.ToolMenu + "Build/Demos/Basic Connection/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "BasicConnection", "Client");

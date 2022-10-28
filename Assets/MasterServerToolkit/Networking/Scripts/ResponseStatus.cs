@@ -8,6 +8,7 @@
         Error,
         Unauthorized,
         Invalid,
+        TokenExpired,
         Failed,
         NotConnected,
         NotHandled,

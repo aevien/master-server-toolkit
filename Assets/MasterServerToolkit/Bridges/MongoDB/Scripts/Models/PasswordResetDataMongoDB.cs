@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace MasterServerToolkit.Bridges.MongoDB
 {
-    public class PasswordResetDataMongoDB : IPasswordResetData
+    public class PasswordResetDataMongoDB
     {
         [BsonId]
         public ObjectId _id { get; set; }

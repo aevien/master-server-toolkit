@@ -50,7 +50,7 @@ namespace MasterServerToolkit.Extensions
         /// <returns></returns>
         public static uint ToUint32Hash(params string[] values)
         {
-            return string.Join('_', values).ToUint32Hash();
+            return string.Join("_", values).ToUint32Hash();
         }
 
         /// <summary>

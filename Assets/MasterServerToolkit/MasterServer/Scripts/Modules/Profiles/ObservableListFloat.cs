@@ -12,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Deserialize(string value)
         {
-            var splitted = value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var splitted = value.Split(";", StringSplitOptions.RemoveEmptyEntries);
             _value = new List<float>();
 
             foreach (string i in splitted)
@@ -30,7 +30,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override string Serialize()
         {
-            return string.Join(",", _value);
+            return string.Join(";", _value);
         }
 
         protected override float ReadValue(EndianBinaryReader reader)

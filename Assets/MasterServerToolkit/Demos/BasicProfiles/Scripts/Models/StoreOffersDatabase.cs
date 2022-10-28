@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
-    [CreateAssetMenu(fileName = "StoreOffersDatabase", menuName = Mst.CreateMenu + "Examples/BasicProfile/Create store offers database")]
+    [CreateAssetMenu(fileName = "StoreOffersDatabase", menuName = MstConstants.CreateMenu + "Examples/BasicProfile/Create store offers database")]
     public class StoreOffersDatabase : ScriptableObject
     {
         [SerializeField]

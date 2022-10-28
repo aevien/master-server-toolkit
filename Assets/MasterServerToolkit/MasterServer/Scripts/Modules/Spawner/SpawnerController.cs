@@ -62,8 +62,8 @@ namespace MasterServerToolkit.MasterServer
 
             SpawnSettings = new SpawnerConfig()
             {
-                MasterIp = connection.ConnectionIp,
-                MasterPort = connection.ConnectionPort,
+                MasterIp = connection.Address,
+                MasterPort = connection.Port,
                 MachineIp = spawnerOptions.MachineIp,
                 Region = string.IsNullOrEmpty(spawnerOptions.Region) ? "International" : spawnerOptions.Region
             };
@@ -174,14 +174,14 @@ namespace MasterServerToolkit.MasterServer
             /************************************************************************/
             // Check if we're overriding an IP to master server
             var masterIpArgument = string.IsNullOrEmpty(SpawnSettings.MasterIp) ?
-                Connection.ConnectionIp : SpawnSettings.MasterIp;
+                Connection.Address : SpawnSettings.MasterIp;
 
             // Create master IP arg
             processArguments.Set(Mst.Args.Names.MasterIp, masterIpArgument);
 
             /************************************************************************/
             /// Check if we're overriding a port to master server
-            var masterPortArgument = SpawnSettings.MasterPort < 0 ? Connection.ConnectionPort : SpawnSettings.MasterPort;
+            var masterPortArgument = SpawnSettings.MasterPort < 0 ? Connection.Port : SpawnSettings.MasterPort;
 
             // Create master port arg
             processArguments.Set(Mst.Args.Names.MasterPort, masterPortArgument);

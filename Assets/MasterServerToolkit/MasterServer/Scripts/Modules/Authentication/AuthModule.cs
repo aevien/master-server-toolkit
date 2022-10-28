@@ -1,6 +1,5 @@
-﻿using MasterServerToolkit.Extensions;
+﻿using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -99,7 +98,29 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Whether or not to save guest info
         /// </summary>
-        public bool SaveGuestInfo => saveGuestInfo;
+        public bool SaveGuestInfo
+        {
+            get => saveGuestInfo;
+            set => saveGuestInfo = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IAccountsDatabaseAccessor DatabaseAccessor
+        {
+            get => authDatabaseAccessor;
+            set => authDatabaseAccessor = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DatabaseAccessorFactory DatabaseAccessorFactory
+        {
+            get => databaseAccessorFactory;
+            set => databaseAccessorFactory = value;
+        }
 
         /// <summary>
         /// Invoked, when user logedin
@@ -145,11 +166,9 @@ namespace MasterServerToolkit.MasterServer
 
             authDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
 
-            // If guest user cansave its account info
             if (authDatabaseAccessor == null)
             {
                 logger.Fatal($"Account database implementation was not found in {GetType().Name}");
-                return;
             }
 
             censorModule = server.GetModule<CensorModule>();
@@ -168,23 +187,23 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
         }
 
-        public override JObject JsonInfo()
+        public override MstJson JsonInfo()
         {
             var data = base.JsonInfo();
 
             try
             {
-                data.Add("loggedInUsers", LoggedInUsers.Count());
-                data.Add("allowGuests", enableGuestLogin);
-                data.Add("saveGuests", saveGuestInfo);
-                data.Add("guestNamePrefix", guestPrefix);
-                data.Add("emailConfirmRequired", emailConfirmRequired);
-                data.Add("minUsernameLength", usernameMinChars);
-                data.Add("minPasswordLength", userPasswordMinChars);
+                data.AddField("loggedInUsers", LoggedInUsers.Count());
+                data.AddField("allowGuests", enableGuestLogin);
+                data.AddField("saveGuests", saveGuestInfo);
+                data.AddField("guestNamePrefix", guestPrefix);
+                data.AddField("emailConfirmRequired", emailConfirmRequired);
+                data.AddField("minUsernameLength", usernameMinChars);
+                data.AddField("minPasswordLength", userPasswordMinChars);
             }
             catch (Exception e)
             {
-                data.Add("error", e.ToString());
+                data.AddField("error", e.ToString());
             }
 
             return data;
@@ -399,10 +418,9 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
+            var passwordResetCode = await authDatabaseAccessor.GetPasswordResetDataAsync(data.AsString("email"));
 
-            var passwordResetData = await authDatabaseAccessor.GetPasswordResetDataAsync(data.AsString("email"));
-
-            if (passwordResetData == null || passwordResetData.Code == null || passwordResetData.Code != data.AsString("code"))
+            if (passwordResetCode != data.AsString("code"))
             {
                 message.Respond("Invalid code provided", ResponseStatus.Unauthorized);
                 return;
@@ -776,7 +794,7 @@ namespace MasterServerToolkit.MasterServer
                 if (aesKey == null)
                 {
                     // There's no aesKey that client and master agreed upon
-                    message.Respond("Insecure request", ResponseStatus.Unauthorized);
+                    message.Respond(ResponseStatus.Unauthorized);
                     return;
                 }
 
@@ -794,7 +812,8 @@ namespace MasterServerToolkit.MasterServer
 
                 if (userAccount == null)
                 {
-                    message.Respond("Account is not created!", ResponseStatus.Failed);
+                    logger.Error($"Account for client {message.Peer.Id} is not created!");
+                    message.Respond(ResponseStatus.Failed);
                     return;
                 }
 
@@ -916,9 +935,6 @@ namespace MasterServerToolkit.MasterServer
 
                 // Save account and return its id in DB
                 var accountId = await authDatabaseAccessor.InsertNewAccountAsync(userAccount);
-
-                // Set account Id if it was not defined earlier
-                userAccount.Id = accountId;
             }
             // if account found
             else
@@ -927,9 +943,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Let's save user auth token
-            userAccount.SetToken(tokenExpiresInDays);
-
-            await authDatabaseAccessor.UpdateAccountAsync(userAccount);
+            await CreateAccountToken(userAccount);
 
             if (mailer == null)
             {
@@ -952,6 +966,39 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return userAccount;
+        }
+
+        /// <summary>
+        /// Creates and saves account token
+        /// </summary>
+        /// <param name="userAccount"></param>
+        protected virtual async Task CreateAccountToken(IAccountInfoData userAccount)
+        {
+            string dateTime = DateTime.UtcNow.AddDays(tokenExpiresInDays).ToString();
+            string token = Convert.ToBase64String($"{userAccount.Id}/{userAccount.Username}/{dateTime}".ToBytes());
+            await authDatabaseAccessor.InsertTokenAsync(userAccount, token);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        protected virtual bool IsTokenExpired(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return true;
+
+            string rawString = Encoding.UTF8.GetString(Convert.FromBase64String(token));
+            char[] chars = new char[] { '/' };
+            string[] values = rawString.Split(chars, StringSplitOptions.RemoveEmptyEntries);
+
+            if (values.Length == 3 && DateTime.TryParse(values[2], out DateTime expireDate))
+            {
+                return DateTime.UtcNow >= expireDate;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -1005,9 +1052,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Let's save user auth token
-            userAccount.SetToken(tokenExpiresInDays);
-
-            await authDatabaseAccessor.UpdateAccountAsync(userAccount);
+            await CreateAccountToken(userAccount);
 
             return userAccount;
         }
@@ -1020,48 +1065,46 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual async Task<IAccountInfoData> SignInByToken(IPeer peer, MstProperties userCredentials, IIncomingMessage message)
         {
-            logger.Info("Token auth ".ToGreen());
             // Trying to get user extension from peer
             var userPeerExtension = peer.GetExtension<IUserPeerExtension>();
 
             // If user peer has IUserPeerExtension means this user is already logged in
             if (userPeerExtension != null)
             {
-                logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
-                message.Respond("You are already logged in", ResponseStatus.Failed);
+                logger.Warn($"User {peer.Id} trying to login, but he is already logged in");
+                message.Respond(ResponseStatus.Failed);
+                return null;
+            }
+
+            // Get token
+            string token = userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN);
+
+            // If token has expired
+            if (IsTokenExpired(token))
+            {
+                logger.Warn($"Session token has expired");
+                message.Respond(ResponseStatus.TokenExpired);
                 return null;
             }
 
             // Get account by token
-            IAccountInfoData userAccount = await authDatabaseAccessor.GetAccountByTokenAsync(userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN));
+            IAccountInfoData userAccount = await authDatabaseAccessor.GetAccountByTokenAsync(token);
 
             // if no account found
             if (userAccount == null)
             {
-                message.Respond("Your token is not valid", ResponseStatus.Invalid);
-                return null;
-            }
-
-            // If token has expired
-            if (userAccount.IsTokenExpired())
-            {
-                message.Respond("Your session token has expired", ResponseStatus.Invalid);
+                logger.Warn($"Session token id not valid");
+                message.Respond(ResponseStatus.Invalid);
                 return null;
             }
 
             // If another session found
             if (IsUserLoggedInByUsername(userAccount.Username))
             {
-                logger.Debug("Another user is already logged in with this account");
-                message.Respond("This account is already logged in", ResponseStatus.Failed);
+                logger.Debug($"Another user is already logged in with this username {userAccount.Username}");
+                message.Respond(ResponseStatus.Failed);
                 return null;
             }
-
-            // Let's set new user auth token
-            userAccount.SetToken(tokenExpiresInDays);
-
-            // Save account
-            await authDatabaseAccessor.UpdateAccountAsync(userAccount);
 
             return userAccount;
         }
@@ -1081,14 +1124,15 @@ namespace MasterServerToolkit.MasterServer
             if (userPeerExtension != null)
             {
                 logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
-                message.Respond("You are already logged in", ResponseStatus.Failed);
+                message.Respond(ResponseStatus.Failed);
                 return null;
             }
 
             // Check if guest login is allowed
             if (!enableGuestLogin)
             {
-                message.Respond("Guest login is not allowed in this game", ResponseStatus.Error);
+                logger.Error("Guest login is not allowed in this game");
+                message.Respond(ResponseStatus.Failed);
                 return null;
             }
 
@@ -1119,13 +1163,7 @@ namespace MasterServerToolkit.MasterServer
                 if (saveGuestInfo && !anotherGuestOnTheSameDevice)
                 {
                     // Save account and return its id in DB
-                    var accountId = await authDatabaseAccessor.InsertNewAccountAsync(userAccount);
-
-                    // Set account Id if it was not defined earlier
-                    userAccount.Id = accountId;
-
-                    // Save all updates
-                    await authDatabaseAccessor.UpdateAccountAsync(userAccount);
+                    await authDatabaseAccessor.InsertNewAccountAsync(userAccount);
                 }
             }
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.LiteDB
 {
-    public class ProfilesDatabaseAccessor : IProfilesDatabaseAccessor, IDisposable
+    public class ProfilesDatabaseAccessor : IProfilesDatabaseAccessor
     {
         private ILiteCollection<ProfileInfoData> profiles;
         private readonly ILiteDatabase database;

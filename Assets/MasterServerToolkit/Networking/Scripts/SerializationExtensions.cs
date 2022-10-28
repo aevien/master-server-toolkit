@@ -336,8 +336,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="dictionary"></param>
         /// <param name="reader"></param>
         /// <returns></returns>
-        public static Dictionary<string, string> FromReader(this Dictionary<string, string> dictionary,
-            EndianBinaryReader reader)
+        public static Dictionary<string, string> FromReader(this Dictionary<string, string> dictionary, EndianBinaryReader reader)
         {
             var count = reader.ReadInt32();
 
@@ -456,7 +455,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="itemsSeparator"></param>
         /// <param name="kvpSeparator"></param>
         /// <returns></returns>
-        public static string ToReadableString(this Dictionary<string, string> dictionary, string itemsSeparator = "; ", string kvpSeparator = " : ")
+        public static string ToReadableString(this Dictionary<string, string> dictionary, string itemsSeparator = ";", string kvpSeparator = ":")
         {
             var readableString = string.Empty;
 
@@ -466,6 +465,28 @@ namespace MasterServerToolkit.Networking
             }
 
             return readableString;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static Dictionary<string, string> FromReadableString(this Dictionary<string, string> dictionary, string value, string itemsSplitter = ";", string kvpSplitter = ":")
+        {
+            dictionary.Clear();
+
+            string[] kvps = value.Split(itemsSplitter, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string kvp in kvps)
+            {
+                int splitterIndex = kvp.IndexOf(kvpSplitter);
+                string dicKey = kvp.Substring(0, kvp.IndexOf(kvpSplitter));
+                string dicValue = kvp.Substring(splitterIndex + 1);
+                dictionary.Add(dicKey.Trim(), dicValue.Trim());
+            }
+
+            return dictionary;
         }
     }
 }

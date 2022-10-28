@@ -1,5 +1,5 @@
-﻿using MasterServerToolkit.MasterServer.Web;
-using Newtonsoft.Json.Linq;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.MasterServer.Web;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -45,15 +45,15 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnGetMstInfoJsonHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            JObject json = new JObject();
-            JArray modulesJson = new JArray();
+            MstJson json = new MstJson();
+            MstJson modulesJson = new MstJson();
 
             foreach (var module in MasterServer.GetInitializedModules())
             {
                 modulesJson.Add(module.JsonInfo());
             }
 
-            json.Add("modules", modulesJson);
+            json.AddField("modules", modulesJson);
 
             byte[] contents = Encoding.UTF8.GetBytes(json.ToString());
 

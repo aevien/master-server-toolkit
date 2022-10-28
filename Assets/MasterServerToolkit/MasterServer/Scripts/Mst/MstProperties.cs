@@ -470,7 +470,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="key"></param>
         /// <param name="defValue"></param>
         /// <returns></returns>
-        public short AsShort(string key, short defValue = 0)
+        public short AsInt16(string key, short defValue = 0)
         {
             if (!Has(key))
             {
@@ -478,6 +478,22 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return Convert.ToInt16(properties[key]);
+        }
+
+        /// <summary>
+        /// Get item as short
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="defValue"></param>
+        /// <returns></returns>
+        public ushort AsUInt16(string key, ushort defValue = 0)
+        {
+            if (!Has(key))
+            {
+                return defValue;
+            }
+
+            return Convert.ToUInt16(properties[key]);
         }
 
         /// <summary>
@@ -567,9 +583,21 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="itemsSeparator"></param>
         /// <param name="kvpSeparator"></param>
         /// <returns></returns>
-        public string ToReadableString(string itemsSeparator = "; ", string kvpSeparator = " : ")
+        public string ToReadableString(string itemsSeparator = ";", string kvpSeparator = ":")
         {
             return ToDictionary().ToReadableString(itemsSeparator, kvpSeparator);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="itemsSplitter"></param>
+        /// <param name="kvpSplitter"></param>
+        /// <returns></returns>
+        public MstProperties FromReadableString(string value, string itemsSplitter = ";", string kvpSplitter = ":")
+        {
+            properties.FromReadableString(value, itemsSplitter, kvpSplitter);
+            return this;
         }
 
         /// <summary>

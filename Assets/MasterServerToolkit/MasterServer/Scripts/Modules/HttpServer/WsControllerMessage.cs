@@ -1,5 +1,4 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using MasterServerToolkit.Json;
 using System;
 
 namespace MasterServerToolkit.MasterServer
@@ -7,18 +6,14 @@ namespace MasterServerToolkit.MasterServer
     [Serializable]
     public class WsControllerMessage
     {
-        [JsonProperty("ackId")]
         public long AckId { get; set; } = -1;
-        [JsonProperty("opcode")]
         public string OpCode { get; set; }
-        [JsonProperty("data")]
-        public JObject Data { get; set; }
-        [JsonProperty("error")]
+        public MstJson Data { get; set; }
         public string Error { get; set; }
 
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this);
+            return MstJson.EmptyObject.ToString();
         }
 
         public bool HasOpCode()

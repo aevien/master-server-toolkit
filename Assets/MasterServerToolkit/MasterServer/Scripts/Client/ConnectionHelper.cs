@@ -69,12 +69,17 @@ namespace MasterServerToolkit.MasterServer
             if (isNowDestroying) return;
 
             // Set connection if it is null
-            if (Connection == null) Connection = ConnectionFactory();
+            if (Connection == null)
+            {
+                Connection = ConnectionFactory();
+            }
 
             // In case this object is not at the root level of hierarchy
             // move it there, so that it won't be destroyed
             if (transform.parent != null)
+            {
                 transform.SetParent(null, false);
+            }
 
             // check if autostart connection os defined in cmd args
             connectOnStart = Mst.Args.AsBool(Mst.Args.Names.StartClientConnection, connectOnStart);

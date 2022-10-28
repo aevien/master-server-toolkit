@@ -1,48 +1,28 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class SystemInfoPacket : SerializablePacket
     {
-        [JsonProperty("id")]
         public string Id { get; set; } = string.Empty;
-        [JsonProperty("deviceId")]
         public string DeviceId { get; set; } = string.Empty;
-        [JsonProperty("deviceModel")]
         public string DeviceModel { get; set; } = string.Empty;
-        [JsonProperty("deviceName")]
         public string DeviceName { get; set; } = string.Empty;
-        [JsonProperty("deviceType")]
         public string DeviceType { get; set; } = string.Empty;
-        [JsonProperty("graphicsDeviceId")]
         public string GraphicsDeviceId { get; set; } = string.Empty;
-        [JsonProperty("graphicsDeviceName")]
         public string GraphicsDeviceName { get; set; } = string.Empty;
-        [JsonProperty("graphicsDeviceVersion")]
         public string GraphicsDeviceVersion { get; set; } = string.Empty;
-        [JsonProperty("graphicsDeviceType")]
         public string GraphicsDeviceType { get; set; } = string.Empty;
-        [JsonProperty("graphicsDeviceVendorId")]
         public string GraphicsDeviceVendorId { get; set; } = string.Empty;
-        [JsonProperty("graphicsDeviceVendor")]
         public string GraphicsDeviceVendor { get; set; } = string.Empty;
-        [JsonProperty("graphicsDeviceMemory")]
         public int GraphicsDeviceMemory { get; set; }
-        [JsonProperty("os")]
         public string Os { get; set; } = string.Empty;
-        [JsonProperty("osFamily")]
         public string OsFamily { get; set; } = string.Empty;
-        [JsonProperty("cpuType")]
         public string CpuType { get; set; } = string.Empty;
-        [JsonProperty("cpuFrequency")]
         public int CpuFrequency { get; set; }
-        [JsonProperty("cpuCount")]
         public int CpuCount { get; set; }
-        [JsonProperty("ram")]
         public int Ram { get; set; }
-        [JsonProperty("error")]
         public string Error { get; set; } = string.Empty;
 
         public override void FromBinaryReader(EndianBinaryReader reader)
@@ -91,14 +71,14 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(Error);
         }
 
-        public JObject ToJObject()
+        public MstJson ToJson()
         {
-            return JObject.FromObject(this);
+            return MstJson.EmptyObject;
         }
 
-        public static SystemInfoPacket FromJobject(JObject json)
+        public static SystemInfoPacket FromJson(MstJson json)
         {
-            return json.ToObject<SystemInfoPacket>();
+            return new SystemInfoPacket();
         }
     }
 }

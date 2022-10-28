@@ -89,12 +89,12 @@ namespace MasterServerToolkit.MasterServer
                 ApplicationKey = applicationKeyHash
             };
 
-            connection.SendMessage(MstOpCodes.ServerAccessRequest, accessInfo, (status, error) =>
+            connection.SendMessage(MstOpCodes.ServerAccessRequest, accessInfo, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback?.Invoke(false, error.AsString());
-                    Logs.Error(error.AsString());
+                    callback?.Invoke(false, response.AsString());
+                    Logs.Error(response.AsString());
                     return;
                 }
 
@@ -148,7 +148,7 @@ namespace MasterServerToolkit.MasterServer
         public void AuthenticateConnection(IClientSocket connection, SuccessCallback callback)
         {
             if (clientAuthenticatorProvider != null)
-                clientAuthenticatorProvider?.Invoke(connection, callback);
+                clientAuthenticatorProvider.Invoke(connection, callback);
             else
                 DefaultAuthenticator(connection, callback);
         }
@@ -161,7 +161,7 @@ namespace MasterServerToolkit.MasterServer
         public void ValidateConnection(ProvideServerAccessCheckPacket accessCheckOptions, SuccessCallback callback)
         {
             if (clientValidatorProvider != null)
-                clientValidatorProvider?.Invoke(accessCheckOptions, callback);
+                clientValidatorProvider.Invoke(accessCheckOptions, callback);
             else
                 DefaultValidator(accessCheckOptions, callback);
         }
@@ -492,12 +492,12 @@ namespace MasterServerToolkit.MasterServer
         public string CreateHash(string password)
         {
             // Generate a random salt
-            var csprng = new RNGCryptoServiceProvider();
-            var salt = new byte[SALT_BYTE_SIZE];
+            RNGCryptoServiceProvider csprng = new RNGCryptoServiceProvider();
+            byte[] salt = new byte[SALT_BYTE_SIZE];
             csprng.GetBytes(salt);
 
             // Hash the password and encode the parameters
-            var hash = PBKDF2(password, salt, PBKDF2_ITERATIONS, HASH_BYTE_SIZE);
+            byte[] hash = PBKDF2(password, salt, PBKDF2_ITERATIONS, HASH_BYTE_SIZE);
             return PBKDF2_ITERATIONS + ":" + Convert.ToBase64String(salt) + ":" + Convert.ToBase64String(hash);
         }
 
@@ -511,12 +511,12 @@ namespace MasterServerToolkit.MasterServer
         {
             // Extract the parameters from the hash
             char[] delimiter = { ':' };
-            var split = correctHash.Split(delimiter);
-            var iterations = int.Parse(split[ITERATION_INDEX_IN_HASH]);
-            var salt = Convert.FromBase64String(split[SALT_INDEX_IN_HASH]);
-            var hash = Convert.FromBase64String(split[PBKDF2_INDEX_IN_HASH]);
+            string[] split = correctHash.Split(delimiter);
+            int iterations = int.Parse(split[ITERATION_INDEX_IN_HASH]);
+            byte[] salt = Convert.FromBase64String(split[SALT_INDEX_IN_HASH]);
+            byte[] hash = Convert.FromBase64String(split[PBKDF2_INDEX_IN_HASH]);
 
-            var testHash = PBKDF2(password, salt, iterations, hash.Length);
+            byte[] testHash = PBKDF2(password, salt, iterations, hash.Length);
             return SlowEquals(hash, testHash);
         }
 
@@ -530,7 +530,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns>True if both byte arrays are equal. False otherwise.</returns>
         private static bool SlowEquals(byte[] a, byte[] b)
         {
-            var diff = (uint)a.Length ^ (uint)b.Length;
+            uint diff = (uint)a.Length ^ (uint)b.Length;
+
             for (var i = 0; (i < a.Length) && (i < b.Length); i++)
             {
                 diff |= (uint)(a[i] ^ b[i]);

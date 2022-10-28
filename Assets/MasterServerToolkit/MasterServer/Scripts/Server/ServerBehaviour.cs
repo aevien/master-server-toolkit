@@ -1,8 +1,8 @@
 ﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -229,35 +229,34 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <returns></returns>
-        public virtual JObject JsonInfo()
+        public virtual MstJson JsonInfo()
         {
-            var info = new JObject();
+            var info = new MstJson();
 
             try
             {
-                info.Add("initializedModules", GetInitializedModules().Count);
-                info.Add("unitializedModules", GetUninitializedModules().Count);
-                info.Add("activeClients", CurrentPeersCount);
-                info.Add("inactiveClients", currentInactivePeersCount);
-                info.Add("unauthenticatedPeers", unauthenticatedPeers.Count);
-                info.Add("totalClients", totalPeersCount);
-                info.Add("highestClients", highestPeersCount);
-                //info.Add("updatebles", MstUpdateRunner.Instance.Count);
-                info.Add("peersAccepted", totalPeersCount);
-                info.Add("peersRejected", rejectedPeersCount);
-                info.Add("useSecure", Mst.Settings.UseSecure);
-                info.Add("certificatePath", Mst.Settings.CertificatePath);
-                info.Add("certificatePassword", Mst.Settings.CertificatePassword);
-                info.Add("applicationKey", Mst.Settings.ApplicationKey);
-                info.Add("localIp", Address);
-                info.Add("publicIp", Address);
-                info.Add("port", Port);
-                info.Add("incomingTraffic", Mst.Analytics.TotalReceived);
-                info.Add("outgoingTraffic", Mst.Analytics.TotalSent);
+                info.AddField("initializedModules", GetInitializedModules().Count);
+                info.AddField("unitializedModules", GetUninitializedModules().Count);
+                info.AddField("activeClients", CurrentPeersCount);
+                info.AddField("inactiveClients", currentInactivePeersCount);
+                info.AddField("unauthenticatedPeers", unauthenticatedPeers.Count);
+                info.AddField("totalClients", totalPeersCount);
+                info.AddField("highestClients", highestPeersCount);
+                info.AddField("peersAccepted", totalPeersCount);
+                info.AddField("peersRejected", rejectedPeersCount);
+                info.AddField("useSecure", Mst.Settings.UseSecure);
+                info.AddField("certificatePath", Mst.Settings.CertificatePath);
+                info.AddField("certificatePassword", Mst.Settings.CertificatePassword);
+                info.AddField("applicationKey", Mst.Settings.ApplicationKey);
+                info.AddField("localIp", Address);
+                info.AddField("publicIp", Address);
+                info.AddField("port", Port);
+                info.AddField("incomingTraffic", Mst.Analytics.TotalReceived);
+                info.AddField("outgoingTraffic", Mst.Analytics.TotalSent);
             }
             catch (Exception e)
             {
-                info.Add("error", e.ToString());
+                info.AddField("error", e.ToString());
             }
 
             return info;
@@ -288,6 +287,17 @@ namespace MasterServerToolkit.MasterServer
             info.Set("Public Ip", Address);
             info.Set("Port", Port);
             return info;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="isOn"></param>
+        /// <param name="inChildrenOnly"></param>
+        public void SetLookForModules(bool isOn, bool inChildrenOnly = true)
+        {
+            lookForModules = isOn;
+            lookInChildrenOnly = inChildrenOnly;
         }
 
         /// <summary>

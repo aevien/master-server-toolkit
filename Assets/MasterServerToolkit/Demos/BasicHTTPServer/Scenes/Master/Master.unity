@@ -854,7 +854,7 @@ GameObject:
   - component: {fileID: 1238821700}
   - component: {fileID: 1238821701}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: MstInfoHttpController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -963,6 +963,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   serverIp: 127.0.0.1
   serverPort: 5000
   timeout: 5
@@ -1192,7 +1193,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   useAuthModule: 1
-  ignoreForbiddenChannelNames: 0
+  useCensorModule: 1
   setFirstChannelAsLocal: 1
   setLastChannelAsLocal: 1
   allowUsernamePicking: 1

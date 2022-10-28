@@ -1,5 +1,5 @@
-﻿using MasterServerToolkit.Networking;
-using Newtonsoft.Json.Linq;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Networking;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -54,34 +54,52 @@ namespace MasterServerToolkit.MasterServer
             StartCoroutine(StartQueueUpdater());
         }
 
-        public override JObject JsonInfo()
+        public override MstJson JsonInfo()
         {
             var data = base.JsonInfo();
-            data["description"] = "This module manages the processes of running rooms.";
-            data.Add("totalSpawners", spawnersList.Count);
+            data.SetField("description", "This module manages the processes of running rooms.");
+            data.SetField("totalSpawners", spawnersList.Count);
 
             int totalRooms = 0;
 
-            JArray spawners = new JArray();
+            MstJson spawners = new MstJson();
 
             foreach (var spawner in spawnersList.Values)
             {
                 totalRooms += spawner.ProcessesRunning;
 
-                var spawnerJson = new JObject
-                {
-                    { "id", spawner.SpawnerId },
-                    { "processes", spawner.ProcessesRunning },
-                    { "options", JObject.FromObject(spawner.Options) }
-                };
+                var spawnerJson = new MstJson();
+                spawnerJson.AddField("id", spawner.SpawnerId);
+                spawnerJson.AddField("processes", spawner.ProcessesRunning);
+                spawnerJson.AddField("processes", spawner.ProcessesRunning);
+
+                var options = new MstJson();
+                options.AddField("machineIp", spawner.Options.MachineIp);
+                options.AddField("maxProcesses", spawner.Options.MaxProcesses);
+                options.AddField("region", spawner.Options.Region);
+
+                var customOptions = new MstJson();
+
+                foreach (var option in spawner.Options.CustomOptions)
+                    customOptions.AddField(option.Key, option.Value);
+
+                options.AddField("customOptions", customOptions);
+
+                spawnerJson.AddField("options", options);
 
                 spawners.Add(spawnerJson);
             }
 
-            data.Add("totalStartedRooms", totalRooms);
-            data.Add("allRegions", new JArray(GetRegions().Select(i => i.Name).ToArray()));
-            data.Add("maxConcurrentRequests", RegisteredSpawner.MaxConcurrentRequests);
-            data.Add("spawners", spawners);
+            data.SetField("totalStartedRooms", totalRooms);
+
+            var allRegions = new MstJson();
+
+            foreach (var region in GetRegions().Select(i => i.Name))
+                allRegions.Add(region);
+
+            data.SetField("allRegions", allRegions);
+            data.SetField("maxConcurrentRequests", RegisteredSpawner.MaxConcurrentRequests);
+            data.SetField("spawners", spawners);
 
             return data;
         }
@@ -379,11 +397,21 @@ namespace MasterServerToolkit.MasterServer
             return extension != null && extension.PermissionLevel >= createSpawnerPermissionLevel;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
         protected virtual bool CanClientSpawn(IPeer peer, MstProperties options)
         {
             return enableClientSpawnRequests;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         protected virtual IEnumerator StartQueueUpdater()
         {
             while (true)

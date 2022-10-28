@@ -2,7 +2,6 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,13 +37,6 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
             //Update profile resources each 5 sec
             InvokeRepeating(nameof(IncreaseResources), 1f, 1f);
-        }
-
-        public override JObject JsonInfo()
-        {
-            var json = base.JsonInfo();
-            json["name"] = "ProfilesModule";
-            return json;
         }
 
         /// <summary>

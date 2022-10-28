@@ -1,6 +1,5 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -8,20 +7,20 @@ namespace MasterServerToolkit.MasterServer
     {
         public string Id { get; set; }
         public string Module { get; set; }
-        public JObject Data { get; set; }
+        public MstJson Data { get; set; }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
             Id = reader.ReadString();
             Module = reader.ReadString();
-            Data = JObject.Parse(reader.ReadString());
+            Data = new MstJson(reader.ReadString());
         }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
             writer.Write(Id);
             writer.Write(Module);
-            writer.Write(JsonConvert.SerializeObject(Data));
+            writer.Write(Data.ToString());
         }
     }
 }

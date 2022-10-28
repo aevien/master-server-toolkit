@@ -21,7 +21,7 @@ namespace MasterServerToolkit.MasterServer
         {
             censoredWords = new List<string>();
 
-            char[] splitter = new char[] { ',', ' ' };
+            char[] splitter = new char[] { ',' };
 
             foreach (TextAsset words in wordsLists)
             {
@@ -36,7 +36,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="text">Text to check for dirty words.</param>
         public virtual bool HasCensoredWord(string text)
         {
-            if (string.IsNullOrWhiteSpace(text))
+            if (string.IsNullOrEmpty(text))
             {
                 return false;
             }

@@ -122,17 +122,17 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a registration request to server
         /// </summary>
-        /// <param name="data"></param>
+        /// <param name="credentials"></param>
         /// <param name="callback"></param>
-        public void SignUp(MstProperties data, SuccessCallback callback)
+        public void SignUp(MstProperties credentials, SuccessCallback callback)
         {
-            SignUp(data, callback, Connection);
+            SignUp(credentials, callback, Connection);
         }
 
         /// <summary>
         /// Sends a registration request to given connection
         /// </summary>
-        public void SignUp(MstProperties data, SuccessCallback callback, IClientSocket connection)
+        public void SignUp(MstProperties credentials, SuccessCallback callback, IClientSocket connection)
         {
             if (IsNowSigningIn)
             {
@@ -162,7 +162,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
+                var encryptedData = Mst.Security.EncryptAES(credentials.ToBytes(), aesKey);
 
                 connection.SendMessage(MstOpCodes.SignUp, encryptedData, (status, response) =>
                 {

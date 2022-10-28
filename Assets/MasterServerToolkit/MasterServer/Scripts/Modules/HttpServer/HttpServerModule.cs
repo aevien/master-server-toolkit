@@ -1,5 +1,5 @@
-﻿using MasterServerToolkit.MasterServer.Web;
-using Newtonsoft.Json.Linq;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.MasterServer.Web;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -555,7 +555,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected string ClearRawUrl(HttpListenerRequest request)
         {
-            return request.RawUrl.Split('?', StringSplitOptions.RemoveEmptyEntries)[0];
+            return request.RawUrl.Split(new char[] { '?' }, StringSplitOptions.RemoveEmptyEntries)[0];
         }
 
         /// <summary>
@@ -793,15 +793,27 @@ namespace MasterServerToolkit.MasterServer
             httpRequestActions.TryAdd(url, handler);
         }
 
-        public override JObject JsonInfo()
+        public override MstJson JsonInfo()
         {
             var info = base.JsonInfo();
 
-            info.Add("localIp", httpAddress);
-            info.Add("port", httpPort);
-            info.Add("checkHeartBeatUrl", checkHeartBeatUrl);
-            info.Add("controllers", new JArray(Controllers.Keys.Select(x => x.Name)));
-            info.Add("requestActions", new JArray(httpRequestActions.Keys));
+            info.AddField("localIp", httpAddress);
+            info.AddField("port", httpPort);
+            info.AddField("checkHeartBeatUrl", checkHeartBeatUrl);
+
+            var controllers = MstJson.EmptyArray;
+
+            foreach (var controller in Controllers.Keys.Select(x => x.Name))
+                controllers.Add(controller);
+
+            info.AddField("controllers", controllers);
+
+            var requestActions = MstJson.EmptyArray;
+
+            foreach (var requestAction in httpRequestActions.Keys)
+                controllers.Add(requestAction);
+
+            info.AddField("requestActions", requestActions);
 
             return info;
         }

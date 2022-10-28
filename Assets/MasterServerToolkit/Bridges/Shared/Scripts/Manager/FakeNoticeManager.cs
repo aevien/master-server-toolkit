@@ -1,7 +1,7 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -37,11 +37,11 @@ namespace MasterServerToolkit.Games
         /// <summary>
         /// 
         /// </summary>
-        private JArray tasks;
+        private MstJson tasks;
         /// <summary>
         /// 
         /// </summary>
-        private JArray users;
+        private MstJson users;
 
         private IEnumerator LoadUsers()
         {
@@ -52,17 +52,28 @@ namespace MasterServerToolkit.Games
 #if UNITY_2019_1_OR_NEWER && !UNITY_2020_3_OR_NEWER
                 if (www.isHttpError || www.isNetworkError)
                 {
-#elif UNITY_2020_3_OR_NEWER
-                if (www.result == UnityWebRequest.Result.ProtocolError || www.result == UnityWebRequest.Result.ProtocolError || www.result == UnityWebRequest.Result.DataProcessingError)
+                    Debug.LogError(www.error);
+                }
+                else if (www.isDone)
                 {
+                    var json = www.downloadHandler.text;
+                    users = new MstJson(json);
+                }
 #endif
+
+#if UNITY_2020_3_OR_NEWER                                                                                                                                                          
+                if (www.result == UnityWebRequest.Result.ConnectionError
+                    || www.result == UnityWebRequest.Result.ProtocolError
+                    || www.result == UnityWebRequest.Result.DataProcessingError)
+                {
                     Debug.LogError(www.error);
                 }
                 else if (www.result == UnityWebRequest.Result.Success)
                 {
                     var json = www.downloadHandler.text;
-                    users = JArray.Parse(json);
+                    users = new MstJson(json);
                 }
+#endif
             }
         }
 
@@ -75,17 +86,28 @@ namespace MasterServerToolkit.Games
 #if UNITY_2019_1_OR_NEWER && !UNITY_2020_3_OR_NEWER
                 if (www.isHttpError || www.isNetworkError)
                 {
-#elif UNITY_2020_3_OR_NEWER
-                if (www.result == UnityWebRequest.Result.ProtocolError || www.result == UnityWebRequest.Result.ProtocolError || www.result == UnityWebRequest.Result.DataProcessingError)
+                    Debug.LogError(www.error);
+                }
+                else if (www.isDone)
                 {
+                    var json = www.downloadHandler.text;
+                    tasks = new MstJson(json);
+                }
 #endif
+
+#if UNITY_2020_3_OR_NEWER                                                                                                                                                          
+                if (www.result == UnityWebRequest.Result.ConnectionError
+                    || www.result == UnityWebRequest.Result.ProtocolError
+                    || www.result == UnityWebRequest.Result.DataProcessingError)
+                {
                     Debug.LogError(www.error);
                 }
                 else if (www.result == UnityWebRequest.Result.Success)
                 {
                     var json = www.downloadHandler.text;
-                    tasks = JArray.Parse(json);
+                    tasks = new MstJson(json);
                 }
+#endif
             }
         }
 
@@ -99,8 +121,8 @@ namespace MasterServerToolkit.Games
                 {
                     MstTimer.WaitForRealtimeSeconds(timeToWait, () =>
                     {
-                        var task = tasks[Random.Range(0, tasks.Count)];
-                        var user = users.Where(i => i.Value<string>("id") == task.Value<string>("userId")).FirstOrDefault();
+                        var task = tasks[Random.Range(0, tasks.list.Count)];
+                        var user = users.list.Where(i => i.GetField("id").stringValue == task.GetField("userId").stringValue).FirstOrDefault();
 
                         if (user != null)
                         {
@@ -114,7 +136,7 @@ namespace MasterServerToolkit.Games
                         }
                         else
                         {
-                            Logs.Error($"User {task.Value<string>("userId")} not found");
+                            Logs.Error($"User {task.GetField("userId")} not found");
                             StartTaskNotices();
                         }
                     });

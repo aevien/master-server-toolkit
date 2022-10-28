@@ -353,6 +353,7 @@ MonoBehaviour:
   defaultIndexPage:
   - index
   - home
+  useCredentials: 1
   username: admin
   password: admin
 --- !u!1 &1152754123

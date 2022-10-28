@@ -6,34 +6,31 @@ using WebSocketSharp;
 
 namespace MasterServerToolkit.Networking
 {
-    /// <summary>
-    /// Client for connecting to websocket server.
-    /// </summary>
     public class WsClientSocket : BaseClientSocket, IClientSocket, IUpdatable
     {
         private WsClientPeer _peer;
         private WebSocket webSocket;
-        private ConnectionStatus status;
-        private readonly Dictionary<ushort, IPacketHandler> handlers;
+        private ConnectionStatus connectionStatus;
         private float connectionTimeout = 10f;
+        private readonly Dictionary<ushort, IPacketHandler> handlers = new Dictionary<ushort, IPacketHandler>();
         private bool wasConnected = false;
 
         public bool IsConnected { get; private set; } = false;
-        public bool IsConnecting { get { return status == ConnectionStatus.Connecting; } }
-        public string ConnectionIp { get; private set; }
-        public int ConnectionPort { get; private set; }
+        public bool IsConnecting { get { return connectionStatus == ConnectionStatus.Connecting; } }
+        public string Address { get; private set; }
+        public int Port { get; private set; }
         public ConnectionStatus Status
         {
             get
             {
-                return status;
+                return connectionStatus;
             }
             set
             {
-                if (status != value)
+                if (connectionStatus != value)
                 {
-                    status = value;
-                    OnStatusChangedEvent?.Invoke(status);
+                    connectionStatus = value;
+                    OnStatusChangedEvent?.Invoke(connectionStatus);
                 }
             }
         }
@@ -46,62 +43,10 @@ namespace MasterServerToolkit.Networking
 
         public WsClientSocket()
         {
-            SetStatus(ConnectionStatus.Disconnected, false);
-            handlers = new Dictionary<ushort, IPacketHandler>();
+            connectionStatus = ConnectionStatus.Disconnected;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="status"></param>
-        private void SetStatus(ConnectionStatus status, bool fireEvent = true)
-        {
-            switch (status)
-            {
-                case ConnectionStatus.Connecting:
-
-                    if (Status != ConnectionStatus.Connecting)
-                        Status = ConnectionStatus.Connecting;
-
-                    break;
-                case ConnectionStatus.Connected:
-
-                    if (Status != ConnectionStatus.Connected)
-                    {
-                        _peer.SendDelayedMessages();
-
-                        // Client should be validated
-                        Mst.Security.AuthenticateConnection(this, (isSuccess, error) =>
-                        {
-                            Status = ConnectionStatus.Connected;
-
-                            if (isSuccess && fireEvent)
-                                OnConnectionOpenEvent?.Invoke(this);
-                        });
-                    }
-
-                    break;
-                case ConnectionStatus.Disconnected:
-
-                    if (Status != ConnectionStatus.Disconnected)
-                    {
-                        Status = ConnectionStatus.Disconnected;
-
-                        CloseCode = (ushort)(webSocket != null ? webSocket.CloseCode : 0);
-
-                        if (fireEvent)
-                            OnConnectionCloseEvent?.Invoke(this);
-                    }
-
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        private void HandleMessage(IIncomingMessage message)
+        private void OnMessageReceivedHandler(IIncomingMessage message)
         {
             try
             {
@@ -195,7 +140,7 @@ namespace MasterServerToolkit.Networking
 
             if (IsConnected && invokeInstantlyIfConnected)
             {
-                callback.Invoke(this);
+                OnConnectionOpenEvent.Invoke(this);
             }
         }
 
@@ -214,7 +159,7 @@ namespace MasterServerToolkit.Networking
 
             if (!IsConnected && invokeInstantlyIfDisconnected)
             {
-                callback.Invoke(this);
+                OnConnectionCloseEvent.Invoke(this);
             }
         }
 
@@ -250,7 +195,7 @@ namespace MasterServerToolkit.Networking
         public void Reconnect(bool fireEvent = true)
         {
             Close(fireEvent);
-            Connect(ConnectionIp, ConnectionPort);
+            Connect(Address, Port);
         }
 
         public void Update()
@@ -279,6 +224,49 @@ namespace MasterServerToolkit.Networking
             }
         }
 
+        private void SetStatus(ConnectionStatus status, bool fireEvent = true)
+        {
+            switch (status)
+            {
+                case ConnectionStatus.Connecting:
+
+                    if (Status != ConnectionStatus.Connecting)
+                        Status = ConnectionStatus.Connecting;
+
+                    break;
+                case ConnectionStatus.Connected:
+
+                    if (Status != ConnectionStatus.Connected)
+                    {
+                        _peer.SendDelayedMessages();
+
+                        // Client should be validated
+                        Mst.Security.AuthenticateConnection(this, (isSuccess, error) =>
+                        {
+                            Status = ConnectionStatus.Connected;
+
+                            if (isSuccess && fireEvent)
+                                OnConnectionOpenEvent?.Invoke(this);
+                        });
+                    }
+
+                    break;
+                case ConnectionStatus.Disconnected:
+
+                    if (Status != ConnectionStatus.Disconnected)
+                    {
+                        Status = ConnectionStatus.Disconnected;
+
+                        CloseCode = (ushort)(webSocket != null ? webSocket.CloseCode : 0);
+
+                        if (fireEvent)
+                            OnConnectionCloseEvent?.Invoke(this);
+                    }
+
+                    break;
+            }
+        }
+
         public IClientSocket Connect(string ip, int port)
         {
             return Connect(ip, port, connectionTimeout);
@@ -290,10 +278,10 @@ namespace MasterServerToolkit.Networking
 
             connectionTimeout = timeoutSeconds;
 
-            ConnectionIp = ip;
-            ConnectionPort = port;
+            Address = ip;
+            Port = port;
 
-            SetStatus(ConnectionStatus.Connecting);
+            Status = ConnectionStatus.Connecting;
 
             if (UseSecure)
             {
@@ -305,17 +293,14 @@ namespace MasterServerToolkit.Networking
             }
 
             _peer = new WsClientPeer(webSocket);
-            _peer.OnMessageReceivedEvent += HandleMessage;
+            _peer.OnMessageReceivedEvent += OnMessageReceivedHandler;
 
             Peer = _peer;
 
             MstUpdateRunner.Add(this);
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-            MstUpdateRunner.Instance.StartCoroutine(webSocket.Connect());
-#else
-            webSocket.Connect();
-#endif
+            _peer.Connect();
+
             return this;
         }
 
@@ -331,19 +316,16 @@ namespace MasterServerToolkit.Networking
 
         public void Close(ushort code, string reason, bool fireEvent = true)
         {
-            //MstUpdateRunner.Remove(this);
-
             if (webSocket != null)
                 webSocket.Close(code, reason);
 
             if (_peer != null)
             {
-                _peer.OnMessageReceivedEvent -= HandleMessage;
+                _peer.OnMessageReceivedEvent -= OnMessageReceivedHandler;
                 _peer.Dispose();
             }
 
             IsConnected = false;
-            SetStatus(ConnectionStatus.Disconnected, fireEvent);
         }
     }
 }

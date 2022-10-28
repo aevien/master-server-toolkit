@@ -118,28 +118,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
             });
         }
 
-
-
-
-        public async Task<IEnumerable<IAccountInfoData>> GetAccountsByIdAsync(IEnumerable<string> ids)
-        {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Where(i => ids.Any(id => id == i.Id));
-            return await Task.Run(() =>
-            {
-                return _accountsCollection.Find(filter).ToEnumerable();
-            });
-        }
-
-
-        public async Task<IEnumerable<IAccountInfoData>> GetPagedAccounts(int pageIndex = 0, int pageSize = 100)
-        {
-            var filter = Builders<AccountInfoMongoDB>.Filter.Exists(e => e._id);
-            return await Task.Run(() =>
-            {
-                return _accountsCollection.Find(filter).Skip(pageSize * pageIndex).Limit(pageSize).ToEnumerable();
-            });
-        }
-
         public async Task SavePasswordResetCodeAsync(IAccountInfoData account, string code)
         {
             await Task.Run(() =>
@@ -153,13 +131,18 @@ namespace MasterServerToolkit.Bridges.MongoDB
             });
         }
 
-        public async Task<IPasswordResetData> GetPasswordResetDataAsync(string email)
+        public async Task<string> GetPasswordResetDataAsync(string email)
         {
+            PasswordResetDataMongoDB data = default;
+
             var filter = Builders<PasswordResetDataMongoDB>.Filter.Eq(i => i.Email, email.ToLower());
-            return await Task.Run(() =>
+
+            await Task.Run(() =>
             {
-                return _resetCodesCollection.Find(filter).FirstOrDefault();
+                data = _resetCodesCollection.Find(filter).FirstOrDefault();
             });
+
+            return data != null ? data.Code : "";
         }
 
 

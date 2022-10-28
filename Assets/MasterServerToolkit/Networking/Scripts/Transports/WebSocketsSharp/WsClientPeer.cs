@@ -79,5 +79,14 @@ namespace MasterServerToolkit.Networking
         {
             socket.Close(code, reason);
         }
+
+        public void Connect()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            MstUpdateRunner.Instance.StartCoroutine(socket.Connect());
+#else
+            socket.Connect();
+#endif
+        }
     }
 }

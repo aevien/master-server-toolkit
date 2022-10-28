@@ -1,5 +1,5 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using WebSocketSharp;
@@ -16,7 +16,6 @@ namespace MasterServerToolkit.MasterServer
         public void SetHttpServer(HttpServerModule httpServerModule)
         {
             this.httpServerModule = httpServerModule;
-            //this.httpServerModule.OnUpdateEvent += HttpServerModule_OnUpdateEvent;
         }
 
         private void HttpServerModule_OnUpdateEvent()
@@ -32,7 +31,8 @@ namespace MasterServerToolkit.MasterServer
                 {
                     try
                     {
-                        WsControllerMessage msg = JsonConvert.DeserializeObject<WsControllerMessage>(messageQueueData.Dequeue());
+                        WsControllerMessage msg = new WsControllerMessage();
+                        MstJson messageData = new MstJson(messageQueueData.Dequeue());
 
                         if (!msg.HasOpCode())
                             throw new ArgumentNullException("This message has no opcode");

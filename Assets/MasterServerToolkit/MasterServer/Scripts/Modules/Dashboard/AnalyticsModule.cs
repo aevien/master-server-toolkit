@@ -165,7 +165,7 @@ namespace MasterServerToolkit.MasterServer
                     var moduleInfoPacket = new ModuleInfoPacket
                     {
                         Id = dashboardInfoId,
-                        Module = moduleInfo.Value<string>("name"),
+                        Module = moduleInfo.GetField("name").stringValue,
                         Data = moduleInfo
                     };
 

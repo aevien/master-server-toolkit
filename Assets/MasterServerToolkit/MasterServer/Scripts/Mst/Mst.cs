@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Localization;
+using MasterServerToolkit.Networking;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -11,22 +12,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "4.14.3";
+        public static string Version => "4.15.0";
 
         /// <summary>
         /// Just name of the framework
         /// </summary>
         public static string Name => "MASTER SERVER TOOLKIT";
-
-        /// <summary>
-        /// Root menu of framework
-        /// </summary>
-        public const string ToolMenu = "Tools/Master Server Toolkit/";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public const string CreateMenu = "Master Server Toolkit/";
 
         /// <summary>
         /// Main connection to master server
@@ -96,6 +87,11 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static MstProperties Options { get; private set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public static MstLocalization Localization { get; private set; }
+
         static Mst()
         {
             Initialize();
@@ -103,6 +99,7 @@ namespace MasterServerToolkit.MasterServer
 
         private static void Initialize()
         {
+            Localization = new MstLocalization();
             Settings = new MstAdvancedSettings();
             Runtime = new MstRuntime();
             Helper = new MstHelper();

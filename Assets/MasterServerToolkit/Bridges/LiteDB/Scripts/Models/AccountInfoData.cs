@@ -13,7 +13,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public string Password { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public string Facebook { get; set; }
         public string Token { get; set; }
         public bool IsAdmin { get; set; }
         public bool IsGuest { get; set; }
@@ -21,8 +20,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
         public Dictionary<string, string> Properties { get; set; }
-        public string Google { get; set; }
-        public string Apple { get; set; }
         public DateTime LastLogin { get; set; }
 
         public event Action<IAccountInfoData> OnChangedEvent;
@@ -34,9 +31,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
             Password = string.Empty;
             Email = string.Empty;
             PhoneNumber = string.Empty;
-            Facebook = string.Empty;
-            Google = string.Empty;
-            Apple = string.Empty;
             Token = string.Empty;
             IsAdmin = false;
             IsGuest = true;
@@ -83,9 +77,6 @@ namespace MasterServerToolkit.Bridges.LiteDB
             properties.Set("Password", Password);
             properties.Set("Email", Email);
             properties.Set("PhoneNumber", PhoneNumber);
-            properties.Set("Facebook", Facebook);
-            properties.Set("Google", Google);
-            properties.Set("Apple", Apple);
             properties.Set("IsAdmin", IsAdmin);
             properties.Set("IsGuest", IsGuest);
             properties.Set("IsEmailConfirmed", IsEmailConfirmed);
