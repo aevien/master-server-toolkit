@@ -92,6 +92,11 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static MstLocalization Localization { get; private set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public static MstRegistry Registry { get; private set; }
+
         static Mst()
         {
             Initialize();
@@ -99,11 +104,12 @@ namespace MasterServerToolkit.MasterServer
 
         private static void Initialize()
         {
-            Localization = new MstLocalization();
-            Settings = new MstAdvancedSettings();
-            Runtime = new MstRuntime();
             Helper = new MstHelper();
             Args = new MstArgs();
+            Localization = new MstLocalization();
+            Registry = new MstRegistry();
+            Settings = new MstAdvancedSettings();
+            Runtime = new MstRuntime();
 
             Connection = Settings.ClientSocketFactory();
             Client = new MstClient(Connection);

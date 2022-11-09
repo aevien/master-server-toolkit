@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ColorPalette : MonoBehaviour
     {

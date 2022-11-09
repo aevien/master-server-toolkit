@@ -1,7 +1,7 @@
 ﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class LoadingInfoView : PopupView
     {

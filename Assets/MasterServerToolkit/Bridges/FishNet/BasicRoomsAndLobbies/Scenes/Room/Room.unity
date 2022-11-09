@@ -2273,6 +2273,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   roomConnectionTimeout: 10
   autoStartInEditor: 1
   autoStartDelay: 1
@@ -4319,24 +4320,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1182598396324832459, guid: 7eac22982fe8d5547be9015c7bdb378e,
-        type: 3}
-      propertyPath: forceClientMode
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1182598396324832459, guid: 7eac22982fe8d5547be9015c7bdb378e,
-        type: 3}
-      propertyPath: terminateRoomWhenDisconnected
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 1182598396324832461, guid: 7eac22982fe8d5547be9015c7bdb378e,
         type: 3}
       propertyPath: m_Name
       value: --ROOM_SERVER
       objectReference: {fileID: 0}
-    - target: {fileID: 5068188183937466392, guid: 7eac22982fe8d5547be9015c7bdb378e,
+    - target: {fileID: 4418077282172698758, guid: 7eac22982fe8d5547be9015c7bdb378e,
         type: 3}
-      propertyPath: _startOnHeadless
+      propertyPath: _startInOffline
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

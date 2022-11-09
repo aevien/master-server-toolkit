@@ -1,0 +1,10 @@
+﻿Выполняется установка сборки 'C:\Program Files (x86)\MySQL\MySQL Connector NET 8.0.31\Assemblies\v4.8\MySql.Data.dll'.
+Затронуты следующие параметры:
+   logtoconsole = true
+   logfile = C:\Program Files (x86)\MySQL\MySQL Connector NET 8.0.31\Assemblies\v4.8\MySql.Data.InstallLog
+   assemblypath = C:\Program Files (x86)\MySQL\MySQL Connector NET 8.0.31\Assemblies\v4.8\MySql.Data.dll
+Выполняется фиксация сборки 'C:\Program Files (x86)\MySQL\MySQL Connector NET 8.0.31\Assemblies\v4.8\MySql.Data.dll'.
+Затронуты следующие параметры:
+   logtoconsole = true
+   logfile = C:\Program Files (x86)\MySQL\MySQL Connector NET 8.0.31\Assemblies\v4.8\MySql.Data.InstallLog
+   assemblypath = C:\Program Files (x86)\MySQL\MySQL Connector NET 8.0.31\Assemblies\v4.8\MySql.Data.dll

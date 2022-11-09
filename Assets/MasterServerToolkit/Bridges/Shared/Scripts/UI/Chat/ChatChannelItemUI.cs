@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ChatChannelItemUI : MonoBehaviour
     {

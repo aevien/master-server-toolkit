@@ -1,8 +1,8 @@
 using MasterServerToolkit.Extensions;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.MasterServer
 {
-    public struct ProfilePropertyKeys
+    public partial struct ProfilePropertyOpCodes
     {
         public static ushort displayName = nameof(displayName).ToUint16Hash();
         public static ushort avatarUrl = nameof(avatarUrl).ToUint16Hash();

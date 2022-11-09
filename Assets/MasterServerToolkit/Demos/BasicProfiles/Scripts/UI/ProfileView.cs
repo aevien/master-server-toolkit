@@ -1,4 +1,4 @@
-﻿using MasterServerToolkit.Games;
+﻿using MasterServerToolkit.Bridges;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using UnityEngine;
@@ -51,15 +51,15 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private void Profile_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
         {
-            if (key == ProfilePropertyKeys.displayName)
+            if (key == ProfilePropertyOpCodes.displayName)
                 displayNameUIProperty.Lable = property.As<ObservableString>().Value;
-            else if (key == ProfilePropertyKeys.avatarUrl)
+            else if (key == ProfilePropertyOpCodes.avatarUrl)
                 avatar.SetAvatarUrl(property.Serialize());
-            else if (key == ProfilePropertyKeys.bronze)
+            else if (key == ProfilePropertyOpCodes.bronze)
                 bronzeUIProperty.SetValue(property.As<ObservableInt>().Value);
-            else if (key == ProfilePropertyKeys.silver)
+            else if (key == ProfilePropertyOpCodes.silver)
                 silverUIProperty.SetValue(property.As<ObservableInt>().Value);
-            else if (key == ProfilePropertyKeys.gold)
+            else if (key == ProfilePropertyOpCodes.gold)
                 goldUIProperty.SetValue(property.As<ObservableInt>().Value);
         }
     }

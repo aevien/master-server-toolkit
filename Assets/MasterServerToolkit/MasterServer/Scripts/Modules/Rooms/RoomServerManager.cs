@@ -252,7 +252,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 logger.Debug($"Room server player {player.Username} with room client Id {roomPeerId} left the room");
 
-                // Remove thisplayer from filtered list
+                // Remove this player from filtered list
                 playersByRoomPeerId.Remove(player.RoomPeerId);
                 playersByMasterPeerId.Remove(player.MasterPeerId);
                 playersByUsername.Remove(player.Username);
@@ -403,7 +403,7 @@ namespace MasterServerToolkit.MasterServer
             RoomOptions = new RoomOptions
             {
                 // Just the name of the room
-                Name = Mst.Args.RoomName,
+                Name = Mst.Args.AsString(Mst.Args.Names.RoomName, $"Room-{Mst.Helper.CreateFriendlyId()}"),
 
                 // Room IP that will be used by players to connect to this room
                 RoomIp = Mst.Args.RoomIp,

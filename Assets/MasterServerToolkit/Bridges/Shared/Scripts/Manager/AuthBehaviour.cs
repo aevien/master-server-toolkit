@@ -5,7 +5,7 @@ using MasterServerToolkit.UI;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class AuthBehaviour : BaseClientBehaviour
     {
@@ -110,7 +110,7 @@ namespace MasterServerToolkit.Games
 
         protected override void OnInitialize()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Connecting to master... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["connectionProgress"]);
 
             // If we want to use default credentials for signin or signup views
             if (useDefaultCredentials && Mst.Runtime.IsEditor)
@@ -165,8 +165,7 @@ namespace MasterServerToolkit.Games
 
             Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
             Mst.Events.Invoke(MstEventKeys.showOkDialogBox,
-                new OkDialogBoxEventMessage("The connection to the server has been lost. "
-                + "Please try again or contact to the developers of the game or your internet provider.",
+                new OkDialogBoxEventMessage(Mst.Localization["connectionLost"],
                 () =>
                 {
                     SignOut();
@@ -222,9 +221,9 @@ namespace MasterServerToolkit.Games
         /// <param name="password"></param>
         public virtual void SignIn(string username, string password)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signInProgress"]);
 
-            logger.Debug("Signing in... Please wait!");
+            logger.Debug(Mst.Localization["signInProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -236,7 +235,7 @@ namespace MasterServerToolkit.Games
                     {
                         if (accountInfo.IsEmailConfirmed)
                         {
-                            logger.Debug($"You are successfully logged in as {Mst.Client.Auth.AccountInfo}");
+                            logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
                         }
                         else
                         {
@@ -247,7 +246,7 @@ namespace MasterServerToolkit.Games
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while signing in: {error}";
+                        string outputMessage = $"{Mst.Localization["signInErrorResult"]} {error}";
                         logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
@@ -264,9 +263,9 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public virtual void SignInAsGuest()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in as guest... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signInProgress"]);
 
-            logger.Debug("Signing in as guest... Please wait!");
+            logger.Debug(Mst.Localization["signInProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -278,11 +277,11 @@ namespace MasterServerToolkit.Games
                     {
                         Mst.Events.Invoke(MstEventKeys.hideSignInView);
 
-                        logger.Debug($"You are successfully logged in as {Mst.Client.Auth.AccountInfo}");
+                        logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while signing in: {error}";
+                        string outputMessage = $"{Mst.Localization["signInErrorResult"]} {error}";
                         logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
@@ -299,9 +298,9 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public virtual void SignInWithToken()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signInProgress"]);
 
-            logger.Debug("Signing in... Please wait!");
+            logger.Debug(Mst.Localization["signInProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -313,7 +312,7 @@ namespace MasterServerToolkit.Games
                     {
                         if (accountInfo.IsGuest || accountInfo.IsEmailConfirmed)
                         {
-                            logger.Debug($"You are successfully logged in. {Mst.Client.Auth.AccountInfo}");
+                            logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
                         }
                         else
                         {
@@ -322,7 +321,7 @@ namespace MasterServerToolkit.Games
                     }
                     else
                     {
-                        outputMessage = $"An error occurred while signing in: {error}";
+                        outputMessage = $"{Mst.Localization["signInErrorResult"]} {error}";
                         logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showSignInView);
@@ -336,9 +335,9 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public virtual void SignUp(string username, string useremail, string userpassword)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing up... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signUpProgress"]);
 
-            logger.Debug("Signing up... Please wait!");
+            logger.Debug(Mst.Localization["signUpProgress"]);
 
             var credentials = new MstProperties();
             credentials.Set(MstDictKeys.USER_NAME, username);
@@ -357,11 +356,11 @@ namespace MasterServerToolkit.Games
                         Mst.Events.Invoke(MstEventKeys.showSignInView);
                         Mst.Events.Invoke(MstEventKeys.setSignInDefaultCredentials, credentials);
 
-                        logger.Debug($"You have successfuly signed up. Now you may sign in");
+                        logger.Debug(Mst.Localization["signUpSuccessResult"]);
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while signing up: {error}";
+                        string outputMessage = Mst.Localization["signUpErrorResult"];
                         logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
@@ -381,9 +380,9 @@ namespace MasterServerToolkit.Games
         /// <param name="newPassword"></param>
         public virtual void ResetPassword(string userEmail, string resetCode, string newPassword)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Changing password... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["changePasswordProgress"]);
 
-            logger.Debug("Changing password... Please wait!");
+            logger.Debug(Mst.Localization["changePasswordProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -395,11 +394,11 @@ namespace MasterServerToolkit.Games
                     {
                         Mst.Events.Invoke(MstEventKeys.hidePasswordResetView);
                         Mst.Events.Invoke(MstEventKeys.showSignInView);
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("You have successfuly changed your password. Now you can sign in.", null));
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(Mst.Localization["changePasswordProgress"], null));
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while changing password: {error}";
+                        string outputMessage = $"{Mst.Localization["changePasswordErrorResult"]} {error}";
                         logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
@@ -417,9 +416,9 @@ namespace MasterServerToolkit.Games
         /// <param name="userEmail"></param>
         public virtual void RequestResetPasswordCode(string userEmail)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Sending reset password code... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["changePasswordCodeSuccessResult"]);
 
-            logger.Debug("Sending reset password code... Please wait!");
+            logger.Debug(Mst.Localization["changePasswordCodeSuccessResult"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -433,11 +432,11 @@ namespace MasterServerToolkit.Games
 
                         Mst.Events.Invoke(MstEventKeys.hidePasswordResetCodeView);
                         Mst.Events.Invoke(MstEventKeys.showPasswordResetView);
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"We have sent an email with reset code to your address '{userEmail}'", null));
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"{Mst.Localization["changePasswordCodeSuccessResult"]} '{userEmail}'", null));
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while password reset code: {error}";
+                        string outputMessage = $"{Mst.Localization["changePasswordCodeErrorResult"]} {error}";
                         logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
@@ -469,9 +468,9 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public virtual void RequestConfirmationCode()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Sending confirmation code... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["confirmationCodeSendingProcess"]);
 
-            logger.Debug("Sending confirmation code... Please wait!");
+            logger.Debug(Mst.Localization["confirmationCodeSendingProcess"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -481,11 +480,11 @@ namespace MasterServerToolkit.Games
 
                     if (isSuccessful)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"We have sent an email with confirmation code to your address '{Mst.Client.Auth.AccountInfo.Email}'", null));
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"{Mst.Localization["confirmationCodeSendingSuccessResult"]} '{Mst.Client.Auth.AccountInfo.Email}'", null));
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while requesting confirmation code: {error}";
+                        string outputMessage = $"{Mst.Localization["confirmationCodeSendingErrorResult"]}: {error}";
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
                         logger.Error(outputMessage);
                     }
@@ -498,9 +497,9 @@ namespace MasterServerToolkit.Games
         /// </summary>
         public virtual void ConfirmAccount(string confirmationCode)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Confirming your account... Please wait!");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["accountConfirmationProgress"]);
 
-            logger.Debug("Sending confirmation code... Please wait!");
+            logger.Debug(Mst.Localization["accountConfirmationProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -514,7 +513,7 @@ namespace MasterServerToolkit.Games
                     }
                     else
                     {
-                        string outputMessage = $"An error occurred while confirming yor account: {error}";
+                        string outputMessage = $"{Mst.Localization["accountConfirmationErrorResult"]} {error}";
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
                         logger.Error(outputMessage);
                     }

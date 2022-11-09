@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class PlayersListView : UIView
     {
@@ -68,16 +68,6 @@ namespace MasterServerToolkit.Games
         {
             ClearPlayersList();
             canvasGroup.interactable = false;
-            List<string> players;
-
-            // if we are in lobby game
-            if (Mst.Client.Lobbies.IsInLobby)
-            {
-                canvasGroup.interactable = true;
-                players = Mst.Client.Lobbies.JoinedLobby.Members.Select(m => m.Value.Username).ToList();
-                DrawPlayersList(players);
-                return;
-            }
 
             // if we have room access
             if (roomId < 0 && Mst.Client.Rooms.HasAccess)
@@ -94,13 +84,13 @@ namespace MasterServerToolkit.Games
 
                 if (games.Count > 0)
                 {
-                    var game = games.First();
-                    DrawPlayersList(game.OnlinePlayersList);
+                    GameInfoPacket game = games.First();
+                    DrawPlayersList(game);
                 }
             });
         }
 
-        private void DrawPlayersList(List<string> players)
+        private void DrawPlayersList(GameInfoPacket game)
         {
             if (listContainer)
             {
@@ -112,14 +102,16 @@ namespace MasterServerToolkit.Games
                 var playerNameCol = Instantiate(uiColLablePrefab, listContainer, false);
                 playerNameCol.Text = "Name";
 
-                foreach (string player in players)
+                foreach (string player in game.OnlinePlayersList)
                 {
+                    bool isMasterUser = game.Properties.AsString("-room.masterUser") == player;
+
                     var playerIndoexLable = Instantiate(uiLablePrefab, listContainer, false);
                     playerIndoexLable.Text = (index + 1).ToString();
                     playerIndoexLable.name = $"playerIndoexLable_{index}";
 
                     var playerNameLable = Instantiate(uiLablePrefab, listContainer, false);
-                    playerNameLable.Text = player;
+                    playerNameLable.Text = $"{player} {(isMasterUser ? ":)" : "")}";
                     playerNameLable.name = $"playerNameLable_{index}";
 
                     index++;
@@ -127,7 +119,7 @@ namespace MasterServerToolkit.Games
             }
             else
             {
-                Logs.Error("Not all components are setup");
+                logger.Error("Not all components are setup");
             }
         }
 

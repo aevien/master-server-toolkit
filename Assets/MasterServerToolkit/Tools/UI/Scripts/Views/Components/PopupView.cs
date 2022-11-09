@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using MasterServerToolkit.Bridges;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -7,7 +8,7 @@ namespace MasterServerToolkit.UI
     public class PopupView : UIView
     {
         [Header("Lables Settings"), SerializeField]
-        protected TextMeshProUGUI[] lables;
+        protected TMP_Text[] lables;
 
         [Header("Buttons Settings"), SerializeField]
         protected UIButton[] buttons;

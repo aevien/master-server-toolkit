@@ -164,6 +164,11 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public string LogFileDir { get; private set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DefaultLanguage { get; private set; }
+
         public MstArgNames Names { get; set; }
 
         public MstArgs()
@@ -182,7 +187,7 @@ namespace MasterServerToolkit.MasterServer
             WebAddress = AsString(Names.WebAddress, "127.0.0.1");
             WebPort = AsInt(Names.WebPort, 8080);
 
-            RoomName = AsString(Names.RoomName, $"Room-{Mst.Helper.CreateFriendlyId()}");
+            RoomName = AsString(Names.RoomName);
             RoomIp = AsString(Names.RoomIp, "127.0.0.1");
             RoomPort = (ushort)AsInt(Names.RoomPort, 7777);
             RoomDefaultPort = AsInt(Names.RoomDefaultPort, 1500);
@@ -210,6 +215,8 @@ namespace MasterServerToolkit.MasterServer
             UseDevMode = AsBool(Names.UseDevMode, false);
 
             TargetFrameRate = AsInt(Names.TargetFrameRate, 60);
+
+            DefaultLanguage = AsString(Names.DefaultLanguage);
         }
 
         private void ParseArguments()

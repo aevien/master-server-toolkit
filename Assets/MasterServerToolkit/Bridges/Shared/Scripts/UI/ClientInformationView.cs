@@ -1,6 +1,6 @@
 ﻿using MasterServerToolkit.UI;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ClientInformationView : UIView { }
 }

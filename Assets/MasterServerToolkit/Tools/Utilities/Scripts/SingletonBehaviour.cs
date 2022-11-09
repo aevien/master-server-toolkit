@@ -34,6 +34,9 @@ namespace MasterServerToolkit.Utils
 
         protected virtual void Awake()
         {
+            logger = Mst.Create.Logger(typeof(T).Name);
+            logger.LogLevel = logLevel;
+
             if (Instance != null)
             {
                 isNowDestroying = true;
@@ -46,15 +49,12 @@ namespace MasterServerToolkit.Utils
             if (isGlobal)
             {
                 DontDestroyOnLoad(gameObject);
-            }    
-
-            logger = Mst.Create.Logger(typeof(T).Name);
-            logger.LogLevel = logLevel;
+            }
         }
 
         protected virtual void OnDestroy()
         {
-            if(Instance == this)
+            if (Instance == this)
             {
                 Instance = null;
             }

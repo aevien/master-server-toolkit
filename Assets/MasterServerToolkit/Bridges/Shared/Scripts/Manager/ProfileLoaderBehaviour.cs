@@ -2,7 +2,7 @@
 using MasterServerToolkit.Utils;
 using UnityEngine.Events;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ProfileLoaderBehaviour : BaseClientBehaviour
     {

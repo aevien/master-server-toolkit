@@ -7,7 +7,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class FakeNoticeManager : MonoBehaviour
     {

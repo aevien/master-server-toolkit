@@ -1,11 +1,8 @@
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.MasterServer;
-using MySqlConnector;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using MySql.Data.MySqlClient;
 using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MySQL
 {
@@ -32,13 +29,13 @@ namespace MasterServerToolkit.Bridges.MySQL
                     cmd.Connection = connection;
                     cmd.CommandText = $"SELECT `property_key`, `property_value` FROM profiles WHERE account_id = '{profile.UserId}';";
 
-                    using (MySqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    using (MySqlDataReader reader = (MySqlDataReader)await cmd.ExecuteReaderAsync())
                     {
                         if (reader.HasRows)
                         {
                             while (await reader.ReadAsync())
                             {
-                                if (profile.TryGet(Convert.ToUInt16(reader.GetString("property_key")), out IObservableProperty property))
+                                if (profile.TryGet(reader.GetString("property_key").ToUint16Hash(), out IObservableProperty property))
                                 {
                                     property.Deserialize(reader.GetString("property_value"));
                                 }
@@ -68,7 +65,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                     foreach (var property in profile)
                     {
                         index++;
-                        sql.Append($"('{profile.UserId}','{property.Key}','{property.Serialize()}'){(index < profile.Count ? "," : "")} ");
+                        sql.Append($"('{profile.UserId}','{Mst.Registry.GetProfilePropertyOpCodeName(property.Key)}','{property.Serialize()}'){(index < profile.Count ? "," : "")} ");
                     }
 
                     sql.Append($"as p ");

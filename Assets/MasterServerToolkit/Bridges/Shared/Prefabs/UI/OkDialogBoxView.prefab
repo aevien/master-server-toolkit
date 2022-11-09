@@ -302,12 +302,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: OkDialogBoxView
+  title: OkDialogBoxView
   hideOnStart: 1
   allwaysOnTop: 1
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 0}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []

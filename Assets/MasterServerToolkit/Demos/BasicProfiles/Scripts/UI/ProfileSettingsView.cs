@@ -53,9 +53,9 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private void ProfilesManager_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
         {
-            if (key == ProfilePropertyKeys.displayName)
+            if (key == ProfilePropertyOpCodes.displayName)
                 displayNameInputField.text = property.Serialize();
-            else if (key == ProfilePropertyKeys.avatarUrl)
+            else if (key == ProfilePropertyOpCodes.avatarUrl)
                 avatarUrlInputField.text = property.Serialize();
         }
     }

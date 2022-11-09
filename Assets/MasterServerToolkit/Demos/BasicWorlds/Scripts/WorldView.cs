@@ -1,5 +1,5 @@
 using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Games;
+using MasterServerToolkit.Bridges;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 

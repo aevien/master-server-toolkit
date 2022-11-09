@@ -5,7 +5,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class MatchmakingBehaviour : BaseClientBehaviour
     {
@@ -23,6 +23,11 @@ namespace MasterServerToolkit.Games
         #endregion
 
         private static MatchmakingBehaviour _instance;
+
+        /// <summary>
+        /// Properties that will be synced from room to all users
+        /// </summary>
+        public MstProperties CustomRoomProperties { get; private set; } = new MstProperties();
 
         public static MatchmakingBehaviour Instance
         {
@@ -88,6 +93,7 @@ namespace MasterServerToolkit.Games
             customSpawnOptions.Add("-room.CustomTextOption", "Here is room custom option");
             customSpawnOptions.Add("-room.CustomIdOption", Mst.Helper.CreateID_10());
             customSpawnOptions.Add("-room.CustomDateTimeOption", DateTime.Now.ToString());
+            customSpawnOptions.Add("-room.masterUser", Mst.Client.Auth.IsSignedIn ? Mst.Client.Auth.AccountInfo.Username : "Anonymous");
 
             Mst.Client.Spawners.RequestSpawn(spawnOptions, customSpawnOptions, regionName, (controller, error) =>
             {
@@ -102,29 +108,32 @@ namespace MasterServerToolkit.Games
                     return;
                 }
 
-                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Room started. Finalizing... Please wait!");
+                controller.OnStatusChangedEvent += Controller_OnStatusChangedEvent;
 
                 // Wait for spawning status until it is finished
                 // This status must be send by room
                 MstTimer.WaitWhile(() =>
                 {
-                    return controller.Status != SpawnStatus.Finalized;
+                    return controller.Status == SpawnStatus.Finalized;
                 }, (isSuccess) =>
                 {
+                    controller.OnStatusChangedEvent -= Controller_OnStatusChangedEvent;
+
                     Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
                     if (!isSuccess)
                     {
                         Mst.Client.Spawners.AbortSpawn(controller.SpawnTaskId);
 
-                        logger.Error("Failed spawn new room. Time is up!");
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Time is up!", () =>
+                        OnRoomStartAborted();
+                        OnRoomStartAbortedEvent?.Invoke();
+
+                        logger.Error("Failed spawn new room");
+
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room", () =>
                         {
                             failCallback?.Invoke();
                         }));
-
-                        OnRoomStartAborted();
-                        OnRoomStartAbortedEvent?.Invoke();
 
                         return;
                     }
@@ -136,6 +145,11 @@ namespace MasterServerToolkit.Games
 
                 }, matchCreationTimeout);
             });
+        }
+
+        private void Controller_OnStatusChangedEvent(SpawnStatus status)
+        {
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Room started. Status: {status}");
         }
 
         protected virtual void OnRoomStarted() { }

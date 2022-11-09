@@ -5,7 +5,7 @@ using MasterServerToolkit.Utils;
 using TMPro;
 using UnityEngine;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class UsernamePickView : UIView
     {

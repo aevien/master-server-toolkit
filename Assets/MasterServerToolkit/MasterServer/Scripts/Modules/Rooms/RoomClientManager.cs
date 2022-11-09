@@ -1,4 +1,4 @@
-using MasterServerToolkit.Games;
+using MasterServerToolkit.Bridges;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using UnityEngine;

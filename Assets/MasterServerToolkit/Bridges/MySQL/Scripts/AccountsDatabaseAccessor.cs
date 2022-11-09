@@ -1,13 +1,8 @@
-using MasterServerToolkit.Bridges.LiteDB;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using MySqlConnector;
-using System;
+using MySql.Data.MySqlClient;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MySQL
 {
@@ -45,7 +40,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                     cmd.CommandText = $"SELECT * FROM accounts WHERE {propertyName} = @{propertyName};";
                     cmd.Parameters.AddWithValue($"@{propertyName}", propertyValue);
 
-                    using (var reader = await cmd.ExecuteReaderAsync())
+                    using (MySqlDataReader reader = (MySqlDataReader)await cmd.ExecuteReaderAsync())
                     {
                         if (!reader.HasRows)
                             return null;
@@ -146,7 +141,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                     cmd.CommandText = $"SELECT * FROM email_confirmation_codes WHERE email = @email;";
                     cmd.Parameters.AddWithValue($"@email", email);
 
-                    var reader = await cmd.ExecuteReaderAsync();
+                    var reader = (MySqlDataReader)await cmd.ExecuteReaderAsync();
 
                     if (!reader.HasRows)
                         return null;
@@ -189,7 +184,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                     cmd.CommandText = "SELECT * FROM password_reset_codes WHERE email = @email";
                     cmd.Parameters.AddWithValue("@email", email);
 
-                    var reader = await cmd.ExecuteReaderAsync();
+                    var reader = (MySqlDataReader)await cmd.ExecuteReaderAsync();
 
                     if (!reader.HasRows)
                         return null;

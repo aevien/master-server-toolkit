@@ -1,7 +1,7 @@
 using MasterServerToolkit.Networking;
 using UnityEngine;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ColorMessage : SerializablePacket
     {

@@ -511,11 +511,13 @@ namespace MasterServerToolkit.MasterServer
 
                 if (handler == null)
                 {
-                    logger.Warn(string.Format($"Handler for OpCode {message.OpCode} does not exist"));
+                    logger.Error($"You are trying to handle message with OpCode [{Mst.Registry.GetMessageOpCodeName(message.OpCode)}]. " +
+                        $"But a handler for this message does not exist. " +
+                        $"This may have happened because you did not initialize the server module that should handle this message or did not register the message handler properly.");
 
                     if (message.IsExpectingResponse)
                     {
-                        message.Respond("Internal Server Error", ResponseStatus.NotHandled);
+                        message.Respond(ResponseStatus.NotHandled);
                         return;
                     }
 
@@ -531,7 +533,7 @@ namespace MasterServerToolkit.MasterServer
                     throw;
                 }
 
-                logger.Error($"Error while handling a message from Client. OpCode: {message.OpCode}, Error: {e}");
+                logger.Error($"An error occurred while handling a message from client. Message OpCode: [{Mst.Registry.GetMessageOpCodeName(message.OpCode)}], Error: {e}");
 
                 if (!message.IsExpectingResponse)
                 {
@@ -540,7 +542,7 @@ namespace MasterServerToolkit.MasterServer
 
                 try
                 {
-                    message.Respond("Internal Server Error", ResponseStatus.Error);
+                    message.Respond(ResponseStatus.Error);
                 }
                 catch (Exception exception)
                 {

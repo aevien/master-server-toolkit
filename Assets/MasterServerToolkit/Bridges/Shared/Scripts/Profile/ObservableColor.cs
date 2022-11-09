@@ -2,7 +2,7 @@ using MasterServerToolkit.MasterServer;
 using System.Text;
 using UnityEngine;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ObservableColor : ObservableBase<Color>
     {

@@ -19,7 +19,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Current spawn status
         /// </summary>
-        public SpawnStatus Status { get; private set; }
+        public SpawnStatus Status { get; private set; } = SpawnStatus.None;
 
         /// <summary>
         /// A dictionary of options that user provided when requesting a 
@@ -45,7 +45,7 @@ namespace MasterServerToolkit.MasterServer
             SpawnOptions = spawnOptions;
 
             // Set handlers
-            connection.RegisterMessageHandler((ushort)MstOpCodes.SpawnRequestStatusChange, StatusUpdateHandler);
+            connection.RegisterMessageHandler(MstOpCodes.SpawnRequestStatusChange, StatusUpdateHandler);
         }
 
         /// <summary>

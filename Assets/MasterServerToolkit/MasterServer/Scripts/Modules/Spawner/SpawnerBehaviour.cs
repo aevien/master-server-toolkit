@@ -113,6 +113,11 @@ namespace MasterServerToolkit.MasterServer
             DontDestroyOnLoad(gameObject);
         }
 
+        private void OnValidate()
+        {
+            region = !string.IsNullOrEmpty(region) ? region : "International";
+        }
+
         protected virtual void OnApplicationQuit()
         {
             // Kill all the processes of spawner controller

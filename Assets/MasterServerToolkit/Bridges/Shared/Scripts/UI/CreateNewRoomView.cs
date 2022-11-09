@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class CreateNewRoomView : UIView
     {

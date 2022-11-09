@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ClientAuthStatusComponent : MonoBehaviour
     {
@@ -41,12 +41,12 @@ namespace MasterServerToolkit.Games
                 }
                 else
                 {
-                    RepaintStatus("Unauthorized", unauthorizedStatusColor);
+                    RepaintStatus($"{Mst.Localization["authStatusUnauthorized"]}", unauthorizedStatusColor);
                 }
             }
             else
             {
-                RepaintStatus("Unauthorized", unauthorizedStatusColor);
+                RepaintStatus($"{Mst.Localization["authStatusUnauthorized"]}", unauthorizedStatusColor); ;
             }
         }
 

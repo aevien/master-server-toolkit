@@ -51,16 +51,16 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
             ProfileProperties.Fill(profile);
 
-            profile.Get<ObservableString>(ProfilePropertyKeys.displayName).Value = SimpleNameGenerator.Generate(Gender.Male);
-            profile.Get<ObservableString>(ProfilePropertyKeys.avatarUrl).Value = avatarUrl;
+            profile.Get<ObservableString>(ProfilePropertyOpCodes.displayName).Value = SimpleNameGenerator.Generate(Gender.Male);
+            profile.Get<ObservableString>(ProfilePropertyOpCodes.avatarUrl).Value = avatarUrl;
 
-            if (profile.TryGet(ProfilePropertyKeys.gold, out ObservableInt goldProperty))
+            if (profile.TryGet(ProfilePropertyOpCodes.gold, out ObservableInt goldProperty))
                 goldProperty.Add(gold);
 
-            if (profile.TryGet(ProfilePropertyKeys.silver, out ObservableInt silverProperty))
+            if (profile.TryGet(ProfilePropertyOpCodes.silver, out ObservableInt silverProperty))
                 silverProperty.Add(silver);
 
-            if (profile.TryGet(ProfilePropertyKeys.bronze, out ObservableInt bronzeProperty))
+            if (profile.TryGet(ProfilePropertyOpCodes.bronze, out ObservableInt bronzeProperty))
                 bronzeProperty.Add(bronze);
 
             return profile;
@@ -70,13 +70,13 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             foreach (var profile in Profiles)
             {
-                if (profile.TryGet(ProfilePropertyKeys.gold, out ObservableInt goldProperty))
+                if (profile.TryGet(ProfilePropertyOpCodes.gold, out ObservableInt goldProperty))
                     goldProperty.Add(1);
 
-                if (profile.TryGet(ProfilePropertyKeys.silver, out ObservableInt silverProperty))
+                if (profile.TryGet(ProfilePropertyOpCodes.silver, out ObservableInt silverProperty))
                     silverProperty.Add(5);
 
-                if (profile.TryGet(ProfilePropertyKeys.bronze, out ObservableInt bronzeProperty))
+                if (profile.TryGet(ProfilePropertyOpCodes.bronze, out ObservableInt bronzeProperty))
                     bronzeProperty.Add(10);
             }
         }
@@ -97,8 +97,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
             {
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile))
                 {
-                    profile.Get<ObservableString>(ProfilePropertyKeys.displayName).Value = newProfileData["displayName"];
-                    profile.Get<ObservableString>(ProfilePropertyKeys.avatarUrl).Value = newProfileData["avatarUrl"];
+                    profile.Get<ObservableString>(ProfilePropertyOpCodes.displayName).Value = newProfileData["displayName"];
+                    profile.Get<ObservableString>(ProfilePropertyOpCodes.avatarUrl).Value = newProfileData["avatarUrl"];
 
                     message.Respond(ResponseStatus.Success);
                 }
@@ -128,7 +128,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                 var data = message.AsPacket(new BuySellItemPacket());
 
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
-                        && profile.TryGet(ProfilePropertyKeys.items, out ObservableDictStringInt items))
+                        && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
                 {
                     if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty)
                         && currencyProperty.Subtract(data.Price, 0))
@@ -175,7 +175,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                 var data = message.AsPacket(new BuySellItemPacket());
 
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
-                        && profile.TryGet(ProfilePropertyKeys.items, out ObservableDictStringInt items))
+                        && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
                 {
                     if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty))
                     {

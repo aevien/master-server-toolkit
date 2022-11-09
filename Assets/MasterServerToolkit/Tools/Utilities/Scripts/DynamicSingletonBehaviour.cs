@@ -33,7 +33,7 @@ namespace MasterServerToolkit.Utils
             logger = Mst.Create.Logger(typeof(T).Name);
             logger.LogLevel = logLevel;
 
-            if (_instance != null && _instance != this)
+            if (_instance != null)
             {
                 isNowDestroying = true;
                 Destroy(gameObject);

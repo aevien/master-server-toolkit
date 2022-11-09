@@ -1,4 +1,4 @@
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public interface IIdentifiable
     {

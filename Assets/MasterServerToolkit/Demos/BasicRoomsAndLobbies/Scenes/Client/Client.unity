@@ -998,6 +998,16 @@ PrefabInstance:
       propertyPath: m_textInfo.characterCount
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Games List <sprite index=18 tint=>
+      objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_VerticalAlignment
+      value: 512
+      objectReference: {fileID: 0}
     - target: {fileID: 9184578206818738323, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
       propertyPath: m_AnchoredPosition.y

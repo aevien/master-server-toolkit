@@ -1,5 +1,5 @@
 using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Games;
+using MasterServerToolkit.Bridges;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Collections.Generic;
@@ -56,7 +56,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             profileLoader.Profile.OnPropertyUpdatedEvent += Profile_OnPropertyUpdatedEvent;
 
-            if (profileLoader.Profile.TryGet(ProfilePropertyKeys.items, out ObservableDictStringInt items))
+            if (profileLoader.Profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
             {
                 DrawBackpackItems(items);
 
@@ -125,17 +125,17 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private void Profile_OnPropertyUpdatedEvent(ushort key, IObservableProperty property)
         {
-            if (key == ProfilePropertyKeys.bronze)
+            if (key == ProfilePropertyOpCodes.bronze)
             {
                 bronzeUIProperty.Lable = "Bronze";
                 bronzeUIProperty.SetValue(property.As<ObservableInt>().Value);
             }
-            else if (key == ProfilePropertyKeys.silver)
+            else if (key == ProfilePropertyOpCodes.silver)
             {
                 silverUIProperty.Lable = "Silver";
                 silverUIProperty.SetValue(property.As<ObservableInt>().Value);
             }
-            else if (key == ProfilePropertyKeys.gold)
+            else if (key == ProfilePropertyOpCodes.gold)
             {
                 goldUIProperty.Lable = "Gold";
                 goldUIProperty.SetValue(property.As<ObservableInt>().Value);

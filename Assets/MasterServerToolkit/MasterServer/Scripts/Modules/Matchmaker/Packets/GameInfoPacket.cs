@@ -86,7 +86,7 @@ namespace MasterServerToolkit.MasterServer
             options.Add("Address", Address);
             options.Add("Type", Type.ToString());
             options.Add("Name", Name);
-            options.Add("Region", string.IsNullOrEmpty(Region) ? "International" : Region);
+            options.Add("Region", Region);
             options.Add("IsPasswordProtected", IsPasswordProtected);
             options.Add("MaxPlayers", maxPleyers);
             options.Add("OnlinePlayers", $"{OnlinePlayers}/{maxPleyers}");

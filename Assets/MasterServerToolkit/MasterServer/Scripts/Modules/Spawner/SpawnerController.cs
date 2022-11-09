@@ -205,25 +205,10 @@ namespace MasterServerToolkit.MasterServer
 
             /************************************************************************/
             // Path to executable
-            var executablePath = SpawnSettings.ExecutablePath;
+            var executablePath = !string.IsNullOrEmpty(data.OverrideExePath) ? data.OverrideExePath : SpawnSettings.ExecutablePath;
 
-            if (string.IsNullOrEmpty(executablePath))
-            {
-                executablePath = File.Exists(Environment.GetCommandLineArgs()[0])
-                    ? Environment.GetCommandLineArgs()[0]
-                    : Process.GetCurrentProcess().MainModule.FileName;
-            }
-
-            // In case a path is provided with the request
-            if (data.Options.Has(Mst.Args.Names.RoomExecutablePath))
-            {
-                executablePath = data.Options.AsString(Mst.Args.Names.RoomExecutablePath);
-            }
-
-            if (!string.IsNullOrEmpty(data.OverrideExePath))
-            {
-                executablePath = data.OverrideExePath;
-            }
+            if (!File.Exists(executablePath))
+                throw new FileNotFoundException($"Room executable not found at {executablePath}");
 
             /// Create info about starting process
             var startProcessInfo = new ProcessStartInfo(executablePath)
@@ -243,9 +228,11 @@ namespace MasterServerToolkit.MasterServer
                 {
                     try
                     {
+                        Logs.Info($"Starting room process [{startProcessInfo.FileName}]");
+
                         using (var process = Process.Start(startProcessInfo))
                         {
-                            Logger.Info($"Process started. Spawn Id: {data.SpawnTaskId}, pid: {process.Id}");
+                            Logger.Info($"Process [{startProcessInfo.FileName}] started. Spawn Id: {data.SpawnTaskId}, pid: {process.Id}");
                             processStarted = true;
 
                             lock (processLock)
@@ -271,7 +258,7 @@ namespace MasterServerToolkit.MasterServer
                         }
 
                         Logger.Error("An exception was thrown while starting a process. Make sure that you have set a correct build path. " +
-                                     $"We've tried to start a process at [{executablePath}]. You can change it at 'SpawnerBehaviour' component or in application.cfg");
+                                     $"We've tried to start a process at [{startProcessInfo.FileName}]. You can change it at 'SpawnerBehaviour' component or in application.cfg");
                         Logger.Error(e);
                     }
                     finally

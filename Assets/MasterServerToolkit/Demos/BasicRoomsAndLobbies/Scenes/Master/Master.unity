@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -255,7 +255,6 @@ Transform:
   m_Children:
   - {fileID: 674311274}
   - {fileID: 978456419}
-  - {fileID: 1971871410}
   m_Father: {fileID: 1005001217}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -492,7 +491,6 @@ Transform:
   - {fileID: 1971139660}
   - {fileID: 505681164}
   - {fileID: 135600769}
-  - {fileID: 1579907633}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -610,53 +608,6 @@ MonoBehaviour:
   silver: 20
   gold: 50
   avatarUrl: https://i.imgur.com/JQ9pRoD.png
---- !u!1 &1579907632
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1579907633}
-  - component: {fileID: 1579907634}
-  m_Layer: 0
-  m_Name: FriendsModule
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1579907633
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1579907632}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1005001217}
-  m_RootOrder: 9
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1579907634
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1579907632}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e9f1a0709ebbd743bf59a196388b450, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 0
-  useAuthModule: 1
-  friendsAccessorFactory: {fileID: 1971871409}
 --- !u!1 &1584503552
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,6 +683,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   serverIp: 127.0.0.1
   serverPort: 5000
   timeout: 5
@@ -797,7 +749,7 @@ MonoBehaviour:
   executableFilePath: 
   maxProcesses: 5
   spawnWebSocketServers: 0
-  region: 
+  region: International
   killProcessesWhenStop: 0
   autoStartInEditor: 1
   overrideExePathInEditor: 1
@@ -886,52 +838,6 @@ MonoBehaviour:
   createLobbiesPermissionLevel: 0
   dontAllowCreatingIfJoined: 1
   joinedLobbiesLimit: 1
---- !u!1 &1971871408
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1971871410}
-  - component: {fileID: 1971871409}
-  m_Layer: 0
-  m_Name: FriendsLiteDbAccessorFactory
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1971871409
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1971871408}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a19f6d3ab5e8d3439979704b219add4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 0
-  friendsDbName: friends
---- !u!4 &1971871410
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1971871408}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 505681164}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1977181801
 GameObject:
   m_ObjectHideFlags: 0

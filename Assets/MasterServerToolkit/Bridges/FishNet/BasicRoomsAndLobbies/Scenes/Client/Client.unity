@@ -769,6 +769,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   serverIp: 127.0.0.1
   serverPort: 5000
   timeout: 5
@@ -844,6 +845,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
+  isGlobal: 1
   resolutionMultiplier: 1
   screenshoKey: 107
   format: 3
@@ -914,10 +916,35 @@ PrefabInstance:
       propertyPath: _persistence
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832459, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: allowGuestUsers
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832459, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: forceClientMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832459, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: autoLoadUserProfile
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1182598396324832459, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: terminateRoomWhenDisconnected
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1182598396324832461, guid: 7eac22982fe8d5547be9015c7bdb378e,
         type: 3}
       propertyPath: m_Name
       value: --ROOM_SERVER
+      objectReference: {fileID: 0}
+    - target: {fileID: 4418077282172698758, guid: 7eac22982fe8d5547be9015c7bdb378e,
+        type: 3}
+      propertyPath: _startInOffline
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5068188183937466392, guid: 7eac22982fe8d5547be9015c7bdb378e,
         type: 3}
@@ -971,6 +998,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   roomConnectionTimeout: 10
   autoStartInEditor: 0
   autoStartDelay: 1
@@ -2673,7 +2701,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   initModulesAtStart: 0
-  matchCreationTimeout: 60
+  matchCreationTimeout: 10
   OnRoomStartedEvent:
     m_PersistentCalls:
       m_Calls:
@@ -3838,6 +3866,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
+  isGlobal: 1
   maxHeight: 1
   toggleSpeed: 1000
   toggleHotkey: '`'

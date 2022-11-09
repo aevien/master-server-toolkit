@@ -705,6 +705,7 @@ MonoBehaviour:
   defaultIndexPage:
   - index
   - home
+  useCredentials: 1
   username: admin
   password: admin
 --- !u!1 &1152754123
@@ -942,6 +943,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   serverIp: 127.0.0.1
   serverPort: 5000
   timeout: 5
@@ -1020,10 +1022,10 @@ MonoBehaviour:
   executableFilePath: 
   maxProcesses: 5
   spawnWebSocketServers: 0
-  region: 
+  region: International
   killProcessesWhenStop: 1
   autoStartInEditor: 1
-  overrideExePathInEditor: 1
+  overrideExePathInEditor: 0
   exePathFromEditor: C:\UnityProjects\MST\Builds\Mirror\RoomsAndLobbies\Room\Room.exe
   OnSpawnerStartedEvent:
     m_PersistentCalls:

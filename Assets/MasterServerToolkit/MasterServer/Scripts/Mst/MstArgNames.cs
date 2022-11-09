@@ -242,5 +242,10 @@
         /// 
         /// </summary>
         public string SmtpSenderDisplayName => "-mstSmtpSenderDisplayName";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DefaultLanguage => "-mstDefaultLanguage";
     }
 }

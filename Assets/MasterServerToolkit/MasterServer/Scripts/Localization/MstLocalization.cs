@@ -1,3 +1,4 @@
+using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,13 +7,29 @@ namespace MasterServerToolkit.Localization
 {
     public class MstLocalization
     {
-        private string _selectedLang = "en";
+        private string selectedLang = "en";
         private Dictionary<string, Dictionary<string, string>> _localization = new Dictionary<string, Dictionary<string, string>>();
 
         /// <summary>
         /// Current selected language
         /// </summary>
-        public string Lang => _selectedLang;
+        public string Lang
+        {
+            get
+            {
+                return selectedLang;
+            }
+            set
+            {
+                string prevLanguage = selectedLang;
+                selectedLang = !string.IsNullOrEmpty(value) ? value.ToLower() : "en";
+
+                if (prevLanguage != selectedLang)
+                {
+                    LanguageChangedEvent?.Invoke(selectedLang);
+                }
+            }
+        }
 
         /// <summary>
         /// Returns translated string by key
@@ -23,7 +40,7 @@ namespace MasterServerToolkit.Localization
         {
             get
             {
-                if (_localization.TryGetValue(_selectedLang, out var dictionary) && dictionary != null && dictionary.ContainsKey(key))
+                if (_localization.TryGetValue(selectedLang, out var dictionary) && dictionary != null && dictionary.ContainsKey(key))
                 {
                     return dictionary[key];
                 }
@@ -34,10 +51,15 @@ namespace MasterServerToolkit.Localization
             }
         }
 
+        /// <summary>
+        /// Invoked when the language changes
+        /// </summary>
+        public event Action<string> LanguageChangedEvent;
+
         public MstLocalization()
         {
-            _localization[_selectedLang] = new Dictionary<string, string>();
-
+            selectedLang = Mst.Args.AsString(Mst.Args.Names.DefaultLanguage, selectedLang);
+            _localization[selectedLang] = new Dictionary<string, string>();
             LoadLocalization();
         }
 
@@ -63,15 +85,6 @@ namespace MasterServerToolkit.Localization
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="lang"></param>
-        public void SelectLang(string lang)
-        {
-            _selectedLang = lang;
-        }
-
-        /// <summary>
         /// Registers localization key-value by given language
         /// </summary>
         /// <param name="lang"></param>
@@ -79,10 +92,12 @@ namespace MasterServerToolkit.Localization
         /// <param name="value"></param>
         public void RegisterKey(string lang, string key, string value)
         {
-            if (!_localization.ContainsKey(lang))
-                _localization[lang] = new Dictionary<string, string>();
+            string lankValue = lang.ToLower();
 
-            _localization[lang][key] = value;
+            if (!_localization.ContainsKey(lankValue))
+                _localization[lankValue] = new Dictionary<string, string>();
+
+            _localization[lankValue][key] = value;
         }
     }
 }

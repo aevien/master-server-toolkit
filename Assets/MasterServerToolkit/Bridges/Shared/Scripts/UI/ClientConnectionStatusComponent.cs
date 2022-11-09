@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MasterServerToolkit.Games
+namespace MasterServerToolkit.Bridges
 {
     public class ClientConnectionStatusComponent : MonoBehaviour
     {
@@ -42,13 +42,13 @@ namespace MasterServerToolkit.Games
             switch (status)
             {
                 case ConnectionStatus.Connected:
-                    RepaintStatus($"Client is connected to\n{address}", onlineStatusColor);
+                    RepaintStatus($"{Mst.Localization["connectionStatusConnected"]}\n{address}", onlineStatusColor);
                     break;
                 case ConnectionStatus.Disconnected:
-                    RepaintStatus("Client is offline", offlineStatusColor);
+                    RepaintStatus($"{Mst.Localization["connectionStatusDisconnected"]}", offlineStatusColor);
                     break;
                 case ConnectionStatus.Connecting:
-                    RepaintStatus($"Client is connecting to\n{address}", connectingStatusColor);
+                    RepaintStatus($"{Mst.Localization["connectionStatusConnecting"]}\n{address}", connectingStatusColor);
                     break;
                 default:
                     RepaintStatus($"Unknown status", unknownStatusColor);

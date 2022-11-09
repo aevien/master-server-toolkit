@@ -1,4 +1,4 @@
-using MasterServerToolkit.Games;
+using MasterServerToolkit.Bridges;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
