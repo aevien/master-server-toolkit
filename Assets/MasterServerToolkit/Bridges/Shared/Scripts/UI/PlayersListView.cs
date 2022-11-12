@@ -1,7 +1,5 @@
-﻿using MasterServerToolkit.Logging;
-using MasterServerToolkit.MasterServer;
+﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 

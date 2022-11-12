@@ -1,6 +1,5 @@
 using MasterServerToolkit.MasterServer;
 using System;
-using System.Diagnostics;
 
 namespace MasterServerToolkit.Bridges.MySQL
 {

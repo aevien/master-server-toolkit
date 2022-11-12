@@ -1,5 +1,4 @@
 ﻿#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
-using MasterServerToolkit.MasterServer;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 

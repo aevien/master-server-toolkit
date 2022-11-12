@@ -18,11 +18,12 @@ namespace MasterServerToolkit.Bridges
         protected uint matchCreationTimeout = 20;
 
         public UnityEvent OnRoomStartedEvent;
-        public UnityEvent OnRoomStartAbortedEvent;
+        public UnityEvent OnRoomStartFailedEvent;
 
         #endregion
 
         private static MatchmakingBehaviour _instance;
+        private bool roomStartingProcessCompleted = false;
 
         /// <summary>
         /// Properties that will be synced from room to all users
@@ -95,6 +96,8 @@ namespace MasterServerToolkit.Bridges
             customSpawnOptions.Add("-room.CustomDateTimeOption", DateTime.Now.ToString());
             customSpawnOptions.Add("-room.masterUser", Mst.Client.Auth.IsSignedIn ? Mst.Client.Auth.AccountInfo.Username : "Anonymous");
 
+            roomStartingProcessCompleted = false;
+
             Mst.Client.Spawners.RequestSpawn(spawnOptions, customSpawnOptions, regionName, (controller, error) =>
             {
                 if (controller == null)
@@ -114,34 +117,49 @@ namespace MasterServerToolkit.Bridges
                 // This status must be send by room
                 MstTimer.WaitWhile(() =>
                 {
-                    return controller.Status == SpawnStatus.Finalized;
+                    return !roomStartingProcessCompleted;
                 }, (isSuccess) =>
                 {
                     controller.OnStatusChangedEvent -= Controller_OnStatusChangedEvent;
 
                     Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                    if (!isSuccess)
+                    if (isSuccess)
+                    {
+                        if (controller.Status == SpawnStatus.Finalized)
+                        {
+                            OnRoomStarted();
+                            OnRoomStartedEvent?.Invoke();
+
+                            logger.Info("You have successfully spawned new room");
+                        }
+                        else
+                        {
+                            OnRoomStartFailed();
+                            OnRoomStartFailedEvent?.Invoke();
+
+                            logger.Error($"Failed spawn new room. Status: {controller.Status}");
+
+                            Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Please, try later", () =>
+                            {
+                                failCallback?.Invoke();
+                            }));
+                        }
+                    }
+                    else
                     {
                         Mst.Client.Spawners.AbortSpawn(controller.SpawnTaskId);
 
-                        OnRoomStartAborted();
-                        OnRoomStartAbortedEvent?.Invoke();
+                        OnRoomStartFailed();
+                        OnRoomStartFailedEvent?.Invoke();
 
-                        logger.Error("Failed spawn new room");
+                        logger.Error("Failed spawn new room. Time out");
 
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room", () =>
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Time out", () =>
                         {
                             failCallback?.Invoke();
                         }));
-
-                        return;
                     }
-
-                    OnRoomStarted();
-                    OnRoomStartedEvent?.Invoke();
-
-                    logger.Info("You have successfully spawned new room");
 
                 }, matchCreationTimeout);
             });
@@ -149,12 +167,21 @@ namespace MasterServerToolkit.Bridges
 
         private void Controller_OnStatusChangedEvent(SpawnStatus status)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Room started. Status: {status}");
+            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Starting room... Status: {status}");
+
+            switch (status)
+            {
+                case SpawnStatus.Finalized:
+                case SpawnStatus.Killed:
+                case SpawnStatus.Aborted:
+                    roomStartingProcessCompleted = true;
+                    break;
+            }
         }
 
         protected virtual void OnRoomStarted() { }
 
-        protected virtual void OnRoomStartAborted() { }
+        protected virtual void OnRoomStartFailed() { }
 
         /// <summary>
         /// Sends request to master server to start new room process

@@ -1,7 +1,5 @@
 ﻿using MasterServerToolkit.Networking;
 using System.Collections.Concurrent;
-using System.Linq;
-using System.Text;
 
 namespace MasterServerToolkit.MasterServer
 {

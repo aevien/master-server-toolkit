@@ -326,6 +326,8 @@ namespace MasterServerToolkit.Networking
             }
 
             IsConnected = false;
+
+            SetStatus(ConnectionStatus.Disconnected, fireEvent);
         }
     }
 }

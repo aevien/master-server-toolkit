@@ -9,6 +9,7 @@ namespace MasterServerToolkit.MasterServer
         public string SpawnTaskUniqueCode { get; set; } = string.Empty;
         public string OverrideExePath { get; set; } = string.Empty;
         public MstProperties Options { get; set; }
+        public bool UseOverrideExePath => !string.IsNullOrEmpty(OverrideExePath);
 
         public SpawnRequestPacket()
         {

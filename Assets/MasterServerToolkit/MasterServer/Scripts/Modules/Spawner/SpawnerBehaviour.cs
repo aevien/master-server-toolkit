@@ -194,6 +194,10 @@ namespace MasterServerToolkit.MasterServer
             {
                 executableFilePath = exePathFromEditor;
             }
+            else
+            {
+                executableFilePath = Mst.Args.AsString(Mst.Args.Names.RoomExecutablePath, executableFilePath);
+            }
 
             logger.Info($"Registering as a spawner with options: \n{spawnerOptions}");
 
@@ -215,8 +219,8 @@ namespace MasterServerToolkit.MasterServer
                 // 4. Set use web sockets if required
                 spawnerController.SpawnSettings.UseWebSockets = Mst.Args.AsBool(Mst.Args.Names.UseWebSockets, spawnWebSocketServers);
 
-                // 5. Set the default executable path
-                spawnerController.SpawnSettings.ExecutablePath = Mst.Args.AsString(Mst.Args.Names.RoomExecutablePath, executableFilePath);
+                // 5. Set the executable path
+                spawnerController.SpawnSettings.ExecutablePath = executableFilePath;
 
                 // 6. Set the machine IP
                 spawnerController.SpawnSettings.MachineIp = machineIp;

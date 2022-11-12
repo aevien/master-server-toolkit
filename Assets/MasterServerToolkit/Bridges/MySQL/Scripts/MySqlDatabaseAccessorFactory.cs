@@ -1,7 +1,5 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Utils;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MySQL

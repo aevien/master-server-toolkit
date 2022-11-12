@@ -35,7 +35,10 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public SpawnerConfig SpawnSettings { get; protected set; }
 
-        public Logger Logger { get; protected set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public MasterServerToolkit.Logging.Logger Logger { get; protected set; }
 
         /// <summary>
         /// Fired when process is started
@@ -55,7 +58,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="options"></param>
         public SpawnerController(int spawnerId, IClientSocket connection, SpawnerOptions spawnerOptions)
         {
-            Logger = Mst.Create.Logger(typeof(SpawnerController).Name, LogLevel.All);
+            Logger = Mst.Create.Logger(typeof(SpawnerController).Name, MasterServerToolkit.Logging.LogLevel.All);
 
             Connection = connection;
             SpawnerId = spawnerId;
@@ -205,7 +208,7 @@ namespace MasterServerToolkit.MasterServer
 
             /************************************************************************/
             // Path to executable
-            var executablePath = !string.IsNullOrEmpty(data.OverrideExePath) ? data.OverrideExePath : SpawnSettings.ExecutablePath;
+            var executablePath = data.UseOverrideExePath ? data.OverrideExePath : SpawnSettings.ExecutablePath;
 
             if (!File.Exists(executablePath))
                 throw new FileNotFoundException($"Room executable not found at {executablePath}");

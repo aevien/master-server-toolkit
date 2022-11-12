@@ -930,7 +930,7 @@ MonoBehaviour:
   region: International
   killProcessesWhenStop: 1
   autoStartInEditor: 1
-  overrideExePathInEditor: 0
+  overrideExePathInEditor: 1
   exePathFromEditor: C:\UnityProjects\MST\Builds\FishNet\BasicRoomsAndLobbies\Room\Room.exe
   OnSpawnerStartedEvent:
     m_PersistentCalls:
