@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of encripted data
         /// </summary>
-        private readonly Dictionary<IClientSocket, EncryptionData> _encryptionData;
+        private readonly ConcurrentDictionary<IClientSocket, EncryptionData> _encryptionData = new ConcurrentDictionary<IClientSocket, EncryptionData>();
 
         /// <summary>
         /// Size of RSA key
@@ -68,10 +69,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event Action OnPermissionsLevelChangedEvent;
 
-        public MstSecurity(IClientSocket connection) : base(connection)
-        {
-            _encryptionData = new Dictionary<IClientSocket, EncryptionData>();
-        }
+        public MstSecurity(IClientSocket connection) : base(connection) { }
 
         /// <summary>
         /// Default client authenticator method used by client to validate its connections to server
@@ -270,7 +268,7 @@ namespace MasterServerToolkit.MasterServer
             foreach (var connection in disconnected)
             {
                 // Remove encryption data
-                _encryptionData.Remove(connection);
+                _encryptionData.TryRemove(connection, out _);
 
                 // Unsubscribe from event
                 connection.OnConnectionCloseEvent -= OnEncryptableConnectionDisconnected;

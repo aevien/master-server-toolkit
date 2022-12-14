@@ -139,7 +139,7 @@ namespace MasterServerToolkit.MasterServer
 
             Logs.Debug($"Aborting process [{spawnTaskId}]");
 
-            connection.SendMessage((ushort)MstOpCodes.AbortSpawnRequest, spawnTaskId, (status, response) =>
+            connection.SendMessage(MstOpCodes.AbortSpawnRequest, spawnTaskId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
@@ -177,7 +177,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            connection.SendMessage((ushort)MstOpCodes.GetSpawnFinalizationData, spawnId, (status, response) =>
+            connection.SendMessage(MstOpCodes.GetSpawnFinalizationData, spawnId, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {

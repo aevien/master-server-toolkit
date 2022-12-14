@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.16788375, g: 0.21073635, b: 0.28994125, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: f2149112e9dec7d439ded9268a07ea79,
+  m_LightingDataAsset: {fileID: 112000002, guid: 4388f809099059549a9a3e1afb44123e,
     type: 2}
   m_LightingSettings: {fileID: 1979954411}
 --- !u!196 &4
@@ -2258,6 +2258,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   roomConnectionTimeout: 10
   autoStartInEditor: 1
   autoStartDelay: 1
@@ -6072,7 +6073,7 @@ PrefabInstance:
     - target: {fileID: 96597585286142794, guid: c9d1e01fb39c63247a88620789b39937,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -24.949127
+      value: -24.94934
       objectReference: {fileID: 0}
     - target: {fileID: 96597585286142794, guid: c9d1e01fb39c63247a88620789b39937,
         type: 3}

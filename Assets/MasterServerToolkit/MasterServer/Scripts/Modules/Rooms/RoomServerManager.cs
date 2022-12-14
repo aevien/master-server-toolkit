@@ -464,8 +464,7 @@ namespace MasterServerToolkit.MasterServer
                 logger.Info($"Room registered successfully. Room ID: {controller.RoomId}, {RoomOptions}");
 
                 // If this room was spawned
-                if (SpawnTaskController != null)
-                    SpawnTaskController.FinalizeTask(CreateSpawnFinalizationData());
+                SpawnTaskController?.FinalizeTask(CreateSpawnFinalizationData());
 
                 // Notify listeners
                 OnRoomRegisteredEvent?.Invoke(RoomController);

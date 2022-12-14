@@ -156,15 +156,15 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         public void SetPort(int port)
         {
             // Set room port
-            if (Transport.activeTransport is KcpTransport kcpTransport)
+            if (Transport.active is KcpTransport kcpTransport)
             {
                 kcpTransport.Port = (ushort)port;
             }
-            else if (Transport.activeTransport is TelepathyTransport telepathyTransport)
+            else if (Transport.active is TelepathyTransport telepathyTransport)
             {
                 telepathyTransport.port = (ushort)port;
             }
-            else if (Transport.activeTransport is SimpleWebTransport swTransport)
+            else if (Transport.active is SimpleWebTransport swTransport)
             {
                 swTransport.port = (ushort)port;
             }

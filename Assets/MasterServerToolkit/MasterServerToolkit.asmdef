@@ -7,7 +7,8 @@
         "Mirror",
         "FishNet.Runtime",
         "FishNet.Generated",
-        "FishNet.Example"
+        "FishNet.Example",
+        "Mirror.Transports"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

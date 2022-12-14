@@ -20,9 +20,11 @@ namespace MasterServerToolkit.MasterServer
         #region INSPECTOR
 
         [Header("Accessibility Settings"), SerializeField]
-        private float heatBeatCheckInterval = 5f;
+        private float heartBeatCheckInterval = 5f;
 
         [Header("Http Server Settings"), SerializeField]
+        protected bool autostart = true;
+        [SerializeField]
         protected string httpAddress = "127.0.0.1";
         [SerializeField]
         protected int httpPort = 5056;
@@ -75,9 +77,67 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public string CertificatePassword { get; set; }
 
-        private void OnValidate()
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool UseCredentials
         {
-            heatBeatCheckInterval = Mathf.Clamp(heatBeatCheckInterval, 2f, 120f);
+            get => useCredentials;
+            set => useCredentials = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Username
+        {
+            get => username;
+            set => username = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Password
+        {
+            get => password;
+            set => password = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string HttpAddress
+        {
+            get => httpAddress;
+            set => httpAddress = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int HttpPort
+        {
+            get => httpPort;
+            set => httpPort = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string[] DefaultIndexPages
+        {
+            get => defaultIndexPage;
+            set => defaultIndexPage = value;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public float HeartBeatCheckInterval
+        {
+            get => heartBeatCheckInterval;
+            set => heartBeatCheckInterval = value;
         }
 
         protected override void Awake()
@@ -88,7 +148,7 @@ namespace MasterServerToolkit.MasterServer
             password = Mst.Args.AsString(Mst.Args.Names.WebPassword, password);
 
             // Set heartbeat check interval
-            heatBeatCheckInterval = Mathf.Clamp(Mst.Args.AsFloat(Mst.Args.Names.WebServerHeartbeatCheckInterval, heatBeatCheckInterval), 2f, 120f);
+            heartBeatCheckInterval = Mathf.Clamp(Mst.Args.AsFloat(Mst.Args.Names.WebServerHeartbeatCheckInterval, heartBeatCheckInterval), 2f, 120f);
             checkHeartBeatUrl = Mst.Args.AsString($"live-{Mst.Args.Names.WebServerHeartbeatCheckPage}", $"live-{Mst.Helper.CreateGuidString()}");
 
             // Set port
@@ -96,6 +156,11 @@ namespace MasterServerToolkit.MasterServer
 
             // Set port
             httpAddress = Mst.Args.AsString(Mst.Args.Names.WebAddress, httpAddress);
+        }
+
+        private void OnValidate()
+        {
+            heartBeatCheckInterval = Mathf.Clamp(heartBeatCheckInterval, 2f, 120f);
         }
 
         private void OnDestroy()
@@ -113,18 +178,18 @@ namespace MasterServerToolkit.MasterServer
             CertificatePassword = Mst.Settings.CertificatePassword;
 
             // Start heartbeat checking
-            InvokeRepeating(nameof(CheckHeartBeat), heatBeatCheckInterval, heatBeatCheckInterval);
+            InvokeRepeating(nameof(CheckHeartBeat), heartBeatCheckInterval, heartBeatCheckInterval);
 
-            // Start
-            Listen();
+            if (autostart)
+            {
+                // Start
+                Listen();
+            }
         }
 
-        [ContextMenu("Restart")]
-        private void Restart()
-        {
-            Listen();
-        }
-
+        /// <summary>
+        /// Starts listening web requests
+        /// </summary>
         public void Listen()
         {
             // Stop if started
@@ -265,7 +330,7 @@ namespace MasterServerToolkit.MasterServer
                     hbWebResponse.Close();
 
                 logger.Error($"Web server is dead: {e.Message}. Restarting...");
-                Restart();
+                Listen();
             }
         }
 
