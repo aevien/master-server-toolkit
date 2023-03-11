@@ -5,6 +5,7 @@ using System.Text;
 using WebSocketSharp;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
+        using System.Collections;
         using System.Runtime.InteropServices;
 #endif
 

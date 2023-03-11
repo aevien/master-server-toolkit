@@ -71,6 +71,18 @@ namespace MasterServerToolkit.Networking
         /// 
         /// </summary>
         /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        /// <param name="packet"></param>
+        /// <returns></returns>
+        public static T FromBytes<T>(byte[] data) where T : ISerializablePacket, new()
+        {
+            return FromBytes<T>(data, new T());
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="value"></param>
         /// <param name="packet"></param>
         /// <returns></returns>

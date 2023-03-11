@@ -83,6 +83,11 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
             return Input.GetMouseButtonDown(0);
         }
 
+        public virtual bool IsPaused()
+        {
+            return Input.GetKeyDown(KeyCode.Escape);
+        }
+
         public bool MouseToWorldHitPoint(out RaycastHit hit, float maxCheckDistance = Mathf.Infinity)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

@@ -15,13 +15,13 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
     {
         #region INSPECTOR
 
-        [Header("Mirror Network Manager Components"), SerializeField]
+        [Header("Components"), SerializeField]
         protected RoomServerManager roomServerManager;
 
         /// <summary>
         /// Log levelof this module
         /// </summary>
-        [Header("Mirror Network Manager Settings"), SerializeField]
+        [Header("Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
 
         #endregion
@@ -99,15 +99,15 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
+            if (roomServerManager == null)
+                roomServerManager = GetComponent<RoomServerManager>();
+
             // Prevent start network manager in headless mode automatically
             autoStartServerBuild = false;
         }
 
         public void StartRoomServer()
         {
-            // Find room server if it is not assigned in inspector
-            if (!roomServerManager) roomServerManager = GetComponent<RoomServerManager>();
-
             // Set online scene
             onlineScene = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
 

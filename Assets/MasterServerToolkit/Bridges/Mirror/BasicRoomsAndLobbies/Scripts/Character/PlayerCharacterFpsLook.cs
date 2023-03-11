@@ -1,4 +1,5 @@
 ﻿#if MIRROR
+using System;
 using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
@@ -52,6 +53,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
             {
                 UpdateCameraPosition();
                 UpdateCameraRotation();
+                UpdateCursor();
             }
         }
 
@@ -63,6 +65,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 
         public override void OnStartLocalPlayer()
         {
+            ToggleCursor();
             CreateCameraControls();
         }
 
@@ -97,6 +100,28 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
             }
         }
 
+        private void UpdateCursor()
+        {
+            if (inputController.IsPaused())
+            {
+                ToggleCursor();
+            }
+        }
+
+        private void ToggleCursor()
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+
         protected override void UpdateCameraPosition()
         {
             Vector3 newCameraPosition = transform.position + transform.rotation * cameraPoint;
@@ -105,19 +130,22 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
 
         protected override void UpdateCameraRotation()
         {
-            cameraRotation.y += inputController.MouseX() * lookSensitivity.x;
-            cameraRotation.x = Mathf.Clamp(cameraRotation.x - inputController.MouseY() * lookSensitivity.y, minLookAngle, maxLookAngle);
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                cameraRotation.y += inputController.MouseX() * lookSensitivity.x;
+                cameraRotation.x = Mathf.Clamp(cameraRotation.x - inputController.MouseY() * lookSensitivity.y, minLookAngle, maxLookAngle);
 
-            if (useSmoothness)
-            {
-                transform.rotation = Quaternion.Euler(0f, smoothedCameraRotation.y, 0f);
-                smoothedCameraRotation = Vector3.SmoothDamp(smoothedCameraRotation, cameraRotation, ref currentCameraRotationVelocity, smoothnessTime);
-                lookCamera.transform.rotation = Quaternion.Euler(smoothedCameraRotation.x, smoothedCameraRotation.y, 0f);
-            }
-            else
-            {
-                transform.rotation = Quaternion.Euler(0f, cameraRotation.y, 0f);
-                lookCamera.transform.rotation = Quaternion.Euler(cameraRotation.x, cameraRotation.y, 0f);
+                if (useSmoothness)
+                {
+                    transform.rotation = Quaternion.Euler(0f, smoothedCameraRotation.y, 0f);
+                    smoothedCameraRotation = Vector3.SmoothDamp(smoothedCameraRotation, cameraRotation, ref currentCameraRotationVelocity, smoothnessTime);
+                    lookCamera.transform.rotation = Quaternion.Euler(smoothedCameraRotation.x, smoothedCameraRotation.y, 0f);
+                }
+                else
+                {
+                    transform.rotation = Quaternion.Euler(0f, cameraRotation.y, 0f);
+                    lookCamera.transform.rotation = Quaternion.Euler(cameraRotation.x, cameraRotation.y, 0f);
+                }
             }
         }
     }

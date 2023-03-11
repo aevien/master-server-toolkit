@@ -10,9 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 643701551274921288}
   - component: {fileID: 643701551274921334}
-  - component: {fileID: 643701551274921289}
+  - component: {fileID: 8973327076234395987}
   - component: {fileID: 643701551274921291}
-  - component: {fileID: 643701551274921332}
   m_Layer: 0
   m_Name: --ROOM_SERVER
   m_TagString: Untagged
@@ -50,10 +49,11 @@ MonoBehaviour:
   dontDestroyOnLoad: 1
   runInBackground: 1
   autoStartServerBuild: 1
-  serverTickRate: 30
+  autoConnectClientBuild: 0
+  sendRate: 30
   offlineScene: 
   onlineScene: 
-  transport: {fileID: 643701551274921289}
+  transport: {fileID: 8973327076234395987}
   networkAddress: localhost
   maxConnections: 10
   authenticator: {fileID: 0}
@@ -62,9 +62,10 @@ MonoBehaviour:
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
+  timeInterpolationGui: 0
   roomServerManager: {fileID: 643701551274921291}
   logLevel: 0
---- !u!114 &643701551274921289
+--- !u!114 &8973327076234395987
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -73,26 +74,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 643701551274921290}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b0fecffa3f624585964b0d0eb21b18e, type: 3}
+  m_Script: {fileID: 11500000, guid: 0110f245bfcfc7d459681f7bd9ebc590, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Port: 7777
-  DualMode: 1
-  NoDelay: 1
-  Interval: 10
-  Timeout: 10000
-  FastResend: 2
-  CongestionWindow: 0
-  SendWindowSize: 4096
-  ReceiveWindowSize: 4096
-  MaxRetransmit: 40
-  NonAlloc: 1
-  MaximizeSendReceiveBuffersToOSLimit: 1
-  ReliableMaxMessageSize: 298449
-  UnreliableMaxMessageSize: 1199
-  debugLog: 0
-  statisticsGUI: 0
-  statisticsLog: 0
+  port: 7778
+  maxMessageSize: 16384
+  handshakeMaxSize: 3000
+  noDelay: 1
+  sendTimeout: 5000
+  receiveTimeout: 20000
+  serverMaxMessagesPerTick: 10000
+  clientMaxMessagesPerTick: 1000
+  batchSend: 1
+  waitBeforeSend: 0
+  clientUseWss: 0
+  sslEnabled: 1
+  sslCertJson: ./cert.json
+  sslProtocols: 12288
+  _logLevels: 3
 --- !u!114 &643701551274921291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,17 +153,3 @@ MonoBehaviour:
   OnPlayerLeftRoomEvent:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &643701551274921332
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 643701551274921290}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c2479fa4db7e6249b2c1a478e8797f2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  roomServerManager: {fileID: 643701551274921291}
-  active: 1

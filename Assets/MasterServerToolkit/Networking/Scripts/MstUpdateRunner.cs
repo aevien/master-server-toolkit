@@ -26,7 +26,7 @@ namespace MasterServerToolkit.Networking
                 IUpdatable runnable = _updatebles[i];
 
                 if (runnable != null)
-                    runnable.Update();
+                    runnable.DoUpdate();
                 else
                     _updatebles.RemoveAt(i);
             }

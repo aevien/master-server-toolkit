@@ -93,7 +93,7 @@ namespace MasterServerToolkit.Networking
             if (TryGetOrCreate(out var instance))
                 instance.StartCoroutine(instance.WaitPingCoroutine(address, callback, timeout));
 #else
-            logger.Warn("You cannot use Ping in WebGL. Ping time will always be zero");
+            _instance.logger.Warn("You cannot use Ping in WebGL. Ping time will always be zero");
             callback?.Invoke(0);
 #endif
         }

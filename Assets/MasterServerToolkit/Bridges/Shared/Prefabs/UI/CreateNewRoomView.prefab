@@ -122,6 +122,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3987525352551131394, guid: 01a92532fcdcefe4fbb08196f0168da3,
+        type: 3}
+      propertyPath: m_Options.m_Options.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4193888564299656558, guid: 01a92532fcdcefe4fbb08196f0168da3,
         type: 3}
       propertyPath: m_AnchorMax.x
@@ -131,6 +136,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4698931323303305527, guid: 01a92532fcdcefe4fbb08196f0168da3,
+        type: 3}
+      propertyPath: m_text
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 01a92532fcdcefe4fbb08196f0168da3, type: 3}
@@ -528,6 +538,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8249671917318911619, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+        type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8249671917318911622, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}

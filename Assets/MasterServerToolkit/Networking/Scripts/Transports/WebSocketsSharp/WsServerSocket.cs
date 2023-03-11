@@ -56,7 +56,7 @@ namespace MasterServerToolkit.Networking
         /// Opens the socket and starts listening to a given port and IP
         /// </summary>
         /// <param name="port"></param>
-        public void Listen(string ip, int port)
+        public void Listen(string address, int port)
         {
             try
             {
@@ -65,13 +65,14 @@ namespace MasterServerToolkit.Networking
 
                 server?.Stop();
 
-                if (ip == "127.0.0.1".Trim() || ip == "localhost".Trim())
+                if (IPAddress.TryParse(address, out var ipAddress))
                 {
-                    server = new WebSocketServer(port, UseSecure);
+                    server = new WebSocketServer(ipAddress, port, UseSecure);
                 }
                 else
                 {
-                    server = new WebSocketServer(IPAddress.Parse(ip), port, UseSecure);
+                    string url = $"{(UseSecure ? "wss://" : "ws://")}{address}:{port}";
+                    server = new WebSocketServer(url);
                 }
 
                 server.KeepClean = true;
@@ -121,7 +122,8 @@ namespace MasterServerToolkit.Networking
                     server.SslConfiguration.EnabledSslProtocols =
                         System.Security.Authentication.SslProtocols.Tls
                         | System.Security.Authentication.SslProtocols.Tls11
-                        | System.Security.Authentication.SslProtocols.Tls12;
+                        | System.Security.Authentication.SslProtocols.Tls12
+                        | System.Security.Authentication.SslProtocols.Tls13;
                 }
 
                 // Setup all services used by server

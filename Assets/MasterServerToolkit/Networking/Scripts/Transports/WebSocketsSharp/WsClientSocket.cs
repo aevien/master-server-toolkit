@@ -198,7 +198,7 @@ namespace MasterServerToolkit.Networking
             Connect(Address, Port);
         }
 
-        public void Update()
+        public void DoUpdate()
         {
             if (webSocket == null)
             {

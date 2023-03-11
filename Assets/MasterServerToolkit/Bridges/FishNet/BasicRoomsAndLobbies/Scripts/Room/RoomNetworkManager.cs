@@ -16,27 +16,23 @@ namespace MasterServerToolkit.Bridges.FishNetworking
     {
         #region INSPECTOR
 
+        [Header("Components"), SerializeField]
+        protected RoomServerManager roomServerManager;
+        [SerializeField]
+        protected NetworkManager networkManager;
+
         /// <summary>
         /// Log levelof this module
         /// </summary>
-        [Header("Network Manager Settings"), SerializeField]
+        [Header("Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
 
         #endregion
 
-        public static RoomNetworkManager Instance { get; private set; }
         /// <summary>
         /// Logger assigned to this module
         /// </summary>
         protected Logging.Logger logger;
-        /// <summary>
-        /// The NetworkManager on this object.
-        /// </summary>
-        private NetworkManager _networkManager;
-        /// <summary>
-        /// 
-        /// </summary>
-        protected RoomServerManager roomServerManager;
         /// <summary>
         /// 
         /// </summary>
@@ -47,7 +43,11 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
-            _networkManager = GetComponent<NetworkManager>();
+            if (networkManager == null)
+                networkManager = GetComponent<NetworkManager>();
+
+            if (roomServerManager == null)
+                roomServerManager = GetComponent<RoomServerManager>();
         }
 
         private void Start()
@@ -55,20 +55,16 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             if (!defaultScene)
                 defaultScene = GetComponent<DefaultScene>();
 
-            _networkManager.ServerManager.OnServerConnectionState += ServerManager_OnServerConnectionState;
-            _networkManager.ServerManager.OnRemoteConnectionState += ServerManager_OnRemoteConnectionState;
+            networkManager.ServerManager.OnServerConnectionState += ServerManager_OnServerConnectionState;
+            networkManager.ServerManager.OnRemoteConnectionState += ServerManager_OnRemoteConnectionState;
         }
 
         public void StartRoomServer()
         {
-            // Find room server if it is not assigned in inspector
-            if (!roomServerManager)
-                roomServerManager = GetComponent<RoomServerManager>();
-
             string onlineScene = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
             defaultScene.SetOnlineScene(onlineScene);
 
-            TransportManager transportManager = _networkManager.TransportManager;
+            TransportManager transportManager = networkManager.TransportManager;
             Transport transport = transportManager.Transport;
 
             // Set the max number of connections
@@ -82,12 +78,12 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             logger.Info($"Online Scene: {onlineScene}");
 
             // Start server
-            _networkManager.ServerManager.StartConnection();
+            networkManager.ServerManager.StartConnection();
         }
 
         public void StopRoomServer()
         {
-            _networkManager.ServerManager.StopConnection(true);
+            networkManager.ServerManager.StopConnection(true);
         }
 
         #region FISHNET CALLBACKS
@@ -96,9 +92,9 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         {
             if (state.ConnectionState == LocalConnectionState.Started)
             {
-                logger.Info($"Room Server started and listening to: {_networkManager.TransportManager.Transport.GetServerBindAddress(IPAddressType.IPv4)}:{roomServerManager.RoomOptions.RoomPort}");
+                logger.Info($"Room Server started and listening to: {networkManager.TransportManager.Transport.GetServerBindAddress(IPAddressType.IPv4)}:{roomServerManager.RoomOptions.RoomPort}");
 
-                _networkManager.ServerManager.RegisterBroadcast<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler);
+                networkManager.ServerManager.RegisterBroadcast<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler);
 
                 if (roomServerManager) roomServerManager.OnServerStarted();
             }
@@ -107,7 +103,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
                 logger.Info("Room Server stopped");
 
-                _networkManager.ServerManager.UnregisterBroadcast<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler);
+                networkManager.ServerManager.UnregisterBroadcast<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler);
 
                 if (roomServerManager) roomServerManager.OnServerStopped();
             }

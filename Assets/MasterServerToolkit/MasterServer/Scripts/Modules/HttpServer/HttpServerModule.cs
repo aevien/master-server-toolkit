@@ -173,7 +173,7 @@ namespace MasterServerToolkit.MasterServer
             CancelInvoke();
 
             // Setup secure connection
-            UseSecure = Mst.Settings.UseSecure;
+            UseSecure = false; // Mst.Settings.UseSecure;
             CertificatePath = Mst.Settings.CertificatePath;
             CertificatePassword = Mst.Settings.CertificatePassword;
 

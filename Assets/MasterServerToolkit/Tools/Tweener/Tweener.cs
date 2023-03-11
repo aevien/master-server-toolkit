@@ -39,7 +39,7 @@ namespace MasterServerToolkit.Utils
         }
 #endif
 
-        public void Update()
+        public void DoUpdate()
         {
             foreach (var actionKvp in actions)
                 ProcessAction(actionKvp);

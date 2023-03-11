@@ -902,6 +902,67 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!1 &178791788
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 178791790}
+  - component: {fileID: 178791789}
+  m_Layer: 0
+  m_Name: --CONNECTION_TO_MASTER
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &178791789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 178791788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f4cb439243992949b9b12a35c4760c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 0
+  isGlobal: 1
+  serverIp: 127.0.0.1
+  serverPort: 5000
+  timeout: 5
+  maxAttemptsToConnect: 5
+  waitAndConnect: 0.2
+  connectOnStart: 1
+  OnConnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnFailedConnectEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDisconnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &178791790
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 178791788}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3103.9978, y: 543.1653, z: -2735.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &194639973
 Mesh:
   m_ObjectHideFlags: 0
@@ -2770,7 +2831,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 703154918}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -16.5, y: -0.75, z: 18}
+  m_LocalPosition: {x: -17.41256, y: -0.75, z: 17.76107}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6073,7 +6134,7 @@ PrefabInstance:
     - target: {fileID: 96597585286142794, guid: c9d1e01fb39c63247a88620789b39937,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -24.94934
+      value: -24.94989
       objectReference: {fileID: 0}
     - target: {fileID: 96597585286142794, guid: c9d1e01fb39c63247a88620789b39937,
         type: 3}
@@ -6093,6 +6154,11 @@ PrefabInstance:
     - target: {fileID: 96597585286142796, guid: c9d1e01fb39c63247a88620789b39937,
         type: 3}
       propertyPath: hideOnStart
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 96597585286142798, guid: c9d1e01fb39c63247a88620789b39937,
+        type: 3}
+      propertyPath: m_PresetInfoIsWorld
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 96597585286142837, guid: c9d1e01fb39c63247a88620789b39937,
@@ -7440,7 +7506,12 @@ PrefabInstance:
     - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
         type: 3}
       propertyPath: terminateRoomDelay
-      value: 5
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
+        type: 3}
+      propertyPath: terminateRoomWhenLastPlayerQuits
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
         type: 3}
@@ -7450,6 +7521,16 @@ PrefabInstance:
     - target: {fileID: 643701551274921332, guid: 3114b2bf90808704bae88ad10a2aafd1,
         type: 3}
       propertyPath: active
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 643701551274921334, guid: 3114b2bf90808704bae88ad10a2aafd1,
+        type: 3}
+      propertyPath: autoStartServerBuild
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8973327076234395987, guid: 3114b2bf90808704bae88ad10a2aafd1,
+        type: 3}
+      propertyPath: sslEnabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -7834,6 +7915,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Arena
+      objectReference: {fileID: 0}
+    - target: {fileID: 7900704462852736170, guid: e226e1f60aca533438a0d1665b2283fa,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7900704462852736171, guid: e226e1f60aca533438a0d1665b2283fa,
         type: 3}

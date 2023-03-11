@@ -20,7 +20,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var property in properties)
             {
-                _value[property.Key] = properties.AsUInt16(property.Key);
+                _value[property.Key] = properties.AsInt(property.Key);
             }
         }
 

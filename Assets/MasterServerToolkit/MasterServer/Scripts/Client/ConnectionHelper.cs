@@ -120,7 +120,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual IClientSocket ConnectionFactory()
         {
-            return Mst.Client.Connection;
+            return Mst.Connection;
         }
 
         /// <summary>

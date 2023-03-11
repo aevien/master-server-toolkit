@@ -50,6 +50,7 @@ MonoBehaviour:
   _refreshDefaultPrefabs: 0
   _runInBackground: 1
   _dontDestroyOnLoad: 1
+  _objectPool: {fileID: 0}
   _persistence: 0
   _logging: {fileID: 11400000, guid: 36d2500f6fd077d4691cbc09333202a4, type: 2}
   _spawnablePrefabs: {fileID: 11400000, guid: d8910c11a56a448468126fadd5e483b3, type: 2}
@@ -65,6 +66,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37f9293ac5ed6ca4997283d324e73e4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  roomServerManager: {fileID: 1182598396324832459}
+  networkManager: {fileID: 1182598396324832457}
   logLevel: 0
 --- !u!114 &1182598396324832459
 MonoBehaviour:
@@ -139,6 +142,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57ce8bbb58966cb45a7140f32da5327a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _useGlobalScenes: 1
   _startInOffline: 0
   _offlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Client/Client.unity
   _onlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room/Room.unity

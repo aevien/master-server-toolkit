@@ -168,24 +168,6 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        protected override IClientSocket ConnectionFactory()
-        {
-            if (!Mst.Client.Rooms.IsClientMode)
-            {
-                if (!RoomToMasterConnector.Instance)
-                {
-                    var connectorObject = new GameObject("--ROOM_CONNECTION_TO_MASTER");
-                    connectorObject.AddComponent<RoomToMasterConnector>();
-                }
-
-                return RoomToMasterConnector.Instance.Connection;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         private void OnConnectedToMasterEventHandler(IClientSocket client)
         {
             logger.Info("Room server connected to master server as client");
