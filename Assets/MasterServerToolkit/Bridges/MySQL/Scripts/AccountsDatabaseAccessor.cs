@@ -302,5 +302,10 @@ namespace MasterServerToolkit.Bridges.MySQL
                 }
             }
         }
+
+        public Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyKey, string propertyValue)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

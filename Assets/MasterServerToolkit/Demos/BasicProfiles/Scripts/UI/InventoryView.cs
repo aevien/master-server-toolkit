@@ -185,44 +185,50 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private void BuyItem(StoreOffer storeOffer)
         {
-            var data = new BuySellItemPacket
+            if (Mst.Client.Connection.IsConnected)
             {
-                Id = storeOffer.id,
-                Price = storeOffer.price,
-                Currency = storeOffer.currency
-            };
-
-            Mst.Client.Connection.SendMessage(MessageOpCodes.BuyDemoItem, data, (status, responce) =>
-            {
-                if (status != Networking.ResponseStatus.Success)
+                var data = new BuySellItemPacket
                 {
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
-                    return;
-                }
+                    Id = storeOffer.id,
+                    Price = storeOffer.price,
+                    Currency = storeOffer.currency
+                };
 
-                logger.Info($"You bought {storeOffer.name}");
-            });
+                Mst.Client.Connection.SendMessage(MessageOpCodes.BuyDemoItem, data, (status, responce) =>
+                {
+                    if (status != Networking.ResponseStatus.Success)
+                    {
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
+                        return;
+                    }
+
+                    logger.Info($"You bought {storeOffer.name}");
+                });
+            }
         }
 
         private void SellItem(StoreOffer storeOffer)
         {
-            var data = new BuySellItemPacket
+            if (Mst.Client.Connection.IsConnected)
             {
-                Id = storeOffer.id,
-                Price = (int)(storeOffer.price * 0.7f),
-                Currency = storeOffer.currency
-            };
-
-            Mst.Client.Connection.SendMessage(MessageOpCodes.SellDemoItem, data, (status, responce) =>
-            {
-                if (status != Networking.ResponseStatus.Success)
+                var data = new BuySellItemPacket
                 {
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
-                    return;
-                }
+                    Id = storeOffer.id,
+                    Price = (int)(storeOffer.price * 0.7f),
+                    Currency = storeOffer.currency
+                };
 
-                logger.Info($"You sold {storeOffer.name}");
-            });
+                Mst.Client.Connection.SendMessage(MessageOpCodes.SellDemoItem, data, (status, responce) =>
+                {
+                    if (status != Networking.ResponseStatus.Success)
+                    {
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
+                        return;
+                    }
+
+                    logger.Info($"You sold {storeOffer.name}");
+                });
+            }
         }
     }
 }

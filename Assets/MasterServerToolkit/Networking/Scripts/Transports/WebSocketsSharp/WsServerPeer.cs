@@ -96,7 +96,7 @@ namespace MasterServerToolkit.Networking
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
-            if (serviceForPeer.ConnectionState == WebSocketSharp.WebSocketState.Open)
+            if (serviceForPeer.ReadyState == WebSocketState.Open)
             {
                 // There's a bug in websockets
                 // When server sends a message to client right after client
@@ -115,7 +115,7 @@ namespace MasterServerToolkit.Networking
                     }
                 }
 
-                Mst.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+                Mst.TrafficStatistics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
                 serviceForPeer.SendAsync(message.ToBytes());
             }
             else

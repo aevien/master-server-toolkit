@@ -71,18 +71,9 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
-        /// <summary>
-        /// List of users by username
-        /// </summary>
-        private Dictionary<string, RoomPlayer> playersByUsername;
-        /// <summary>
-        /// List of users by master peer id
-        /// </summary>
-        private Dictionary<int, RoomPlayer> playersByMasterPeerId;
-        /// <summary>
-        /// List of users by room peer id
-        /// </summary>
-        private Dictionary<int, RoomPlayer> playersByRoomPeerId;
+        private readonly Dictionary<string, RoomPlayer> playersByUsername = new Dictionary<string, RoomPlayer>();
+        private readonly Dictionary<int, RoomPlayer> playersByMasterPeerId = new Dictionary<int, RoomPlayer>();
+        private readonly Dictionary<int, RoomPlayer> playersByRoomPeerId = new Dictionary<int, RoomPlayer>();
 
         /// <summary>
         /// Options of this room we must share with clients
@@ -135,10 +126,6 @@ namespace MasterServerToolkit.MasterServer
                 terminateRoomWhenDisconnected = false;
                 terminateRoomWhenLastPlayerQuits = false;
             }
-
-            playersByUsername = new Dictionary<string, RoomPlayer>();
-            playersByMasterPeerId = new Dictionary<int, RoomPlayer>();
-            playersByRoomPeerId = new Dictionary<int, RoomPlayer>();
 
             ProfileFactory = (userId) => new ObservableServerProfile(userId);
         }

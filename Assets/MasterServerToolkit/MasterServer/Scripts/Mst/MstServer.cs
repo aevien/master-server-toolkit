@@ -11,7 +11,7 @@ namespace MasterServerToolkit.MasterServer
         public MstSpawnersServer Spawners { get; private set; }
         public MstDbAccessor DbAccessors { get; private set; }
         public MstNotificationServer Notifications { get; private set; }
-        public static MstAnalytics Analytics { get; private set; }
+        public static MstTrafficStatistics Analytics { get; private set; }
 
         public MstServer(IClientSocket connection) : base(connection)
         {
@@ -22,7 +22,7 @@ namespace MasterServerToolkit.MasterServer
             Lobbies = new MstLobbiesServer(connection);
             Profiles = new MstProfilesServer(connection);
             Notifications = new MstNotificationServer(connection);
-            Analytics = new MstAnalytics();
+            Analytics = new MstTrafficStatistics();
         }
     }
 }

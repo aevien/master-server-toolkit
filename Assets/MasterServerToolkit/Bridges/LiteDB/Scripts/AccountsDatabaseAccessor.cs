@@ -88,6 +88,15 @@ namespace MasterServerToolkit.Bridges.LiteDB
             });
         }
 
+        public async Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyKey, string propertyValue)
+        {
+            return await Task.Run(() =>
+            {
+                return accountsCollection.FindOne(i => i.Properties[propertyKey] != null
+                && i.Properties[propertyKey] == propertyValue);
+            });
+        }
+
         public async Task SavePasswordResetCodeAsync(IAccountInfoData account, string code)
         {
             await Task.Run(() =>

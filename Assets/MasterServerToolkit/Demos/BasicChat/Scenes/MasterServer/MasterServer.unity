@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -389,7 +389,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   useAuthModule: 0
-  useCensorModule: 1
+  useCensorModule: 0
   setFirstChannelAsLocal: 1
   setLastChannelAsLocal: 1
   allowUsernamePicking: 1
@@ -441,7 +441,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  heatBeatCheckInterval: 5
+  heartBeatCheckInterval: 5
+  autostart: 1
   httpAddress: 127.0.0.1
   httpPort: 8080
   defaultIndexPage:

@@ -572,7 +572,7 @@ namespace MasterServerToolkit.Networking
                 return;
             }
 
-            Mst.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Incoming);
+            Mst.TrafficStatistics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Incoming);
 
             HandleMessage(message);
         }

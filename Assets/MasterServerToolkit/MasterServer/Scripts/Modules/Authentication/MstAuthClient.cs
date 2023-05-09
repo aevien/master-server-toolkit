@@ -256,7 +256,8 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!HasAuthToken())
             {
-                throw new Exception("You have no auth token!");
+                callback.Invoke(null, "You have no auth token");
+                return;
             }
 
             SignInWithToken(PlayerPrefs.GetString(MstDictKeys.USER_AUTH_TOKEN), callback, connection);
@@ -416,7 +417,7 @@ namespace MasterServerToolkit.MasterServer
 
                     IsSignedIn = true;
 
-                    callback.Invoke(AccountInfo, null);
+                    callback?.Invoke(AccountInfo, null);
                     OnSignedInEvent?.Invoke();
                 });
             }, connection);

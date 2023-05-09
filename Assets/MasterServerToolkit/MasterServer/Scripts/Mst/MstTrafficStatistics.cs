@@ -1,16 +1,15 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace MasterServerToolkit.MasterServer
 {
     public enum TrafficType { Incoming, Outgoing }
-
-    public class MstAnalytics
+    public class MstTrafficStatistics
     {
         private long _totalBytesSent = 0;
         private long _totalBytesReceived = 0;
 
-        ConcurrentDictionary<int, long> _totalBytesSentByOpCode = new ConcurrentDictionary<int, long>();
-        ConcurrentDictionary<int, long> _totalBytesReceivedByOpCode = new ConcurrentDictionary<int, long>();
+        ConcurrentDictionary<ushort, long> _totalBytesSentByOpCode = new ConcurrentDictionary<ushort, long>();
+        ConcurrentDictionary<ushort, long> _totalBytesReceivedByOpCode = new ConcurrentDictionary<ushort, long>();
 
         public long TotalReceived => _totalBytesReceived;
         public long TotalSent => _totalBytesSent;
@@ -38,7 +37,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="opCode"></param>
         /// <param name="dataLength"></param>
         /// <param name="trafficType"></param>
-        public void RegisterOpCodeTrafic(int opCode, long dataLength, TrafficType trafficType)
+        public void RegisterOpCodeTrafic(ushort opCode, long dataLength, TrafficType trafficType)
         {
             //Debug.Log($"{trafficType} Traffic, OpCode: {opCode}, Data Length: {dataLength}b");
 

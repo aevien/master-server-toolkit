@@ -19,7 +19,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Saving profile data... Please wait!");
 
-            MstTimer.WaitForSeconds(1f, () =>
+            MstTimer.WaitForSeconds(0.1f, () =>
             {
                 Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), (status, response) =>
                 {

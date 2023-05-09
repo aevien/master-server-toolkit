@@ -92,6 +92,8 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="socket"></param>
         public void ChangeConnection(IClientSocket socket)
         {
+            if (Connection == socket) return;
+
             // Clear just connection but not handlers
             ClearConnection(false);
 

@@ -9,13 +9,13 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
 {
     public class BasicWorldsBuild
     {
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Worlds/Room(Headless)")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Worlds/Room(Headless)")]
         private static void BuildRoomForWindowsHeadless()
         {
             BuildRoomForWindows(true);
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Worlds/Room(Normal)")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Worlds/Room(Normal)")]
         private static void BuildRoomForWindowsNormal()
         {
             BuildRoomForWindows(false);
@@ -67,7 +67,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             }
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Worlds/Master Server and Spawner")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Worlds/Master Server and Spawner")]
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "BasicWorlds", "MasterAndSpawner");
@@ -112,7 +112,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             }
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Worlds/Spawner")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Worlds/Spawner")]
         private static void BuildSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "BasicWorlds", "Spawner");
@@ -160,7 +160,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             }
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Worlds/Client")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Worlds/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "BasicWorlds", "Client");

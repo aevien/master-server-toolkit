@@ -215,6 +215,11 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public void Dispose()
         {
         }
+
+        public Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyKey, string propertyValue)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 #endif

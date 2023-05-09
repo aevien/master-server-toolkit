@@ -42,9 +42,16 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Gets user account from database by device id. This method can be used for guest accounts
         /// </summary>
-        /// <param name="token"></param>
+        /// <param name="deviceId"></param>
         /// <returns></returns>
         Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId);
+        /// <summary>
+        /// Gets user account from database by property value. This method can be used for guest accounts
+        /// </summary>
+        /// <param name="propertyKey"></param>
+        /// <param name="propertyValue"></param>
+        /// <returns></returns>
+        Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyKey, string propertyValue);
         /// <summary>
         /// Saves code that user gets when reset pasword request
         /// </summary>

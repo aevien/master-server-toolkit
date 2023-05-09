@@ -216,6 +216,17 @@ namespace MasterServerToolkit.MasterServer
             StopServer();
         }
 
+        #region DEBUG METHODS
+
+        [ContextMenu("Disconnect clients")]
+        private void DisconnectAllClients()
+        {
+            foreach (var peer in connectedPeers.Values)
+                peer.Disconnect("Debug");
+        }
+
+        #endregion
+
         /// <summary>
         /// Check if server is allowed to be started in editor. This feature is for testing purpose only
         /// </summary>
@@ -251,8 +262,8 @@ namespace MasterServerToolkit.MasterServer
                 info.AddField("localIp", Address);
                 info.AddField("publicIp", Address);
                 info.AddField("port", Port);
-                info.AddField("incomingTraffic", Mst.Analytics.TotalReceived);
-                info.AddField("outgoingTraffic", Mst.Analytics.TotalSent);
+                info.AddField("incomingTraffic", Mst.TrafficStatistics.TotalReceived);
+                info.AddField("outgoingTraffic", Mst.TrafficStatistics.TotalSent);
             }
             catch (Exception e)
             {

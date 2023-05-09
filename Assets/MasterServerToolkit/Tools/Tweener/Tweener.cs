@@ -25,7 +25,7 @@ namespace MasterServerToolkit.Utils
         private static int _id = 0;
         private static Tweener _tweener;
         private static readonly ConcurrentDictionary<int, Func<bool>> actions = new ConcurrentDictionary<int, Func<bool>>();
-        private static readonly ConcurrentDictionary<int, TweenerActionInfoCallback> onCompletes = new ConcurrentDictionary<int, TweenerActionInfoCallback>();
+        private static readonly ConcurrentDictionary<int, TweenerActionInfoCallback> onCompleted = new ConcurrentDictionary<int, TweenerActionInfoCallback>();
 
         public static int NextId => _id++;
 
@@ -35,7 +35,7 @@ namespace MasterServerToolkit.Utils
         {
             _id = 0;
             actions.Clear();
-            onCompletes.Clear();
+            onCompleted.Clear();
         }
 #endif
 
@@ -61,7 +61,7 @@ namespace MasterServerToolkit.Utils
             {
                 actions.TryRemove(actionKvp.Key, out _);
 
-                if (onCompletes.TryRemove(actionKvp.Key, out var onComplete))
+                if (onCompleted.TryRemove(actionKvp.Key, out var onComplete))
                     onComplete?.Invoke(actionKvp.Key);
             }
         }
@@ -95,7 +95,7 @@ namespace MasterServerToolkit.Utils
         public static void AddOnCompleteListener(TweenerActionInfo actionInfo, TweenerActionInfoCallback callback)
         {
             if (actionInfo == null) return;
-            onCompletes.TryAdd(actionInfo.Id, callback);
+            onCompleted.TryAdd(actionInfo.Id, callback);
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace MasterServerToolkit.Utils
         /// <param name="callback"></param>
         public static void AddOnCompleteListener(int id, TweenerActionInfoCallback callback)
         {
-            onCompletes.TryAdd(id, callback);
+            onCompleted.TryAdd(id, callback);
         }
 
         /// <summary>

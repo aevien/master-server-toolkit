@@ -230,8 +230,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual string GenerateGuestUsername()
         {
-            string prefix = string.IsNullOrEmpty(guestPrefix) ? "user-" : guestPrefix;
-            return $"{prefix}{Mst.Helper.CreateFriendlyId()}";
+            string prefix = string.IsNullOrEmpty(guestPrefix) ? "user#" : guestPrefix;
+            return $"{prefix}{Mst.Helper.CreateID_16()}";
         }
 
         /// <summary>
@@ -840,7 +840,7 @@ namespace MasterServerToolkit.MasterServer
             catch (Exception e)
             {
                 logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                message.Respond(ResponseStatus.Error);
             }
         }
 

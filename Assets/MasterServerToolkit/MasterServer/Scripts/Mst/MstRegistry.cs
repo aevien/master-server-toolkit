@@ -55,7 +55,6 @@ namespace MasterServerToolkit.MasterServer
         {
             if (messageOpCodes.ContainsKey(code))
             {
-                Logs.Error($"Code {code} with name {name} is already registered");
                 return;
             }
 
@@ -71,7 +70,6 @@ namespace MasterServerToolkit.MasterServer
         {
             if (profileOpCodes.ContainsKey(code))
             {
-                Logs.Error($"Code {code} with name {name} is already registered");
                 return;
             }
 

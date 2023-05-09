@@ -66,7 +66,7 @@ namespace MasterServerToolkit.Networking
                 }
             }
 
-            Mst.Analytics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+            Mst.TrafficStatistics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
             socket.Send(message.ToBytes());
         }
 

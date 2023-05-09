@@ -96,16 +96,21 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
                 networkManager.ServerManager.RegisterBroadcast<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler);
 
-                if (roomServerManager) roomServerManager.OnServerStarted();
+                if (roomServerManager != null)
+                {
+                    roomServerManager.OnServerStarted();
+                }
             }
             else if (state.ConnectionState == LocalConnectionState.Stopped)
             {
-
                 logger.Info("Room Server stopped");
 
                 networkManager.ServerManager.UnregisterBroadcast<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler);
-
-                if (roomServerManager) roomServerManager.OnServerStopped();
+                
+                if (roomServerManager)
+                {
+                    roomServerManager.OnServerStopped();
+                }
             }
         }
 

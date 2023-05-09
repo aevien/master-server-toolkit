@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -13,6 +14,8 @@ namespace MasterServerToolkit.Bridges
         private Image icon;
         [SerializeField]
         private Image progressImage;
+        [SerializeField]
+        private Sprite defaultSprite;
 
         #endregion
 
@@ -24,13 +27,13 @@ namespace MasterServerToolkit.Bridges
 
         private void Update()
         {
-            if (progressImage)
+            if (progressImage != null && progressImage.isActiveAndEnabled)
                 progressImage.transform.Rotate(0, 0, -200f * Time.deltaTime);
         }
 
         private void SetProgressActive(bool value)
         {
-            if (progressImage)
+            if (progressImage != null)
                 progressImage.gameObject.SetActive(value);
         }
 
@@ -41,7 +44,7 @@ namespace MasterServerToolkit.Bridges
         public void SetAvatarSprite(Sprite avatar)
         {
             icon.sprite = avatar;
-            icon.gameObject.SetActive(icon.sprite);
+            icon.gameObject.SetActive(icon.sprite != null);
         }
 
         /// <summary>
@@ -56,11 +59,13 @@ namespace MasterServerToolkit.Bridges
 
         private IEnumerator StartLoadAvatarImage(string url)
         {
-            SetProgressActive(true);
-
-            using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(url))
+            if (Uri.TryCreate(url, UriKind.Absolute, out Uri balidUri))
             {
-                yield return www.SendWebRequest();
+                SetProgressActive(true);
+
+                using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(url))
+                {
+                    yield return www.SendWebRequest();
 
 #if UNITY_2019_1_OR_NEWER && !UNITY_2020_3_OR_NEWER
                 if (www.isHttpError || www.isNetworkError)
@@ -74,21 +79,26 @@ namespace MasterServerToolkit.Bridges
                     avatarImage.sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
                 }
 #elif UNITY_2020_3_OR_NEWER
-                SetProgressActive(www.result == UnityWebRequest.Result.InProgress);
+                    SetProgressActive(www.result == UnityWebRequest.Result.InProgress);
 
-                if (www.result == UnityWebRequest.Result.ProtocolError
-                    || www.result == UnityWebRequest.Result.ProtocolError
-                     || www.result == UnityWebRequest.Result.DataProcessingError)
-                {
-                    SetAvatarSprite(null);
-                    Debug.Log(www.error);
-                }
-                else if (www.result == UnityWebRequest.Result.Success)
-                {
-                    var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-                    SetAvatarSprite(Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f));
-                }
+                    if (www.result == UnityWebRequest.Result.ProtocolError
+                        || www.result == UnityWebRequest.Result.ProtocolError
+                         || www.result == UnityWebRequest.Result.DataProcessingError)
+                    {
+                        SetAvatarSprite(defaultSprite);
+                        Debug.Log(www.error);
+                    }
+                    else if (www.result == UnityWebRequest.Result.Success)
+                    {
+                        var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+                        SetAvatarSprite(Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f));
+                    }
 #endif
+                }
+            }
+            else
+            {
+                Debug.Log($"Url {url} is not valid");
             }
         }
     }

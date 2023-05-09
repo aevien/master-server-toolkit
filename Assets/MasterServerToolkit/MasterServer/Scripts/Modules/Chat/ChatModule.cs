@@ -17,7 +17,7 @@ namespace MasterServerToolkit.MasterServer
         /// If true, chat module will subscribe to auth module, and automatically setup chat users when they log in
         /// </summary>
         [Header("General Settings")]
-        [SerializeField, Tooltip("If true, chat module will subscribe to auth module, and automatically setup chat users when they log in")]
+        [SerializeField, Tooltip("If the value is true, the chat module will subscribe to the authentication module and automatically add the user to the chat module when logging in. After that, the user is ready to receive chat messages from others.")]
         protected bool useAuthModule = true;
 
         [SerializeField, Tooltip("If false, chats will be checked through CensorModule to find use of forbidden words in messages")]
@@ -26,7 +26,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// If true, the first channel that user joins will be set as hist local channel
         /// </summary>
-        [SerializeField, Tooltip("If true, the first channel that user joins will be set as his local channel")]
+        [SerializeField, Tooltip("If true, the first channel that user joins will be set as his default channel")]
         protected bool setFirstChannelAsLocal = true;
 
         /// <summary>

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1182598396324832457}
   - component: {fileID: 1182598396324832458}
   - component: {fileID: 1182598396324832459}
+  - component: {fileID: 6429945057897662660}
   - component: {fileID: 4418077282172698758}
   m_Layer: 0
   m_Name: --ROOM_SERVER
@@ -130,6 +131,29 @@ MonoBehaviour:
   OnPlayerLeftRoomEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6429945057897662660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182598396324832461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68828c85278210948b9d50a8db3aab74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _authenticator: {fileID: 0}
+  _syncTypeRate: 0.1
+  SpawnPacking:
+    Position: 0
+    Rotation: 2
+    Scale: 2
+  _changeFrameRate: 1
+  _frameRate: 500
+  _shareIds: 1
+  _startOnHeadless: 0
+  _limitClientMTU: 1
 --- !u!114 &4418077282172698758
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -104,12 +104,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: ClientInformationView
+  title: ClientInformationView
   hideOnStart: 0
   allwaysOnTop: 1
   ignoreHideAll: 1
   useRaycastBlock: 0
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 0}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -161,7 +163,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -15, y: -15}
-  m_SizeDelta: {x: 400, y: 0}
+  m_SizeDelta: {x: 600, y: 0}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &491393148821242989
 CanvasRenderer:
@@ -326,7 +328,7 @@ PrefabInstance:
     - target: {fileID: 1914646526921349984, guid: f09c1d09d4f61904fabcd4dae29d8baa,
         type: 3}
       propertyPath: m_fontSize
-      value: 16.4
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 2196233024741024744, guid: f09c1d09d4f61904fabcd4dae29d8baa,
         type: 3}

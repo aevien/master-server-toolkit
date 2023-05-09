@@ -7,9 +7,14 @@ namespace MasterServerToolkit.Networking
     /// <summary>
     /// Web socket service, designed to work with unitys main thread
     /// </summary>
-    public class WsService : WebSocketServiceBehavior, IDisposable
+    public class WsService : WebSocketBehavior, IDisposable
     {
         private bool disposedValue = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public new WebSocketState ReadyState => base.ReadyState;
 
         /// <summary>
         /// 

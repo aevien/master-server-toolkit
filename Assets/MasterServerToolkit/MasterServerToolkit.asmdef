@@ -6,7 +6,6 @@
         "SimpleWebTransport",
         "Mirror",
         "FishNet.Runtime",
-        "FishNet.Generated",
         "FishNet.Example",
         "Mirror.Transports"
     ],

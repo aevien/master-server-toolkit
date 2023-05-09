@@ -15,7 +15,7 @@ namespace MasterServerToolkit.MasterServer
 
         public void Notify(string message)
         {
-            Peer.SendMessage((ushort)MstOpCodes.Notification, message);
+            Peer.SendMessage(MstOpCodes.Notification, message);
         }
     }
 }

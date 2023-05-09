@@ -9,13 +9,13 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
 {
     public class BasicRoomsAndLobbiesBuild
     {
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Room(Headless)")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Rooms And Lobbies/Room(Headless)")]
         private static void BuildRoomForWindowsHeadless()
         {
             BuildRoomForWindows(true);
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Room(Normal)")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Rooms And Lobbies/Room(Normal)")]
         private static void BuildRoomForWindowsNormal()
         {
             BuildRoomForWindows(false);
@@ -65,7 +65,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             }
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Master Server and Spawner")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Rooms And Lobbies/Master Server and Spawner")]
         private static void BuildMasterAndSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "BasicRoomsAndLobbies", "MasterAndSpawner");
@@ -110,7 +110,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             }
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Spawner")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Rooms And Lobbies/Spawner")]
         private static void BuildSpawnerForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "BasicRoomsAndLobbies", "Spawner");
@@ -158,7 +158,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             }
         }
 
-        [MenuItem(MstConstants.ToolMenu + "Build/Demos for FishNet/Basic Rooms And Lobbies/Client")]
+        [MenuItem(MstConstants.ToolMenu + "Build Bridges/FishNet/Basic Rooms And Lobbies/Client")]
         private static void BuildClientForWindows()
         {
             string buildFolder = Path.Combine("Builds", "FishNet", "BasicRoomsAndLobbies", "Client");

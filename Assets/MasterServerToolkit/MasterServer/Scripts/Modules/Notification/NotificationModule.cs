@@ -72,7 +72,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             server.RegisterMessageHandler(MstOpCodes.SubscribeToNotifications, OnSubscribeToNotificationsMessageHandler);
-            server.RegisterMessageHandler(MstOpCodes.UnsubscribeFromNotifications, OnUnsubscribeToNotificationsMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.UnsubscribeFromNotifications, OnUnsubscribeFromNotificationsMessageHandler);
             server.RegisterMessageHandler(MstOpCodes.Notification, OnNotificationMessageHandler);
         }
 
@@ -182,12 +182,12 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomId"></param>
         /// <param name="ignoreRecipients"></param>
         /// <param name="textMessage"></param>
-        public virtual void NoticeToRoom(int roomId, List<int> ignoreRecipients, string textMessage, IIncomingMessage message)
+        public virtual void NoticeToRoom(int roomId, List<int> ignoreRecipients, string textMessage)
         {
             // If rooms module not found
             if (!roomsModule)
             {
-                message.Respond($"This message is for room users, but rooms module is not found");
+                logger.Error($"This message is for room users, but rooms module is not found");
                 return;
             }
 
@@ -243,7 +243,13 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="addToPromise"></param>
         public virtual void NoticeToAll(string textMessage, bool addToPromise = false)
         {
-            var recipients = authModule.LoggedInUsers.ToList().Select(i => i.Peer.Id).ToList();
+            if (!authModule)
+            {
+                logger.Error($"This message is for authorized users, but auth module is not found");
+                return;
+            }
+
+            var recipients = authModule.LoggedInUsers.Select(i => i.Peer.Id).ToList();
             NoticeToRecipients(recipients, textMessage);
 
             if (addToPromise && !promisedMessages.Contains(textMessage))
@@ -269,14 +275,15 @@ namespace MasterServerToolkit.MasterServer
                 // If unauthorized user is trying to subscribe the notifications
                 if (userExtension == null)
                 {
-                    message.Respond("Unauthorized request", ResponseStatus.Unauthorized);
+                    message.Respond(ResponseStatus.Unauthorized);
+                    logger.Error("Unauthorized user is trying to subscribe to notifications");
                     return;
                 }
 
                 // If is already subscribed
                 if (HasRecipient(userExtension.UserId))
                 {
-                    message.Respond("You are already subscribed to notifications", ResponseStatus.NotHandled);
+                    message.Respond(ResponseStatus.Success);
                     return;
                 }
 
@@ -290,11 +297,11 @@ namespace MasterServerToolkit.MasterServer
             catch (Exception e)
             {
                 logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                message.Respond(ResponseStatus.Error);
             }
         }
 
-        protected virtual void OnUnsubscribeToNotificationsMessageHandler(IIncomingMessage message)
+        protected virtual void OnUnsubscribeFromNotificationsMessageHandler(IIncomingMessage message)
         {
             try
             {
@@ -302,14 +309,11 @@ namespace MasterServerToolkit.MasterServer
                 var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
                 // If unauthorized user is trying to subscribe the notifications
-                if (userExtension == null)
+                if (userExtension != null)
                 {
-                    message.Respond("Unauthorized request", ResponseStatus.Unauthorized);
-                    return;
+                    // Remove recipient
+                    RemoveRecipient(userExtension.UserId);
                 }
-
-                // Add new recipient
-                RemoveRecipient(userExtension.UserId);
 
                 // Respond about successfull unsubscription
                 message.Respond(ResponseStatus.Success);
@@ -318,7 +322,7 @@ namespace MasterServerToolkit.MasterServer
             catch (Exception e)
             {
                 logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                message.Respond(ResponseStatus.Error);
             }
         }
 
@@ -328,7 +332,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (!HasPermissionToNotify(message.Peer))
                 {
-                    message.Respond($"Unauthorized request", ResponseStatus.Unauthorized);
+                    message.Respond(ResponseStatus.Unauthorized);
+                    logger.Error("The room tries to send a notification, but does not have the right to do so");
                     return;
                 }
 
@@ -337,14 +342,15 @@ namespace MasterServerToolkit.MasterServer
 
                 if (string.IsNullOrEmpty(notification.Message))
                 {
-                    message.Respond($"Message cannot be empty");
+                    message.Respond(ResponseStatus.Invalid);
+                    logger.Error("Message cannot be empty");
                     return;
                 }
 
                 // Check if notification for room users
                 if (useRoomsModule && notification.RoomId >= 0)
                 {
-                    NoticeToRoom(notification.RoomId, notification.IgnoreRecipients, notification.Message, message);
+                    NoticeToRoom(notification.RoomId, notification.IgnoreRecipients, notification.Message);
                 }
                 else if (notification.Recipients.Count > 0)
                 {
@@ -357,7 +363,7 @@ namespace MasterServerToolkit.MasterServer
             catch (Exception e)
             {
                 logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                message.Respond(ResponseStatus.Error);
             }
         }
 

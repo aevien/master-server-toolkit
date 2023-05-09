@@ -7,7 +7,7 @@ using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class WsControllerService : WebSocketServiceBehavior
+    public class WsControllerService : WebSocketBehavior
     {
         private Queue<string> messageQueueData = new Queue<string>();
         private Dictionary<string, WsControllerMessageHandler> messageHandlers = new Dictionary<string, WsControllerMessageHandler>();
