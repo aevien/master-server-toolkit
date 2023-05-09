@@ -1,5 +1,9 @@
 ## Updates Log
 
+### Msf 4.15.2
+
+[changelog here](https://master-toolkit.com/en/release-notes/)
+
 ### Msf 4.15.1
 
 [changelog here](https://master-toolkit.com/en/release-notes/)
