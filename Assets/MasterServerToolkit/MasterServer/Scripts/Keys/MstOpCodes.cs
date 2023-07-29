@@ -2,7 +2,7 @@
 
 namespace MasterServerToolkit.MasterServer
 {
-    public partial struct MstOpCodes
+    public struct MstOpCodes
     {
         public static ushort Error = "mst.error".ToUint16Hash();
 

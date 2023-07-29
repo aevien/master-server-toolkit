@@ -397,7 +397,7 @@ namespace MasterServerToolkit.MasterServer
                     {
                         ClearAuthToken();
 
-                        callback.Invoke(null, response.AsString("Unknown error"));
+                        callback.Invoke(null, response.AsString("Failed to log in"));
                         return;
                     }
 
@@ -454,7 +454,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback.Invoke(false, response.AsString("Failed to confirm email"));
                     return;
                 }
 
@@ -494,7 +494,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback.Invoke(false, response.AsString("Failed to request confirmation code"));
                     return;
                 }
 
@@ -525,7 +525,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback.Invoke(false, response.AsString("Failed to request password reset code"));
                     return;
                 }
 
@@ -565,7 +565,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback.Invoke(false, response.AsString("Failed to change password"));
                     return;
                 }
 
@@ -602,7 +602,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Unknown error"));
+                    callback.Invoke(false, response.AsString("Failed to save account properties"));
                     return;
                 }
 

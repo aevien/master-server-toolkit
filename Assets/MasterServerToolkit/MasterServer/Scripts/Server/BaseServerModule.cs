@@ -99,31 +99,39 @@ namespace MasterServerToolkit.MasterServer
         public virtual MstJson JsonInfo()
         {
             MstJson json = new MstJson();
-            json.AddField("name", GetType().Name);
-            json.AddField("description", GetType().Name);
 
-            if (Dependencies.Count > 0)
+            try
             {
-                var dependenciesArray = MstJson.EmptyArray;
+                json.AddField("name", GetType().Name);
+                json.AddField("description", GetType().Name);
 
-                for (int i = 0; i < Dependencies.Count; i++)
+                if (Dependencies.Count > 0)
                 {
-                    dependenciesArray.Add(Dependencies[i].Name);
+                    var dependenciesArray = MstJson.EmptyArray;
+
+                    for (int i = 0; i < Dependencies.Count; i++)
+                    {
+                        dependenciesArray.Add(Dependencies[i].Name);
+                    }
+
+                    json.AddField("dependencies", dependenciesArray);
                 }
 
-                json.AddField("dependencies", dependenciesArray);
+                if (OptionalDependencies.Count > 0)
+                {
+                    var optionalDependenciesArray = MstJson.EmptyArray;
+
+                    for (int i = 0; i < OptionalDependencies.Count; i++)
+                    {
+                        optionalDependenciesArray.Add(OptionalDependencies[i].Name);
+                    }
+
+                    json.AddField("optionalDependencies", optionalDependenciesArray);
+                }
             }
-
-            if (OptionalDependencies.Count > 0)
+            catch (Exception e)
             {
-                var optionalDependenciesArray = MstJson.EmptyArray;
-
-                for (int i = 0; i < OptionalDependencies.Count; i++)
-                {
-                    optionalDependenciesArray.Add(OptionalDependencies[i].Name);
-                }
-
-                json.AddField("optionalDependencies", optionalDependenciesArray);
+                json.AddField("error", e.ToString());
             }
 
             return json;

@@ -12,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "4.15.2";
+        public static string Version => "4.15.3";
 
         /// <summary>
         /// Just name of the framework
@@ -92,11 +92,6 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static MstLocalization Localization { get; private set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public static MstRegistry Registry { get; private set; }
-
         static Mst()
         {
             Initialize();
@@ -107,7 +102,6 @@ namespace MasterServerToolkit.MasterServer
             Helper = new MstHelper();
             Args = new MstArgs();
             Localization = new MstLocalization();
-            Registry = new MstRegistry();
             Settings = new MstAdvancedSettings();
             Runtime = new MstRuntime();
 

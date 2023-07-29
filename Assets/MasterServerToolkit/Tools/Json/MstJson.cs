@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 //#define JSONOBJECT_DISABLE_PRETTY_PRINT // Use when you no longer need to read JSON to disable pretty Print system-wide
 //#define JSONOBJECT_USE_FLOAT //Use floats for numbers instead of doubles (enable if you don't need support for doubles and want to cut down on significant digits in output)
-//#define JSONOBJECT_POOLING //Create JSONObjects from a pool and prevent finalization by returning objects to the pool
+//#define JSONOBJECT_POOLING //Create MstJsons from a pool and prevent finalization by returning objects to the pool
 
 // ReSharper disable ArrangeAccessorOwnerBody
 // ReSharper disable MergeConditionalExpression
@@ -49,31 +49,11 @@ namespace MasterServerToolkit.Json
 {
     public class MstJson : IEnumerable
     {
-#if JSONOBJECT_POOLING
-		const int MaxPoolSize = 100000;
-		static readonly Queue<JSONObject> Pool = new Queue<JSONObject>();
-		static bool poolingEnabled = true;
+        public delegate void FieldNotFoundCallbackHandler(string fieldName);
+        public delegate void GetFieldResponseHandler(MstJson jsonObject);
+        public delegate void AddJsonContentsHandler(MstJson jsonObject);
 
-		bool isPooled;
-#endif
-
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-        const string Newline = "\r\n";
-        const string Tab = "\t";
-#endif
-
-        const string Infinity = "Infinity";
-        const string NegativeInfinity = "-Infinity";
-        const string NaN = "NaN";
-        const string True = "true";
-        const string False = "false";
-        const string Null = "null";
-
-        const float MaxFrameTime = 0.008f;
-        static readonly Stopwatch PrintWatch = new Stopwatch();
-        public static readonly char[] Whitespace = { ' ', '\r', '\n', '\t', '\uFEFF', '\u0009' };
-
-        public enum Type
+        public enum ValueType
         {
             Null,
             String,
@@ -84,243 +64,224 @@ namespace MasterServerToolkit.Json
             Baked
         }
 
-        public struct ParseResult
-        {
-            public readonly MstJson result;
-            public readonly int offset;
-            public readonly bool pause;
+#if JSONOBJECT_POOLING
+		private const int _maxPoolSize = 100000;
+		private static readonly Queue<MstJson> _pool = new Queue<MstJson>();
+		private static bool _poolingEnabled = true;
 
-            public ParseResult(MstJson result, int offset, bool pause)
-            {
-                this.result = result;
-                this.offset = offset;
-                this.pause = pause;
-            }
-        }
+		private bool _isPooled;
+#endif
 
-        public delegate void FieldNotFound(string name);
-        public delegate void GetFieldResponse(MstJson jsonObject);
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+        private const string _newline = "\r\n";
+        private const string _tab = "\t";
+#endif
 
-        public bool isContainer
-        {
-            get { return type == Type.Array || type == Type.Object; }
-        }
+        private const string _infinity = "Infinity";
+        private const string _negativeInfinity = "-Infinity";
+        private const string _naN = "NaN";
+        private const string _true = "true";
+        private const string _false = "false";
+        private const string _null = "null";
 
-        public Type type = Type.Null;
+        private const float _maxFrameTime = 0.008f;
+        private static readonly Stopwatch _printWatch = new Stopwatch();
+        private static readonly char[] _whitespace = { ' ', '\r', '\n', '\t', '\uFEFF', '\u0009' };
 
-        public int count
-        {
-            get
-            {
-                return list == null ? 0 : list.Count;
-            }
-        }
-
-        public List<MstJson> list;
-        public List<string> keys;
-        public string stringValue;
-        public bool isInteger;
-        public long longValue;
-        public bool boolValue;
+        public bool IsContainer => Type == ValueType.Array || Type == ValueType.Object;
+        public ValueType Type { get; private set; } = ValueType.Null;
+        public int Count => Values == null ? 0 : Values.Count;
+        public static MstJson NullObject => Create(ValueType.Null);
+        public static MstJson EmptyObject => Create(ValueType.Object);
+        public static MstJson EmptyArray => Create(ValueType.Array);
+        public bool IsNumber => Type == ValueType.Number;
+        public bool IsNull => Type == ValueType.Null;
+        public bool IsString => Type == ValueType.String;
+        public bool IsBool => Type == ValueType.Bool;
+        public bool IsArray => Type == ValueType.Array;
+        public bool IsObject => Type == ValueType.Object;
+        public bool IsBaked => Type == ValueType.Baked;
+        public List<MstJson> Values { get; set; } = new List<MstJson>();
+        public List<string> Keys { get; set; } = new List<string>();
+        public string StringValue { get; set; }
+        public bool IsInteger { get; set; }
+        public long LongValue { get; set; }
+        public bool BoolValue { get; set; }
 #if JSONOBJECT_USE_FLOAT
-		public float floatValue;
-		public double doubleValue {
+		public float FloatValue;
+		public double DoubleValue {
 			get {
-				return floatValue;
+				return FloatValue;
 			}
 			set {
-				floatValue = (float) value;
+				FloatValue = (float) value;
 			}
 		}
 #else
-        public double doubleValue;
-        public float floatValue
+        public double DoubleValue;
+        public float FloatValue
         {
             get
             {
-                return (float)doubleValue;
+                return (float)DoubleValue;
             }
             set
             {
-                doubleValue = value;
+                DoubleValue = value;
             }
         }
 #endif
 
-        public int intValue
+        public int IntValue
         {
             get
             {
-                return (int)longValue;
+                return (int)LongValue;
             }
             set
             {
-                longValue = value;
+                LongValue = value;
             }
         }
 
-        public delegate void AddJSONContents(MstJson self);
-
-        public static MstJson NullObject
-        {
-            get { return Create(Type.Null); }
-        }
-
-        public static MstJson EmptyObject
-        {
-            get { return Create(Type.Object); }
-        }
-
-        public static MstJson EmptyArray
-        {
-            get { return Create(Type.Array); }
-        }
-
-        public MstJson(Type type) { this.type = type; }
+        public MstJson(ValueType type) { this.Type = type; }
 
         public MstJson(bool value)
         {
-            type = Type.Bool;
-            boolValue = value;
+            Type = ValueType.Bool;
+            BoolValue = value;
         }
 
         public MstJson(float value)
         {
-            type = Type.Number;
+            Type = ValueType.Number;
 #if JSONOBJECT_USE_FLOAT
-			floatValue = value;
+			FloatValue = value;
 #else
-            doubleValue = value;
+            DoubleValue = value;
 #endif
         }
 
         public MstJson(double value)
         {
-            type = Type.Number;
+            Type = ValueType.Number;
 #if JSONOBJECT_USE_FLOAT
-			floatValue = (float)value;
+			FloatValue = (float)value;
 #else
-            doubleValue = value;
+            DoubleValue = value;
 #endif
         }
 
         public MstJson(int value)
         {
-            type = Type.Number;
-            longValue = value;
-            isInteger = true;
+            Type = ValueType.Number;
+            LongValue = value;
+            IsInteger = true;
 #if JSONOBJECT_USE_FLOAT
-			floatValue = value;
+			FloatValue = value;
 #else
-            doubleValue = value;
+            DoubleValue = value;
 #endif
         }
 
         public MstJson(long value)
         {
-            type = Type.Number;
-            longValue = value;
-            isInteger = true;
+            Type = ValueType.Number;
+            LongValue = value;
+            IsInteger = true;
 #if JSONOBJECT_USE_FLOAT
-			floatValue = value;
+			FloatValue = value;
 #else
-            doubleValue = value;
+            DoubleValue = value;
 #endif
         }
 
         public MstJson(Dictionary<string, string> dictionary)
         {
-            type = Type.Object;
-            keys = new List<string>();
-            list = new List<MstJson>();
+            Type = ValueType.Object;
+            Keys = new List<string>();
+            Values = new List<MstJson>();
             foreach (KeyValuePair<string, string> kvp in dictionary)
             {
-                keys.Add(kvp.Key);
-                list.Add(CreateStringObject(kvp.Value));
+                Keys.Add(kvp.Key);
+                Values.Add(Create(kvp.Value));
             }
         }
 
         public MstJson(Dictionary<string, MstJson> dictionary)
         {
-            type = Type.Object;
-            keys = new List<string>();
-            list = new List<MstJson>();
+            Type = ValueType.Object;
+            Keys = new List<string>();
+            Values = new List<MstJson>();
             foreach (KeyValuePair<string, MstJson> kvp in dictionary)
             {
-                keys.Add(kvp.Key);
-                list.Add(kvp.Value);
+                Keys.Add(kvp.Key);
+                Values.Add(kvp.Value);
             }
         }
 
-        public MstJson(AddJSONContents content)
+        public MstJson(AddJsonContentsHandler content)
         {
             content.Invoke(this);
         }
 
         public MstJson(MstJson[] objects)
         {
-            type = Type.Array;
-            list = new List<MstJson>(objects);
+            Type = ValueType.Array;
+            Values = new List<MstJson>(objects);
         }
 
         public MstJson(List<MstJson> objects)
         {
-            type = Type.Array;
-            list = objects;
-        }
-
-        /// <summary>
-        /// Convenience function for creating a JSONObject containing a string.
-        /// This is not part of the constructor so that malformed JSON data doesn't just turn into a string object
-        /// </summary>
-        /// <param name="value">The string value for the new JSONObject</param>
-        /// <returns>Thew new JSONObject</returns>
-        public static MstJson StringObject(string value)
-        {
-            return CreateStringObject(value);
+            Type = ValueType.Array;
+            Values = objects;
         }
 
         public void Absorb(MstJson other)
         {
-            var otherList = other.list;
+            var otherList = other.Values;
             if (otherList != null)
             {
-                if (list == null)
-                    list = new List<MstJson>();
+                if (Values == null)
+                {
+                    Values = new List<MstJson>();
+                }
 
-                list.AddRange(otherList);
+                Values.AddRange(otherList);
             }
 
-            var otherKeys = other.keys;
+            var otherKeys = other.Keys;
             if (otherKeys != null)
             {
-                if (keys == null)
-                    keys = new List<string>();
+                if (Keys == null)
+                {
+                    Keys = new List<string>();
+                }
 
-                keys.AddRange(otherKeys);
+                Keys.AddRange(otherKeys);
             }
 
-            stringValue = other.stringValue;
+            StringValue = other.StringValue;
 #if JSONOBJECT_USE_FLOAT
-			floatValue = other.floatValue;
+			FloatValue = other.FloatValue;
 #else
-            doubleValue = other.doubleValue;
+            DoubleValue = other.DoubleValue;
 #endif
 
-            isInteger = other.isInteger;
-            longValue = other.longValue;
-            boolValue = other.boolValue;
-            type = other.type;
+            IsInteger = other.IsInteger;
+            LongValue = other.LongValue;
+            BoolValue = other.BoolValue;
+            Type = other.Type;
         }
 
         public static MstJson Create()
         {
 #if JSONOBJECT_POOLING
-			lock (Pool) {
-				if (Pool.Count > 0) {
-					var result = Pool.Dequeue();
+			lock (_pool) {
+				if (_pool.Count > 0) {
+					var result = _pool.Dequeue();
 
-					result.isPooled = false;
+					result._isPooled = false;
 					return result;
 				}
 			}
@@ -329,29 +290,29 @@ namespace MasterServerToolkit.Json
             return new MstJson();
         }
 
-        public static MstJson Create(Type type)
+        public static MstJson Create(ValueType type)
         {
             var jsonObject = Create();
-            jsonObject.type = type;
+            jsonObject.Type = type;
             return jsonObject;
         }
 
         public static MstJson Create(bool value)
         {
             var jsonObject = Create();
-            jsonObject.type = Type.Bool;
-            jsonObject.boolValue = value;
+            jsonObject.Type = ValueType.Bool;
+            jsonObject.BoolValue = value;
             return jsonObject;
         }
 
         public static MstJson Create(float value)
         {
             var jsonObject = Create();
-            jsonObject.type = Type.Number;
+            jsonObject.Type = ValueType.Number;
 #if JSONOBJECT_USE_FLOAT
-			jsonObject.floatValue = value;
+			jsonObject.FloatValue = value;
 #else
-            jsonObject.doubleValue = value;
+            jsonObject.DoubleValue = value;
 #endif
 
             return jsonObject;
@@ -360,11 +321,11 @@ namespace MasterServerToolkit.Json
         public static MstJson Create(double value)
         {
             var jsonObject = Create();
-            jsonObject.type = Type.Number;
+            jsonObject.Type = ValueType.Number;
 #if JSONOBJECT_USE_FLOAT
-			jsonObject.floatValue = (float)value;
+			jsonObject.FloatValue = (float)value;
 #else
-            jsonObject.doubleValue = value;
+            jsonObject.DoubleValue = value;
 #endif
 
             return jsonObject;
@@ -373,13 +334,13 @@ namespace MasterServerToolkit.Json
         public static MstJson Create(int value)
         {
             var jsonObject = Create();
-            jsonObject.type = Type.Number;
-            jsonObject.isInteger = true;
-            jsonObject.longValue = value;
+            jsonObject.Type = ValueType.Number;
+            jsonObject.IsInteger = true;
+            jsonObject.LongValue = value;
 #if JSONOBJECT_USE_FLOAT
-			jsonObject.floatValue = value;
+			jsonObject.FloatValue = value;
 #else
-            jsonObject.doubleValue = value;
+            jsonObject.DoubleValue = value;
 #endif
 
             return jsonObject;
@@ -388,52 +349,67 @@ namespace MasterServerToolkit.Json
         public static MstJson Create(long value)
         {
             var jsonObject = Create();
-            jsonObject.type = Type.Number;
-            jsonObject.isInteger = true;
-            jsonObject.longValue = value;
+            jsonObject.Type = ValueType.Number;
+            jsonObject.IsInteger = true;
+            jsonObject.LongValue = value;
 #if JSONOBJECT_USE_FLOAT
-			jsonObject.floatValue = value;
+			jsonObject.FloatValue = value;
 #else
-            jsonObject.doubleValue = value;
+            jsonObject.DoubleValue = value;
 #endif
 
             return jsonObject;
         }
 
-        public static MstJson CreateStringObject(string value)
+        public static MstJson Create(string value)
         {
+            string parsed = value;
+
+            if (!string.IsNullOrEmpty(parsed))
+            {
+                if (parsed.StartsWith('\"'))
+                {
+                    parsed = parsed.Substring(1);
+                }
+
+                if (parsed.EndsWith('\"'))
+                {
+                    parsed = parsed.Substring(0, parsed.Length - 1);
+                }
+            }
+
             var jsonObject = Create();
-            jsonObject.type = Type.String;
-            jsonObject.stringValue = value;
+            jsonObject.Type = ValueType.String;
+            jsonObject.StringValue = parsed;
             return jsonObject;
         }
 
         public static MstJson CreateBakedObject(string value)
         {
             var bakedObject = Create();
-            bakedObject.type = Type.Baked;
-            bakedObject.stringValue = value;
+            bakedObject.Type = ValueType.Baked;
+            bakedObject.StringValue = value;
             return bakedObject;
         }
 
         /// <summary>
-        /// Create a JSONObject (using pooling if enabled) using a string containing valid JSON
+        /// Create a MstJson (using pooling if enabled) using a string containing valid JSON
         /// </summary>
-        /// <param name="jsonString">A string containing valid JSON to be parsed into objects</param>
+        /// <param name="json">A string containing valid JSON to be parsed into objects</param>
         /// <param name="offset">An offset into the string at which to start parsing</param>
         /// <param name="endOffset">The length of the string after the offset to parse
         /// Specify a length of -1 (default) to use the full string length</param>
         /// <param name="maxDepth">The maximum depth for the parser to search.</param>
-        /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked JSONObjects</param>
-        /// <returns>A JSONObject containing the parsed data</returns>
-        public static MstJson Create(string jsonString, int offset = 0, int endOffset = -1, int maxDepth = -1, bool storeExcessLevels = false)
+        /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked MstJsons</param>
+        /// <returns>A MstJson containing the parsed data</returns>
+        public static MstJson Create(string json, int offset = 0, int endOffset = -1, int maxDepth = -1, bool storeExcessLevels = false)
         {
             var jsonObject = Create();
-            Parse(jsonString, ref offset, endOffset, jsonObject, maxDepth, storeExcessLevels);
+            Parse(json, ref offset, endOffset, jsonObject, maxDepth, storeExcessLevels);
             return jsonObject;
         }
 
-        public static MstJson Create(AddJSONContents content)
+        public static MstJson Create(AddJsonContentsHandler content)
         {
             var jsonObject = Create();
             content.Invoke(jsonObject);
@@ -442,34 +418,25 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(MstJson[] objects)
         {
-            var jsonObject = Create();
-            jsonObject.type = Type.Array;
-            jsonObject.list = new List<MstJson>(objects);
-
+            var jsonObject = EmptyArray;
+            jsonObject.Values.AddRange(objects);
             return jsonObject;
         }
 
         public static MstJson Create(List<MstJson> objects)
         {
-            var jsonObject = Create();
-            jsonObject.type = Type.Array;
-            jsonObject.list = objects;
-
+            var jsonObject = EmptyArray;
+            jsonObject.Values.AddRange(objects);
             return jsonObject;
         }
 
         public static MstJson Create(Dictionary<string, string> dictionary)
         {
-            var jsonObject = Create();
-            jsonObject.type = Type.Object;
-            var keys = new List<string>();
-            jsonObject.keys = keys;
-            var list = new List<MstJson>();
-            jsonObject.list = list;
+            var jsonObject = EmptyObject;
+
             foreach (var kvp in dictionary)
             {
-                keys.Add(kvp.Key);
-                list.Add(CreateStringObject(kvp.Value));
+                jsonObject.AddField(kvp.Key, kvp.Value);
             }
 
             return jsonObject;
@@ -477,36 +444,31 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(Dictionary<string, MstJson> dictionary)
         {
-            var jsonObject = Create();
-            jsonObject.type = Type.Object;
-            var keys = new List<string>();
-            jsonObject.keys = keys;
-            var list = new List<MstJson>();
-            jsonObject.list = list;
+            var jsonObject = EmptyObject;
+
             foreach (var kvp in dictionary)
             {
-                keys.Add(kvp.Key);
-                list.Add(kvp.Value);
+                jsonObject.AddField(kvp.Key, kvp.Value);
             }
 
             return jsonObject;
         }
 
         /// <summary>
-        /// Create a JSONObject (using pooling if enabled) using a string containing valid JSON
+        /// Create a MstJson (using pooling if enabled) using a string containing valid JSON
         /// </summary>
         /// <param name="jsonString">A string containing valid JSON to be parsed into objects</param>
         /// <param name="offset">An offset into the string at which to start parsing</param>
         /// <param name="endOffset">The length of the string after the offset to parse
         /// Specify a length of -1 (default) to use the full string length</param>
         /// <param name="maxDepth">The maximum depth for the parser to search.</param>
-        /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked JSONObjects</param>
-        /// <returns>A JSONObject containing the parsed data</returns>
-        public static IEnumerable<ParseResult> CreateAsync(string jsonString, int offset = 0, int endOffset = -1, int maxDepth = -1, bool storeExcessLevels = false)
+        /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked MstJsons</param>
+        /// <returns>A MstJson containing the parsed data</returns>
+        public static IEnumerable<MstJsonParseResult> CreateAsync(string jsonString, int offset = 0, int endOffset = -1, int maxDepth = -1, bool storeExcessLevels = false)
         {
             var jsonObject = Create();
-            PrintWatch.Reset();
-            PrintWatch.Start();
+            _printWatch.Reset();
+            _printWatch.Start();
             foreach (var e in ParseAsync(jsonString, offset, endOffset, jsonObject, maxDepth, storeExcessLevels))
             {
                 if (e.pause)
@@ -515,23 +477,23 @@ namespace MasterServerToolkit.Json
                 offset = e.offset;
             }
 
-            yield return new ParseResult(jsonObject, offset, false);
+            yield return new MstJsonParseResult(jsonObject, offset, false);
         }
 
         public MstJson() { }
 
         /// <summary>
-        /// Construct a new JSONObject using a string containing valid JSON
+        /// Construct a new MstJson using a string containing valid JSON
         /// </summary>
-        /// <param name="jsonString">A string containing valid JSON to be parsed into objects</param>
+        /// <param name="json">A string containing valid JSON to be parsed into objects</param>
         /// <param name="offset">An offset into the string at which to start parsing</param>
         /// <param name="endOffset">The length of the string after the offset to parse
         /// Specify a length of -1 (default) to use the full string length</param>
         /// <param name="maxDepth">The maximum depth for the parser to search.</param>
-        /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked JSONObjects</param>
-        public MstJson(string jsonString, int offset = 0, int endOffset = -1, int maxDepth = -1, bool storeExcessLevels = false)
+        /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked MstJsons</param>
+        public MstJson(string json, int offset = 0, int endOffset = -1, int maxDepth = -1, bool storeExcessLevels = false)
         {
-            Parse(jsonString, ref offset, endOffset, this, maxDepth, storeExcessLevels);
+            Parse(json, ref offset, endOffset, this, maxDepth, storeExcessLevels);
         }
 
         // ReSharper disable UseNameofExpression
@@ -544,12 +506,12 @@ namespace MasterServerToolkit.Json
             {
                 if (storeExcessLevels)
                 {
-                    container.stringValue = inputString;
-                    container.type = Type.Baked;
+                    container.StringValue = inputString;
+                    container.Type = ValueType.Baked;
                 }
                 else
                 {
-                    container.type = Type.Null;
+                    container.Type = ValueType.Null;
                 }
 
                 return false;
@@ -565,19 +527,22 @@ namespace MasterServerToolkit.Json
             }
 
             if (endOffset >= stringLength)
+            {
                 throw new ArgumentException("Cannot parse if end offset is greater than or equal to string length", "endOffset");
+            }
 
-            if (offset >= endOffset)
+            if (offset > endOffset)
+            {
                 throw new ArgumentException("Cannot parse if offset is greater than or equal to end offset", "offset");
+            }
 
             return true;
         }
-        // ReSharper restore UseNameofExpression
 
-        static void Parse(string inputString, ref int offset, int endOffset, MstJson container, int maxDepth,
+        static void Parse(string json, ref int offset, int endOffset, MstJson container, int maxDepth,
             bool storeExcessLevels, int depth = 0, bool isRoot = true)
         {
-            if (!BeginParse(inputString, offset, ref endOffset, container, maxDepth, storeExcessLevels))
+            if (!BeginParse(json, offset, ref endOffset, container, maxDepth, storeExcessLevels))
                 return;
 
             var startOffset = offset;
@@ -589,8 +554,8 @@ namespace MasterServerToolkit.Json
 
             while (offset <= endOffset)
             {
-                var currentCharacter = inputString[offset++];
-                if (Array.IndexOf(Whitespace, currentCharacter) > -1)
+                var currentCharacter = json[offset++];
+                if (Array.IndexOf(_whitespace, currentCharacter) > -1)
                     continue;
 
                 MstJson newContainer;
@@ -616,8 +581,8 @@ namespace MasterServerToolkit.Json
                             SafeAddChild(container, newContainer);
                         }
 
-                        newContainer.type = Type.Object;
-                        Parse(inputString, ref offset, endOffset, newContainer, maxDepth, storeExcessLevels, depth + 1, false);
+                        newContainer.Type = ValueType.Object;
+                        Parse(json, ref offset, endOffset, newContainer, maxDepth, storeExcessLevels, depth + 1, false);
 
                         break;
                     case '[':
@@ -637,17 +602,17 @@ namespace MasterServerToolkit.Json
                             SafeAddChild(container, newContainer);
                         }
 
-                        newContainer.type = Type.Array;
-                        Parse(inputString, ref offset, endOffset, newContainer, maxDepth, storeExcessLevels, depth + 1, false);
+                        newContainer.Type = ValueType.Array;
+                        Parse(json, ref offset, endOffset, newContainer, maxDepth, storeExcessLevels, depth + 1, false);
 
                         break;
                     case '}':
-                        if (!ParseObjectEnd(inputString, offset, openQuote, container, startOffset, lastValidOffset, maxDepth, storeExcessLevels, depth, ref bakeDepth))
+                        if (!ParseObjectEnd(json, offset, openQuote, container, startOffset, lastValidOffset, maxDepth, storeExcessLevels, depth, ref bakeDepth))
                             return;
 
                         break;
                     case ']':
-                        if (!ParseArrayEnd(inputString, offset, openQuote, container, startOffset, lastValidOffset, maxDepth, storeExcessLevels, depth, ref bakeDepth))
+                        if (!ParseArrayEnd(json, offset, openQuote, container, startOffset, lastValidOffset, maxDepth, storeExcessLevels, depth, ref bakeDepth))
                             return;
 
                         break;
@@ -655,12 +620,12 @@ namespace MasterServerToolkit.Json
                         ParseQuote(ref openQuote, offset, ref quoteStart, ref quoteEnd);
                         break;
                     case ':':
-                        if (!ParseColon(inputString, openQuote, container, ref startOffset, offset, quoteStart, quoteEnd, bakeDepth))
+                        if (!ParseColon(json, openQuote, container, ref startOffset, offset, quoteStart, quoteEnd, bakeDepth))
                             return;
 
                         break;
                     case ',':
-                        if (!ParseComma(inputString, openQuote, container, ref startOffset, offset, lastValidOffset, bakeDepth))
+                        if (!ParseComma(json, openQuote, container, ref startOffset, offset, lastValidOffset, bakeDepth))
                             return;
 
                         break;
@@ -670,7 +635,7 @@ namespace MasterServerToolkit.Json
             }
         }
 
-        static IEnumerable<ParseResult> ParseAsync(string inputString, int offset, int endOffset, MstJson container,
+        static IEnumerable<MstJsonParseResult> ParseAsync(string inputString, int offset, int endOffset, MstJson container,
             int maxDepth, bool storeExcessLevels, int depth = 0, bool isRoot = true)
         {
             if (!BeginParse(inputString, offset, ref endOffset, container, maxDepth, storeExcessLevels))
@@ -684,15 +649,15 @@ namespace MasterServerToolkit.Json
             var bakeDepth = 0;
             while (offset <= endOffset)
             {
-                if (PrintWatch.Elapsed.TotalSeconds > MaxFrameTime)
+                if (_printWatch.Elapsed.TotalSeconds > _maxFrameTime)
                 {
-                    PrintWatch.Reset();
-                    yield return new ParseResult(container, offset, true);
-                    PrintWatch.Start();
+                    _printWatch.Reset();
+                    yield return new MstJsonParseResult(container, offset, true);
+                    _printWatch.Start();
                 }
 
                 var currentCharacter = inputString[offset++];
-                if (Array.IndexOf(Whitespace, currentCharacter) > -1)
+                if (Array.IndexOf(_whitespace, currentCharacter) > -1)
                     continue;
 
                 MstJson newContainer;
@@ -718,7 +683,7 @@ namespace MasterServerToolkit.Json
                             SafeAddChild(container, newContainer);
                         }
 
-                        newContainer.type = Type.Object;
+                        newContainer.Type = ValueType.Object;
                         foreach (var e in ParseAsync(inputString, offset, endOffset, newContainer, maxDepth, storeExcessLevels, depth + 1, false))
                         {
                             if (e.pause)
@@ -745,7 +710,7 @@ namespace MasterServerToolkit.Json
                             SafeAddChild(container, newContainer);
                         }
 
-                        newContainer.type = Type.Array;
+                        newContainer.Type = ValueType.Array;
                         foreach (var e in ParseAsync(inputString, offset, endOffset, newContainer, maxDepth, storeExcessLevels, depth + 1, false))
                         {
                             if (e.pause)
@@ -758,7 +723,7 @@ namespace MasterServerToolkit.Json
                     case '}':
                         if (!ParseObjectEnd(inputString, offset, openQuote, container, startOffset, lastValidOffset, maxDepth, storeExcessLevels, depth, ref bakeDepth))
                         {
-                            yield return new ParseResult(container, offset, false);
+                            yield return new MstJsonParseResult(container, offset, false);
                             yield break;
                         }
 
@@ -766,7 +731,7 @@ namespace MasterServerToolkit.Json
                     case ']':
                         if (!ParseArrayEnd(inputString, offset, openQuote, container, startOffset, lastValidOffset, maxDepth, storeExcessLevels, depth, ref bakeDepth))
                         {
-                            yield return new ParseResult(container, offset, false);
+                            yield return new MstJsonParseResult(container, offset, false);
                             yield break;
                         }
 
@@ -777,7 +742,7 @@ namespace MasterServerToolkit.Json
                     case ':':
                         if (!ParseColon(inputString, openQuote, container, ref startOffset, offset, quoteStart, quoteEnd, bakeDepth))
                         {
-                            yield return new ParseResult(container, offset, false);
+                            yield return new MstJsonParseResult(container, offset, false);
                             yield break;
                         }
 
@@ -785,7 +750,7 @@ namespace MasterServerToolkit.Json
                     case ',':
                         if (!ParseComma(inputString, openQuote, container, ref startOffset, offset, lastValidOffset, bakeDepth))
                         {
-                            yield return new ParseResult(container, offset, false);
+                            yield return new MstJsonParseResult(container, offset, false);
                             yield break;
                         }
 
@@ -795,16 +760,16 @@ namespace MasterServerToolkit.Json
                 lastValidOffset = offset - 1;
             }
 
-            yield return new ParseResult(container, offset, false);
+            yield return new MstJsonParseResult(container, offset, false);
         }
 
         static void SafeAddChild(MstJson container, MstJson child)
         {
-            var list = container.list;
+            var list = container.Values;
             if (list == null)
             {
                 list = new List<MstJson>();
-                container.list = list;
+                container.Values = list;
             }
 
             list.Add(child);
@@ -815,7 +780,7 @@ namespace MasterServerToolkit.Json
             var firstCharacter = inputString[startOffset];
             do
             {
-                if (Array.IndexOf(Whitespace, firstCharacter) > -1)
+                if (Array.IndexOf(_whitespace, firstCharacter) > -1)
                 {
                     firstCharacter = inputString[++startOffset];
                     continue;
@@ -828,49 +793,49 @@ namespace MasterServerToolkit.Json
             switch (firstCharacter)
             {
                 case '"':
-                    type = Type.String;
+                    Type = ValueType.String;
 
                     // Trim quotes from string values
-                    stringValue = UnEscapeString(inputString.Substring(startOffset + 1, lastValidOffset - startOffset - 1));
+                    StringValue = UnEscapeString(inputString.Substring(startOffset + 1, lastValidOffset - startOffset - 1));
                     return;
                 case 't':
-                    type = Type.Bool;
-                    boolValue = true;
+                    Type = ValueType.Bool;
+                    BoolValue = true;
                     return;
                 case 'f':
-                    type = Type.Bool;
-                    boolValue = false;
+                    Type = ValueType.Bool;
+                    BoolValue = false;
                     return;
                 case 'n':
-                    type = Type.Null;
+                    Type = ValueType.Null;
                     return;
                 case 'I':
-                    type = Type.Number;
+                    Type = ValueType.Number;
 
 #if JSONOBJECT_USE_FLOAT
-					floatValue = float.PositiveInfinity;
+					FloatValue = float.PositiveInfinity;
 #else
-                    doubleValue = double.PositiveInfinity;
+                    DoubleValue = double.PositiveInfinity;
 #endif
 
                     return;
                 case 'N':
-                    type = Type.Number;
+                    Type = ValueType.Number;
 
 #if JSONOBJECT_USE_FLOAT
-					floatValue = float.NaN;
+					FloatValue = float.NaN;
 #else
-                    doubleValue = double.NaN;
+                    DoubleValue = double.NaN;
 #endif
                     return;
                 case '-':
                     if (inputString[startOffset + 1] == 'I')
                     {
-                        type = Type.Number;
+                        Type = ValueType.Number;
 #if JSONOBJECT_USE_FLOAT
-						floatValue = float.NegativeInfinity;
+						FloatValue = float.NegativeInfinity;
 #else
-                        doubleValue = double.NegativeInfinity;
+                        DoubleValue = double.NegativeInfinity;
 #endif
                         return;
                     }
@@ -884,36 +849,36 @@ namespace MasterServerToolkit.Json
                 if (numericString.Contains("."))
                 {
 #if JSONOBJECT_USE_FLOAT
-					floatValue = Convert.ToSingle(numericString, CultureInfo.InvariantCulture);
+					FloatValue = Convert.ToSingle(numericString, CultureInfo.InvariantCulture);
 #else
-                    doubleValue = Convert.ToDouble(numericString, CultureInfo.InvariantCulture);
+                    DoubleValue = Convert.ToDouble(numericString, CultureInfo.InvariantCulture);
 #endif
                 }
                 else
                 {
-                    longValue = Convert.ToInt64(numericString, CultureInfo.InvariantCulture);
-                    isInteger = true;
+                    LongValue = Convert.ToInt64(numericString, CultureInfo.InvariantCulture);
+                    IsInteger = true;
 #if JSONOBJECT_USE_FLOAT
-					floatValue = longValue;
+					FloatValue = LongValue;
 #else
-                    doubleValue = longValue;
+                    DoubleValue = LongValue;
 #endif
                 }
 
-                type = Type.Number;
+                Type = ValueType.Number;
             }
             catch (OverflowException)
             {
-                type = Type.Number;
+                Type = ValueType.Number;
 #if JSONOBJECT_USE_FLOAT
-				floatValue = numericString.StartsWith("-") ? float.NegativeInfinity : float.PositiveInfinity;
+				FloatValue = numericString.StartsWith("-") ? float.NegativeInfinity : float.PositiveInfinity;
 #else
-                doubleValue = numericString.StartsWith("-") ? double.NegativeInfinity : double.PositiveInfinity;
+                DoubleValue = numericString.StartsWith("-") ? double.NegativeInfinity : double.PositiveInfinity;
 #endif
             }
             catch (FormatException)
             {
-                type = Type.Null;
+                Type = ValueType.Null;
 #if USING_UNITY
                 Debug.LogWarning
 #else
@@ -1011,14 +976,14 @@ namespace MasterServerToolkit.Json
                 return false;
             }
 
-            var keys = container.keys;
+            var keys = container.Keys;
             if (keys == null)
             {
                 keys = new List<string>();
-                container.keys = keys;
+                container.Keys = keys;
             }
 
-            container.keys.Add(inputString.Substring(quoteStart, quoteEnd - quoteStart));
+            container.Keys.Add(inputString.Substring(quoteStart, quoteEnd - quoteStart));
             startOffset = offset;
 
             return true;
@@ -1064,39 +1029,416 @@ namespace MasterServerToolkit.Json
             return false;
         }
 
-        public bool isNumber
+        static string EscapeString(string input)
         {
-            get { return type == Type.Number; }
+            var escaped = input.Replace("\b", "\\b");
+            escaped = escaped.Replace("\f", "\\f");
+            escaped = escaped.Replace("\n", "\\n");
+            escaped = escaped.Replace("\r", "\\r");
+            escaped = escaped.Replace("\t", "\\t");
+            escaped = escaped.Replace("\"", "\\\"");
+            return escaped;
         }
 
-        public bool isNull
+        static string UnEscapeString(string input)
         {
-            get { return type == Type.Null; }
+            var unescaped = input.Replace("\\\"", "\"");
+            unescaped = unescaped.Replace("\\b", "\b");
+            unescaped = unescaped.Replace("\\f", "\f");
+            unescaped = unescaped.Replace("\\n", "\n");
+            unescaped = unescaped.Replace("\\r", "\r");
+            unescaped = unescaped.Replace("\\t", "\t");
+            return unescaped;
         }
 
-        public bool isString
+        /// <summary>
+        /// Merge object right into left recursively
+        /// </summary>
+        /// <param name="left">The left (base) object</param>
+        /// <param name="right">The right (new) object</param>
+        static void MergeRecur(MstJson left, MstJson right)
         {
-            get { return type == Type.String; }
+            if (left.Type == ValueType.Null)
+            {
+                left.Absorb(right);
+            }
+            else if (left.Type == ValueType.Object && right.Type == ValueType.Object && right.Values != null && right.Keys != null)
+            {
+                for (var i = 0; i < right.Values.Count; i++)
+                {
+                    var key = right.Keys[i];
+                    if (right[i].IsContainer)
+                    {
+                        if (left.HasField(key))
+                            MergeRecur(left[key], right[i]);
+                        else
+                            left.AddField(key, right[i]);
+                    }
+                    else
+                    {
+                        if (left.HasField(key))
+                            left.SetField(key, right[i]);
+                        else
+                            left.AddField(key, right[i]);
+                    }
+                }
+            }
+            else if (left.Type == ValueType.Array && right.Type == ValueType.Array && right.Values != null)
+            {
+                if (right.Count > left.Count)
+                {
+#if USING_UNITY
+                    Debug.LogError
+#else
+					Debug.WriteLine
+#endif
+                        ("Cannot merge arrays when right object has more elements");
+                    return;
+                }
+
+                for (var i = 0; i < right.Values.Count; i++)
+                {
+                    if (left[i].Type == right[i].Type)
+                    {
+                        //Only overwrite with the same type
+                        if (left[i].IsContainer)
+                            MergeRecur(left[i], right[i]);
+                        else
+                        {
+                            left[i] = right[i];
+                        }
+                    }
+                }
+            }
         }
 
-        public bool isBool
+        /// <summary>
+        /// Convert the MstJson into a string
+        /// </summary>
+        /// <param name="depth">How many containers deep this run has reached</param>
+        /// <param name="builder">The StringBuilder used to build the string</param>
+        /// <param name="pretty">Whether this string should be "pretty" and include whitespace for readability</param>
+        /// <returns>An enumerator for this function</returns>
+        IEnumerable<bool> StringifyAsync(int depth, StringBuilder builder, bool pretty = false)
         {
-            get { return type == Type.Bool; }
+            if (_printWatch.Elapsed.TotalSeconds > _maxFrameTime)
+            {
+                _printWatch.Reset();
+                yield return true;
+                _printWatch.Start();
+            }
+
+            switch (Type)
+            {
+                case ValueType.Baked:
+                    builder.Append(StringValue);
+                    break;
+                case ValueType.String:
+                    StringifyString(builder);
+                    break;
+                case ValueType.Number:
+                    StringifyNumber(builder);
+                    break;
+                case ValueType.Object:
+                    var fieldCount = Count;
+                    if (fieldCount <= 0)
+                    {
+                        StringifyEmptyObject(builder);
+                        break;
+                    }
+
+                    depth++;
+
+                    BeginStringifyObjectContainer(builder, pretty);
+                    for (var index = 0; index < fieldCount; index++)
+                    {
+                        var jsonObject = Values[index];
+                        if (jsonObject == null)
+                            continue;
+
+                        var key = Keys[index];
+                        BeginStringifyObjectField(builder, pretty, depth, key);
+                        foreach (var pause in jsonObject.StringifyAsync(depth, builder, pretty))
+                        {
+                            if (pause)
+                                yield return true;
+                        }
+
+                        EndStringifyObjectField(builder, pretty);
+                    }
+
+                    EndStringifyObjectContainer(builder, pretty, depth);
+                    break;
+                case ValueType.Array:
+                    var arraySize = Count;
+                    if (arraySize <= 0)
+                    {
+                        StringifyEmptyArray(builder);
+                        break;
+                    }
+
+                    BeginStringifyArrayContainer(builder, pretty);
+                    for (var index = 0; index < arraySize; index++)
+                    {
+                        var jsonObject = Values[index];
+                        if (jsonObject == null)
+                            continue;
+
+                        BeginStringifyArrayElement(builder, pretty, depth);
+                        foreach (var pause in Values[index].StringifyAsync(depth, builder, pretty))
+                        {
+                            if (pause)
+                                yield return true;
+                        }
+
+                        EndStringifyArrayElement(builder, pretty);
+                    }
+
+                    EndStringifyArrayContainer(builder, pretty, depth);
+                    break;
+                case ValueType.Bool:
+                    StringifyBool(builder);
+                    break;
+                case ValueType.Null:
+                    StringifyNull(builder);
+                    break;
+            }
         }
 
-        public bool isArray
+        /// <summary>
+        /// Convert the MstJson into a string
+        /// </summary>
+        /// <param name="depth">How many containers deep this run has reached</param>
+        /// <param name="builder">The StringBuilder used to build the string</param>
+        /// <param name="pretty">Whether this string should be "pretty" and include whitespace for readability</param>
+        void Stringify(int depth, StringBuilder builder, bool pretty = false)
         {
-            get { return type == Type.Array; }
+            depth++;
+            switch (Type)
+            {
+                case ValueType.Baked:
+                    builder.Append(StringValue);
+                    break;
+                case ValueType.String:
+                    StringifyString(builder);
+                    break;
+                case ValueType.Number:
+                    StringifyNumber(builder);
+                    break;
+                case ValueType.Object:
+                    var fieldCount = Count;
+                    if (fieldCount <= 0)
+                    {
+                        StringifyEmptyObject(builder);
+                        break;
+                    }
+
+                    BeginStringifyObjectContainer(builder, pretty);
+
+                    for (var index = 0; index < fieldCount; index++)
+                    {
+                        var jsonObject = Values[index];
+                        if (jsonObject == null)
+                            continue;
+
+                        if (Keys == null || index >= Keys.Count)
+                            break;
+
+                        var key = Keys[index];
+                        BeginStringifyObjectField(builder, pretty, depth, key);
+                        jsonObject.Stringify(depth, builder, pretty);
+                        EndStringifyObjectField(builder, pretty);
+                    }
+
+                    EndStringifyObjectContainer(builder, pretty, depth);
+                    break;
+                case ValueType.Array:
+                    if (Count <= 0)
+                    {
+                        StringifyEmptyArray(builder);
+                        break;
+                    }
+
+                    BeginStringifyArrayContainer(builder, pretty);
+                    foreach (var jsonObject in Values)
+                    {
+                        if (jsonObject == null)
+                            continue;
+
+                        BeginStringifyArrayElement(builder, pretty, depth);
+                        jsonObject.Stringify(depth, builder, pretty);
+                        EndStringifyArrayElement(builder, pretty);
+                    }
+
+                    EndStringifyArrayContainer(builder, pretty, depth);
+                    break;
+                case ValueType.Bool:
+                    StringifyBool(builder);
+                    break;
+                case ValueType.Null:
+                    StringifyNull(builder);
+                    break;
+            }
         }
 
-        public bool isObject
+        void StringifyString(StringBuilder builder)
         {
-            get { return type == Type.Object; }
+            builder.AppendFormat("\"{0}\"", EscapeString(StringValue));
         }
 
-        public bool isBaked
+        void BeginStringifyObjectContainer(StringBuilder builder, bool pretty)
         {
-            get { return type == Type.Baked; }
+            builder.Append("{");
+
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                builder.Append(_newline);
+#endif
+        }
+
+        static void StringifyEmptyObject(StringBuilder builder)
+        {
+            builder.Append("{}");
+        }
+
+        void BeginStringifyObjectField(StringBuilder builder, bool pretty, int depth, string key)
+        {
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                for (var j = 0; j < depth; j++)
+                    builder.Append(_tab); //for a bit more readability
+#endif
+
+            builder.AppendFormat("\"{0}\":", key);
+        }
+
+        void EndStringifyObjectField(StringBuilder builder, bool pretty)
+        {
+            builder.Append(",");
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                builder.Append(_newline);
+#endif
+        }
+
+        void EndStringifyObjectContainer(StringBuilder builder, bool pretty, int depth)
+        {
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                builder.Length -= 3;
+            else
+#endif
+                builder.Length--;
+
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty && Count > 0)
+            {
+                builder.Append(_newline);
+                for (var j = 0; j < depth - 1; j++)
+                    builder.Append(_tab);
+            }
+#endif
+
+            builder.Append("}");
+        }
+
+        static void StringifyEmptyArray(StringBuilder builder)
+        {
+            builder.Append("[]");
+        }
+
+        void BeginStringifyArrayContainer(StringBuilder builder, bool pretty)
+        {
+            builder.Append("[");
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                builder.Append(_newline);
+#endif
+
+        }
+
+        void BeginStringifyArrayElement(StringBuilder builder, bool pretty, int depth)
+        {
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                for (var j = 0; j < depth; j++)
+                    builder.Append(_tab); //for a bit more readability
+#endif
+        }
+
+        void EndStringifyArrayElement(StringBuilder builder, bool pretty)
+        {
+            builder.Append(",");
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                builder.Append(_newline);
+#endif
+        }
+
+        void EndStringifyArrayContainer(StringBuilder builder, bool pretty, int depth)
+        {
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty)
+                builder.Length -= 3;
+            else
+#endif
+                builder.Length--;
+
+#if !JSONOBJECT_DISABLE_PRETTY_PRINT
+            if (pretty && Count > 0)
+            {
+                builder.Append(_newline);
+                for (var j = 0; j < depth - 1; j++)
+                    builder.Append(_tab);
+            }
+#endif
+
+            builder.Append("]");
+        }
+
+        void StringifyNumber(StringBuilder builder)
+        {
+            if (IsInteger)
+            {
+                builder.Append(LongValue.ToString(CultureInfo.InvariantCulture));
+            }
+            else
+            {
+#if JSONOBJECT_USE_FLOAT
+				if (float.IsNegativeInfinity(FloatValue))
+					builder.Append(_negativeInfinity);
+				else if (float.IsInfinity(FloatValue))
+					builder.Append(_infinity);
+				else if (float.IsNaN(FloatValue))
+					builder.Append(_naN);
+				else
+					builder.Append(FloatValue.ToString("R", CultureInfo.InvariantCulture));
+#else
+                if (double.IsNegativeInfinity(DoubleValue))
+                    builder.Append(_negativeInfinity);
+                else if (double.IsInfinity(DoubleValue))
+                    builder.Append(_infinity);
+                else if (double.IsNaN(DoubleValue))
+                    builder.Append(_naN);
+                else
+                    builder.Append(DoubleValue.ToString("R", CultureInfo.InvariantCulture));
+#endif
+            }
+        }
+
+        void StringifyBool(StringBuilder builder)
+        {
+            builder.Append(BoolValue ? _true : _false);
+        }
+
+        static void StringifyNull(StringBuilder builder)
+        {
+            builder.Append(_null);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         public void Add(bool value)
@@ -1126,10 +1468,10 @@ namespace MasterServerToolkit.Json
 
         public void Add(string value)
         {
-            Add(CreateStringObject(value));
+            Add(Create(value));
         }
 
-        public void Add(AddJSONContents content)
+        public void Add(AddJsonContentsHandler content)
         {
             Add(Create(content));
         }
@@ -1140,11 +1482,11 @@ namespace MasterServerToolkit.Json
                 return;
 
             // Convert to array to support list
-            type = Type.Array;
-            if (list == null)
-                list = new List<MstJson>();
+            Type = ValueType.Array;
+            if (Values == null)
+                Values = new List<MstJson>();
 
-            list.Add(jsonObject);
+            Values.Add(jsonObject);
         }
 
         public void AddField(string name, bool value)
@@ -1172,14 +1514,14 @@ namespace MasterServerToolkit.Json
             AddField(name, Create(value));
         }
 
-        public void AddField(string name, AddJSONContents content)
+        public void AddField(string name, AddJsonContentsHandler content)
         {
             AddField(name, Create(content));
         }
 
         public void AddField(string name, string value)
         {
-            AddField(name, CreateStringObject(value));
+            AddField(name, Create(value));
         }
 
         public void AddField(string name, MstJson jsonObject)
@@ -1188,25 +1530,30 @@ namespace MasterServerToolkit.Json
                 return;
 
             // Convert to object if needed to support fields
-            type = Type.Object;
-            if (list == null)
-                list = new List<MstJson>();
+            Type = ValueType.Object;
 
-            if (keys == null)
-                keys = new List<string>();
-
-            while (keys.Count < list.Count)
+            if (Values == null)
             {
-                keys.Add(keys.Count.ToString(CultureInfo.InvariantCulture));
+                Values = new List<MstJson>();
             }
 
-            keys.Add(name);
-            list.Add(jsonObject);
+            if (Keys == null)
+            {
+                Keys = new List<string>();
+            }
+
+            while (Keys.Count < Values.Count)
+            {
+                Keys.Add(Keys.Count.ToString(CultureInfo.InvariantCulture));
+            }
+
+            Keys.Add(name);
+            Values.Add(jsonObject);
         }
 
         public void SetField(string name, string value)
         {
-            SetField(name, CreateStringObject(value));
+            SetField(name, Create(value));
         }
 
         public void SetField(string name, bool value)
@@ -1238,8 +1585,8 @@ namespace MasterServerToolkit.Json
         {
             if (HasField(name))
             {
-                list.Remove(this[name]);
-                keys.Remove(name);
+                Values.Remove(this[name]);
+                Keys.Remove(name);
             }
 
             AddField(name, jsonObject);
@@ -1247,13 +1594,13 @@ namespace MasterServerToolkit.Json
 
         public void RemoveField(string name)
         {
-            if (keys == null || list == null)
+            if (Keys == null || Values == null)
                 return;
 
-            if (keys.IndexOf(name) > -1)
+            if (Keys.IndexOf(name) > -1)
             {
-                list.RemoveAt(keys.IndexOf(name));
-                keys.Remove(name);
+                Values.RemoveAt(Keys.IndexOf(name));
+                Keys.Remove(name);
             }
         }
 
@@ -1263,19 +1610,19 @@ namespace MasterServerToolkit.Json
             return GetField(ref field, name);
         }
 
-        public bool GetField(ref bool field, string name, FieldNotFound fail = null)
+        public bool GetField(ref bool field, string name, FieldNotFoundCallbackHandler fail = null)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
-                    field = list[index].boolValue;
+                    field = Values[index].BoolValue;
                     return true;
                 }
             }
 
-            if (fail != null) fail.Invoke(name);
+            fail?.Invoke(name);
             return false;
         }
 
@@ -1285,17 +1632,17 @@ namespace MasterServerToolkit.Json
             return GetField(ref field, name);
         }
 
-        public bool GetField(ref double field, string name, FieldNotFound fail = null)
+        public bool GetField(ref double field, string name, FieldNotFoundCallbackHandler fail = null)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
 #if JSONOBJECT_USE_FLOAT
-					field = list[index].floatValue;
+					field = Values[index].FloatValue;
 #else
-                    field = list[index].doubleValue;
+                    field = Values[index].DoubleValue;
 #endif
                     return true;
                 }
@@ -1311,17 +1658,17 @@ namespace MasterServerToolkit.Json
             return GetField(ref field, name);
         }
 
-        public bool GetField(ref float field, string name, FieldNotFound fail = null)
+        public bool GetField(ref float field, string name, FieldNotFoundCallbackHandler fail = null)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
 #if JSONOBJECT_USE_FLOAT
-					field = list[index].floatValue;
+					field = Values[index].FloatValue;
 #else
-                    field = (float)list[index].doubleValue;
+                    field = (float)Values[index].DoubleValue;
 #endif
                     return true;
                 }
@@ -1337,14 +1684,14 @@ namespace MasterServerToolkit.Json
             return GetField(ref field, name);
         }
 
-        public bool GetField(ref int field, string name, FieldNotFound fail = null)
+        public bool GetField(ref int field, string name, FieldNotFoundCallbackHandler fail = null)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
-                    field = (int)list[index].longValue;
+                    field = (int)Values[index].LongValue;
                     return true;
                 }
             }
@@ -1359,14 +1706,14 @@ namespace MasterServerToolkit.Json
             return GetField(ref field, name);
         }
 
-        public bool GetField(ref long field, string name, FieldNotFound fail = null)
+        public bool GetField(ref long field, string name, FieldNotFoundCallbackHandler fail = null)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
-                    field = list[index].longValue;
+                    field = Values[index].LongValue;
                     return true;
                 }
             }
@@ -1381,14 +1728,14 @@ namespace MasterServerToolkit.Json
             return GetField(ref field, name);
         }
 
-        public bool GetField(ref uint field, string name, FieldNotFound fail = null)
+        public bool GetField(ref uint field, string name, FieldNotFoundCallbackHandler fail = null)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
-                    field = (uint)list[index].longValue;
+                    field = (uint)Values[index].LongValue;
                     return true;
                 }
             }
@@ -1403,14 +1750,14 @@ namespace MasterServerToolkit.Json
             return GetField(ref field, name);
         }
 
-        public bool GetField(ref string field, string name, FieldNotFound fail = null)
+        public bool GetField(ref string field, string name, FieldNotFoundCallbackHandler fail = null)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
-                    field = list[index].stringValue;
+                    field = Values[index].StringValue;
                     return true;
                 }
             }
@@ -1419,14 +1766,14 @@ namespace MasterServerToolkit.Json
             return false;
         }
 
-        public void GetField(string name, GetFieldResponse response, FieldNotFound fail = null)
+        public void GetField(string name, GetFieldResponseHandler response, FieldNotFoundCallbackHandler fail = null)
         {
-            if (response != null && type == Type.Object && keys != null && list != null)
+            if (response != null && Type == ValueType.Object && Keys != null && Values != null)
             {
-                var index = keys.IndexOf(name);
+                var index = Keys.IndexOf(name);
                 if (index >= 0)
                 {
-                    response.Invoke(list[index]);
+                    response.Invoke(Values[index]);
                     return;
                 }
             }
@@ -1437,11 +1784,11 @@ namespace MasterServerToolkit.Json
 
         public MstJson GetField(string name)
         {
-            if (type == Type.Object && keys != null && list != null)
+            if (Type == ValueType.Object && Keys != null && Values != null)
             {
-                for (var index = 0; index < keys.Count; index++)
-                    if (keys[index] == name)
-                        return list[index];
+                for (var index = 0; index < Keys.Count; index++)
+                    if (Keys[index] == name)
+                        return Values[index];
             }
 
             return null;
@@ -1449,11 +1796,11 @@ namespace MasterServerToolkit.Json
 
         public bool HasFields(string[] names)
         {
-            if (type != Type.Object || keys == null || list == null)
+            if (Type != ValueType.Object || Keys == null || Values == null)
                 return false;
 
             foreach (var name in names)
-                if (!keys.Contains(name))
+                if (!Keys.Contains(name))
                     return false;
 
             return true;
@@ -1461,13 +1808,13 @@ namespace MasterServerToolkit.Json
 
         public bool HasField(string name)
         {
-            if (type != Type.Object || keys == null || list == null)
+            if (Type != ValueType.Object || Keys == null || Values == null)
                 return false;
 
-            if (keys == null || list == null)
+            if (Keys == null || Values == null)
                 return false;
 
-            foreach (var fieldName in keys)
+            foreach (var fieldName in Keys)
                 if (fieldName == name)
                     return true;
 
@@ -1476,26 +1823,26 @@ namespace MasterServerToolkit.Json
 
         public void Clear()
         {
-            type = Type.Null;
-            if (list != null)
-                list.Clear();
+            Type = ValueType.Null;
+            if (Values != null)
+                Values.Clear();
 
-            if (keys != null)
-                keys.Clear();
+            if (Keys != null)
+                Keys.Clear();
 
-            stringValue = null;
-            longValue = 0;
-            boolValue = false;
-            isInteger = false;
+            StringValue = null;
+            LongValue = 0;
+            BoolValue = false;
+            IsInteger = false;
 #if JSONOBJECT_USE_FLOAT
-			floatValue = 0;
+			FloatValue = 0;
 #else
-            doubleValue = 0;
+            DoubleValue = 0;
 #endif
         }
 
         /// <summary>
-        /// Copy a JSONObject. This could be more efficient
+        /// Copy a MstJson. This could be more efficient
         /// </summary>
         /// <returns></returns>
         public MstJson Copy()
@@ -1503,87 +1850,27 @@ namespace MasterServerToolkit.Json
             return Create(Print());
         }
 
-        /*
-		 * The Merge function is experimental. Use at your own risk.
-		 */
+        /// <summary>
+        /// The Merge function is experimental. Use at your own risk.
+        /// </summary>
+        /// <param name="jsonObject"></param>
         public void Merge(MstJson jsonObject)
         {
             MergeRecur(this, jsonObject);
         }
 
-        /// <summary>
-        /// Merge object right into left recursively
-        /// </summary>
-        /// <param name="left">The left (base) object</param>
-        /// <param name="right">The right (new) object</param>
-        static void MergeRecur(MstJson left, MstJson right)
-        {
-            if (left.type == Type.Null)
-            {
-                left.Absorb(right);
-            }
-            else if (left.type == Type.Object && right.type == Type.Object && right.list != null && right.keys != null)
-            {
-                for (var i = 0; i < right.list.Count; i++)
-                {
-                    var key = right.keys[i];
-                    if (right[i].isContainer)
-                    {
-                        if (left.HasField(key))
-                            MergeRecur(left[key], right[i]);
-                        else
-                            left.AddField(key, right[i]);
-                    }
-                    else
-                    {
-                        if (left.HasField(key))
-                            left.SetField(key, right[i]);
-                        else
-                            left.AddField(key, right[i]);
-                    }
-                }
-            }
-            else if (left.type == Type.Array && right.type == Type.Array && right.list != null)
-            {
-                if (right.count > left.count)
-                {
-#if USING_UNITY
-                    Debug.LogError
-#else
-					Debug.WriteLine
-#endif
-                        ("Cannot merge arrays when right object has more elements");
-                    return;
-                }
-
-                for (var i = 0; i < right.list.Count; i++)
-                {
-                    if (left[i].type == right[i].type)
-                    {
-                        //Only overwrite with the same type
-                        if (left[i].isContainer)
-                            MergeRecur(left[i], right[i]);
-                        else
-                        {
-                            left[i] = right[i];
-                        }
-                    }
-                }
-            }
-        }
-
         public void Bake()
         {
-            if (type == Type.Baked)
+            if (Type == ValueType.Baked)
                 return;
 
-            stringValue = Print();
-            type = Type.Baked;
+            StringValue = Print();
+            Type = ValueType.Baked;
         }
 
         public IEnumerable BakeAsync()
         {
-            if (type == Type.Baked)
+            if (Type == ValueType.Baked)
                 yield break;
 
 
@@ -1596,8 +1883,8 @@ namespace MasterServerToolkit.Json
                         yield return null;
                 }
 
-                stringValue = builder.ToString();
-                type = Type.Baked;
+                StringValue = builder.ToString();
+                Type = ValueType.Baked;
             }
         }
 
@@ -1611,28 +1898,6 @@ namespace MasterServerToolkit.Json
         public void Print(StringBuilder builder, bool pretty = false)
         {
             Stringify(0, builder, pretty);
-        }
-
-        static string EscapeString(string input)
-        {
-            var escaped = input.Replace("\b", "\\b");
-            escaped = escaped.Replace("\f", "\\f");
-            escaped = escaped.Replace("\n", "\\n");
-            escaped = escaped.Replace("\r", "\\r");
-            escaped = escaped.Replace("\t", "\\t");
-            escaped = escaped.Replace("\"", "\\\"");
-            return escaped;
-        }
-
-        static string UnEscapeString(string input)
-        {
-            var unescaped = input.Replace("\\\"", "\"");
-            unescaped = unescaped.Replace("\\b", "\b");
-            unescaped = unescaped.Replace("\\f", "\f");
-            unescaped = unescaped.Replace("\\n", "\n");
-            unescaped = unescaped.Replace("\\r", "\r");
-            unescaped = unescaped.Replace("\\t", "\t");
-            return unescaped;
         }
 
         public IEnumerable<string> PrintAsync(bool pretty = false)
@@ -1649,8 +1914,8 @@ namespace MasterServerToolkit.Json
 
         public IEnumerable<bool> PrintAsync(StringBuilder builder, bool pretty = false)
         {
-            PrintWatch.Reset();
-            PrintWatch.Start();
+            _printWatch.Reset();
+            _printWatch.Start();
             using (var enumerator = StringifyAsync(0, builder, pretty).GetEnumerator())
             {
                 while (enumerator.MoveNext())
@@ -1661,344 +1926,21 @@ namespace MasterServerToolkit.Json
             }
         }
 
-        /// <summary>
-        /// Convert the JSONObject into a string
-        /// </summary>
-        /// <param name="depth">How many containers deep this run has reached</param>
-        /// <param name="builder">The StringBuilder used to build the string</param>
-        /// <param name="pretty">Whether this string should be "pretty" and include whitespace for readability</param>
-        /// <returns>An enumerator for this function</returns>
-        IEnumerable<bool> StringifyAsync(int depth, StringBuilder builder, bool pretty = false)
-        {
-            if (PrintWatch.Elapsed.TotalSeconds > MaxFrameTime)
-            {
-                PrintWatch.Reset();
-                yield return true;
-                PrintWatch.Start();
-            }
-
-            switch (type)
-            {
-                case Type.Baked:
-                    builder.Append(stringValue);
-                    break;
-                case Type.String:
-                    StringifyString(builder);
-                    break;
-                case Type.Number:
-                    StringifyNumber(builder);
-                    break;
-                case Type.Object:
-                    var fieldCount = count;
-                    if (fieldCount <= 0)
-                    {
-                        StringifyEmptyObject(builder);
-                        break;
-                    }
-
-                    depth++;
-
-                    BeginStringifyObjectContainer(builder, pretty);
-                    for (var index = 0; index < fieldCount; index++)
-                    {
-                        var jsonObject = list[index];
-                        if (jsonObject == null)
-                            continue;
-
-                        var key = keys[index];
-                        BeginStringifyObjectField(builder, pretty, depth, key);
-                        foreach (var pause in jsonObject.StringifyAsync(depth, builder, pretty))
-                        {
-                            if (pause)
-                                yield return true;
-                        }
-
-                        EndStringifyObjectField(builder, pretty);
-                    }
-
-                    EndStringifyObjectContainer(builder, pretty, depth);
-                    break;
-                case Type.Array:
-                    var arraySize = count;
-                    if (arraySize <= 0)
-                    {
-                        StringifyEmptyArray(builder);
-                        break;
-                    }
-
-                    BeginStringifyArrayContainer(builder, pretty);
-                    for (var index = 0; index < arraySize; index++)
-                    {
-                        var jsonObject = list[index];
-                        if (jsonObject == null)
-                            continue;
-
-                        BeginStringifyArrayElement(builder, pretty, depth);
-                        foreach (var pause in list[index].StringifyAsync(depth, builder, pretty))
-                        {
-                            if (pause)
-                                yield return true;
-                        }
-
-                        EndStringifyArrayElement(builder, pretty);
-                    }
-
-                    EndStringifyArrayContainer(builder, pretty, depth);
-                    break;
-                case Type.Bool:
-                    StringifyBool(builder);
-                    break;
-                case Type.Null:
-                    StringifyNull(builder);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Convert the JSONObject into a string
-        /// </summary>
-        /// <param name="depth">How many containers deep this run has reached</param>
-        /// <param name="builder">The StringBuilder used to build the string</param>
-        /// <param name="pretty">Whether this string should be "pretty" and include whitespace for readability</param>
-        void Stringify(int depth, StringBuilder builder, bool pretty = false)
-        {
-            depth++;
-            switch (type)
-            {
-                case Type.Baked:
-                    builder.Append(stringValue);
-                    break;
-                case Type.String:
-                    StringifyString(builder);
-                    break;
-                case Type.Number:
-                    StringifyNumber(builder);
-                    break;
-                case Type.Object:
-                    var fieldCount = count;
-                    if (fieldCount <= 0)
-                    {
-                        StringifyEmptyObject(builder);
-                        break;
-                    }
-
-                    BeginStringifyObjectContainer(builder, pretty);
-                    for (var index = 0; index < fieldCount; index++)
-                    {
-                        var jsonObject = list[index];
-                        if (jsonObject == null)
-                            continue;
-
-                        if (keys == null || index >= keys.Count)
-                            break;
-
-                        var key = keys[index];
-                        BeginStringifyObjectField(builder, pretty, depth, key);
-                        jsonObject.Stringify(depth, builder, pretty);
-                        EndStringifyObjectField(builder, pretty);
-                    }
-
-                    EndStringifyObjectContainer(builder, pretty, depth);
-                    break;
-                case Type.Array:
-                    if (count <= 0)
-                    {
-                        StringifyEmptyArray(builder);
-                        break;
-                    }
-
-                    BeginStringifyArrayContainer(builder, pretty);
-                    foreach (var jsonObject in list)
-                    {
-                        if (jsonObject == null)
-                            continue;
-
-                        BeginStringifyArrayElement(builder, pretty, depth);
-                        jsonObject.Stringify(depth, builder, pretty);
-                        EndStringifyArrayElement(builder, pretty);
-                    }
-
-                    EndStringifyArrayContainer(builder, pretty, depth);
-                    break;
-                case Type.Bool:
-                    StringifyBool(builder);
-                    break;
-                case Type.Null:
-                    StringifyNull(builder);
-                    break;
-            }
-        }
-
-        void StringifyString(StringBuilder builder)
-        {
-            builder.AppendFormat("\"{0}\"", EscapeString(stringValue));
-        }
-
-        void BeginStringifyObjectContainer(StringBuilder builder, bool pretty)
-        {
-            builder.Append("{");
-
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                builder.Append(Newline);
-#endif
-        }
-
-        static void StringifyEmptyObject(StringBuilder builder)
-        {
-            builder.Append("{}");
-        }
-
-        void BeginStringifyObjectField(StringBuilder builder, bool pretty, int depth, string key)
-        {
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                for (var j = 0; j < depth; j++)
-                    builder.Append(Tab); //for a bit more readability
-#endif
-
-            builder.AppendFormat("\"{0}\":", key);
-        }
-
-        void EndStringifyObjectField(StringBuilder builder, bool pretty)
-        {
-            builder.Append(",");
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                builder.Append(Newline);
-#endif
-        }
-
-        void EndStringifyObjectContainer(StringBuilder builder, bool pretty, int depth)
-        {
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                builder.Length -= 3;
-            else
-#endif
-                builder.Length--;
-
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty && count > 0)
-            {
-                builder.Append(Newline);
-                for (var j = 0; j < depth - 1; j++)
-                    builder.Append(Tab);
-            }
-#endif
-
-            builder.Append("}");
-        }
-
-        static void StringifyEmptyArray(StringBuilder builder)
-        {
-            builder.Append("[]");
-        }
-
-        void BeginStringifyArrayContainer(StringBuilder builder, bool pretty)
-        {
-            builder.Append("[");
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                builder.Append(Newline);
-#endif
-
-        }
-
-        void BeginStringifyArrayElement(StringBuilder builder, bool pretty, int depth)
-        {
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                for (var j = 0; j < depth; j++)
-                    builder.Append(Tab); //for a bit more readability
-#endif
-        }
-
-        void EndStringifyArrayElement(StringBuilder builder, bool pretty)
-        {
-            builder.Append(",");
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                builder.Append(Newline);
-#endif
-        }
-
-        void EndStringifyArrayContainer(StringBuilder builder, bool pretty, int depth)
-        {
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty)
-                builder.Length -= 3;
-            else
-#endif
-                builder.Length--;
-
-#if !JSONOBJECT_DISABLE_PRETTY_PRINT
-            if (pretty && count > 0)
-            {
-                builder.Append(Newline);
-                for (var j = 0; j < depth - 1; j++)
-                    builder.Append(Tab);
-            }
-#endif
-
-            builder.Append("]");
-        }
-
-        void StringifyNumber(StringBuilder builder)
-        {
-            if (isInteger)
-            {
-                builder.Append(longValue.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-#if JSONOBJECT_USE_FLOAT
-				if (float.IsNegativeInfinity(floatValue))
-					builder.Append(NegativeInfinity);
-				else if (float.IsInfinity(floatValue))
-					builder.Append(Infinity);
-				else if (float.IsNaN(floatValue))
-					builder.Append(NaN);
-				else
-					builder.Append(floatValue.ToString("R", CultureInfo.InvariantCulture));
-#else
-                if (double.IsNegativeInfinity(doubleValue))
-                    builder.Append(NegativeInfinity);
-                else if (double.IsInfinity(doubleValue))
-                    builder.Append(Infinity);
-                else if (double.IsNaN(doubleValue))
-                    builder.Append(NaN);
-                else
-                    builder.Append(doubleValue.ToString("R", CultureInfo.InvariantCulture));
-#endif
-            }
-        }
-
-        void StringifyBool(StringBuilder builder)
-        {
-            builder.Append(boolValue ? True : False);
-        }
-
-        static void StringifyNull(StringBuilder builder)
-        {
-            builder.Append(Null);
-        }
-
 #if USING_UNITY
         public static implicit operator WWWForm(MstJson jsonObject)
         {
             var form = new WWWForm();
-            var count = jsonObject.count;
-            var list = jsonObject.list;
-            var keys = jsonObject.keys;
-            var hasKeys = jsonObject.type == Type.Object && keys != null && keys.Count >= count;
+            var count = jsonObject.Count;
+            var list = jsonObject.Values;
+            var keys = jsonObject.Keys;
+            var hasKeys = jsonObject.Type == ValueType.Object && keys != null && keys.Count >= count;
 
             for (var i = 0; i < count; i++)
             {
                 var key = hasKeys ? keys[i] : i.ToString(CultureInfo.InvariantCulture);
                 var element = list[i];
                 var val = element.ToString();
-                if (element.type == Type.String)
+                if (element.Type == ValueType.String)
                     val = val.Replace("\"", "");
 
                 form.AddField(key, val);
@@ -2011,12 +1953,12 @@ namespace MasterServerToolkit.Json
         {
             get
             {
-                return count > index ? list[index] : null;
+                return Count > index ? Values[index] : null;
             }
             set
             {
-                if (count > index)
-                    list[index] = value;
+                if (Count > index)
+                    Values[index] = value;
             }
         }
 
@@ -2038,41 +1980,41 @@ namespace MasterServerToolkit.Json
 
         public Dictionary<string, string> ToDictionary()
         {
-            if (type != Type.Object)
+            if (Type != ValueType.Object)
             {
 #if USING_UNITY
                 Debug.Log
 #else
 				Debug.WriteLine
 #endif
-                    ("Tried to turn non-Object JSONObject into a dictionary");
+                    ("Tried to turn non-Object MstJson into a dictionary");
 
                 return null;
             }
 
             var result = new Dictionary<string, string>();
-            var listCount = count;
-            if (keys == null || keys.Count != listCount)
+            var listCount = Count;
+            if (Keys == null || Keys.Count != listCount)
                 return result;
 
             for (var index = 0; index < listCount; index++)
             {
-                var element = list[index];
-                switch (element.type)
+                var element = Values[index];
+                switch (element.Type)
                 {
-                    case Type.String:
-                        result.Add(keys[index], element.stringValue);
+                    case ValueType.String:
+                        result.Add(Keys[index], element.StringValue);
                         break;
-                    case Type.Number:
+                    case ValueType.Number:
 #if JSONOBJECT_USE_FLOAT
-						result.Add(keys[index], element.floatValue.ToString(CultureInfo.InvariantCulture));
+						result.Add(Keys[index], element.FloatValue.ToString(CultureInfo.InvariantCulture));
 #else
-                        result.Add(keys[index], element.doubleValue.ToString(CultureInfo.InvariantCulture));
+                        result.Add(Keys[index], element.DoubleValue.ToString(CultureInfo.InvariantCulture));
 #endif
 
                         break;
-                    case Type.Bool:
-                        result.Add(keys[index], element.boolValue.ToString(CultureInfo.InvariantCulture));
+                    case ValueType.Bool:
+                        result.Add(Keys[index], element.BoolValue.ToString(CultureInfo.InvariantCulture));
                         break;
                     default:
 #if USING_UNITY
@@ -2080,7 +2022,7 @@ namespace MasterServerToolkit.Json
 #else
 						Debug.WriteLine
 #endif
-                            (string.Format("Omitting object: {0} in dictionary conversion", keys[index]));
+                            (string.Format("Omitting object: {0} in dictionary conversion", Keys[index]));
                         break;
                 }
             }
@@ -2095,75 +2037,29 @@ namespace MasterServerToolkit.Json
 
 #if JSONOBJECT_POOLING
 		public static void ClearPool() {
-			poolingEnabled = false;
-			poolingEnabled = true;
-			lock (Pool) {
-				Pool.Clear();
+			_poolingEnabled = false;
+			_poolingEnabled = true;
+			lock (_pool) {
+				_pool.Clear();
 			}
 		}
 
-		~JSONObject() {
-			lock (Pool) {
-				if (!poolingEnabled || isPooled || Pool.Count >= MaxPoolSize)
+		~MstJson() {
+			lock (_pool) {
+				if (!_poolingEnabled || _isPooled || _pool.Count >= _maxPoolSize)
 					return;
 
 				Clear();
-				isPooled = true;
-				Pool.Enqueue(this);
+				_isPooled = true;
+				_pool.Enqueue(this);
 				GC.ReRegisterForFinalize(this);
 			}
 		}
 #endif
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public MstJsonEnumerator GetEnumerator()
         {
-            return GetEnumerator();
-        }
-
-        public JSONObjectEnumerator GetEnumerator()
-        {
-            return new JSONObjectEnumerator(this);
-        }
-    }
-
-    public class JSONObjectEnumerator : IEnumerator
-    {
-        public MstJson target;
-
-        // Enumerators are positioned before the first element until the first MoveNext() call.
-        int position = -1;
-
-        public JSONObjectEnumerator(MstJson jsonObject)
-        {
-            if (!jsonObject.isContainer)
-                throw new InvalidOperationException("JSONObject must be an array or object to provide an iterator");
-
-            target = jsonObject;
-        }
-
-        public bool MoveNext()
-        {
-            position++;
-            return position < target.count;
-        }
-
-        public void Reset()
-        {
-            position = -1;
-        }
-
-        object IEnumerator.Current
-        {
-            get { return Current; }
-        }
-
-        // ReSharper disable once InconsistentNaming
-        public MstJson Current
-        {
-            get
-            {
-                return target[position];
-            }
+            return new MstJsonEnumerator(this);
         }
     }
 }

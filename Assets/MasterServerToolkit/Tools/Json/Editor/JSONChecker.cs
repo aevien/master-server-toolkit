@@ -90,7 +90,7 @@ namespace MasterServerToolkit.Json.Editor
 
             if (jsonObject)
             {
-                GUILayout.Label(jsonObject.type == MstJson.Type.Null
+                GUILayout.Label(jsonObject.Type == MstJson.ValueType.Null
                     ? string.Format("JSON fail:\n{0}", jsonObject.ToString(true))
                     : string.Format("JSON success:\n{0}", jsonObject.ToString(true)));
             }

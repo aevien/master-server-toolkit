@@ -88,7 +88,7 @@ MonoBehaviour:
   batchSend: 1
   waitBeforeSend: 0
   clientUseWss: 0
-  sslEnabled: 1
+  sslEnabled: 0
   sslCertJson: ./cert.json
   sslProtocols: 12288
   _logLevels: 3

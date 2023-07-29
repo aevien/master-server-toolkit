@@ -9,12 +9,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
     {
         #region INSPECTOR
 
-        [SerializeField]
-        private HelpBox _header = new HelpBox()
-        {
-            Text = "This is a mongo db client factory that helps to create client for all mongo db accessors"
-        };
-
         [Header("MongoDB Settings"), SerializeField]
         private string defaultConnectionString = "mongodb://localhost";
         [SerializeField]

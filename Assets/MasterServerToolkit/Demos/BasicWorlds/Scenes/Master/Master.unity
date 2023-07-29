@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -366,7 +366,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  accountDbName: accounts
+  databaseName: accounts
 --- !u!1 &839013358
 GameObject:
   m_ObjectHideFlags: 0
@@ -477,7 +477,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  profilesDbName: profiles1
+  databaseName: profiles
 --- !u!1 &1005001215
 GameObject:
   m_ObjectHideFlags: 0
@@ -517,7 +517,6 @@ MonoBehaviour:
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:
   m_ObjectHideFlags: 0
@@ -598,6 +597,7 @@ MonoBehaviour:
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
+  tokenSecret: t0k9n-$ecr9t
   serviceCodeMinChars: 6
   databaseAccessorFactory: {fileID: 674311275}
 --- !u!1 &1189862047
@@ -797,11 +797,11 @@ MonoBehaviour:
   executableFilePath: 
   maxProcesses: 5
   spawnWebSocketServers: 0
-  region: 
+  region: International
   killProcessesWhenStop: 0
   autoStartInEditor: 1
   overrideExePathInEditor: 1
-  exePathFromEditor: C:\UnityProjects\MST\Builds\BasicWorlds\Room\Room.exe
+  exePathFromEditor: E:\UnityProjects\MST\Builds\BasicWorlds\Room\Room.exe
   OnSpawnerStartedEvent:
     m_PersistentCalls:
       m_Calls: []

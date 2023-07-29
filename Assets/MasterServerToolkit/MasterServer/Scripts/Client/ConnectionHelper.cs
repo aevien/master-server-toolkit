@@ -23,13 +23,13 @@ namespace MasterServerToolkit.MasterServer
         [Tooltip("Port of the server"), SerializeField]
         protected int serverPort = 5000;
 
-        [Header("Advanced"), SerializeField]
+        [Header("Advanced"), SerializeField, Tooltip("The amount of time given for one connection attempt")]
         protected float timeout = 5f;
-        [SerializeField]
+        [SerializeField, Tooltip("Specifies the maximum number of connection attempts")]
         protected int maxAttemptsToConnect = 5;
-        [SerializeField]
+        [SerializeField, Tooltip("Waiting time for the start of automatic connection")]
         protected float waitAndConnect = 0.2f;
-        [Tooltip("If true, will try to connect on the Start()"), SerializeField]
+        [SerializeField, Tooltip("If true, will try to connect on the Start()")]
         protected bool connectOnStart = true;
 
         [Header("Events")]
@@ -50,6 +50,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected int currentAttemptToConnect = 0;
         private bool isConnecting = false;
+        private float startConnectionTime = 0f;
 
         /// <summary>
         /// Main connection to server
@@ -89,17 +90,24 @@ namespace MasterServerToolkit.MasterServer
         {
             if (connectOnStart)
             {
-                MstTimer.WaitForSeconds(waitAndConnect, () =>
+                if (waitAndConnect <= 0f)
                 {
                     StartConnection();
-                });
+                }
+                else
+                {
+                    MstTimer.WaitForSeconds(waitAndConnect, () =>
+                    {
+                        StartConnection();
+                    });
+                }
             }
         }
 
         protected virtual void OnValidate()
         {
             maxAttemptsToConnect = Mathf.Clamp(maxAttemptsToConnect, 1, int.MaxValue);
-            waitAndConnect = Mathf.Clamp(waitAndConnect, 0.2f, 60f);
+            waitAndConnect = Mathf.Clamp(waitAndConnect, 0f, 60f);
             timeout = Mathf.Clamp(timeout, 2f, 60f);
         }
 
@@ -158,6 +166,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (Connection != null)
             {
+                startConnectionTime = Time.realtimeSinceStartup;
                 currentAttemptToConnect = 0;
                 maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
 
@@ -177,12 +186,12 @@ namespace MasterServerToolkit.MasterServer
 
             if (!Connection.IsConnected && !Connection.IsConnecting)
             {
-                logger.Info($"Starting {GetType().Name.SplitByUppercase()}...".ToGreen());
-                logger.Info($"{GetType().Name.SplitByUppercase()} is connecting to server at: {serverIp}:{serverPort}".ToGreen());
+                logger.Info($"Starting {GetType().Name.ToSpaceByUppercase()}...".ToGreen());
+                logger.Info($"{GetType().Name.ToSpaceByUppercase()} is connecting to server at: {serverIp}:{serverPort}".ToGreen());
             }
             else if (!Connection.IsConnected && Connection.IsConnecting)
             {
-                logger.Info($"{GetType().Name.SplitByUppercase()} is retrying to connect to server at: {serverIp}:{serverPort}. Attempt: {currentAttemptToConnect}".ToGreen());
+                logger.Info($"{GetType().Name.ToSpaceByUppercase()} is retrying to connect to server at: {serverIp}:{serverPort}. Attempt: {currentAttemptToConnect}".ToGreen());
             }
 
             Connection.UseSecure = Mst.Settings.UseSecure;
@@ -197,7 +206,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     if (currentAttemptToConnect == maxAttemptsToConnect)
                     {
-                        logger.Info($"{GetType().Name.SplitByUppercase()} cannot to connect to server at: {serverIp}:{serverPort}".ToRed());
+                        logger.Info($"{GetType().Name.ToSpaceByUppercase()} cannot to connect to server at: {serverIp}:{serverPort}".ToRed());
                         Connection.Close();
                         OnFailedConnectEvent?.Invoke();
                     }
@@ -211,13 +220,14 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnDisconnectedEventHandler(IClientSocket client)
         {
-            logger.Info($"{GetType().Name.SplitByUppercase()} disconnected from server".ToRed());
+            logger.Info($"{GetType().Name.ToSpaceByUppercase()} disconnected from server".ToRed());
             OnDisconnectedEvent?.Invoke();
         }
 
         protected virtual void OnConnectedEventHandler(IClientSocket client)
         {
-            logger.Info($"{GetType().Name.SplitByUppercase()} connected to server at: {serverIp}:{serverPort}".ToGreen());
+            float totalConnectionTime = Time.realtimeSinceStartup - startConnectionTime;
+            logger.Info($"{GetType().Name.ToSpaceByUppercase()} connected to server at: {serverIp}:{serverPort}. Connection time is: {totalConnectionTime}s.".ToGreen());
             OnConnectedEvent?.Invoke();
         }
     }

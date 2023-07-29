@@ -25,7 +25,7 @@ namespace MasterServerToolkit.Examples.BasicTelegramBotLogger
                     return;
                 }
 
-                if (response.HasField("ok") && response.GetField("ok").boolValue == true)
+                if (response.HasField("ok") && response.GetField("ok").BoolValue == true)
                 {
                     Application.logMessageReceived += Application_logMessageReceived;
                 }

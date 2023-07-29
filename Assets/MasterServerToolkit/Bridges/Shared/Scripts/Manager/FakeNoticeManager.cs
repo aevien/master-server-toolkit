@@ -121,8 +121,8 @@ namespace MasterServerToolkit.Bridges
                 {
                     MstTimer.WaitForRealtimeSeconds(timeToWait, () =>
                     {
-                        var task = tasks[Random.Range(0, tasks.list.Count)];
-                        var user = users.list.Where(i => i.GetField("id").stringValue == task.GetField("userId").stringValue).FirstOrDefault();
+                        var task = tasks[Random.Range(0, tasks.Values.Count)];
+                        var user = users.Values.Where(i => i.GetField("id").StringValue == task.GetField("userId").StringValue).FirstOrDefault();
 
                         if (user != null)
                         {

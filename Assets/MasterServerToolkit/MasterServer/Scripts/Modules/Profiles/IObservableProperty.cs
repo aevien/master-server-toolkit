@@ -1,4 +1,6 @@
-﻿namespace MasterServerToolkit.MasterServer
+﻿using MasterServerToolkit.Json;
+
+namespace MasterServerToolkit.MasterServer
 {
     /// <summary>
     /// Represents basic functionality of observable property
@@ -48,6 +50,24 @@
         /// Should deserialize a value from string
         /// </summary>
         void Deserialize(string value);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        MstJson ToJson();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="json"></param>
+        void FromJson(MstJson json);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="json"></param>
+        void FromJson(string json);
 
         /// <summary>
         /// Retrieves updates that happened from the last time

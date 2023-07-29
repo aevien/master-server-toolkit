@@ -8,11 +8,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
     {
         #region INSPECTOR
 
-        public HelpBox _header = new HelpBox()
-        {
-            Text = "This is Accounts DB factory. Assign it to ProfilesModule"
-        };
-
         [Header("Components"), SerializeField]
         private MongoDbClientFactory mongoDbClientFactory;
 

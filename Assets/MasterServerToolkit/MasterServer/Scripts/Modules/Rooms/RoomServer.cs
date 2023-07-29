@@ -41,8 +41,6 @@ namespace MasterServerToolkit.MasterServer
 
             // Set server behaviour to be able to use in all levels
             DontDestroyOnLoad(gameObject);
-
-            autoStartInEditor = false;
         }
 
         protected override void Start()

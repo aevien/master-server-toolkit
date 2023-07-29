@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Utils
 {
-    public class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
+    public abstract class SingletonBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     {
         #region INSPECTOR
 
@@ -14,7 +14,7 @@ namespace MasterServerToolkit.Utils
         [Header("Base Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
         [SerializeField]
-        protected bool isGlobal = true;
+        protected bool isGlobal = false;
 
         #endregion
 

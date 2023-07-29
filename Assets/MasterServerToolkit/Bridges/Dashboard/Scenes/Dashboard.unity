@@ -157,10 +157,11 @@ MonoBehaviour:
   permissions: []
   targetFrameRate: 30
   logLevel: 0
-  serverIP: 127.0.0.1
+  serverIp: 127.0.0.1
   serverPort: 5099
   maxConnections: 0
-  autoStartInEditor: 1
+  inactivityTimeout: 5
+  validationTimeout: 5
 --- !u!4 &339640914
 Transform:
   m_ObjectHideFlags: 0
@@ -224,14 +225,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  heatBeatCheckInterval: 5
+  heartBeatCheckInterval: 5
+  autostart: 1
   httpAddress: 127.0.0.1
   httpPort: 5056
   defaultIndexPage:
   - index
   - home
-  authenticationSchemes: 8
-  realm: adminusers@masterservertoolkit.com
+  useCredentials: 1
   username: admin
   password: admin
 --- !u!1 &616562308

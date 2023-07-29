@@ -59,6 +59,9 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, TextArea(3, 10)]
         protected string emailAddressValidationTemplate = @"^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$";
 
+        [Header("Security"), SerializeField, Tooltip("Secret code to create user auth token. Change it for your own project")]
+        protected string tokenSecret = "t0k9n-$ecr9t";
+
         [Header("Generic"), SerializeField, Tooltip("Min number of characters the service code must contain")]
         protected int serviceCodeMinChars = 6;
 
@@ -83,17 +86,17 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Collection of users who are currently logged in by user id
         /// </summary>
-        protected ConcurrentDictionary<string, IUserPeerExtension> LoggedInUsersById { get; set; } = new ConcurrentDictionary<string, IUserPeerExtension>();
+        protected ConcurrentDictionary<string, IUserPeerExtension> loggedInUsers { get; set; } = new ConcurrentDictionary<string, IUserPeerExtension>();
 
         /// <summary>
         /// Collection of users who are currently logged in by username
         /// </summary>
-        protected ConcurrentDictionary<string, IUserPeerExtension> LoggedInUsersByUsername { get; set; } = new ConcurrentDictionary<string, IUserPeerExtension>();
+        //protected ConcurrentDictionary<string, IUserPeerExtension> LoggedInUsersByUsername { get; set; } = new ConcurrentDictionary<string, IUserPeerExtension>();
 
         /// <summary>
         /// Collection of users who are currently logged in
         /// </summary>
-        public IEnumerable<IUserPeerExtension> LoggedInUsers => LoggedInUsersById.Values;
+        public IEnumerable<IUserPeerExtension> LoggedInUsers => loggedInUsers.Values;
 
         /// <summary>
         /// Whether or not to save guest info
@@ -259,14 +262,17 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public IUserPeerExtension GetLoggedInUserByUsername(string username)
         {
-            if (LoggedInUsersByUsername.TryGetValue(username.ToLower(), out IUserPeerExtension user))
+            string login = username.ToLower();
+
+            foreach (var user in loggedInUsers.Values)
             {
-                return user;
+                if (user.Username == login)
+                {
+                    return user;
+                }
             }
-            else
-            {
-                return default;
-            }
+
+            return null;
         }
 
         /// <summary>
@@ -276,7 +282,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public IUserPeerExtension GetLoggedInUserById(string id)
         {
-            if (LoggedInUsersById.TryGetValue(id, out IUserPeerExtension user))
+            if (loggedInUsers.TryGetValue(id, out IUserPeerExtension user))
             {
                 return user;
             }
@@ -309,7 +315,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (string id in ids)
             {
-                if (LoggedInUsersById.TryGetValue(id, out IUserPeerExtension user))
+                if (TryGetLoggedInUserById(id, out IUserPeerExtension user))
                 {
                     if (user != null)
                         list.Add(user);
@@ -326,7 +332,8 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool IsUserLoggedInByUsername(string username)
         {
-            return LoggedInUsersByUsername.ContainsKey(username.ToLower());
+            var user = GetLoggedInUserByUsername(username);
+            return user != null;
         }
 
         /// <summary>
@@ -336,7 +343,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool IsUserLoggedInById(string id)
         {
-            return !string.IsNullOrEmpty(id) && LoggedInUsersById.ContainsKey(id);
+            return !string.IsNullOrEmpty(id) && loggedInUsers.ContainsKey(id);
         }
 
         /// <summary>
@@ -375,8 +382,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            LoggedInUsersByUsername.TryRemove(extension.Username.ToLower(), out _);
-            LoggedInUsersById.TryRemove(extension.UserId, out _);
+            loggedInUsers.TryRemove(extension.UserId, out _);
 
             OnUserLoggedOutEvent?.Invoke(extension);
         }
@@ -412,9 +418,24 @@ namespace MasterServerToolkit.MasterServer
         {
             var data = MstProperties.FromBytes(message.AsBytes());
 
-            if (!data.Has("code") || !data.Has("password") || !data.Has("email"))
+            if (data.IsValueEmpty("code"))
             {
-                message.Respond("Invalid request", ResponseStatus.Unauthorized);
+                logger.Error("Invalid password change request. Code required");
+                message.Respond(ResponseStatus.Invalid);
+                return;
+            }
+
+            if (data.IsValueEmpty("email"))
+            {
+                logger.Error("Invalid password change request. Email required");
+                message.Respond(ResponseStatus.Invalid);
+                return;
+            }
+
+            if (data.IsValueEmpty("password"))
+            {
+                logger.Error("Invalid password change request. New password required");
+                message.Respond(ResponseStatus.Invalid);
                 return;
             }
 
@@ -422,7 +443,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (passwordResetCode != data.AsString("code"))
             {
-                message.Respond("Invalid code provided", ResponseStatus.Unauthorized);
+                logger.Error("Invalid code provided");
+                message.Respond(ResponseStatus.Invalid);
                 return;
             }
 
@@ -448,7 +470,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (userAccount == null)
             {
-                message.Respond("No such e-mail in the system", ResponseStatus.Unauthorized);
+                logger.Error("Invalid email provided");
+                message.Respond(ResponseStatus.Invalid);
                 return;
             }
 
@@ -465,7 +488,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (!sentResult)
             {
-                message.Respond("Couldn't send an activation code to your e-mail");
+                logger.Error($"Couldn't send an activation code to email {userAccount.Email}");
+                message.Respond(ResponseStatus.Failed);
                 return;
             }
 
@@ -483,19 +507,20 @@ namespace MasterServerToolkit.MasterServer
 
             if (userExtension == null || userExtension.Account == null)
             {
-                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                message.Respond(ResponseStatus.Unauthorized);
                 return;
             }
 
             if (userExtension.Account.IsGuest)
             {
-                message.Respond("Guests cannot confirm e-mails", ResponseStatus.Unauthorized);
+                logger.Error("Guests cannot confirm e-mails");
+                message.Respond(ResponseStatus.Unauthorized);
                 return;
             }
 
             if (userExtension.Account.IsEmailConfirmed)
             {
-                message.Respond("Your email is already confirmed", ResponseStatus.Success);
+                message.Respond(ResponseStatus.Success);
                 return;
             }
 
@@ -503,7 +528,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (requiredCode != confirmationCode)
             {
-                message.Respond("Invalid activation code", ResponseStatus.Error);
+                logger.Error("Invalid activation code");
+                message.Respond(ResponseStatus.Invalid);
                 return;
             }
 
@@ -530,13 +556,14 @@ namespace MasterServerToolkit.MasterServer
 
             if (userExtension == null || userExtension.Account == null)
             {
-                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                message.Respond(ResponseStatus.Unauthorized);
                 return;
             }
 
             if (userExtension.Account.IsGuest)
             {
-                message.Respond("Guests cannot confirm e-mails", ResponseStatus.Unauthorized);
+                logger.Error("Guests cannot confirm e-mails");
+                message.Respond(ResponseStatus.Unauthorized);
                 return;
             }
 
@@ -546,7 +573,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (mailer == null)
             {
-                message.Respond("Couldn't send a confirmation code to your e-mail. Please contact support", ResponseStatus.Error);
+                logger.Error($"Couldn't send a confirmation code to e-mail {userExtension.Account.Email}");
+                message.Respond(ResponseStatus.Failed);
                 return;
             }
 
@@ -560,7 +588,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (!sentResult)
             {
-                message.Respond("Couldn't send a confirmation code to your e-mail. Please contact support", ResponseStatus.Error);
+                logger.Error($"Couldn't send a confirmation code to e-mail {userExtension.Account.Email}");
+                message.Respond(ResponseStatus.Failed);
                 return;
             }
 
@@ -576,7 +605,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!HasGetPeerInfoPermissions(message.Peer))
             {
-                message.Respond("Unauthorized", ResponseStatus.Unauthorized);
+                message.Respond(ResponseStatus.Unauthorized);
                 return;
             }
 
@@ -585,15 +614,17 @@ namespace MasterServerToolkit.MasterServer
 
             if (peer == null)
             {
-                message.Respond("Peer with a given ID is not in the game", ResponseStatus.Error);
+                logger.Error($"Peer with a given ID {peerId} is not in the game");
+                message.Respond(ResponseStatus.NotFound);
                 return;
             }
 
             var userExtension = peer.GetExtension<IUserPeerExtension>();
 
-            if (userExtension == null)
+            if (userExtension == null || userExtension.Account == null)
             {
-                message.Respond("Peer has not been authenticated", ResponseStatus.Failed);
+                logger.Error($"Peer with a given ID {peerId} is not authenticated");
+                message.Respond(ResponseStatus.NotFound);
                 return;
             }
 
@@ -632,7 +663,8 @@ namespace MasterServerToolkit.MasterServer
                 // If user is already logged in and he is not a guest
                 if (isLoggedIn && !userExtension.Account.IsGuest)
                 {
-                    message.Respond($"You are already logged in as {userExtension.Account.Username}", ResponseStatus.Error);
+                    logger.Error($"Player {userExtension.Account.Username} is already logged in");
+                    message.Respond(ResponseStatus.Failed);
                     return;
                 }
 
@@ -645,8 +677,9 @@ namespace MasterServerToolkit.MasterServer
                 // If no AES key found
                 if (string.IsNullOrEmpty(aesKey))
                 {
+                    logger.Error($"Insecure request for peer {message.Peer.Id}");
                     // There's no aesKey that client and master agreed upon
-                    message.Respond("Insecure request", ResponseStatus.Unauthorized);
+                    message.Respond(ResponseStatus.Unauthorized);
                     return;
                 }
 
@@ -659,20 +692,21 @@ namespace MasterServerToolkit.MasterServer
                 // Parse our data to user creadentials
                 var userCredentials = MstProperties.FromBytes(decryptedBytesData);
 
-                bool hasUsername = userCredentials.Has(MstDictKeys.USER_NAME);
-                bool hasPassword = userCredentials.Has(MstDictKeys.USER_PASSWORD);
-                bool hasEmail = userCredentials.Has(MstDictKeys.USER_EMAIL);
+                bool hasUsername = !userCredentials.IsValueEmpty(MstDictKeys.USER_NAME);
+                bool hasPassword = !userCredentials.IsValueEmpty(MstDictKeys.USER_PASSWORD);
+                bool hasEmail = !userCredentials.IsValueEmpty(MstDictKeys.USER_EMAIL);
 
                 if (!hasPassword)
                 {
-                    message.Respond("Password required", ResponseStatus.Invalid);
+                    logger.Error("Invalid password");
+                    message.Respond(ResponseStatus.Invalid);
                     return;
                 }
 
-
                 if (!hasEmail && !hasUsername)
                 {
-                    message.Respond("Username or email required", ResponseStatus.Invalid);
+                    logger.Error("Invalid username and email");
+                    message.Respond(ResponseStatus.Invalid);
                     return;
                 }
 
@@ -683,35 +717,40 @@ namespace MasterServerToolkit.MasterServer
                 // Check if length of our password is valid
                 if (userPasswordMinChars > userPassword.Length)
                 {
-                    message.Respond($"Invalid user password. It must consist at least {userPasswordMinChars} characters", ResponseStatus.Invalid);
+                    logger.Error($"Invalid user password. It must consist at least {userPasswordMinChars} characters");
+                    message.Respond(ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if username is valid
                 if (hasUsername && !IsUsernameValid(userName))
                 {
-                    message.Respond($"Invalid username {userName}", ResponseStatus.Invalid);
+                    logger.Error($"Invalid username {userName}");
+                    message.Respond(ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if there's a forbidden word in username
                 if (hasUsername && censorModule != null && censorModule.HasCensoredWord(userName))
                 {
-                    message.Respond($"Forbidden word used in username {userName}", ResponseStatus.Invalid);
+                    logger.Error($"Forbidden word used in username {userName}");
+                    message.Respond(ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if username length is good
                 if (hasUsername && ((userName.Length < usernameMinChars) || (userName.Length > usernameMaxChars)))
                 {
-                    message.Respond($"Invalid usernanme length. Min length is {usernameMinChars} and max length is {usernameMaxChars}", ResponseStatus.Invalid);
+                    logger.Error($"Invalid usernanme length. Min length is {usernameMinChars} and max length is {usernameMaxChars}");
+                    message.Respond(ResponseStatus.Invalid);
                     return;
                 }
 
                 // Check if email is valid
                 if (hasEmail && !IsEmailValid(userEmail))
                 {
-                    message.Respond($"Invalid email {userEmail}", ResponseStatus.Invalid);
+                    logger.Error($"Invalid email {userEmail}");
+                    message.Respond(ResponseStatus.Invalid);
                     return;
                 }
 
@@ -751,7 +790,7 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        private void SignOutMessageHandler(IIncomingMessage message)
+        protected virtual void SignOutMessageHandler(IIncomingMessage message)
         {
             try
             {
@@ -760,8 +799,7 @@ namespace MasterServerToolkit.MasterServer
                 if (userExtension == null || userExtension.Account == null)
                     return;
 
-                LoggedInUsersByUsername.TryRemove(userExtension.Username.ToLower(), out _);
-                LoggedInUsersById.TryRemove(userExtension.UserId, out _);
+                loggedInUsers.TryRemove(userExtension.UserId, out _);
 
                 NotifyOnUserLoggedOutEvent(userExtension);
 
@@ -825,8 +863,7 @@ namespace MasterServerToolkit.MasterServer
                 userExtension.Peer.OnConnectionCloseEvent += OnUserDisconnectedEventListener;
 
                 // Add to lookup of logged in users
-                LoggedInUsersByUsername.TryAdd(userExtension.Username.ToLower(), userExtension);
-                LoggedInUsersById.TryAdd(userExtension.UserId, userExtension);
+                loggedInUsers.TryAdd(userExtension.UserId, userExtension);
 
                 logger.Debug($"User {message.Peer.Id} signed in as {userAccount.Username}");
 
@@ -893,7 +930,7 @@ namespace MasterServerToolkit.MasterServer
             if (userPeerExtension != null)
             {
                 logger.Debug($"User {peer.Id} trying to login, but he is already logged in");
-                message.Respond("You are already logged in", ResponseStatus.Failed);
+                message.Respond(ResponseStatus.Failed);
                 return null;
             }
 
@@ -903,15 +940,16 @@ namespace MasterServerToolkit.MasterServer
             // if email is not in valid format
             if (!IsEmailValid(userEmail))
             {
-                message.Respond($"Email {userEmail} is invalid", ResponseStatus.Invalid);
+                logger.Error($"Email {userEmail} is invalid");
+                message.Respond(ResponseStatus.Invalid);
                 return null;
             }
 
             // If another session found
             if (IsUserLoggedInByUsername(userEmail))
             {
-                logger.Debug("Another user is already logged in with this account");
-                message.Respond("This account is already logged in", ResponseStatus.Failed);
+                logger.Error("Another user is already logged in with this account");
+                message.Respond(ResponseStatus.Failed);
                 return null;
             }
 
@@ -961,7 +999,8 @@ namespace MasterServerToolkit.MasterServer
 
             if (!sentResult)
             {
-                message.Respond("Couldn't send creadentials to your e-mail. Please contact support", ResponseStatus.Error);
+                logger.Error($"Couldn't send creadentials to e-mail {userEmail}");
+                message.Respond(ResponseStatus.Failed);
                 return null;
             }
 
@@ -975,7 +1014,8 @@ namespace MasterServerToolkit.MasterServer
         protected virtual async Task CreateAccountToken(IAccountInfoData userAccount)
         {
             string dateTime = DateTime.UtcNow.AddDays(tokenExpiresInDays).ToString();
-            string token = Convert.ToBase64String($"{userAccount.Id}/{userAccount.Username}/{dateTime}".ToBytes());
+            string token = $"{userAccount.Id}/{userAccount.Username}/{dateTime}";
+            token = Mst.Security.EncryptStringAES(token, tokenSecret);
             await authDatabaseAccessor.InsertTokenAsync(userAccount, token);
         }
 
@@ -989,9 +1029,9 @@ namespace MasterServerToolkit.MasterServer
             if (string.IsNullOrEmpty(token))
                 return true;
 
-            string rawString = Encoding.UTF8.GetString(Convert.FromBase64String(token));
+            string decryptedToken = Mst.Security.DecryptStringAES(token, tokenSecret);
             char[] chars = new char[] { '/' };
-            string[] values = rawString.Split(chars, StringSplitOptions.RemoveEmptyEntries);
+            string[] values = decryptedToken.Split(chars, StringSplitOptions.RemoveEmptyEntries);
 
             if (values.Length == 3 && DateTime.TryParse(values[2], out DateTime expireDate))
             {

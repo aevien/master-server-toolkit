@@ -32,19 +32,20 @@ namespace MasterServerToolkit.MasterServer
 
         private readonly Dictionary<string, string> components = new Dictionary<string, string>();
 
-        private const string JS_OUTPUT = "#jsOutput";
         private const string MST_TITLE = "#mstTitle";
         private const string MST_VERSION = "#mstVersion";
+        private const string MST_LOGO = "#mstLogo";
+        private const string JS_OUTPUT = "#jsOutput";
         private const string VUE_COMPONENT_TEMPLATE = "#vueComponentTemplate";
 
         private byte[] logoRawData;
 
-        public override void Initialize(HttpServerModule httpServer)
+        private void Start()
         {
-            base.Initialize(httpServer);
-
             appHtml = appHtmlFile.text;
             appVue = appVueFile.text;
+
+            logoRawData = logoImage.EncodeToPNG();
 
             foreach (var appComponent in appComponents)
             {
@@ -56,8 +57,11 @@ namespace MasterServerToolkit.MasterServer
                     components.Add(appComponent.name, result);
                 }
             }
+        }
 
-            logoRawData = logoImage.EncodeToPNG();
+        public override void Initialize(HttpServerModule httpServer)
+        {
+            base.Initialize(httpServer);
 
             httpServer.RegisterHttpRequestHandler("dashboard", OnDashboardRequestHandlerAsync);
             httpServer.RegisterHttpRequestHandler("get-system-info", OnGetSystemInfoRequestHandlerAsync);
@@ -100,7 +104,7 @@ namespace MasterServerToolkit.MasterServer
                 Inject(Mst.Version, appHtml, MST_VERSION, out appHtml);
 
                 string logoBase64 = $"data:image/png;base64,{Convert.ToBase64String(logoRawData)}";
-                Inject(logoBase64, appHtml, "#logo", out appHtml);
+                Inject(logoBase64, appHtml, MST_LOGO, out appHtml);
 
                 byte[] contents = Encoding.UTF8.GetBytes(appHtml);
 

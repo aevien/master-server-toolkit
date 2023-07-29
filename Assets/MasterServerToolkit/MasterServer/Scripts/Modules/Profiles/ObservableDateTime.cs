@@ -1,3 +1,4 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 using System;
 
@@ -42,6 +43,21 @@ namespace MasterServerToolkit.MasterServer
             var data = new byte[sizeof(long)];
             EndianBitConverter.Big.CopyBytes(_value.ToBinary(), data, 0);
             return data;
+        }
+
+        public override MstJson ToJson()
+        {
+            return MstJson.Create(_value.ToString());
+        }
+
+        public override void FromJson(MstJson json)
+        {
+            DateTime.TryParse(json.StringValue, out _value);
+        }
+
+        public override void FromJson(string json)
+        {
+            FromJson(MstJson.Create(json));
         }
     }
 }

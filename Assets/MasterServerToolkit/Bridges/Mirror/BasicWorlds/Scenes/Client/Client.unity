@@ -432,6 +432,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   serverIp: 127.0.0.1
   serverPort: 5000
   timeout: 5
@@ -507,6 +508,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
+  isGlobal: 0
   resolutionMultiplier: 1
   screenshoKey: 107
   format: 3
@@ -558,6 +560,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 1
   roomConnectionTimeout: 10
   autoStartInEditor: 0
   autoStartDelay: 1

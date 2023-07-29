@@ -1,4 +1,6 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Networking;
+using System;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -94,5 +96,20 @@ namespace MasterServerToolkit.MasterServer
         }
 
         public override void ClearUpdates() { }
+
+        public override MstJson ToJson()
+        {
+            return MstJson.Create(_value);
+        }
+
+        public override void FromJson(MstJson json)
+        {
+            _value = json.FloatValue;
+        }
+
+        public override void FromJson(string json)
+        {
+            _value = Convert.ToSingle(json);
+        }
     }
 }

@@ -17,10 +17,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public ProfilesDatabaseAccessor(string databaseName)
         {
             database = new LiteDatabase($"{databaseName}.db");
-        }
 
-        public void InitCollections()
-        {
             profiles = database.GetCollection<ProfileInfoData>("profiles");
             profiles.EnsureIndex(a => a.UserId, true);
         }

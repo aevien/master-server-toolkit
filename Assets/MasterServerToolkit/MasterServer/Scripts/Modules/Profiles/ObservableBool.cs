@@ -1,4 +1,6 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
+using System;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -53,5 +55,23 @@ namespace MasterServerToolkit.MasterServer
         }
 
         public override void ClearUpdates() { }
+
+        public override MstJson ToJson()
+        {
+            return new MstJson
+            {
+                _value
+            };
+        }
+
+        public override void FromJson(MstJson json)
+        {
+            _value = json.BoolValue;
+        }
+
+        public override void FromJson(string json)
+        {
+            _value = Convert.ToBoolean(json);
+        }
     }
 }

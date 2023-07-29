@@ -153,6 +153,8 @@ Transform:
   m_Children:
   - {fileID: 2041466606}
   - {fileID: 1428928144}
+  - {fileID: 906279996}
+  - {fileID: 875486224}
   m_Father: {fileID: 1005001217}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -241,6 +243,100 @@ Transform:
   m_Father: {fileID: 1005001217}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &875486223
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 875486224}
+  - component: {fileID: 875486225}
+  m_Layer: 0
+  m_Name: ProfilesMySQLAccessorFactory
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &875486224
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 875486223}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 57874328}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &875486225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 875486223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 684a6143e4d5b2d4bb7f4ac5c34249a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  connectionString: Server=localhost;Database=master_server_toolkit;Uid=root;Pwd=qazwsxedc123!@#;Port=3306;
+  useGlobalConnectionstring: 1
+--- !u!1 &906279995
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 906279996}
+  - component: {fileID: 906279997}
+  m_Layer: 0
+  m_Name: AccountsMySQLAccessorFactory
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &906279996
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 906279995}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 57874328}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &906279997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 906279995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0ac332f7ae58d646b911847451b16f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  connectionString: Server=localhost;Database=master_server_toolkit;Uid=root;Pwd=qazwsxedc123!@#;Port=3306;
+  useGlobalConnectionstring: 1
 --- !u!1 &1005001215
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,7 +376,6 @@ MonoBehaviour:
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:
   m_ObjectHideFlags: 0
@@ -298,64 +393,9 @@ Transform:
   - {fileID: 1189862048}
   - {fileID: 57874328}
   - {fileID: 582703838}
-  - {fileID: 1112139946}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1112139945
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1112139946}
-  - component: {fileID: 1112139947}
-  m_Layer: 0
-  m_Name: HttpServerModule
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1112139946
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1112139945}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1005001217}
-  m_RootOrder: 5
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1112139947
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1112139945}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5973188e872fa5478516491aa22dcba, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 0
-  heatBeatCheckInterval: 5
-  httpAddress: 127.0.0.1
-  httpPort: 8080
-  defaultIndexPage:
-  - index
-  - home
-  useCredentials: 1
-  username: admin
-  password: admin
 --- !u!1 &1152754123
 GameObject:
   m_ObjectHideFlags: 0
@@ -412,8 +452,9 @@ MonoBehaviour:
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
+  tokenSecret: t0k9n-$ecr9t
   serviceCodeMinChars: 6
-  databaseAccessorFactory: {fileID: 2041466607}
+  databaseAccessorFactory: {fileID: 906279997}
 --- !u!1 &1189862047
 GameObject:
   m_ObjectHideFlags: 0
@@ -465,7 +506,7 @@ MonoBehaviour:
   clientUpdateDebounceTime: 0.1
   editProfilePermissionLevel: 0
   ignoreProfileMissmatchError: 0
-  databaseAccessorFactory: {fileID: 1428928145}
+  databaseAccessorFactory: {fileID: 875486225}
   bronze: 2000
   silver: 1000
   gold: 100
@@ -515,7 +556,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  profilesDbName: profiles1
+  databaseName: profiles
 --- !u!1 &1977181801
 GameObject:
   m_ObjectHideFlags: 0
@@ -607,4 +648,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  accountDbName: accounts
+  databaseName: accounts

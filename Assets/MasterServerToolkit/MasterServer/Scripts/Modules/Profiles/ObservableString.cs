@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using MasterServerToolkit.Json;
+using System.Text;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -57,5 +58,20 @@ namespace MasterServerToolkit.MasterServer
         }
 
         public override void ClearUpdates() { }
+
+        public override MstJson ToJson()
+        {
+            return MstJson.Create(_value);
+        }
+
+        public override void FromJson(MstJson json)
+        {
+            _value = json.StringValue;
+        }
+
+        public override void FromJson(string json)
+        {
+            FromJson(MstJson.Create(json));
+        }
     }
 }

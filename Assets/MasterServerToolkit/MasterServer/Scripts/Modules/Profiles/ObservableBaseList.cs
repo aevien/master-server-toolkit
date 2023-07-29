@@ -1,4 +1,5 @@
 using MasterServerToolkit.Networking;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -14,6 +15,7 @@ namespace MasterServerToolkit.MasterServer
         private const byte _setOperation = 0;
         private const byte _removeOperation = 1;
         private const byte _insertOperation = 2;
+
         private Queue<ListUpdateEntry> _updates;
         public int Count => _value.Count;
 
@@ -337,8 +339,16 @@ namespace MasterServerToolkit.MasterServer
         {
             for (int i = 0; i < _value.Count; i++)
             {
-                RemoveAt(i);
+                _updates.Enqueue(new ListUpdateEntry()
+                {
+                    index = i,
+                    operation = _removeOperation,
+                });
             }
+
+            _value.Clear();
+
+            MarkDirty();
         }
 
         private struct ListUpdateEntry

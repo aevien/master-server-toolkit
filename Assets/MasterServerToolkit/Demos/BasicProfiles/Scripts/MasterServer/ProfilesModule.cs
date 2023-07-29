@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.Examples.BasicProfile
 {
-    public class DemoProfilesModule : ProfilesModule
+    public class ProfilesModule : MasterServer.ProfilesModule
     {
         [Header("Start Values"), SerializeField]
         private int bronze = 100;

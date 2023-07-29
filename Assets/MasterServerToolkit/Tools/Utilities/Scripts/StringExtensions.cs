@@ -1,9 +1,13 @@
+using System.Collections.Concurrent;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace MasterServerToolkit.Extensions
 {
     public static class StringExtensions
     {
+        private static readonly ConcurrentDictionary<uint, string> hashes = new ConcurrentDictionary<uint, string>();
+
         const uint FNV_offset_basis = 0x01000193;
         const uint FNV_prime = 0x811c9dc5;
 
@@ -30,7 +34,14 @@ namespace MasterServerToolkit.Extensions
         /// <returns></returns>
         public static ushort ToUint16Hash(this string value)
         {
-            return (ushort)(value.ToUint32Hash() & 0xFFFF);
+            ushort hash = (ushort)(FNV_1a_hash(value) & 0xFFFF);
+
+            if (!hashes.ContainsKey(hash))
+            {
+                hashes[hash] = value;
+            }
+
+            return hash;
         }
 
         /// <summary>
@@ -40,7 +51,14 @@ namespace MasterServerToolkit.Extensions
         /// <returns></returns>
         public static uint ToUint32Hash(this string value)
         {
-            return FNV_1a_hash(value);
+            uint hash = FNV_1a_hash(value);
+
+            if (!hashes.ContainsKey(hash))
+            {
+                hashes[hash] = value;
+            }
+
+            return hash;
         }
 
         /// <summary>
@@ -56,15 +74,44 @@ namespace MasterServerToolkit.Extensions
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="hash"></param>
+        /// <returns></returns>
+        public static string FromHash(uint hash)
+        {
+            hashes.TryGetValue(hash, out var value);
+
+            if (string.IsNullOrEmpty(value))
+            {
+                return hash.ToString();
+            }
+            else
+            {
+                return value;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static string SplitByUppercase(this string value)
+        public static string ToSpaceByUppercase(this string value)
         {
             return Regex.Replace(value, "[A-Z]", (match) =>
             {
                 string v = match.ToString();
                 return $" {v}";
             });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static byte[] Compress(this string value)
+        {
+            return Encoding.UTF8.GetBytes(value).CompressDeflate();
         }
 
         /// <summary>

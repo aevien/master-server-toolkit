@@ -1445,6 +1445,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 0
   roomConnectionTimeout: 10
   autoStartInEditor: 1
   autoStartDelay: 1
@@ -2428,6 +2429,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1365072445}
   m_CullTransparentMesh: 1
+--- !u!1 &1431803445
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1431803447}
+  - component: {fileID: 1431803446}
+  m_Layer: 0
+  m_Name: --CONNECTION_TO_MASTER
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1431803446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1431803445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f4cb439243992949b9b12a35c4760c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 0
+  isGlobal: 1
+  serverIp: 127.0.0.1
+  serverPort: 5000
+  timeout: 5
+  maxAttemptsToConnect: 5
+  waitAndConnect: 0.2
+  connectOnStart: 1
+  OnConnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnFailedConnectEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDisconnectedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1431803447
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1431803445}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3103.9978, y: 543.1653, z: -2735.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1536213074
 GameObject:
   m_ObjectHideFlags: 0

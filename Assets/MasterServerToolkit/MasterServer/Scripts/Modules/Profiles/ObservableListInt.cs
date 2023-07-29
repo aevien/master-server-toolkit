@@ -1,3 +1,4 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,28 @@ namespace MasterServerToolkit.MasterServer
             return string.Join(";", _value);
         }
 
+        public override MstJson ToJson()
+        {
+            var json = MstJson.EmptyArray;
+
+            foreach (var v in _value)
+            {
+                json.Add(v);
+            }
+
+            return json;
+        }
+
+        public override void FromJson(MstJson json)
+        {
+            _value.Clear();
+
+            foreach (var v in json)
+            {
+                _value.Add(v.IntValue);
+            }
+        }
+
         protected override int ReadValue(EndianBinaryReader reader)
         {
             return reader.ReadInt32();
@@ -41,6 +64,11 @@ namespace MasterServerToolkit.MasterServer
         protected override void WriteValue(int value, EndianBinaryWriter writer)
         {
             writer.Write(value);
+        }
+
+        public override void FromJson(string json)
+        {
+            FromJson(new MstJson(json));
         }
     }
 }

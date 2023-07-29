@@ -66,6 +66,8 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
+        private float timeToWaitProfile = 10f * 1000f;
+
         /// <summary>
         /// Auth module for listening to auth events
         /// </summary>
@@ -115,11 +117,6 @@ namespace MasterServerToolkit.MasterServer
         protected override void Awake()
         {
             base.Awake();
-
-            if (DestroyIfExists())
-            {
-                return;
-            }
 
             // Add auth module as a dependency of this module
             AddOptionalDependency<AuthModule>();
@@ -191,19 +188,19 @@ namespace MasterServerToolkit.MasterServer
                 // We need to create a new one
                 profile = CreateProfile(user.UserId, user.Peer);
                 profilesList.TryAdd(user.UserId, profile);
-            }
 
-            // Restore profile data from database
-            await profileDatabaseAccessor.RestoreProfileAsync(profile);
+                // Restore profile data from database
+                await profileDatabaseAccessor.RestoreProfileAsync(profile);
+
+                // Listen to profile events
+                profile.OnModifiedInServerEvent += OnProfileChangedEventHandler;
+            }
 
             // 
             profile.ClearUpdates();
 
             // Save profile property
             user.Peer.AddExtension(new ProfilePeerExtension(profile, user.Peer));
-
-            // Listen to profile events
-            profile.OnModifiedInServerEvent += OnProfileChangedEventHandler;
         }
 
         /// <summary>
@@ -425,9 +422,9 @@ namespace MasterServerToolkit.MasterServer
             ProfilePeerExtension profileExt = null;
 
             // Wait for user profile
-            while (totalTime < 10 * 1000)
+            while (totalTime < timeToWaitProfile)
             {
-                await Task.Delay(10);
+                await Task.Delay(100);
                 totalTime += 100;
 
                 if (message.Peer.TryGetExtension(out profileExt))
@@ -436,7 +433,7 @@ namespace MasterServerToolkit.MasterServer
 
             if (profileExt == null)
             {
-                message.Respond("Profile not found", ResponseStatus.Failed);
+                message.Respond(ResponseStatus.NotFound);
                 return;
             }
 

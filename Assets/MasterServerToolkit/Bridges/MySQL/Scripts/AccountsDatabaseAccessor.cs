@@ -1,5 +1,5 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
 using MySql.Data.MySqlClient;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -25,10 +25,10 @@ namespace MasterServerToolkit.Bridges.MySQL
 
         public async Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId)
         {
-            return await GetAccountByProperty("device_id", deviceId);
+            return await GetAccountByPropertyAsync("device_id", deviceId);
         }
 
-        private async Task<IAccountInfoData> GetAccountByProperty(string propertyName, string propertyValue)
+        public async Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyName, string propertyValue)
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
@@ -45,13 +45,13 @@ namespace MasterServerToolkit.Bridges.MySQL
                         if (!reader.HasRows)
                             return null;
 
-                        return await ReadAccountInfo(reader, cmd);
+                        return await ReadAccountInfo(reader);
                     }
                 }
             }
         }
 
-        private async Task<IAccountInfoData> ReadAccountInfo(MySqlDataReader reader, MySqlCommand cmd)
+        private async Task<IAccountInfoData> ReadAccountInfo(MySqlDataReader reader)
         {
             AccountInfoData account = null;
 
@@ -71,8 +71,11 @@ namespace MasterServerToolkit.Bridges.MySQL
                     DeviceId = reader.GetString("device_id"),
                     DeviceName = reader.GetString("device_name"),
                     IsEmailConfirmed = reader.GetBoolean("is_email_confirmed"),
-                    Properties = new Dictionary<string, string>().FromReadableString(reader.GetString("properties")),
+                    Properties = new Dictionary<string, string>(),
                 };
+
+                var properties = new MstJson(reader.GetString("properties"));
+                account.Properties = properties.ToDictionary();
             }
 
             if (account == null)
@@ -85,27 +88,27 @@ namespace MasterServerToolkit.Bridges.MySQL
 
         public async Task<IAccountInfoData> GetAccountByEmailAsync(string email)
         {
-            return await GetAccountByProperty("email", email);
+            return await GetAccountByPropertyAsync("email", email);
         }
 
         public async Task<IAccountInfoData> GetAccountByIdAsync(string id)
         {
-            return await GetAccountByProperty("id", id);
+            return await GetAccountByPropertyAsync("id", id);
         }
 
         public async Task<IAccountInfoData> GetAccountByPhoneNumberAsync(string phoneNumber)
         {
-            return await GetAccountByProperty("phone_number", phoneNumber);
+            return await GetAccountByPropertyAsync("phone_number", phoneNumber);
         }
 
         public async Task<IAccountInfoData> GetAccountByTokenAsync(string token)
         {
-            return await GetAccountByProperty("token", token);
+            return await GetAccountByPropertyAsync("token", token);
         }
 
         public async Task<IAccountInfoData> GetAccountByUsernameAsync(string username)
         {
-            return await GetAccountByProperty("username", username);
+            return await GetAccountByPropertyAsync("username", username);
         }
 
         public async Task SaveEmailConfirmationCodeAsync(string email, string code)
@@ -264,7 +267,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                         $"'{account.DeviceId}'," +
                         $"'{account.DeviceName}'," +
                         $"{(account.IsEmailConfirmed ? 1 : 0)}," +
-                        $"'{account.Properties.ToReadableString()}');";
+                        $"'{new MstJson(account.Properties)}');";
 
                     await cmd.ExecuteNonQueryAsync();
 
@@ -293,7 +296,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                         $"`device_id`='{account.DeviceId}'," +
                         $"`device_name`='{account.DeviceName}'," +
                         $"`is_email_confirmed`={(account.IsEmailConfirmed ? 1 : 0)}" +
-                        $"`properties`={account.Properties.ToReadableString()}" +
+                        $"`properties`='{new MstJson(account.Properties)}'" +
                         $"WHERE id={account.Id};";
 
                     await cmd.ExecuteNonQueryAsync();
@@ -301,11 +304,6 @@ namespace MasterServerToolkit.Bridges.MySQL
                     return true;
                 }
             }
-        }
-
-        public Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyKey, string propertyValue)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

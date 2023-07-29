@@ -34,7 +34,7 @@ namespace MasterServerToolkit.UI
                 return true;
             }
 
-            if (isRequired && string.IsNullOrEmpty(currentInputField.text))
+            if (isRequired && string.IsNullOrEmpty(currentInputField.text.Trim()))
             {
                 Logs.Error(string.IsNullOrEmpty(requiredErrorMessage) ? $"Field {name} is required" : requiredErrorMessage);
 

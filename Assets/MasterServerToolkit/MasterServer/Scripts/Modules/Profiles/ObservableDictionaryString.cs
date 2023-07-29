@@ -1,5 +1,7 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Networking;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -33,6 +35,33 @@ namespace MasterServerToolkit.MasterServer
         protected override string ReadKey(EndianBinaryReader reader)
         {
             return reader.ReadString();
+        }
+
+        public override MstJson ToJson()
+        {
+            var json = MstJson.EmptyObject;
+
+            foreach (var kvp in _value)
+            {
+                json.AddField(kvp.Key, kvp.Value);
+            }
+
+            return json;
+        }
+
+        public override void FromJson(MstJson json)
+        {
+            _value.Clear();
+
+            foreach (var key in json.Keys)
+            {
+                _value.TryAdd(key, json[key].StringValue);
+            }
+        }
+
+        public override void FromJson(string json)
+        {
+            FromJson(new MstJson(json));
         }
     }
 }

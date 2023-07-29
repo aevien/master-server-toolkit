@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Networking;
 using System.Collections.Concurrent;
 
 namespace MasterServerToolkit.MasterServer
@@ -42,6 +43,33 @@ namespace MasterServerToolkit.MasterServer
         protected override void WriteValue(int value, EndianBinaryWriter writer)
         {
             writer.Write(value);
+        }
+
+        public override MstJson ToJson()
+        {
+            var json = MstJson.EmptyObject;
+
+            foreach (var kvp in _value)
+            {
+                json.AddField(kvp.Key, kvp.Value);
+            }
+
+            return json;
+        }
+
+        public override void FromJson(MstJson json)
+        {
+            _value.Clear();
+
+            foreach (var key in json.Keys)
+            {
+                _value.TryAdd(key, json[key].IntValue);
+            }
+        }
+
+        public override void FromJson(string json)
+        {
+            FromJson(new MstJson(json));
         }
     }
 }

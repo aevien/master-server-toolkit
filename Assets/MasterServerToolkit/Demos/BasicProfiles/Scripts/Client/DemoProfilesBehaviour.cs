@@ -17,25 +17,20 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         public void UpdateProfile(MstProperties data)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Saving profile data... Please wait!");
-
-            MstTimer.WaitForSeconds(0.1f, () =>
+            Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), (status, response) =>
             {
-                Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), (status, response) =>
-                {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
 
-                    if (status == ResponseStatus.Success)
-                    {
-                        OnProfileSavedEvent?.Invoke();
-                        logger.Debug("Your profile is successfuly updated and saved");
-                    }
-                    else
-                    {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(response.AsString()));
-                        logger.Error(response.AsString());
-                    }
-                });
+                if (status == ResponseStatus.Success)
+                {
+                    OnProfileSavedEvent?.Invoke();
+                    logger.Debug("Your profile is successfuly updated and saved");
+                }
+                else
+                {
+                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(response.AsString()));
+                    logger.Error(response.AsString());
+                }
             });
         }
     }

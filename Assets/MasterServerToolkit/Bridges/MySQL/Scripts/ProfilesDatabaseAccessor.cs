@@ -1,6 +1,8 @@
 using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MySql.Data.MySqlClient;
+using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,29 +22,39 @@ namespace MasterServerToolkit.Bridges.MySQL
 
         public async Task RestoreProfileAsync(ObservableServerProfile profile)
         {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            try
             {
-                await connection.OpenAsync();
-
-                using (var cmd = new MySqlCommand())
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
                 {
-                    cmd.Connection = connection;
-                    cmd.CommandText = $"SELECT `property_key`, `property_value` FROM profiles WHERE account_id = '{profile.UserId}';";
+                    await connection.OpenAsync();
 
-                    using (MySqlDataReader reader = (MySqlDataReader)await cmd.ExecuteReaderAsync())
+                    using (var cmd = new MySqlCommand())
                     {
-                        if (reader.HasRows)
+                        cmd.Connection = connection;
+                        cmd.CommandText = $"SELECT `property_key`, `property_value` FROM profiles WHERE account_id = '{profile.UserId}';";
+
+                        using (MySqlDataReader reader = (MySqlDataReader)await cmd.ExecuteReaderAsync())
                         {
-                            while (await reader.ReadAsync())
+                            if (reader.HasRows)
                             {
-                                if (profile.TryGet(reader.GetString("property_key").ToUint16Hash(), out IObservableProperty property))
+                                while (await reader.ReadAsync())
                                 {
-                                    property.Deserialize(reader.GetString("property_value"));
+                                    string propertyKey = reader.GetString("property_key");
+
+                                    if (profile.TryGet(propertyKey.ToUint16Hash(), out IObservableProperty property))
+                                    {
+                                        string propertyValue = reader.GetString("property_value");
+                                        property.FromJson(propertyValue);
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Logs.Error(ex);
             }
         }
 
@@ -65,7 +77,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                     foreach (var property in profile)
                     {
                         index++;
-                        sql.Append($"('{profile.UserId}','{Mst.Registry.GetProfilePropertyOpCodeName(property.Key)}','{property.Serialize()}'){(index < profile.Count ? "," : "")} ");
+                        sql.Append($"('{profile.UserId}','{StringExtensions.FromHash(property.Key)}','{property.ToJson()}'){(index < profile.Count ? "," : "")} ");
                     }
 
                     sql.Append($"as p ");

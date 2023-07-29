@@ -2,7 +2,6 @@
 using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -17,9 +16,16 @@ namespace MasterServerToolkit.MasterServer
     /// <summary>
     /// Helper class, which implements means to encrypt and decrypt data
     /// </summary>
-    public partial class MstSecurity : MstBaseClient
+    public class MstSecurity : MstBaseClient
     {
         public delegate void PermissionLevelCallback(int? permissionLevel, string error);
+
+        private class EncryptionData
+        {
+            public string ClientAesKey { get; set; }
+            public RSACryptoServiceProvider ClientsCsp { get; set; }
+            public RSAParameters ClientsPublicKey { get; set; }
+        }
 
         /// <summary>
         /// 
@@ -107,10 +113,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         private void DefaultValidator(ProvideServerAccessCheckPacket accessCheckOptions, SuccessCallback callback)
         {
-            string applicationKeyHash = accessCheckOptions.ApplicationKey;
-            string applicationKey = Mst.Settings.ApplicationKey;
-
-            if (ValidatePassword(applicationKey, applicationKeyHash))
+            if (ValidatePassword(Mst.Settings.ApplicationKey, accessCheckOptions.ApplicationKey))
             {
                 callback?.Invoke(true, string.Empty);
             }
@@ -440,7 +443,6 @@ namespace MasterServerToolkit.MasterServer
                     {
                         using (StreamReader srDecrypt = new StreamReader(csDecrypt))
                         {
-
                             // Read the decrypted bytes from the decrypting stream
                             // and place them in a string.
                             plaintext = srDecrypt.ReadToEnd();

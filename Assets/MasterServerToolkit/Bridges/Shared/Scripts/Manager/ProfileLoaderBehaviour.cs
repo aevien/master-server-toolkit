@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using UnityEngine.Events;
 
@@ -50,27 +51,20 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public virtual void LoadProfile()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Loading profile... Please wait!");
-
-            Tweener.DelayedCall(0.1f, () =>
+            Mst.Client.Profiles.FillInProfileValues(Profile, (isSuccessful, error) =>
             {
-                Mst.Client.Profiles.FillInProfileValues(Profile, (isSuccessful, error) =>
+                if (isSuccessful)
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    OnProfileLoaded();
+                    OnProfileLoadedEvent?.Invoke();
+                }
+                else
+                {
+                    logger.Error($"Could not load user profile. Error: {error}");
 
-                    if (isSuccessful)
-                    {
-                        OnProfileLoaded();
-                        OnProfileLoadedEvent?.Invoke();
-                    }
-                    else
-                    {
-                        logger.Error($"Could not load user profile. Error: {error}");
-
-                        OnProfileLoadFailed();
-                        OnProfileLoadFailedEvent?.Invoke();
-                    }
-                });
+                    OnProfileLoadFailed();
+                    OnProfileLoadFailedEvent?.Invoke();
+                }
             });
         }
     }

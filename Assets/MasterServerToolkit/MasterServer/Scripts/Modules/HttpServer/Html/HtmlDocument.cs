@@ -6,7 +6,6 @@ namespace MasterServerToolkit.MasterServer.Web
     public class HtmlDocument
     {
         private XmlDocument document;
-        private XmlElement html;
         private XmlElement title;
         private List<XmlElement> metas;
 

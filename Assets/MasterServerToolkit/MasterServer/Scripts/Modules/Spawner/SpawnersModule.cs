@@ -630,7 +630,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (task.RegisteredPeer != message.Peer)
                 {
-                    message.Respond("Unauthorized", ResponseStatus.Unauthorized);
+                    message.Respond(ResponseStatus.Unauthorized);
                     logger.Error("Spawned process tried to complete spawn task, but it's not the same peer who registered to the task");
                 }
                 else
@@ -641,7 +641,7 @@ namespace MasterServerToolkit.MasterServer
             }
             else
             {
-                message.Respond("Invalid spawn task", ResponseStatus.Failed);
+                message.Respond(ResponseStatus.Invalid);
                 logger.Error("Process tried to complete to an unknown task");
             }
         }

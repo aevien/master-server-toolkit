@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MasterServerToolkit.Json;
+using System;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -79,6 +80,12 @@ namespace MasterServerToolkit.MasterServer
         public abstract string Serialize();
 
         public abstract void Deserialize(string value);
+
+        public abstract MstJson ToJson();
+
+        public abstract void FromJson(MstJson json);
+
+        public abstract void FromJson(string json);
 
         public abstract byte[] GetUpdates();
 

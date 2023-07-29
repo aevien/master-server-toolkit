@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using System;
@@ -32,14 +33,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Profile properties list
         /// </summary>
-        public ConcurrentDictionary<ushort, IObservableProperty> Properties { get; protected set; } = new ConcurrentDictionary<ushort, IObservableProperty>();
-
-        /// <summary>
-        /// Invoked, when one of the values changes
-        /// </summary>
-        public event ProfilePropertyUpdateDelegate OnPropertyUpdatedEvent;
-
-        public ObservableProfile() { }
+        public ConcurrentDictionary<ushort, IObservableProperty> Properties { get; private set; } = new ConcurrentDictionary<ushort, IObservableProperty>();
 
         /// <summary>
         /// Check if profile has changed properties
@@ -50,6 +44,13 @@ namespace MasterServerToolkit.MasterServer
         /// The number of properties the profile has
         /// </summary>
         public int Count { get { return Properties.Count; } }
+
+        /// <summary>
+        /// Invoked, when one of the values changes
+        /// </summary>
+        public event ProfilePropertyUpdateDelegate OnPropertyUpdatedEvent;
+
+        public ObservableProfile() { }
 
         /// <summary>
         /// Returns an observable value of given type
@@ -341,6 +342,49 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return result.ToString();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public MstJson ToJson()
+        {
+            var json = MstJson.EmptyObject;
+
+            foreach (var property in Properties.Values)
+            {
+                json.AddField(StringExtensions.FromHash(property.Key), property.ToJson());
+            }
+
+            return json;
+        }
+
+        public void FromJson(string json)
+        {
+            FromJson(new MstJson(json));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="json"></param>
+        public void FromJson(MstJson json)
+        {
+            foreach (var property in Properties.Values)
+            {
+                string key = StringExtensions.FromHash(property.Key);
+
+                if (json.HasField(key))
+                {
+                    var value = json[key];
+
+                    if (!value.IsNull)
+                    {
+                        property.FromJson(value);
+                    }
+                }
+            }
         }
 
         /// <summary>

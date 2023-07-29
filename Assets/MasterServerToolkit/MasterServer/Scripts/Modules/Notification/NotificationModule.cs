@@ -1,5 +1,7 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -24,12 +26,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of recipients
         /// </summary>
-        protected Dictionary<string, NotificationRecipient> registeredRecipients = new Dictionary<string, NotificationRecipient>();
+        protected ConcurrentDictionary<string, NotificationRecipient> registeredRecipients = new ConcurrentDictionary<string, NotificationRecipient>();
 
         /// <summary>
         /// List of messages to be sent to newly logged in users
         /// </summary>
-        private List<string> promisedMessages = new List<string>();
+        protected List<string> promisedMessages = new List<string>();
 
         /// <summary>
         /// 
@@ -108,6 +110,23 @@ namespace MasterServerToolkit.MasterServer
             RemoveRecipient(user.UserId);
         }
 
+        public override MstJson JsonInfo()
+        {
+            var json = base.JsonInfo();
+
+            try
+            {
+                json.AddField("description", $"This is the {nameof(NotificationModule)} theat helps rooms send notifications to their players or helps admins of Master server send notifications to list of recipients");
+                json.AddField("recipients", registeredRecipients.Count);
+            }
+            catch (Exception e)
+            {
+                json.AddField("error", e.ToString());
+            }
+
+            return json;
+        }
+
         public override MstProperties Info()
         {
             var info = base.Info();
@@ -158,7 +177,7 @@ namespace MasterServerToolkit.MasterServer
             if (!HasRecipient(user.UserId))
             {
                 var r = new NotificationRecipient(user.UserId, user.Peer);
-                registeredRecipients.Add(user.UserId, r);
+                registeredRecipients.TryAdd(user.UserId, r);
                 return r;
             }
             else
@@ -173,7 +192,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="userId"></param>
         public void RemoveRecipient(string userId)
         {
-            registeredRecipients.Remove(userId);
+            registeredRecipients.TryRemove(userId, out _);
         }
 
         /// <summary>
@@ -249,8 +268,10 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var recipients = authModule.LoggedInUsers.Select(i => i.Peer.Id).ToList();
-            NoticeToRecipients(recipients, textMessage);
+            foreach(var recipient in registeredRecipients.Values)
+            {
+                recipient.Notify(textMessage);
+            }
 
             if (addToPromise && !promisedMessages.Contains(textMessage))
             {

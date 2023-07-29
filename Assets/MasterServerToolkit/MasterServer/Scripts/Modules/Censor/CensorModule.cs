@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -7,10 +8,13 @@ namespace MasterServerToolkit.MasterServer
 {
     public class CensorModule : BaseServerModule
     {
+        [SerializeField]
         protected List<string> censoredWords;
 
         [Header("Settings"), SerializeField]
         private TextAsset[] wordsLists;
+        [SerializeField, TextArea(5, 10)]
+        private string matchPattern = @"\s*{0}(\s|\W)+";
 
         public override void Initialize(IServer server)
         {
@@ -25,7 +29,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (TextAsset words in wordsLists)
             {
-                censoredWords.AddRange(words.text.Split(splitter, System.StringSplitOptions.RemoveEmptyEntries).Select(word => word.Trim()));
+                censoredWords.AddRange(words.text.Split(splitter, StringSplitOptions.RemoveEmptyEntries).Select(word => word.Trim()));
             }
         }
 
@@ -43,7 +47,9 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var pattern in censoredWords)
             {
-                if (Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                Regex regex = new Regex(string.Format(matchPattern, pattern), RegexOptions.IgnoreCase);
+
+                if (regex.IsMatch(text))
                 {
                     return true;
                 }

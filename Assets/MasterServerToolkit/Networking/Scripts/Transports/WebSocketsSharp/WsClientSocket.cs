@@ -58,18 +58,18 @@ namespace MasterServerToolkit.Networking
                     }
                     else
                     {
-                        Logs.Error($"Connection is missing a handler. OpCode: {message.OpCode}");
+                        Logs.Error($"Connection is missing a handler. OpCode: {Extensions.StringExtensions.FromHash(message.OpCode)}");
                     }
                 }
                 else if (message.IsExpectingResponse)
                 {
-                    Logs.Error($"Connection is missing a handler. OpCode: {message.OpCode}");
+                    Logs.Error($"Connection is missing a handler. OpCode: {Extensions.StringExtensions.FromHash(message.OpCode)}");
                     message.Respond(ResponseStatus.Error);
                 }
             }
             catch (Exception e)
             {
-                Logs.Error($"Failed to handle a message. OpCode: {message.OpCode}, Error: {e}");
+                Logs.Error($"Failed to handle a message. OpCode: {Extensions.StringExtensions.FromHash(message.OpCode)}, Error: {e}");
 
                 if (!message.IsExpectingResponse)
                 {

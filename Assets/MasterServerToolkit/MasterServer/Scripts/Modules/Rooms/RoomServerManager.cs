@@ -71,9 +71,7 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
-        private readonly Dictionary<string, RoomPlayer> playersByUsername = new Dictionary<string, RoomPlayer>();
-        private readonly Dictionary<int, RoomPlayer> playersByMasterPeerId = new Dictionary<int, RoomPlayer>();
-        private readonly Dictionary<int, RoomPlayer> playersByRoomPeerId = new Dictionary<int, RoomPlayer>();
+        private readonly Dictionary<int, RoomPlayer> players = new Dictionary<int, RoomPlayer>();
 
         /// <summary>
         /// Options of this room we must share with clients
@@ -98,7 +96,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// List of all players
         /// </summary>
-        public IEnumerable<RoomPlayer> Players => playersByRoomPeerId.Values;
+        public IEnumerable<RoomPlayer> Players => players.Values;
 
         /// <summary>
         /// Check if room has players
@@ -112,9 +110,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public ProfileFactoryDelegate ProfileFactory { get; set; }
 
-        protected override void Awake()
+        protected override void Start()
         {
-            base.Awake();
+            base.Start();
 
             if (forceClientMode)
                 Mst.Client.Rooms.IsClientMode = true;
@@ -217,14 +215,12 @@ namespace MasterServerToolkit.MasterServer
         public virtual void OnPeerDisconnected(int roomPeerId)
         {
             // Try to find player in filtered list
-            if (playersByRoomPeerId.TryGetValue(roomPeerId, out RoomPlayer player))
+            if (players.TryGetValue(roomPeerId, out RoomPlayer player))
             {
                 logger.Debug($"Room server player {player.Username} with room client Id {roomPeerId} left the room");
 
-                // Remove this player from filtered list
-                playersByRoomPeerId.Remove(player.RoomPeerId);
-                playersByMasterPeerId.Remove(player.MasterPeerId);
-                playersByUsername.Remove(player.Username);
+                // Remove this player from list
+                players.Remove(player.RoomPeerId);
 
                 // Notify master server about disconnected player
                 if (RoomController.IsActive)
@@ -243,7 +239,7 @@ namespace MasterServerToolkit.MasterServer
                 logger.Debug($"Room server client {roomPeerId} left the room");
             }
 
-            if (terminateRoomWhenLastPlayerQuits && playersByRoomPeerId.Count == 0)
+            if (terminateRoomWhenLastPlayerQuits && players.Count == 0)
             {
                 terminateRoomDelay = 0.1f;
                 StartCoroutine(TerminateRoomAfterDelay());
@@ -293,10 +289,7 @@ namespace MasterServerToolkit.MasterServer
                                 Profile = ProfileFactory.Invoke(accountInfo.UserId)
                             };
 
-                            // Add this player to filtered lists
-                            playersByMasterPeerId.Add(usernameAndPeerId.PeerId, player);
-                            playersByRoomPeerId.Add(roomPeerId, player);
-                            playersByUsername.Add(accountInfo.Username, player);
+                            players.Add(roomPeerId, player);
 
                             // If server is required user profile
                             if (autoLoadUserProfile)
@@ -481,9 +474,9 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="conn"></param>
         protected virtual void FinalizePlayerJoining(int roomPeerId)
         {
-            if (playersByRoomPeerId.ContainsKey(roomPeerId))
+            if (players.ContainsKey(roomPeerId))
             {
-                RoomPlayer player = playersByRoomPeerId[roomPeerId];
+                RoomPlayer player = players[roomPeerId];
                 logger.Debug($"Client {roomPeerId} has become a player of this room. Congratulations to {player.Username}");
 
                 OnPlayerJoinedRoom(player);
@@ -529,7 +522,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="successCallback"></param>
         public void LoadPlayerProfile(string username, SuccessCallback successCallback)
         {
-            if (playersByUsername.TryGetValue(username, out RoomPlayer player))
+            if (TryGetRoomPlayerByUsername(username, out RoomPlayer player))
             {
                 Mst.Server.Profiles.FillInProfileValues(player.Profile, (isSuccess, error) =>
                 {
@@ -554,7 +547,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public RoomPlayer GetRoomPlayerByRoomPeer(int peerId)
         {
-            playersByRoomPeerId.TryGetValue(peerId, out RoomPlayer player);
+            players.TryGetValue(peerId, out RoomPlayer player);
             return player;
         }
 
@@ -571,14 +564,25 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Get <see cref="RoomPlayer"/> by master peer Id
+        /// Returns <see cref="RoomPlayer"/> by master peer Id
         /// </summary>
         /// <param name="peerId"></param>
         /// <returns></returns>
         public RoomPlayer GetRoomPlayerByMasterPeer(int peerId)
         {
-            playersByMasterPeerId.TryGetValue(peerId, out RoomPlayer player);
-            return player;
+            return players.Values.Where(i => i.MasterPeerId == peerId).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Returns <see cref="RoomPlayer"/> by master peer Id
+        /// </summary>
+        /// <param name="peerId"></param>
+        /// <param name="roomPlayer"></param>
+        /// <returns></returns>
+        public bool TryGetRoomPlayerByMasterPeer(int peerId, out RoomPlayer roomPlayer)
+        {
+            roomPlayer = GetRoomPlayerByMasterPeer(peerId);
+            return roomPlayer != null;
         }
 
         /// <summary>
@@ -588,8 +592,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public RoomPlayer GetRoomPlayerByUsername(string username)
         {
-            playersByUsername.TryGetValue(username, out RoomPlayer player);
-            return player;
+            return players.Values.Where(i => i.Username == username).FirstOrDefault();
         }
 
         /// <summary>

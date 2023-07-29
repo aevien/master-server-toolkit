@@ -56,16 +56,6 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField]
         protected float validationTimeout = 5f;
 
-        [Header("Editor Settings"), SerializeField]
-        private HelpBox hpEditor = new HelpBox()
-        {
-            Text = "Editor settings are used only while running in editor",
-            Type = HelpBoxType.Warning
-        };
-
-        [SerializeField]
-        protected bool autoStartInEditor = true;
-
         #endregion
 
         /// <summary>
@@ -199,11 +189,6 @@ namespace MasterServerToolkit.MasterServer
             RegisterMessageHandler(MstOpCodes.PermissionLevelRequest, PermissionLevelRequestHandler);
             RegisterMessageHandler(MstOpCodes.PeerGuidRequest, PeerGuidRequestHandler);
             RegisterMessageHandler(MstOpCodes.ServerAccessRequest, ServerAccessRequestHandler);
-
-            if (IsAllowedToBeStartedInEditor())
-            {
-                StartServer();
-            }
         }
 
         protected virtual void OnValidate()
@@ -226,15 +211,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         #endregion
-
-        /// <summary>
-        /// Check if server is allowed to be started in editor. This feature is for testing purpose only
-        /// </summary>
-        /// <returns></returns>
-        protected virtual bool IsAllowedToBeStartedInEditor()
-        {
-            return Mst.Runtime.IsEditor && autoStartInEditor;
-        }
 
         /// <summary>
         /// 
@@ -365,7 +341,7 @@ namespace MasterServerToolkit.MasterServer
             startInfo.Add("\tCertificate Path", !socket.UseSecure ? "Undefined" : socket.CertificatePath);
             startInfo.Add("\tCertificate Pass", string.IsNullOrEmpty(socket.CertificatePath) || !socket.UseSecure ? "Undefined" : "********");
 
-            logger.Info($"Starting {GetType().Name.SplitByUppercase()}...\n{startInfo.ToReadableString(";\n", " ")}");
+            logger.Info($"Starting {GetType().Name.ToSpaceByUppercase()}...\n{startInfo.ToReadableString(";\n", " ")}");
 
             socket.Listen(listenToIp, listenToPort);
             LookForModules();
@@ -421,7 +397,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (uninitializedModules.Count > 0)
                 {
-                    logger.Warn($"Some of the {GetType().Name.SplitByUppercase()} modules failed to initialize: \n{string.Join(" \n", uninitializedModules.Select(m => m.GetType().ToString()).ToArray())}");
+                    logger.Warn($"Some of the {GetType().Name.ToSpaceByUppercase()} modules failed to initialize: \n{string.Join(" \n", uninitializedModules.Select(m => m.GetType().ToString()).ToArray())}");
                 }
             }
         }
@@ -522,7 +498,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (handler == null)
                 {
-                    logger.Error($"You are trying to handle message with OpCode [{Mst.Registry.GetMessageOpCodeName(message.OpCode)}]. " +
+                    logger.Error($"You are trying to handle message with OpCode [{Extensions.StringExtensions.FromHash(message.OpCode)}]. " +
                         $"But a handler for this message does not exist. " +
                         $"This may have happened because you did not initialize the server module that should handle this message or did not register the message handler properly.");
 
@@ -544,7 +520,7 @@ namespace MasterServerToolkit.MasterServer
                     throw;
                 }
 
-                logger.Error($"An error occurred while handling a message from client. Message OpCode: [{Mst.Registry.GetMessageOpCodeName(message.OpCode)}], Error: {e}");
+                logger.Error($"An error occurred while handling a message from client. Message OpCode: [{Extensions.StringExtensions.FromHash(message.OpCode)}], Error: {e}");
 
                 if (!message.IsExpectingResponse)
                 {
