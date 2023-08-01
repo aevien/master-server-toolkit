@@ -354,7 +354,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var property in Properties.Values)
             {
-                json.AddField(StringExtensions.FromHash(property.Key), property.ToJson());
+                json.AddField(Extensions.StringExtensions.FromHash(property.Key), property.ToJson());
             }
 
             return json;
@@ -373,7 +373,7 @@ namespace MasterServerToolkit.MasterServer
         {
             foreach (var property in Properties.Values)
             {
-                string key = StringExtensions.FromHash(property.Key);
+                string key = Extensions.StringExtensions.FromHash(property.Key);
 
                 if (json.HasField(key))
                 {

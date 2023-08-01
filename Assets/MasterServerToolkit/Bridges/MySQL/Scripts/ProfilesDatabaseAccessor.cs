@@ -77,7 +77,7 @@ namespace MasterServerToolkit.Bridges.MySQL
                     foreach (var property in profile)
                     {
                         index++;
-                        sql.Append($"('{profile.UserId}','{StringExtensions.FromHash(property.Key)}','{property.ToJson()}'){(index < profile.Count ? "," : "")} ");
+                        sql.Append($"('{profile.UserId}','{Extensions.StringExtensions.FromHash(property.Key)}','{property.ToJson()}'){(index < profile.Count ? "," : "")} ");
                     }
 
                     sql.Append($"as p ");
