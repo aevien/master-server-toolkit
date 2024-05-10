@@ -327,7 +327,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var options = message.AsPacket(new RoomOptions());
+            var options = message.AsPacket<RoomOptions>();
             var room = RegisterRoom(message.Peer, options);
 
             logger.Debug($"Room {room.RoomId} has been successfully registered with options: {options}");
@@ -364,7 +364,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual void ValidateRoomAccessRequestHandler(IIncomingMessage message)
         {
             // Parse message
-            var data = message.AsPacket(new RoomAccessValidatePacket());
+            var data = message.AsPacket<RoomAccessValidatePacket>();
 
             // Trying to find room in list of registered
             if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
@@ -406,7 +406,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void SaveRoomOptionsRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new SaveRoomOptionsPacket());
+            var data = message.AsPacket<SaveRoomOptionsPacket>();
 
             if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
             {
@@ -427,7 +427,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void GetRoomAccessRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new RoomAccessRequestPacket());
+            var data = message.AsPacket<RoomAccessRequestPacket>();
 
             // Let's find a room by Id which the player wants to join
             if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
@@ -458,7 +458,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void PlayerLeftRoomRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new PlayerLeftRoomPacket());
+            var data = message.AsPacket<PlayerLeftRoomPacket>();
 
             if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
             {
@@ -480,5 +480,3 @@ namespace MasterServerToolkit.MasterServer
         #endregion
     }
 }
-
-

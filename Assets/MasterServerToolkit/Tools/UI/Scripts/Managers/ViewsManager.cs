@@ -8,11 +8,17 @@ namespace MasterServerToolkit.UI
     {
         private readonly static Dictionary<string, IUIView> views = new Dictionary<string, IUIView>();
 
-        public static bool IsInputBlocked => views.Values.Where(i => i != null && i.BlockInput && i.IsVisible).Count() > 0;
+        public static bool AnyInputBlockViewVisible => views.Values.Where(i => i != null && i.BlockInput && i.IsVisible).Count() > 0;
+        public static bool AnyCursorUnlockViewVisible => views.Values.Where(i => i != null && i.UnlockCursor && i.IsVisible).Count() > 0;
 
         public static void Register(string viewId, IUIView view)
         {
             views[viewId] = view;
+        }
+
+        public static void Unregister(string viewId)
+        {
+            views.Remove(viewId);
         }
 
         public static T GetView<T>(string viewId) where T : class, IUIView

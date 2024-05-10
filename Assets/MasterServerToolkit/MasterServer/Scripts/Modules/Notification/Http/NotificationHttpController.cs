@@ -26,7 +26,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnNotifyHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            var jsonResponse = new MstJson();
+            var jsonResponse = MstJson.EmptyObject;
 
             try
             {

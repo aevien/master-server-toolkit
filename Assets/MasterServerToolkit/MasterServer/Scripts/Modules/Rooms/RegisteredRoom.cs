@@ -180,7 +180,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // Parse access data from message
-                var accessData = response.AsPacket(new RoomAccessPacket());
+                var accessData = response.AsPacket<RoomAccessPacket>();
 
                 // Create new access info
                 var access = new RoomAccessData()
@@ -273,10 +273,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Destroy()
         {
-            if (OnDestroyedEvent != null)
-            {
-                OnDestroyedEvent.Invoke(this);
-            }
+            OnDestroyedEvent?.Invoke(this);
 
             unconfirmedAccesses.Clear();
 

@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Utils
 
     public partial class Tweener
     {
-        public static TweenerActionInfo Tween(float from, float to, float time, FloatTweenCallback callback)
+        public static TweenerActionInfo Float(float from, float to, float time, FloatTweenCallback callback)
         {
             float currentTime = 0f;
             float difference = Mathf.Abs(from - to);

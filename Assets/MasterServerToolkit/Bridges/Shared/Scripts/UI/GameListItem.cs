@@ -1,7 +1,7 @@
 ﻿using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MasterServerToolkit.Bridges
 {
@@ -22,7 +22,7 @@ namespace MasterServerToolkit.Bridges
         private TextMeshProUGUI gamePlayersText;
 
         [SerializeField]
-        private UIButton connectButton;
+        private Button connectButton;
 
         #endregion
 
@@ -52,7 +52,8 @@ namespace MasterServerToolkit.Bridges
 
             if (connectButton)
             {
-                connectButton.AddOnClickListener(() =>
+                connectButton.onClick.RemoveAllListeners();
+                connectButton.onClick.AddListener(() =>
                 {
                     MatchmakingBehaviour.Instance.StartMatch(gameInfo);
                 });

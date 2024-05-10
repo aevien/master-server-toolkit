@@ -1,8 +1,8 @@
-﻿using MasterServerToolkit.Logging;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 using System.Linq;
-using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 
@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Bridges
         {
             base.Awake();
 
-            RoomName = $"Room#{Mst.Helper.CreateFriendlyId()}";
+            RoomName = $"Room-{Mst.Helper.CreateFriendlyId()}";
 
             // Listen to show/hide events
             Mst.Events.AddListener(MstEventKeys.showCreateNewRoomView, OnShowCreateNewRoomEventHandler);
@@ -115,19 +115,13 @@ namespace MasterServerToolkit.Bridges
 
             Logs.Debug("Starting room... Please wait!");
 
-            Regex roomNameRe = new Regex(@"\s+");
-
             // Spawn options for spawner controller
             var spawnOptions = new MstProperties();
             spawnOptions.Add(Mst.Args.Names.RoomMaxConnections, MaxConnections);
-            spawnOptions.Add(Mst.Args.Names.RoomName, roomNameRe.Replace(RoomName, "_"));
+            spawnOptions.Add(Mst.Args.Names.RoomName, RoomName.Escape());
 
             if (!string.IsNullOrEmpty(Password))
                 spawnOptions.Add(Mst.Args.Names.RoomPassword, Password);
-
-            // TODO
-            // You can send scene name to load that one in online mode
-            //spawnOptions.Add(Mst.Args.Names.RoomOnlineScene);
 
             MatchmakingBehaviour.Instance.CreateNewRoom(RegionName, spawnOptions, () =>
             {

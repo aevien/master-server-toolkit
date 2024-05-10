@@ -12,15 +12,17 @@ namespace MasterServerToolkit.MasterServer
         string Username { get; set; }
         string Password { get; set; }
         string Email { get; set; }
-        string PhoneNumber { get; set; }
         string Token { get; set; }
         DateTime LastLogin { get; set; }
+        DateTime Created { get; set; }
+        DateTime Updated { get; set; }
         bool IsAdmin { get; set; }
         bool IsGuest { get; set; }
+        bool IsEmailConfirmed { get; set; }
+        bool IsBanned { get; set; }
         string DeviceId { get; set; }
         string DeviceName { get; set; }
-        bool IsEmailConfirmed { get; set; }
-        Dictionary<string, string> Properties { get; set; }
+        Dictionary<string, string> ExtraProperties { get; set; }
 
         event Action<IAccountInfoData> OnChangedEvent;
         void MarkAsDirty();

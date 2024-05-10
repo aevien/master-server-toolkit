@@ -14,7 +14,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
         {
             if (string.IsNullOrEmpty(databaseName))
             {
-                string[] values = GetType().Name.ToSpaceByUppercase().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] values = GetType().Name.FromCamelcase().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 databaseName = values.Length > 0 ? values[0].ToLower() : "database_" + DateTime.Now.ToFileTimeUtc();
             }
         }

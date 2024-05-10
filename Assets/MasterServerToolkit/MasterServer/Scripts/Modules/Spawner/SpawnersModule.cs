@@ -309,7 +309,7 @@ namespace MasterServerToolkit.MasterServer
             // Add this task to queue
             spawner.AddTaskToQueue(task);
 
-            logger.Debug("Spawner was found, and spawn task created: " + task);
+            logger.Debug($"Spawner was found, and spawn task created: {task}");
 
             return task;
         }
@@ -405,7 +405,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual bool CanClientSpawn(IPeer peer, MstProperties options)
         {
-            return enableClientSpawnRequests;
+            return enableClientSpawnRequests && peer.GetExtension<IUserPeerExtension>() != null;
         }
 
         /// <summary>
@@ -453,12 +453,10 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            // Check if current request is authorized
             if (!CanClientSpawn(peer, options))
             {
                 logger.Error("Unauthorized request");
-                // Client can't spawn
-                message.Respond("Unauthorized", ResponseStatus.Unauthorized);
+                message.Respond(ResponseStatus.Unauthorized);
                 return;
             }
 
@@ -480,7 +478,7 @@ namespace MasterServerToolkit.MasterServer
             if (task == null)
             {
                 logger.Warn("But all the servers are busy. Let him try again later");
-                message.Respond("All the servers are busy. Try again later".ToBytes(), ResponseStatus.Failed);
+                message.Respond("All the servers are busy. Try again later", ResponseStatus.Failed);
                 return;
             }
 
@@ -576,7 +574,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Read options
-            var options = message.AsPacket(new SpawnerOptions());
+            var options = message.AsPacket<SpawnerOptions>();
 
             // Create new spawner
             var spawner = CreateSpawner(message.Peer, options);
@@ -594,7 +592,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         protected virtual void RegisterSpawnedProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new RegisterSpawnedProcessPacket());
+            var data = message.AsPacket<RegisterSpawnedProcessPacket>();
 
             // Try get spawn task by ID
             if (!spawnTasksList.TryGetValue(data.SpawnId, out SpawnTask task))
@@ -624,7 +622,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void CompleteSpawnProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new SpawnFinalizationPacket());
+            var data = message.AsPacket<SpawnFinalizationPacket>();
 
             if (spawnTasksList.TryGetValue(data.SpawnTaskId, out SpawnTask task))
             {
@@ -670,7 +668,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void SetSpawnedProcessesCountRequestHandler(IIncomingMessage message)
         {
-            var packet = message.AsPacket(new IntPairPacket());
+            var packet = message.AsPacket<IntPairPacket>();
 
             if (spawnersList.TryGetValue(packet.A, out RegisteredSpawner spawner))
             {

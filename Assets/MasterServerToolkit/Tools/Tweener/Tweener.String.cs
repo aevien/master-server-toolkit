@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Utils
 
     public partial class Tweener
     {
-        public static TweenerActionInfo Tween(string to, float time, StringTweenCallback callback)
+        public static TweenerActionInfo String(string to, float time, StringTweenCallback callback)
         {
             float currentTime = 0f;
             int lastLength = 0;

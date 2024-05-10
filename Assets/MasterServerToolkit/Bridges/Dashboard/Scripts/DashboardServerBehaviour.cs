@@ -66,7 +66,7 @@ namespace MasterServerToolkit.Bridges.Dashboard
 
         protected override void OnStartedServer()
         {
-            logger.Info($"{GetType().Name.ToSpaceByUppercase()} started and listening to: {serverIp}:{serverPort}");
+            logger.Info($"{GetType().Name.FromCamelcase()} started and listening to: {serverIp}:{serverPort}");
 
             base.OnStartedServer();
 
@@ -75,7 +75,7 @@ namespace MasterServerToolkit.Bridges.Dashboard
 
         protected override void OnStoppedServer()
         {
-            logger.Info($"{GetType().Name.ToSpaceByUppercase()} stopped");
+            logger.Info($"{GetType().Name.FromCamelcase()} stopped");
 
             OnDashboardStoppedEvent?.Invoke(this);
         }

@@ -47,7 +47,7 @@ namespace MasterServerToolkit.MasterServer
         public static ushort GetLoggedInUsersCount = nameof(GetLoggedInUsersCount).ToUint16Hash();
         public static ushort ChangePassword = nameof(ChangePassword).ToUint16Hash();
         public static ushort GetPeerAccountInfo = nameof(GetPeerAccountInfo).ToUint16Hash();
-        public static ushort UpdateAccountInfo = nameof(UpdateAccountInfo).ToUint16Hash();
+        public static ushort BindExtraProperties = nameof(BindExtraProperties).ToUint16Hash();
 
         public static ushort PickUsername = nameof(PickUsername).ToUint16Hash();
         public static ushort JoinChannel = nameof(JoinChannel).ToUint16Hash();

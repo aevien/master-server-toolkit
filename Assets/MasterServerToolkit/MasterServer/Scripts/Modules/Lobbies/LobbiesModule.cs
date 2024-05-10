@@ -271,7 +271,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void SetLobbyPropertiesMessageHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new LobbyPropertiesSetPacket());
+            var data = message.AsPacket<LobbyPropertiesSetPacket>();
 
             lobbies.TryGetValue(data.LobbyId, out ILobby lobby);
 
@@ -358,7 +358,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void JoinLobbyTeamMessageHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new LobbyJoinTeamPacket());
+            var data = message.AsPacket<LobbyJoinTeamPacket>();
 
             var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
             var lobby = lobbiesExt.CurrentLobby;
@@ -426,7 +426,7 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void GetLobbyMemberDataMessageHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new IntPairPacket());
+            var data = message.AsPacket<IntPairPacket>();
             var lobbyId = data.A;
             var peerId = data.B;
 

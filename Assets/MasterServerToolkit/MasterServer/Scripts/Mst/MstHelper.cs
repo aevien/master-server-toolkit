@@ -11,6 +11,7 @@ namespace MasterServerToolkit.MasterServer
     public class MstHelper
     {
         private const string alphanumericString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        private const int minGeneratedStringLength = 1;
         private const int maxGeneratedStringLength = 512;
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string CreateRandomAlphanumericString(int length)
         {
-            int clampedLength = Mathf.Clamp(length, 1, maxGeneratedStringLength);
+            int clampedLength = Mathf.Clamp(length, minGeneratedStringLength, maxGeneratedStringLength);
             StringBuilder resultStringBuilder = new StringBuilder();
 
             for (int i = 0; i < clampedLength; i++)
@@ -51,7 +52,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string CreateRandomDigitsString(int length)
         {
-            int clampedLength = Mathf.Clamp(length, 1, maxGeneratedStringLength);
+            int clampedLength = Mathf.Clamp(length, minGeneratedStringLength, maxGeneratedStringLength);
             StringBuilder resultStringBuilder = new StringBuilder();
 
             for (int i = 0; i < clampedLength; i++)
@@ -96,7 +97,13 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string CreateFriendlyId()
         {
-            string rawValue = Mst.Helper.CreateGuidString().ToUint32Hash().ToString("X");
+            string rawValue = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).ToUint32Hash().ToString("x");
+
+            while (rawValue.Length < 12)
+            {
+                rawValue += Random.Next(0, 16).ToString("X");
+            }
+
             string result = "";
 
             for (int i = 0; i < rawValue.Length; i++)
@@ -106,9 +113,6 @@ namespace MasterServerToolkit.MasterServer
 
                 result += rawValue[i];
             }
-
-            if (result.EndsWith("-"))
-                result = result.Substring(0, result.Length - 1);
 
             return result;
         }
@@ -124,9 +128,8 @@ namespace MasterServerToolkit.MasterServer
             long val = (long)(timeSpan.TotalSeconds);
 
             string result = val.ToString("X");
-            int totalRemained = 24 - result.Length;
 
-            for (int i = 0; i < totalRemained; i++)
+            while (result.Length < 24)
             {
                 result += Random.Next(0, 16).ToString("X");
             }
@@ -145,9 +148,8 @@ namespace MasterServerToolkit.MasterServer
             long val = (long)(timeSpan.TotalSeconds);
 
             string result = val.ToString();
-            int totalRemained = 24 - result.Length;
 
-            for (int i = 0; i < totalRemained; i++)
+            while (result.Length < 24)
             {
                 result += Random.Next(0, 10).ToString();
             }

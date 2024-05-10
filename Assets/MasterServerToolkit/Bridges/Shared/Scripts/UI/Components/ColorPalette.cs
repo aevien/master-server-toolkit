@@ -11,7 +11,7 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Settings"), SerializeField]
-        public Color32[] colors = new Color32[]
+        private Color32[] colors = new Color32[]
         {
             new Color(1f,0.8666667f,0.7254902f),
             new Color(0.9058824f,0.7372549f,0.5686275f),

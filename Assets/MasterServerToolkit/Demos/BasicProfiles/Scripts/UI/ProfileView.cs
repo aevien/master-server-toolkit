@@ -10,7 +10,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         #region INSPECTOR
 
         [Header("Player"), SerializeField]
-        private AvatarComponent avatar;
+        private ImageLoaderUI avatar;
         [SerializeField]
         private UIProperty displayNameUIProperty;
 
@@ -54,7 +54,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
             if (key == ProfilePropertyOpCodes.displayName)
                 displayNameUIProperty.Lable = property.As<ObservableString>().Value;
             else if (key == ProfilePropertyOpCodes.avatarUrl)
-                avatar.SetAvatarUrl(property.Serialize());
+                avatar.Load(property.Serialize());
             else if (key == ProfilePropertyOpCodes.bronze)
                 bronzeUIProperty.SetValue(property.As<ObservableInt>().Value);
             else if (key == ProfilePropertyOpCodes.silver)

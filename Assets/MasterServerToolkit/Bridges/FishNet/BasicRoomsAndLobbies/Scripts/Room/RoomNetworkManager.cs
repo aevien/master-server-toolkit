@@ -1,4 +1,5 @@
 ﻿#if FISHNET
+using FishNet.Component.Scenes;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Transporting;
@@ -106,7 +107,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
                 logger.Info("Room Server stopped");
 
                 networkManager.ServerManager.UnregisterBroadcast<ValidateRoomAccessRequestMessage>(ValidateRoomAccessRequestHandler);
-                
+
                 if (roomServerManager)
                 {
                     roomServerManager.OnServerStopped();
@@ -132,29 +133,35 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
         #endregion
 
-        private void ValidateRoomAccessRequestHandler(NetworkConnection conn, ValidateRoomAccessRequestMessage mess)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="message"></param>
+        /// <param name="channel"></param>
+        private void ValidateRoomAccessRequestHandler(NetworkConnection connection, ValidateRoomAccessRequestMessage message, Channel channel)
         {
             if (roomServerManager)
             {
-                roomServerManager.ValidateRoomAccess(conn.ClientId, mess.Token, (isSuccess, error) =>
+                roomServerManager.ValidateRoomAccess(connection.ClientId, message.Token, (isSuccess, error) =>
                 {
                     try
                     {
                         if (!isSuccess)
                         {
                             Debug.LogError(error);
-                            conn.Broadcast(new ValidateRoomAccessResultMessage()
+                            connection.Broadcast(new ValidateRoomAccessResultMessage()
                             {
                                 Error = error,
                                 Status = ResponseStatus.Error
                             });
 
-                            MstTimer.WaitForSeconds(1f, () => conn.Disconnect(true));
+                            MstTimer.WaitForSeconds(1f, () => connection.Disconnect(true));
 
                             return;
                         }
 
-                        conn.Broadcast(new ValidateRoomAccessResultMessage()
+                        connection.Broadcast(new ValidateRoomAccessResultMessage()
                         {
                             Error = string.Empty,
                             Status = ResponseStatus.Success
@@ -164,13 +171,13 @@ namespace MasterServerToolkit.Bridges.FishNetworking
                     catch (Exception e)
                     {
                         Debug.LogError(e.Message);
-                        conn.Broadcast(new ValidateRoomAccessResultMessage()
+                        connection.Broadcast(new ValidateRoomAccessResultMessage()
                         {
                             Error = e.Message,
                             Status = ResponseStatus.Error
                         });
 
-                        MstTimer.WaitForSeconds(1f, () => conn.Disconnect(true));
+                        MstTimer.WaitForSeconds(1f, () => connection.Disconnect(true));
                     }
                 });
             }

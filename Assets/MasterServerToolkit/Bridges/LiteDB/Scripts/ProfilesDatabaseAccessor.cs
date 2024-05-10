@@ -1,8 +1,8 @@
 ﻿#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
 
 using LiteDB;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
-using System;
 using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.LiteDB
@@ -13,6 +13,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
         private readonly ILiteDatabase database;
 
         public MstProperties CustomProperties { get; private set; } = new MstProperties();
+        public Logger Logger { get; set; }
 
         public ProfilesDatabaseAccessor(string databaseName)
         {
@@ -28,15 +29,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
         /// <param name="profile"></param>
         public async Task RestoreProfileAsync(ObservableServerProfile profile)
         {
-            try
-            {
-                var data = await FindOrCreateData(profile);
-                profile.FromBytes(data.Data);
-            }
-            catch (Exception e)
-            {
-                UnityEngine.Debug.LogError(e);
-            }
+            var data = await FindOrCreateData(profile);
+            profile.FromBytes(data.Data);
         }
 
         public void Dispose()

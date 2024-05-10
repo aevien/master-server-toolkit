@@ -1,18 +1,24 @@
 ﻿using LiteDB;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.LiteDB
 {
     public class AccountsDatabaseAccessor : IAccountsDatabaseAccessor
     {
-        private ILiteCollection<AccountInfoData> accountsCollection;
-        private ILiteCollection<PasswordResetData> resetCodesCollection;
-        private ILiteCollection<EmailConfirmationData> emailConfirmationCodesCollection;
+        private readonly ILiteCollection<AccountInfoData> accountsCollection;
+        private readonly ILiteCollection<ExtraPropertyData> extraPropertiesCollection;
+        private readonly ILiteCollection<PasswordResetData> resetCodesCollection;
+        private readonly ILiteCollection<EmailConfirmationData> emailConfirmationCodesCollection;
+
         private readonly LiteDatabase database;
 
         public MstProperties CustomProperties { get; private set; } = new MstProperties();
+        public Logger Logger { get; set; }
 
         public AccountsDatabaseAccessor(string databaseName)
         {
@@ -20,11 +26,16 @@ namespace MasterServerToolkit.Bridges.LiteDB
 
             accountsCollection = database.GetCollection<AccountInfoData>("accounts");
             accountsCollection.EnsureIndex(a => a.Id, true);
+            accountsCollection.EnsureIndex(a => a.Username, true);
 
-            resetCodesCollection = database.GetCollection<PasswordResetData>("resetCodes");
+            extraPropertiesCollection = database.GetCollection<ExtraPropertyData>("extra_properties");
+            extraPropertiesCollection.EnsureIndex(a => a.AccountId);
+            extraPropertiesCollection.EnsureIndex(a => a.PropertyKey);
+
+            resetCodesCollection = database.GetCollection<PasswordResetData>("reset_codes");
             resetCodesCollection.EnsureIndex(a => a.Email, true);
 
-            emailConfirmationCodesCollection = database.GetCollection<EmailConfirmationData>("emailConfirmationCodes");
+            emailConfirmationCodesCollection = database.GetCollection<EmailConfirmationData>("email_confirmation_codes");
             emailConfirmationCodesCollection.EnsureIndex(a => a.Email, true);
         }
 
@@ -33,98 +44,177 @@ namespace MasterServerToolkit.Bridges.LiteDB
             return new AccountInfoData();
         }
 
+        public async Task<IAccountInfoData> GetAccountByIdAsync(string id)
+        {
+            return await Task.Run(async () =>
+            {
+                var account = accountsCollection.FindOne(i => i.Id == id);
+
+                if (account != null)
+                {
+                    account.LastLogin = DateTime.UtcNow;
+                    accountsCollection.Upsert(account);
+                    account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+                }
+
+                return account;
+            });
+        }
+
         public async Task<IAccountInfoData> GetAccountByUsernameAsync(string username)
         {
-            IAccountInfoData account = default;
-
-            await Task.Run(() =>
+            return await Task.Run(async () =>
             {
-                account = accountsCollection.FindOne(a => a.Username == username);
-            });
+                var account = accountsCollection.FindOne(i => i.Username == username);
 
-            return account;
+                if (account != null)
+                {
+                    account.LastLogin = DateTime.UtcNow;
+                    accountsCollection.Upsert(account);
+                    account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+                }
+
+                return account;
+            });
         }
 
         public async Task<IAccountInfoData> GetAccountByTokenAsync(string token)
         {
-            IAccountInfoData account = default;
-
-            await Task.Run(() =>
+            return await Task.Run(async () =>
             {
-                account = accountsCollection.FindOne(a => a.Token == token);
-            });
+                var account = accountsCollection.FindOne(i => i.Token == token);
 
-            return account;
+                if (account != null)
+                {
+                    account.LastLogin = DateTime.UtcNow;
+                    accountsCollection.Upsert(account);
+                    account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+                }
+
+                return account;
+            });
         }
 
         public async Task<IAccountInfoData> GetAccountByEmailAsync(string email)
         {
-            IAccountInfoData account = default;
-
-            await Task.Run(() =>
+            return await Task.Run(async () =>
             {
-                account = accountsCollection.FindOne(i => i.Email == email.ToLower());
-            });
+                var account = accountsCollection.FindOne(i => i.Email == email);
 
-            return account;
-        }
+                if (account != null)
+                {
+                    account.LastLogin = DateTime.UtcNow;
+                    accountsCollection.Upsert(account);
+                    account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+                }
 
-        public async Task<IAccountInfoData> GetAccountByIdAsync(string id)
-        {
-            return await Task.Run(() =>
-            {
-                return accountsCollection.FindOne(i => i.Id == id.ToLower());
+                return account;
             });
         }
 
         public async Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId)
         {
-            return await Task.Run(() =>
+            return await Task.Run(async () =>
             {
-                return accountsCollection.FindOne(i => i.DeviceId == deviceId.ToLower());
+                var account = accountsCollection.FindOne(i => i.DeviceId == deviceId);
+
+                if (account != null)
+                {
+                    account.LastLogin = DateTime.UtcNow;
+                    accountsCollection.Upsert(account);
+                    account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+                }
+
+                return account;
             });
         }
 
-        public async Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyKey, string propertyValue)
+        public async Task<IAccountInfoData> GetAccountByExtraPropertyAsync(string propertyKey, string propertyValue)
+        {
+            return await Task.Run(async () =>
+            {
+                var extraProperty = extraPropertiesCollection.FindOne(i => i.PropertyKey == propertyKey && i.PropertyValue == propertyValue);
+
+                if (extraProperty != null)
+                {
+                    var account = await GetAccountByIdAsync(extraProperty.AccountId);
+
+                    if (account != null)
+                    {
+                        return account;
+                    }
+                }
+
+                return null;
+            });
+        }
+
+        private async Task<Dictionary<string, string>> GetExtraPropertiesAsync(string accountId)
         {
             return await Task.Run(() =>
             {
-                return accountsCollection.FindOne(i => i.Properties[propertyKey] != null
-                && i.Properties[propertyKey] == propertyValue);
+                return extraPropertiesCollection.Find(i => i.AccountId == accountId).ToDictionary(i => i.PropertyKey, i => i.PropertyValue);
             });
         }
 
-        public async Task SavePasswordResetCodeAsync(IAccountInfoData account, string code)
+        public async Task<bool> CheckEmailConfirmationCodeAsync(string email, string code)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(code))
+            {
+                return false;
+            }
+
+            bool result = await Task.Run(() =>
+            {
+                EmailConfirmationData entry = emailConfirmationCodesCollection.FindOne(i => i.Email == email);
+
+                if (entry != null && entry.Code == code)
+                {
+                    emailConfirmationCodesCollection.DeleteMany(i => i.Email == email.ToLower());
+                    return true;
+                }
+
+                return false;
+            });
+
+            return result;
+        }
+
+        public async Task<bool> CheckPasswordResetCodeAsync(string email, string code)
+        {
+            bool result = await Task.Run(() =>
+            {
+                PasswordResetData entry = resetCodesCollection.FindOne(i => i.Email == email.ToLower());
+
+                if (entry != null && entry.Code == code)
+                {
+                    resetCodesCollection.DeleteMany(i => i.Email == email.ToLower());
+                    return true;
+                }
+
+                return false;
+            });
+
+            return result;
+        }
+
+        public async Task SavePasswordResetCodeAsync(string email, string code)
         {
             await Task.Run(() =>
             {
-                resetCodesCollection.DeleteMany(i => i.Email == account.Email.ToLower());
-                resetCodesCollection.Insert(new PasswordResetData()
+                resetCodesCollection.Upsert(new PasswordResetData()
                 {
-                    Email = account.Email,
+                    Email = email,
                     Code = code
                 });
             });
-        }
-
-        public async Task<string> GetPasswordResetDataAsync(string email)
-        {
-            PasswordResetData data = default;
-
-            await Task.Run(() =>
-            {
-                data = resetCodesCollection.FindOne(i => i.Email == email.ToLower());
-            });
-
-            return data != null ? data.Code : "";
         }
 
         public async Task SaveEmailConfirmationCodeAsync(string email, string code)
         {
             await Task.Run(() =>
             {
-                emailConfirmationCodesCollection.DeleteMany(i => i.Email == email.ToLower());
-                emailConfirmationCodesCollection.Insert(new EmailConfirmationData()
+                emailConfirmationCodesCollection.Upsert(new EmailConfirmationData()
                 {
                     Code = code,
                     Email = email
@@ -132,63 +222,18 @@ namespace MasterServerToolkit.Bridges.LiteDB
             });
         }
 
-        public async Task<string> GetEmailConfirmationCodeAsync(string email)
-        {
-            string code = string.Empty;
-
-            await Task.Run(() =>
-            {
-                var entry = emailConfirmationCodesCollection.FindOne(i => i.Email == email);
-                code = entry != null ? entry.Code : string.Empty;
-            });
-
-            return code;
-        }
-
-        public async Task<bool> UpdateAccountAsync(IAccountInfoData account)
-        {
-            string username = account.Username?.Trim();
-            string email = account.Email?.Trim();
-
-            // Check username duplicate
-            if (!string.IsNullOrEmpty(username))
-            {
-                var existingAccount = await GetAccountByUsernameAsync(username);
-
-                // if this account is not ours
-                if (existingAccount != null && existingAccount.Id != account.Id)
-                {
-                    throw new Exception("You are trying to update your username but it is already taken by another user");
-                }
-            }
-
-            // Check email duplicate
-            if (!string.IsNullOrEmpty(email))
-            {
-                var existingAccount = await GetAccountByEmailAsync(email);
-
-                // if this account is not ours
-                if (existingAccount != null && existingAccount.Id != account.Id)
-                {
-                    throw new Exception("There is another user with this email");
-                }
-            }
-
-            return await Task.Run(() => accountsCollection.Update(account as AccountInfoData));
-        }
-
-        public async Task<string> InsertNewAccountAsync(IAccountInfoData account)
+        public async Task<string> InsertAccountAsync(IAccountInfoData account)
         {
             string username = account.Username.Trim();
             string email = account.Email.Trim();
+            IAccountInfoData existingAccount;
 
             // Check username duplicate
             if (!string.IsNullOrEmpty(username))
             {
-                var existingAccount = await GetAccountByUsernameAsync(username);
+                existingAccount = await GetAccountByUsernameAsync(username);
 
-                // if this account is not ours
-                if (existingAccount != null && existingAccount.Id != account.Id)
+                if (existingAccount != null)
                 {
                     throw new Exception($"User with username \"{username}\" already exists");
                 }
@@ -197,40 +242,55 @@ namespace MasterServerToolkit.Bridges.LiteDB
             // Check email duplicate
             if (!string.IsNullOrEmpty(email))
             {
-                var existingAccount = await GetAccountByEmailAsync(email);
+                existingAccount = await GetAccountByEmailAsync(email);
 
-                // if this account is not ours
-                if (existingAccount != null && existingAccount.Id != account.Id)
+                if (existingAccount != null)
                 {
                     throw new Exception($"User with email \"{email}\" already exists");
                 }
             }
 
-            return await Task.Run(() => accountsCollection.Insert(account as AccountInfoData).AsString);
-        }
-
-        public async Task<bool> InsertTokenAsync(IAccountInfoData account, string token)
-        {
-            return await Task.Run(() =>
+            return await Task.Run(async () =>
             {
-                account.Token = token;
-                return accountsCollection.Update(account as AccountInfoData);
+                string accountId = accountsCollection.Insert(account as AccountInfoData).AsString;
+                await InsertOrUpdateExtraProperties(accountId, account.ExtraProperties);
+                return accountId;
             });
         }
 
-        public Task<string> GetPhoneNumberConfirmationCodeAsync(string phoneNumber)
+        public async Task InsertOrUpdateTokenAsync(IAccountInfoData account, string token)
         {
-            throw new NotImplementedException();
+            await Task.Run(() =>
+            {
+                account.Token = token;
+                accountsCollection.Update(account as AccountInfoData);
+            });
         }
 
-        public Task<bool> CheckPhoneNumberConfirmationCodeAsync(string confirmationCode)
+        private async Task InsertOrUpdateExtraProperties(string accountId, Dictionary<string, string> properties)
         {
-            throw new NotImplementedException();
+            await Task.Run(() =>
+            {
+                foreach (KeyValuePair<string, string> pair in properties)
+                {
+                    extraPropertiesCollection.Upsert(new ExtraPropertyData()
+                    {
+                        Id = $"{accountId}_{pair.Key}",
+                        AccountId = accountId,
+                        PropertyKey = pair.Key,
+                        PropertyValue = pair.Value
+                    });
+                }
+            });
         }
 
-        public Task<IAccountInfoData> GetAccountByPhoneNumberAsync(string phoneNumber)
+        public Task UpdateAccountAsync(IAccountInfoData account)
         {
-            throw new NotImplementedException();
+            return Task.Run(async () =>
+            {
+                accountsCollection.Update(account as AccountInfoData);
+                await InsertOrUpdateExtraProperties(account.Id, account.ExtraProperties);
+            });
         }
 
         public void Dispose()

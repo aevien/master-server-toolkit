@@ -63,10 +63,10 @@ namespace MasterServerToolkit.MasterServer
         {
             base.Initialize(httpServer);
 
-            httpServer.RegisterHttpRequestHandler("dashboard", OnDashboardRequestHandlerAsync);
-            httpServer.RegisterHttpRequestHandler("get-system-info", OnGetSystemInfoRequestHandlerAsync);
-            httpServer.RegisterHttpRequestHandler("get-server-info", OnGetServerInfoRequestHandlerAsync);
-            httpServer.RegisterHttpRequestHandler("get-modules-info", OnGetModulesInfoRequestHandlerAsync);
+            httpServer.RegisterHttpGetRequestHandler("dashboard", OnDashboardRequestHandlerAsync);
+            httpServer.RegisterHttpGetRequestHandler("get-system-info", OnGetSystemInfoRequestHandlerAsync);
+            httpServer.RegisterHttpGetRequestHandler("get-server-info", OnGetServerInfoRequestHandlerAsync);
+            httpServer.RegisterHttpGetRequestHandler("get-modules-info", OnGetModulesInfoRequestHandlerAsync);
         }
 
         public override void Dispose()

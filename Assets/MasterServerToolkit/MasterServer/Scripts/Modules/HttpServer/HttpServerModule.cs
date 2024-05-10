@@ -29,6 +29,8 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField]
         protected int httpPort = 5056;
         [SerializeField]
+        protected bool useSecure = false;
+        [SerializeField]
         protected string[] defaultIndexPage = new string[] { "index", "home" };
 
         [Header("User Credentials Settings"), SerializeField]
@@ -58,6 +60,11 @@ namespace MasterServerToolkit.MasterServer
         private readonly ConcurrentDictionary<string, OnHttpRequestDelegate> httpRequestActions = new ConcurrentDictionary<string, OnHttpRequestDelegate>();
 
         /// <summary>
+        /// 
+        /// </summary>
+        private readonly ConcurrentDictionary<string, bool> httpRequestsWithCredentials = new ConcurrentDictionary<string, bool>();
+
+        /// <summary>
         /// List of surface controllers
         /// </summary>
         public Dictionary<Type, IHttpController> Controllers { get; protected set; } = new Dictionary<Type, IHttpController>();
@@ -65,7 +72,11 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        public bool UseSecure { get; set; }
+        public bool UseSecure
+        {
+            get => useSecure;
+            set => useSecure = value;
+        }
 
         /// <summary>
         /// 
@@ -76,15 +87,6 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         public string CertificatePassword { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool UseCredentials
-        {
-            get => useCredentials;
-            set => useCredentials = value;
-        }
 
         /// <summary>
         /// 
@@ -165,17 +167,13 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnDestroy()
         {
+            logger.Info($"Http server stopped");
             Stop();
         }
 
         public override void Initialize(IServer server)
         {
             CancelInvoke();
-
-            // Setup secure connection
-            UseSecure = false; // Mst.Settings.UseSecure;
-            CertificatePath = Mst.Settings.CertificatePath;
-            CertificatePassword = Mst.Settings.CertificatePassword;
 
             // Start heartbeat checking
             InvokeRepeating(nameof(CheckHeartBeat), heartBeatCheckInterval, heartBeatCheckInterval);
@@ -195,13 +193,13 @@ namespace MasterServerToolkit.MasterServer
             // Stop if started
             Stop();
 
-            logger.Info($"Starting http server: {httpAddress}:{httpPort}");
+            logger.Info($"Starting http server: {(UseSecure ? "https://" : "http://")}{httpAddress}:{httpPort}");
 
             // Initialize server
             httpServer = new HttpListener();
 
-            if (useCredentials)
-                httpServer.AuthenticationSchemes = AuthenticationSchemes.Basic;
+            httpServer.AuthenticationSchemeSelectorDelegate =
+                new AuthenticationSchemeSelector(AuthenticationSchemeSelectorHandler);
 
             // Registers default pages
             RegisterDefaultControllers();
@@ -225,7 +223,7 @@ namespace MasterServerToolkit.MasterServer
 
                     if (httpServer.IsListening)
                     {
-                        logger.Info($"Http server is started and listening: {httpAddress}:{httpPort}");
+                        logger.Info($"Http server is started and listening: {(UseSecure ? "https://" : "http://")}{httpAddress}:{httpPort}");
                     }
                     else
                     {
@@ -267,13 +265,45 @@ namespace MasterServerToolkit.MasterServer
 
             httpThread.IsBackground = true;
             httpThread.Name = "MstWebServerThread";
-
             httpThread.Start();
+        }
+
+        private AuthenticationSchemes AuthenticationSchemeSelectorHandler(HttpListenerRequest request)
+        {
+            try
+            {
+                // Let's parse user
+                string cleanRawUrl = ClearRawUrl(request);
+
+                // Let's ceate url key
+                string urlKey = CreateHttpRequestHandlerKey(cleanRawUrl, Enum.Parse<HttpMethod>(request.HttpMethod));
+
+                if (httpRequestsWithCredentials.TryGetValue(urlKey, out var useCredentials))
+                {
+                    if (useCredentials)
+                    {
+                        return AuthenticationSchemes.Basic;
+                    }
+                    else
+                    {
+                        return AuthenticationSchemes.Anonymous;
+                    }
+                }
+                else
+                {
+                    return AuthenticationSchemes.None;
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error(e);
+                return AuthenticationSchemes.None;
+            }
         }
 
         private void ValidateRequest(HttpListenerContext context, Action successCallback)
         {
-            if (useCredentials && context.User != null)
+            if (context.User != null)
             {
                 var identity = (HttpListenerBasicIdentity)context.User.Identity;
 
@@ -309,8 +339,7 @@ namespace MasterServerToolkit.MasterServer
 
             try
             {
-                IPAddress.TryParse(httpAddress, out IPAddress address);
-                string url = CreateHttpRequestPrefix(checkHeartBeatUrl, address != null ? address.ToString() : "127.0.0.1");
+                string url = CreateHttpRequestPrefix(checkHeartBeatUrl, httpAddress);
 
                 if (url.EndsWith("/"))
                     url = url.Substring(0, url.Length - 1);
@@ -336,7 +365,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void RegisterDefaultControllers()
         {
-            RegisterHttpRequestHandler("/", (request, response) =>
+            RegisterHttpGetRequestHandler("/", (request, response) =>
             {
                 byte[] contents = Encoding.UTF8.GetBytes(DefaultIndexPageHtml());
 
@@ -346,7 +375,7 @@ namespace MasterServerToolkit.MasterServer
                 response.Close(contents, true);
             });
 
-            RegisterHttpRequestHandler(checkHeartBeatUrl, (request, response) =>
+            RegisterHttpGetRequestHandler(checkHeartBeatUrl, (request, response) =>
             {
                 byte[] contents = Encoding.UTF8.GetBytes("Ok");
 
@@ -358,7 +387,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (string page in defaultIndexPage)
             {
-                RegisterHttpRequestHandler(page, (request, response) =>
+                RegisterHttpGetRequestHandler(page, (request, response) =>
                 {
                     byte[] contents = Encoding.UTF8.GetBytes(DefaultIndexPageHtml());
 
@@ -749,8 +778,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Stop()
         {
-            if (httpThread != null)
-                httpThread.Abort();
+            httpThread?.Abort();
 
             foreach (var controller in Controllers.Values)
                 controller.Dispose();
@@ -760,7 +788,6 @@ namespace MasterServerToolkit.MasterServer
 
             httpServer?.Stop();
             httpServer?.Close();
-            logger.Info($"Http server stopped");
         }
 
         /// <summary>
@@ -810,20 +837,31 @@ namespace MasterServerToolkit.MasterServer
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
-            string scheme = UseSecure ? "https://" : "http://";
+            string protocol = UseSecure ? "https://" : "http://";
             string url = $"{httpAddress}:{httpPort}/{path}/".Replace("//", "/");
-            return $"{scheme}{url}".ToLower();
+            return $"{protocol}{url}".ToLower();
         }
 
         /// <summary>
         /// Registers http get request method
         /// </summary>
         /// <param name="path"></param>
-        /// <param name="httpMethod"></param>
         /// <param name="handler"></param>
-        public void RegisterHttpRequestHandler(string path, OnHttpRequestDelegate handler)
+        /// <param name="useCredentials"></param>
+        public void RegisterHttpGetRequestHandler(string path, OnHttpRequestDelegate handler, bool useCredentials = false)
         {
-            RegisterHttpRequestHandler(path, HttpMethod.GET, handler);
+            RegisterHttpRequestHandler(path, HttpMethod.GET, handler, useCredentials);
+        }
+
+        /// <summary>
+        /// Registers http get request method
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="handler"></param>
+        /// <param name="useCredentials"></param>
+        public void RegisterHttpPostRequestHandler(string path, OnHttpRequestDelegate handler, bool useCredentials = false)
+        {
+            RegisterHttpRequestHandler(path, HttpMethod.POST, handler, useCredentials);
         }
 
         /// <summary>
@@ -831,31 +869,21 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="path"></param>
         /// <param name="handler"></param>
-        public void RegisterHttpRequestHandler(string path, HttpMethod httpMethod, OnHttpRequestDelegate handler)
+        public void RegisterHttpRequestHandler(string path, HttpMethod httpMethod, OnHttpRequestDelegate handler, bool useCredentials = false)
         {
             string url;
             string prefix = CreateHttpRequestPrefix(path);
-
-            switch (httpMethod)
-            {
-                case HttpMethod.POST:
-                    url = CreateHttpRequestHandlerKey(path, httpMethod);
-                    break;
-                case HttpMethod.PUT:
-                    url = CreateHttpRequestHandlerKey(path, httpMethod);
-                    break;
-                default:
-                    url = CreateHttpRequestHandlerKey(path, HttpMethod.GET);
-                    break;
-            }
+            url = CreateHttpRequestHandlerKey(path, httpMethod);
 
             if (httpRequestActions.ContainsKey(url))
             {
-                throw new Exception($"Handler [{url}] already exists");
+                logger.Error($"Handler [{url}] already exists");
+                return;
             }
 
             httpServer.Prefixes.Add(prefix);
             httpRequestActions.TryAdd(url, handler);
+            httpRequestsWithCredentials.TryAdd(url, useCredentials);
         }
 
         public override MstJson JsonInfo()

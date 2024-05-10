@@ -9,7 +9,12 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Client handlers list. Requires for connection changing process. <seealso cref="ChangeConnection(IClientSocket)"/>
         /// </summary>
-        protected Dictionary<ushort, IPacketHandler> handlers;
+        protected readonly Dictionary<ushort, IPacketHandler> handlers = new Dictionary<ushort, IPacketHandler>();
+
+        /// <summary>
+        /// Logger of current module
+        /// </summary>
+        public Logger Logger { get; set; }
 
         /// <summary>
         /// Current module connection
@@ -24,7 +29,6 @@ namespace MasterServerToolkit.MasterServer
         public MstBaseClient(IClientSocket connection)
         {
             Connection = connection;
-            handlers = new Dictionary<ushort, IPacketHandler>();
         }
 
         /// <summary>
@@ -61,7 +65,7 @@ namespace MasterServerToolkit.MasterServer
                 Connection?.RegisterMessageHandler(handler);
             }
             else
-                Logs.Error($"Handler with opcode {handler.OpCode} is already registered");
+                Logger.Error($"Handler with opcode {handler.OpCode} is already registered");
         }
 
         /// <summary>

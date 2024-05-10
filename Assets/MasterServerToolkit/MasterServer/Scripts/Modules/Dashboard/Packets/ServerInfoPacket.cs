@@ -1,4 +1,3 @@
-using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 
 namespace MasterServerToolkit.MasterServer
@@ -75,16 +74,6 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(IncomingTraffic);
             writer.Write(OutgoingTraffic);
             writer.Write(Error);
-        }
-
-        public MstJson ToJson()
-        {
-            return MstJson.EmptyObject;
-        }
-
-        public static ServerInfoPacket FromJobject(MstJson json)
-        {
-            return new ServerInfoPacket();
         }
     }
 }

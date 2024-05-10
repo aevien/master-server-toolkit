@@ -118,7 +118,7 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                SystemInfoPacket info = message.AsPacket(new SystemInfoPacket());
+                SystemInfoPacket info = message.AsPacket<SystemInfoPacket>();
 
                 if (string.IsNullOrEmpty(info.Id))
                     throw new Exception("Source Id cannot be empty");
@@ -141,7 +141,7 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                ServerInfoPacket info = message.AsPacket(new ServerInfoPacket());
+                ServerInfoPacket info = message.AsPacket<ServerInfoPacket>();
 
                 if (string.IsNullOrEmpty(info.Id))
                     throw new Exception("Source Id cannot be empty");
@@ -164,7 +164,7 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                ModuleInfoPacket info = message.AsPacket(new ModuleInfoPacket());
+                ModuleInfoPacket info = message.AsPacket<ModuleInfoPacket>();
 
                 if (string.IsNullOrEmpty(info.Id))
                     throw new Exception("Source Id cannot be empty");

@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace MasterServerToolkit.Bridges
 {
@@ -16,7 +17,7 @@ namespace MasterServerToolkit.Bridges
         [SerializeField]
         private UILable uiColLablePrefab;
         [SerializeField]
-        private UIButton uiButtonPrefab;
+        private Button buttonPrefab;
         [SerializeField]
         private RectTransform listContainer;
         [SerializeField]
@@ -127,23 +128,24 @@ namespace MasterServerToolkit.Bridges
 
                     pingRegionLable.name = $"pingRegionLable_{index}";
 
-                    var gamePlayersBtn = Instantiate(uiButtonPrefab, listContainer, false);
-                    string maxPleyers = gameInfo.MaxPlayers <= 0 ? "∞" : gameInfo.MaxPlayers.ToString();
-                    gamePlayersBtn.SetLable($"{gameInfo.OnlinePlayers} / {maxPleyers} [Show]");
+                    var gamePlayersBtn = Instantiate(buttonPrefab, listContainer, false);
                     gamePlayersBtn.name = $"gamePlayersLable_{index}";
-                    gamePlayersBtn.AddOnClickListener(() =>
+
+                    string maxPleyers = gameInfo.MaxPlayers <= 0 ? "∞" : gameInfo.MaxPlayers.ToString();
+                    gamePlayersBtn.GetComponentInChildren<TextMeshProUGUI>().text = $"{gameInfo.OnlinePlayers} / {maxPleyers} [Show]";
+                    gamePlayersBtn.onClick.AddListener(() =>
                     {
                         Mst.Events.Invoke(MstEventKeys.showPlayersListView, gameInfo.Id);
                         Hide();
                     });
 
-                    var gameConnectBtn = Instantiate(uiButtonPrefab, listContainer, false);
-                    gameConnectBtn.SetLable("Join");
-                    gameConnectBtn.AddOnClickListener(() =>
+                    var gameConnectBtn = Instantiate(buttonPrefab, listContainer, false);
+                    gameConnectBtn.name = $"gameConnectBtn_{index}";
+                    gameConnectBtn.GetComponentInChildren<TextMeshProUGUI>().text = "Join";
+                    gameConnectBtn.onClick.AddListener(() =>
                     {
                         MatchmakingBehaviour.Instance.StartMatch(gameInfo);
                     });
-                    gameConnectBtn.name = $"gameConnectBtn_{index}";
 
                     index++;
 

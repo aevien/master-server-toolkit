@@ -1,4 +1,5 @@
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MongoDB.Driver;
 using System;
@@ -13,6 +14,9 @@ namespace MasterServerToolkit.Bridges.MongoDB
         private IMongoDatabase _database;
 
         private IMongoCollection<ProfileInfoDataMongoDB> _profiles;
+
+        public MstProperties CustomProperties { get; private set; } = new MstProperties();
+        public Logger Logger { get; set; }
 
         public ProfilesDatabaseAccessor(string connectionString, string databaseName)
             : this(new MongoClient(connectionString), databaseName) { }
@@ -30,8 +34,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
                 )
             );
         }
-
-        public MstProperties CustomProperties { get; private set; } = new MstProperties();
 
         public void Dispose() { }
 

@@ -10,6 +10,18 @@ namespace MasterServerToolkit.Utils
     {
         public int Id { get; set; }
         public Tweener Tweener { get; set; }
+        public bool IsRunning
+        {
+            get
+            {
+                return Tweener.IsRunning(Id);
+            }
+        }
+
+        public void Cancel()
+        {
+            Tweener.Cancel(this);
+        }
 
         public TweenerActionInfo OnComplete(TweenerActionInfoCallback callback)
         {
@@ -57,12 +69,17 @@ namespace MasterServerToolkit.Utils
 
         private void ProcessAction(KeyValuePair<int, Func<bool>> actionKvp)
         {
-            if (actionKvp.Value != null && actionKvp.Value.Invoke())
+            if (actionKvp.Value?.Invoke() == true)
             {
-                actions.TryRemove(actionKvp.Key, out _);
+                if (actions.TryRemove(actionKvp.Key, out _))
+                {
+                    Debug.Log($"Tween action {actionKvp.Key} has completed");
+                }
 
                 if (onCompleted.TryRemove(actionKvp.Key, out var onComplete))
                     onComplete?.Invoke(actionKvp.Key);
+
+
             }
         }
 
@@ -125,7 +142,11 @@ namespace MasterServerToolkit.Utils
         /// <returns></returns>
         public static Tweener Cancel(int id)
         {
-            actions.TryRemove(id, out _);
+            if (actions.TryRemove(id, out _))
+            {
+                Debug.Log($"Tween action {id} has canceled");
+            }
+
             return _tweener;
         }
 
@@ -144,7 +165,12 @@ namespace MasterServerToolkit.Utils
                 Tweener = _tweener
             };
 
-            actions.TryAdd(info.Id, action);
+            if (actions.TryAdd(info.Id, action))
+            {
+                Debug.Log($"Tween action {info.Id} has started");
+            }
+
+
             return info;
         }
     }

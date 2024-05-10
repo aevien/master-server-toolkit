@@ -31,7 +31,6 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         #endregion
 
-        private ProfileLoaderBehaviour profileLoader;
         private readonly Dictionary<string, ItemUI> itemUis = new Dictionary<string, ItemUI>();
 
         protected override void Start()
@@ -39,24 +38,20 @@ namespace MasterServerToolkit.Examples.BasicProfile
             base.Start();
 
             DrawStoreOffers();
-
-            profileLoader = FindObjectOfType<ProfileLoaderBehaviour>();
-            profileLoader.OnProfileLoadedEvent.AddListener(OnProfileLoadedEventHandler);
+            Mst.Client.Profiles.OnProfileLoadedEvent += Profiles_OnProfileLoadedEvent;
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
-
-            if (profileLoader && profileLoader.Profile != null)
-                profileLoader.Profile.OnPropertyUpdatedEvent -= Profile_OnPropertyUpdatedEvent;
+            Mst.Client.Profiles.OnProfileLoadedEvent -= Profiles_OnProfileLoadedEvent;
         }
 
-        private void OnProfileLoadedEventHandler()
+        private void Profiles_OnProfileLoadedEvent(ObservableProfile profile)
         {
-            profileLoader.Profile.OnPropertyUpdatedEvent += Profile_OnPropertyUpdatedEvent;
+            profile.OnPropertyUpdatedEvent += Profile_OnPropertyUpdatedEvent;
 
-            if (profileLoader.Profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
+            if (profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
             {
                 DrawBackpackItems(items);
 
@@ -65,7 +60,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                 items.OnSetEvent += Items_OnSetEvent;
             }
 
-            foreach (var property in profileLoader.Profile.Properties)
+            foreach (var property in profile.Properties)
                 Profile_OnPropertyUpdatedEvent(property.Key, property.Value);
         }
 

@@ -45,9 +45,10 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
-            foreach (var pattern in censoredWords)
+            foreach (var word in censoredWords)
             {
-                Regex regex = new Regex(string.Format(matchPattern, pattern), RegexOptions.IgnoreCase);
+                string pattern = string.Format(matchPattern, word);
+                Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
                 if (regex.IsMatch(text))
                 {

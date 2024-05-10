@@ -153,6 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  isGlobal: 0
   serverIp: 127.0.0.1
   serverPort: 5000
   timeout: 5
@@ -273,7 +274,7 @@ PrefabInstance:
     - target: {fileID: 757970465690165507, guid: 486cd82c994506a4d9b252b2abc8c4a5,
         type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 757970465690165507, guid: 486cd82c994506a4d9b252b2abc8c4a5,
         type: 3}
@@ -966,6 +967,11 @@ PrefabInstance:
       propertyPath: m_textInfo.characterCount
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Sign out
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6f139267009e9a44cb68786e53bdb5dc, type: 3}
 --- !u!224 &712355299 stripped
@@ -1009,7 +1015,7 @@ PrefabInstance:
     - target: {fileID: 375131771426544287, guid: 93bf78af47bfec04f949149d89a5a870,
         type: 3}
       propertyPath: m_RootOrder
-      value: 4
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 375131771426544287, guid: 93bf78af47bfec04f949149d89a5a870,
         type: 3}
@@ -1461,6 +1467,11 @@ PrefabInstance:
       propertyPath: m_textInfo.characterCount
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Quit
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6f139267009e9a44cb68786e53bdb5dc, type: 3}
 --- !u!224 &1020185726 stripped
@@ -1690,12 +1701,12 @@ RectTransform:
   - {fileID: 1751866846}
   - {fileID: 1020185726}
   - {fileID: 590962502}
-  - {fileID: 788313862}
   - {fileID: 1775268639}
   - {fileID: 458490662}
   - {fileID: 1642096280}
   - {fileID: 712355299}
   - {fileID: 624604344}
+  - {fileID: 788313862}
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1826,10 +1837,40 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 688187166830483550, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+        type: 3}
+      propertyPath: m_text
+      value: Main menu
+      objectReference: {fileID: 0}
     - target: {fileID: 1438952054369909395, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
       propertyPath: lable
       value: Main menu
+      objectReference: {fileID: 0}
+    - target: {fileID: 8249671915972898439, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+        type: 3}
+      propertyPath: m_Color.a
+      value: 0.5019608
+      objectReference: {fileID: 0}
+    - target: {fileID: 8249671915972898439, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+        type: 3}
+      propertyPath: m_Color.b
+      value: 0.13333334
+      objectReference: {fileID: 0}
+    - target: {fileID: 8249671915972898439, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+        type: 3}
+      propertyPath: m_Color.g
+      value: 0.09019608
+      objectReference: {fileID: 0}
+    - target: {fileID: 8249671915972898439, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+        type: 3}
+      propertyPath: m_Color.r
+      value: 0.09019608
+      objectReference: {fileID: 0}
+    - target: {fileID: 8249671915972898439, guid: d2a62c3519b48fe40a37aa32c7fe124f,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8249671916789168024, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
@@ -1874,7 +1915,7 @@ PrefabInstance:
     - target: {fileID: 8249671917318911617, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
       propertyPath: m_RootOrder
-      value: 5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 8249671917318911617, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
@@ -1944,7 +1985,7 @@ PrefabInstance:
     - target: {fileID: 8249671917318911617, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0.000061035156
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8249671917318911617, guid: d2a62c3519b48fe40a37aa32c7fe124f,
         type: 3}
@@ -2036,12 +2077,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: MenuView
+  title: MenuView
   hideOnStart: 1
   allwaysOnTop: 0
   ignoreHideAll: 0
   useRaycastBlock: 1
   blockInput: 0
   logLevel: 3
+  titleLable: {fileID: 0}
   OnShowEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -2646,7 +2689,7 @@ PrefabInstance:
     - target: {fileID: 6322575391773244093, guid: a06ad9331a5b74a41a66445ccf7b11d9,
         type: 3}
       propertyPath: m_RootOrder
-      value: 8
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6322575391773244093, guid: a06ad9331a5b74a41a66445ccf7b11d9,
         type: 3}
@@ -3149,7 +3192,7 @@ PrefabInstance:
     - target: {fileID: 1319083470749284403, guid: 12ce4915a9fbfcd4d86d5c9c6ae27a01,
         type: 3}
       propertyPath: m_RootOrder
-      value: 10
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 1319083470749284403, guid: 12ce4915a9fbfcd4d86d5c9c6ae27a01,
         type: 3}
@@ -3393,7 +3436,7 @@ PrefabInstance:
     - target: {fileID: 1691857884350221680, guid: 55852e95879257d4ab3fcd1e87969e88,
         type: 3}
       propertyPath: m_RootOrder
-      value: 9
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1691857884350221680, guid: 55852e95879257d4ab3fcd1e87969e88,
         type: 3}

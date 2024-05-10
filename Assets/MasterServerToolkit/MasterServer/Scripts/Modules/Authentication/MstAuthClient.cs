@@ -1,6 +1,4 @@
-﻿using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Logging;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using System;
 using UnityEngine;
 
@@ -13,7 +11,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Check if user is signed in
         /// </summary>
-        public bool IsSignedIn { get; protected set; }
+        public bool IsSignedIn => AccountInfo != null;
 
         /// <summary>
         /// Check if user is now logging in
@@ -67,25 +65,35 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Generated device id. Not unity's device id
+        /// Generated device id
         /// </summary>
         /// <returns></returns>
         public string DeviceId()
         {
-            if (!string.IsNullOrEmpty(SystemInfo.deviceUniqueIdentifier))
+            return DeviceId(false);
+        }
+
+        /// <summary>
+        /// Generated device id. Not unity's device id if user is guest
+        /// </summary>
+        /// <param name="isGuest"></param>
+        /// <returns></returns>
+        public string DeviceId(bool isGuest)
+        {
+            if (!isGuest && SystemInfo.deviceUniqueIdentifier != SystemInfo.unsupportedIdentifier)
             {
                 return SystemInfo.deviceUniqueIdentifier;
             }
             else
             {
-                if (PlayerPrefs.HasKey(MstDictKeys.USER_DEVICE_ID))
+                if (PlayerPrefs.HasKey(isGuest ? MstDictKeys.USER_GUEST_DEVICE_ID : MstDictKeys.USER_DEVICE_ID))
                 {
-                    return PlayerPrefs.GetString(MstDictKeys.USER_DEVICE_ID);
+                    return PlayerPrefs.GetString(isGuest ? MstDictKeys.USER_GUEST_DEVICE_ID : MstDictKeys.USER_DEVICE_ID);
                 }
                 else
                 {
                     string deviceId = Mst.Helper.CreateGuidStringN();
-                    PlayerPrefs.SetString(MstDictKeys.USER_DEVICE_ID, deviceId);
+                    PlayerPrefs.SetString(isGuest ? MstDictKeys.USER_GUEST_DEVICE_ID : MstDictKeys.USER_DEVICE_ID, deviceId);
                     PlayerPrefs.Save();
                     return deviceId;
                 }
@@ -136,21 +144,24 @@ namespace MasterServerToolkit.MasterServer
         {
             if (IsNowSigningIn)
             {
-                callback.Invoke(false, "Signing in is already in progress");
+                callback.Invoke(false, Mst.Localization["signUpInProgress"]);
                 return;
             }
 
             if (IsSignedIn)
             {
-                callback.Invoke(false, "Already signed in");
+                callback.Invoke(false, Mst.Localization["signedInStatusOk"]);
                 return;
             }
 
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected to server");
+                callback.Invoke(false, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
+
+            credentials.Set(MstDictKeys.USER_DEVICE_ID, DeviceId());
+            credentials.Set(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
 
             // We first need to get an aes key 
             // so that we can encrypt our login data
@@ -158,7 +169,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (aesKey == null)
                 {
-                    callback.Invoke(false, "Failed to register due to security issues");
+                    callback.Invoke(false, Mst.Localization["signUpSecurityError"]);
                     return;
                 }
 
@@ -168,7 +179,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     if (status != ResponseStatus.Success)
                     {
-                        callback.Invoke(false, response.AsString("Unknown error"));
+                        callback.Invoke(false, response.AsString(Mst.Localization["unknownError"]));
                         return;
                     }
 
@@ -200,13 +211,19 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            IsSignedIn = false;
             AccountInfo = null;
 
             if (permanent)
                 ClearAuthToken();
 
-            if (connection != null && connection.IsConnected)
+            if (!connection.IsConnected)
+            {
+                return;
+            }
+
+            connection.SendMessage(MstOpCodes.SignOut);
+
+            if (connection != null)
             {
                 connection.Reconnect();
             }
@@ -233,7 +250,7 @@ namespace MasterServerToolkit.MasterServer
             var credentials = new MstProperties();
             credentials.Add(MstDictKeys.USER_IS_GUEST);
             credentials.Add(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
-            credentials.Add(MstDictKeys.USER_DEVICE_ID, DeviceId());
+            credentials.Add(MstDictKeys.USER_DEVICE_ID, DeviceId(true));
 
             SignIn(credentials, callback, connection);
         }
@@ -256,7 +273,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!HasAuthToken())
             {
-                callback.Invoke(null, "You have no auth token");
+                callback.Invoke(null, Mst.Localization["signInTokenExpired"]);
                 return;
             }
 
@@ -358,23 +375,13 @@ namespace MasterServerToolkit.MasterServer
             if (IsNowSigningIn)
                 return;
 
-            if (IsSignedIn)
-            {
-                callback.Invoke(AccountInfo, string.Empty);
-                return;
-            }
-
             if (!connection.IsConnected)
             {
-                callback.Invoke(null, "Not connected to server");
+                callback.Invoke(null, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
 
-            Logs.Debug("Signing in...".ToGreen());
-
             IsNowSigningIn = true;
-
-            Logs.Debug("Getting AES key...");
 
             // We first need to get an aes key 
             // so that we can encrypt our login data
@@ -383,7 +390,7 @@ namespace MasterServerToolkit.MasterServer
                 if (string.IsNullOrEmpty(aesKey))
                 {
                     IsNowSigningIn = false;
-                    callback.Invoke(null, "Failed to log in due to security issues");
+                    callback.Invoke(null, Mst.Localization["signInSecurityError"]);
                     return;
                 }
 
@@ -397,13 +404,11 @@ namespace MasterServerToolkit.MasterServer
                     {
                         ClearAuthToken();
 
-                        callback.Invoke(null, response.AsString("Failed to log in"));
+                        callback.Invoke(null, response.AsString(Mst.Localization["unknownError"]));
                         return;
                     }
 
-                    Logs.Debug("Successfully signed in!".ToGreen());
-
-                    AccountInfo = response.AsPacket(new AccountInfoPacket());
+                    AccountInfo = response.AsPacket<AccountInfoPacket>();
 
                     // If RememberMe is checked on and we are not guset, then save auth token
                     if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
@@ -415,12 +420,31 @@ namespace MasterServerToolkit.MasterServer
                         ClearAuthToken();
                     }
 
-                    IsSignedIn = true;
-
                     callback?.Invoke(AccountInfo, null);
                     OnSignedInEvent?.Invoke();
                 });
             }, connection);
+        }
+
+        /// <summary>
+        /// Binds social media account to your mst account
+        /// </summary>
+        /// <param name="socialMediaCredentials"></param>
+        /// <param name="callback"></param>
+        public void BindSocialMediaAccount(MstProperties socialMediaCredentials, SignInCallback callback)
+        {
+            BindSocialMediaAccount(socialMediaCredentials, callback, Connection);
+        }
+
+        /// <summary>
+        /// Binds social media account to your mst account
+        /// </summary>
+        /// <param name="socialMediaCredentials"></param>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void BindSocialMediaAccount(MstProperties socialMediaCredentials, SignInCallback callback, IClientSocket connection)
+        {
+            SignIn(socialMediaCredentials, callback, connection);
         }
 
         /// <summary>
@@ -440,13 +464,13 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected to server");
+                callback.Invoke(false, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
 
             if (!IsSignedIn)
             {
-                callback.Invoke(false, "You're not logged in");
+                callback.Invoke(false, Mst.Localization["signedInStatusFail"]);
                 return;
             }
 
@@ -454,7 +478,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Failed to confirm email"));
+                    callback.Invoke(false, response.AsString(Mst.Localization["accountConfirmationErrorResult"]));
                     return;
                 }
 
@@ -480,13 +504,13 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected to server");
+                callback.Invoke(false, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
 
             if (!IsSignedIn)
             {
-                callback.Invoke(false, "You're not logged in");
+                callback.Invoke(false, Mst.Localization["signedInStatusFail"]);
                 return;
             }
 
@@ -494,7 +518,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Failed to request confirmation code"));
+                    callback.Invoke(false, response.AsString(Mst.Localization["confirmationCodeSendingErrorResult"]));
                     return;
                 }
 
@@ -517,7 +541,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected to server");
+                callback.Invoke(false, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
 
@@ -525,7 +549,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Failed to request password reset code"));
+                    callback.Invoke(false, response.AsString(Mst.Localization["changePasswordCodeErrorResult"]));
                     return;
                 }
 
@@ -543,9 +567,9 @@ namespace MasterServerToolkit.MasterServer
         public void ChangePassword(string email, string code, string newPassword, SuccessCallback callback)
         {
             var options = new MstProperties();
-            options.Add("email", email);
-            options.Add("code", code);
-            options.Add("password", newPassword);
+            options.Add(MstDictKeys.RESET_PASSWORD_EMAIL, email);
+            options.Add(MstDictKeys.RESET_PASSWORD_CODE, code);
+            options.Add(MstDictKeys.RESET_PASSWORD, newPassword);
 
             ChangePassword(options, callback, Connection);
         }
@@ -557,7 +581,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected to server");
+                callback.Invoke(false, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
 
@@ -565,7 +589,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Failed to change password"));
+                    callback.Invoke(false, response.AsString(Mst.Localization["changePasswordErrorResult"]));
                     return;
                 }
 
@@ -575,35 +599,42 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Binds extra properties to this account
         /// </summary>
+        /// <param name="properties"></param>
         /// <param name="callback"></param>
-        public void SaveAccountProperties(SuccessCallback callback)
+        public void BindExtraProperties(MstProperties properties, SuccessCallback callback)
         {
-            SaveAccountProperties(callback, Connection);
+            BindExtraProperties(properties, callback, Connection);
         }
 
         /// <summary>
-        /// 
+        /// Binds extra properties to this account
         /// </summary>
+        /// <param name="properties"></param>
         /// <param name="callback"></param>
         /// <param name="connection"></param>
-        public void SaveAccountProperties(SuccessCallback callback, IClientSocket connection)
+        public void BindExtraProperties(MstProperties properties, SuccessCallback callback, IClientSocket connection)
         {
             if (!connection.IsConnected)
             {
-                callback.Invoke(false, "Not connected to server");
+                callback.Invoke(false, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
 
-            var data = AccountInfo.Properties.ToBytes();
+            var data = properties.ToBytes();
 
-            connection.SendMessage(MstOpCodes.UpdateAccountInfo, data, (status, response) =>
+            connection.SendMessage(MstOpCodes.BindExtraProperties, data, (status, response) =>
             {
                 if (status != ResponseStatus.Success)
                 {
-                    callback.Invoke(false, response.AsString("Failed to save account properties"));
+                    callback.Invoke(false, response.AsString(Mst.Localization["accounSaveExtraErrorResult"]));
                     return;
+                }
+
+                foreach (var property in properties)
+                {
+                    AccountInfo.ExtraProperties.Set(property.Key, property.Value);
                 }
 
                 callback.Invoke(true, null);

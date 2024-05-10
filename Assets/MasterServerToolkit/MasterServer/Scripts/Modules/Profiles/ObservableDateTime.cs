@@ -35,7 +35,7 @@ namespace MasterServerToolkit.MasterServer
         {
             long binary = EndianBitConverter.Big.ToInt64(data, 0);
             _value = DateTime.FromBinary(binary);
-            MarkDirty();
+            MarkAsDirty();
         }
 
         public override byte[] ToBytes()

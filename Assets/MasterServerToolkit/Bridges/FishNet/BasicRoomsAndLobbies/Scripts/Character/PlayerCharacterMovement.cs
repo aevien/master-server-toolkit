@@ -48,14 +48,12 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         /// <summary>
         /// Check if running mode is allowed for character
         /// </summary>
-        [SyncVar]
-        protected bool runningIsAllowed = true;
+        protected readonly SyncVar<bool> runningIsAllowed = new SyncVar<bool>(true);
 
         /// <summary>
         /// Check if movement mode is allowed for character
         /// </summary>
-        [SyncVar]
-        protected bool movementIsAllowed = true;
+        protected readonly SyncVar<bool> movementIsAllowed = new SyncVar<bool>(true);
 
         /// <summary>
         /// Current calculated movement direction
@@ -75,7 +73,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         /// <summary>
         /// Check if this behaviour is ready
         /// </summary>
-        public override bool IsReady => inputController && characterController && lookController && base.IsClient;
+        public override bool IsReady => inputController && characterController && lookController && IsClientInitialized;
 
         /// <summary>
         /// Speed of the character
@@ -99,7 +97,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
 
         protected void Update()
         {
-            if (base.IsOwner && IsReady)
+            if (IsOwner && IsReady)
             {
                 UpdateJumpAvailability();
                 UpdateMovementStates();
@@ -109,7 +107,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
 
         protected virtual void UpdateJumpAvailability()
         {
-            if (!movementIsAllowed) return;
+            if (!movementIsAllowed.Value) return;
 
             if (jumpIsAllowed)
             {
@@ -126,11 +124,11 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         /// </summary>
         protected virtual void UpdateMovementStates()
         {
-            IsWalking = inputController.IsMoving() && movementIsAllowed;
-            IsRunning = IsWalking && inputController.IsRunnning() && runningIsAllowed;
+            IsWalking = inputController.IsMoving() && movementIsAllowed.Value;
+            IsRunning = IsWalking && inputController.IsRunnning() && runningIsAllowed.Value;
 
             // Send state update to server
-            CmdUpdateMovementState(IsWalking, IsRunning);
+            RpcUpdateMovementState(IsWalking, IsRunning);
 
             if (IsRunning)
             {
@@ -152,7 +150,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         /// <param name="isWalking"></param>
         /// <param name="isRunning"></param>
         [ServerRpc]
-        private void CmdUpdateMovementState(bool isWalking, bool isRunning)
+        private void RpcUpdateMovementState(bool isWalking, bool isRunning)
         {
             IsWalking = isWalking;
             IsRunning = isRunning;
@@ -176,7 +174,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
             }
             else
             {
-                calculatedMovementDirection += Physics.gravity * gravityMultiplier * Time.deltaTime;
+                calculatedMovementDirection += gravityMultiplier * Time.deltaTime * Physics.gravity;
             }
 
             characterController.Move(calculatedMovementDirection * Time.deltaTime);
@@ -188,9 +186,9 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         /// <param name="value"></param>
         public void AllowRunning(bool value)
         {
-            if (base.IsServer)
+            if (IsServerInitialized)
             {
-                runningIsAllowed = value;
+                runningIsAllowed.Value = value;
             }
         }
 
@@ -200,9 +198,9 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         /// <param name="value"></param>
         public void AllowMoving(bool value)
         {
-            if (base.IsServer)
+            if (IsServerInitialized)
             {
-                movementIsAllowed = value;
+                movementIsAllowed.Value = value;
             }
         }
     }

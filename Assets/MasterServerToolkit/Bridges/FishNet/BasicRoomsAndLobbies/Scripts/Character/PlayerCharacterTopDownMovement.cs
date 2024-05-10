@@ -39,7 +39,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
                 }
 
                 // 
-                if (movementIsAllowed)
+                if (movementIsAllowed.Value)
                 {
                     // Rotate character to target direction
                     transform.rotation = Quaternion.Lerp(transform.rotation, playerTargetDirectionAngle, Time.deltaTime * rotationSmoothTime);
@@ -68,7 +68,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
             }
             else
             {
-                calculatedMovementDirection += Physics.gravity * gravityMultiplier * Time.deltaTime;
+                calculatedMovementDirection += gravityMultiplier * Time.deltaTime * Physics.gravity;
             }
 
             characterController.Move(calculatedMovementDirection * Time.deltaTime);

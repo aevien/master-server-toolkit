@@ -858,12 +858,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   isGlobal: 1
-  serverIp: 127.0.0.1
-  serverPort: 5000
+  serverIp: localhost
+  serverPort: 5001
   timeout: 2
   maxAttemptsToConnect: 3
   waitAndConnect: 0.2
   connectOnStart: 1
+  useSecure: 0
+  service: mst
+  password: mst
   OnConnectedEvent:
     m_PersistentCalls:
       m_Calls: []

@@ -162,7 +162,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                callback.Invoke(response.AsPacket(new UsernameAndPeerIdPacket()), null);
+                callback.Invoke(response.AsPacket<UsernameAndPeerIdPacket>(), null);
             });
         }
 

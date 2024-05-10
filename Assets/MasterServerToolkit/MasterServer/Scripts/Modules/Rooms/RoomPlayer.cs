@@ -1,3 +1,4 @@
+using MasterServerToolkit.Json;
 using System;
 
 namespace MasterServerToolkit.MasterServer
@@ -12,7 +13,7 @@ namespace MasterServerToolkit.MasterServer
             RoomPeerId = roomPeer;
             UserId = userId ?? throw new ArgumentNullException(nameof(userId));
             Username = username ?? throw new ArgumentNullException(nameof(username));
-            CustomOptions = customOptions ?? throw new ArgumentNullException(nameof(customOptions));
+            ExtraProperties = customOptions ?? throw new ArgumentNullException(nameof(customOptions));
             Profile = new ObservableServerProfile(UserId);
         }
 
@@ -39,7 +40,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Custom options user can use in game
         /// </summary>
-        public MstProperties CustomOptions { get; set; }
+        public MstProperties ExtraProperties { get; set; }
 
         /// <summary>
         /// Player profile
@@ -48,13 +49,13 @@ namespace MasterServerToolkit.MasterServer
 
         public override string ToString()
         {
-            MstProperties options = new MstProperties();
-            options.Add("Username", Username);
-            options.Add("RoomPeerId", RoomPeerId);
-            options.Add("MasterPeerId", MasterPeerId);
-            options.Append(Profile.ToStringsDictionary());
-            options.Append(CustomOptions);
-            return options.ToReadableString();
+            MstJson json = new MstJson();
+            json.AddField("username", Username);
+            json.AddField("room_peer_id", RoomPeerId);
+            json.AddField("master_peer_id", MasterPeerId);
+            json.AddField("profile", Profile.ToJson());
+            json.AddField("extra_properties", new MstJson(ExtraProperties.ToDictionary()));
+            return json.ToString();
         }
     }
 }

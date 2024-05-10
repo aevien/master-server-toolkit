@@ -1,7 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using System;
+using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -16,6 +16,8 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         [SerializeField, Tooltip("Time to wait before match creation process will be aborted")]
         protected uint matchCreationTimeout = 20;
+        [SerializeField]
+        protected SerializedKeyValuePair[] customSpawnOptions;
 
         public UnityEvent OnRoomStartedEvent;
         public UnityEvent OnRoomStartFailedEvent;
@@ -28,7 +30,7 @@ namespace MasterServerToolkit.Bridges
         /// <summary>
         /// Properties that will be synced from room to all users
         /// </summary>
-        public MstProperties CustomRoomProperties { get; private set; } = new MstProperties();
+        public MstProperties CustomRoomProperties { get; private set; }
 
         public static MatchmakingBehaviour Instance
         {
@@ -50,6 +52,8 @@ namespace MasterServerToolkit.Bridges
             _instance = this;
 
             base.Awake();
+
+            CustomRoomProperties = new MstProperties(customSpawnOptions);
         }
 
         protected override void OnInitialize()
@@ -69,7 +73,7 @@ namespace MasterServerToolkit.Bridges
             {
                 if (!string.IsNullOrEmpty(error))
                 {
-                    logger.Error(error);
+                    Logger.Error(error);
                     Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, null));
                 }
             });
@@ -83,22 +87,10 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room... Please wait!");
 
-            logger.Debug("Starting room... Please wait!");
-
-            // Custom options that will be given to room directly
-            var customSpawnOptions = new MstProperties();
-            customSpawnOptions.Add(Mst.Args.Names.StartClientConnection, true);
-
-            // Here is the example of using custom options. If your option name starts from "-room."
-            // then this option will be added to custom room options on server automatically
-            customSpawnOptions.Add("-room.CustomTextOption", "Here is room custom option");
-            customSpawnOptions.Add("-room.CustomIdOption", Mst.Helper.CreateID_10());
-            customSpawnOptions.Add("-room.CustomDateTimeOption", DateTime.Now.ToString());
-            customSpawnOptions.Add("-room.masterUser", Mst.Client.Auth.IsSignedIn ? Mst.Client.Auth.AccountInfo.Username : "Anonymous");
-
+            Logger.Debug("Starting room... Please wait!");
             roomStartingProcessCompleted = false;
 
-            Mst.Client.Spawners.RequestSpawn(spawnOptions, customSpawnOptions, regionName, (controller, error) =>
+            Mst.Client.Spawners.RequestSpawn(spawnOptions, CustomRoomProperties, regionName, (controller, error) =>
             {
                 if (controller == null)
                 {
@@ -131,14 +123,14 @@ namespace MasterServerToolkit.Bridges
                             OnRoomStarted();
                             OnRoomStartedEvent?.Invoke();
 
-                            logger.Info("You have successfully spawned new room");
+                            Logger.Info("You have successfully spawned new room");
                         }
                         else
                         {
                             OnRoomStartFailed();
                             OnRoomStartFailedEvent?.Invoke();
 
-                            logger.Error($"Failed spawn new room. Status: {controller.Status}");
+                            Logger.Error($"Failed spawn new room. Status: {controller.Status}");
 
                             Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Please, try later", () =>
                             {
@@ -153,7 +145,7 @@ namespace MasterServerToolkit.Bridges
                         OnRoomStartFailed();
                         OnRoomStartFailedEvent?.Invoke();
 
-                        logger.Error("Failed spawn new room. Time out");
+                        Logger.Error("Failed spawn new room. Time out");
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Time out", () =>
                         {

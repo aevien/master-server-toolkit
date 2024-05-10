@@ -20,7 +20,7 @@ namespace MasterServerToolkit.Networking
         private int _id = -1;
         private int nextAckId = 1;
         private readonly IIncomingMessage timeoutMessage;
-        private readonly Dictionary<Type, IPeerExtension> extensionsList;
+        private readonly ConcurrentDictionary<Type, IPeerExtension> extensionsList = new ConcurrentDictionary<Type, IPeerExtension>();
         private static readonly object idGenerationLock = new object();
         private static int peerIdGenerator;
         private bool disposedValue = false;
@@ -115,7 +115,6 @@ namespace MasterServerToolkit.Networking
             logger.LogLevel = logLevel;
 
             ackTimeoutQueue = new List<long[]>();
-            extensionsList = new Dictionary<Type, IPeerExtension>();
 
             MstTimer.OnTickEvent += HandleAckDisposalTick;
 
@@ -420,6 +419,24 @@ namespace MasterServerToolkit.Networking
         {
             extensionsList[typeof(T)] = extension;
             return extension;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public bool ClearExtension<T>() where T : IPeerExtension
+        {
+            if (HasExtension<T>())
+            {
+                extensionsList[typeof(T)] = null;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>

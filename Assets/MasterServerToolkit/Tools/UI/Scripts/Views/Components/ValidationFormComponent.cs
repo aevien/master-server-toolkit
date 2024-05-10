@@ -3,16 +3,14 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.UI
 {
-    public class ValidationFormComponent : MonoBehaviour, IUIViewComponent
+    public class ValidationFormComponent : MonoBehaviour
     {
         public UnityEvent OnFormValidEvent;
         public UnityEvent OnFormInvalidEvent;
 
         private IValidatableComponent[] validatableList;
 
-        public IUIView Owner { get; set; }
-
-        public void OnOwnerAwake()
+        private void Awake()
         {
             UpdateValidatables();
         }
@@ -22,12 +20,6 @@ namespace MasterServerToolkit.UI
             if (validatableList == null || validatableList.Length == 0)
                 validatableList = GetComponentsInChildren<IValidatableComponent>();
         }
-
-        public void OnOwnerHide(IUIView owner) { }
-
-        public void OnOwnerShow(IUIView owner) { }
-
-        public void OnOwnerStart() { }
 
         public void Validate()
         {

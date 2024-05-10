@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace MasterServerToolkit.UI
 {
@@ -10,7 +11,7 @@ namespace MasterServerToolkit.UI
         protected TMP_Text[] lables;
 
         [Header("Buttons Settings"), SerializeField]
-        protected UIButton[] buttons;
+        protected Button[] buttons;
 
         public virtual void SetLables(params string[] values)
         {
@@ -45,8 +46,8 @@ namespace MasterServerToolkit.UI
             {
                 try
                 {
-                    buttons[i].RemoveAllOnClickListeners();
-                    buttons[i].AddOnClickListener(actions[i]);
+                    buttons[i].onClick.RemoveAllListeners();
+                    buttons[i].onClick.AddListener(actions[i]);
                 }
                 catch
                 {

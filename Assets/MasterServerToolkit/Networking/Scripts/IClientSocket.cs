@@ -41,6 +41,16 @@
         bool UseSecure { get; set; }
 
         /// <summary>
+        /// The service to which the client can be connected
+        /// </summary>
+        string Service { get; set; }
+
+        /// <summary>
+        /// The password that the connection will use to authenticate to the server
+        /// </summary>
+        string Password { get; set; }
+
+        /// <summary>
         /// Event, which is invoked when we successfully 
         /// connect to another socket
         /// </summary>

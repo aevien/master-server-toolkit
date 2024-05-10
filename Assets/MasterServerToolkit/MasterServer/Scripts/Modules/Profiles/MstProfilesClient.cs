@@ -1,9 +1,22 @@
 ﻿using MasterServerToolkit.Networking;
+using System;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MstProfilesClient : MstBaseClient
     {
+        /// <summary>
+        /// Currently loaded user profile
+        /// </summary>
+        public ObservableProfile Current { get; private set; }
+
+        /// <summary>
+        /// Checks if profile exists
+        /// </summary>
+        public bool HasProfile => Current != null;
+
+        public event Action<ObservableProfile> OnProfileLoadedEvent;
+
         public MstProfilesClient(IClientSocket connection) : base(connection) { }
 
         /// <summary>
@@ -48,7 +61,10 @@ namespace MasterServerToolkit.MasterServer
                     profile.ApplyUpdates(message.AsBytes());
                 });
 
+                Current = profile;
+
                 callback.Invoke(true, null);
+                OnProfileLoadedEvent?.Invoke(profile);
             });
         }
     }

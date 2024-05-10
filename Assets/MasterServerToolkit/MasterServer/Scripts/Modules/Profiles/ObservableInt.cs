@@ -22,7 +22,7 @@ namespace MasterServerToolkit.MasterServer
                 if (_value != value)
                 {
                     _value = value;
-                    MarkDirty();
+                    MarkAsDirty();
                 }
             }
         }
@@ -36,7 +36,7 @@ namespace MasterServerToolkit.MasterServer
             if (_value + value <= max)
             {
                 _value += value;
-                MarkDirty();
+                MarkAsDirty();
                 return true;
             }
 
@@ -54,8 +54,7 @@ namespace MasterServerToolkit.MasterServer
             if (_value - value >= min)
             {
                 _value -= value;
-                MarkDirty();
-
+                MarkAsDirty();
                 return true;
             }
 
@@ -72,7 +71,7 @@ namespace MasterServerToolkit.MasterServer
         public override void FromBytes(byte[] data)
         {
             _value = EndianBitConverter.Big.ToInt32(data, 0);
-            MarkDirty();
+            MarkAsDirty();
         }
 
         public override string Serialize()
@@ -109,7 +108,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void FromJson(string json)
         {
-            _value = Convert.ToInt32(json);
+            FromJson(new MstJson(Convert.ToInt32(json)));
         }
     }
 }

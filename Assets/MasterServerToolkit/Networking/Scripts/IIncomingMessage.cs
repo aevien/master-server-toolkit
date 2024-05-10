@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace MasterServerToolkit.Networking
 {
@@ -96,6 +95,13 @@ namespace MasterServerToolkit.Networking
         void Respond(int response, ResponseStatus statusCode = ResponseStatus.Default);
 
         /// <summary>
+        /// Respond with integer
+        /// </summary>
+        /// <param name="response"></param>
+        /// <param name="statusCode"></param>
+        void Respond(bool response, ResponseStatus statusCode = ResponseStatus.Default);
+
+        /// <summary>
         /// Returns contents of this message. Mutable
         /// </summary>
         /// <returns></returns>
@@ -121,12 +127,18 @@ namespace MasterServerToolkit.Networking
         int AsInt();
 
         /// <summary>
+        /// Decodes content to boolean
+        /// </summary>
+        /// <returns></returns>
+        bool AsBool();
+
+        /// <summary>
         /// Writes content of the message into a packet
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="packetToBeFilled"></param>
         /// <returns></returns>
-        T AsPacket<T>(T packetToBeFilled) where T : ISerializablePacket;
+        T AsPacket<T>() where T : ISerializablePacket, new();
 
         /// <summary>
         /// Uses content of the message to regenerate list of packets
@@ -134,6 +146,6 @@ namespace MasterServerToolkit.Networking
         /// <typeparam name="T"></typeparam>
         /// <param name="packetCreator"></param>
         /// <returns></returns>
-        IEnumerable<T> AsPacketsList<T>(Func<T> packetCreator) where T : ISerializablePacket;
+        IEnumerable<T> AsPacketsList<T>() where T : ISerializablePacket, new();
     }
 }

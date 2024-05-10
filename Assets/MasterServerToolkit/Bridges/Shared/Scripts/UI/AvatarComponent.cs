@@ -53,8 +53,18 @@ namespace MasterServerToolkit.Bridges
         /// <param name="url"></param>
         public void SetAvatarUrl(string url)
         {
-            StopAllCoroutines();
-            StartCoroutine(StartLoadAvatarImage(url));
+            if (isActiveAndEnabled)
+            {
+                if (string.IsNullOrEmpty(url))
+                {
+                    SetAvatarSprite(defaultSprite);
+                }
+                else
+                {
+                    StopAllCoroutines();
+                    StartCoroutine(StartLoadAvatarImage(url));
+                }
+            }
         }
 
         private IEnumerator StartLoadAvatarImage(string url)
@@ -91,7 +101,8 @@ namespace MasterServerToolkit.Bridges
                     else if (www.result == UnityWebRequest.Result.Success)
                     {
                         var myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-                        SetAvatarSprite(Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f));
+                        var sprite = Sprite.Create(myTexture, new Rect(0f, 0f, myTexture.width, myTexture.height), new Vector2(0.5f, 0.5f), 100f);
+                        SetAvatarSprite(sprite);
                     }
 #endif
                 }

@@ -16,7 +16,7 @@ namespace MasterServerToolkit.MasterServer
             if (_value != val)
             {
                 _value = val;
-                MarkDirty();
+                MarkAsDirty();
             }
         }
 
@@ -31,7 +31,7 @@ namespace MasterServerToolkit.MasterServer
         public override void FromBytes(byte[] data)
         {
             _value = EndianBitConverter.Big.ToBoolean(data, 0);
-            MarkDirty();
+            MarkAsDirty();
         }
 
         public override string Serialize()

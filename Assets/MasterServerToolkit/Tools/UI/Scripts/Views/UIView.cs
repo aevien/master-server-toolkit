@@ -28,6 +28,8 @@ namespace MasterServerToolkit.UI
         protected bool useRaycastBlock = true;
         [SerializeField]
         protected bool blockInput = false;
+        [SerializeField]
+        protected bool unlockCursor = false;
 
         [Header("Logger Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
@@ -43,22 +45,21 @@ namespace MasterServerToolkit.UI
 
         #endregion
 
-        /// <summary>
-        /// Logger connected to this view
-        /// </summary>
         protected Logging.Logger logger;
 
-        private Dictionary<string, Component> children;
-        protected Dictionary<string, IUIViewComponent> uiViewComponents;
+        private readonly Dictionary<string, Component> children = new Dictionary<string, Component>();
+        protected readonly Dictionary<string, IUIViewComponent> uiViewComponents = new Dictionary<string, IUIViewComponent>();
         protected IUIViewTweener uiViewTweener;
         protected CanvasGroup canvasGroup;
         protected bool isVisible = true;
 
-        public virtual bool IsVisible => isVisible;
         public string Id => id;
+        public bool IsVisible => isVisible;
         public RectTransform Rect => transform as RectTransform;
         public bool IgnoreHideAll { get => ignoreHideAll; set => ignoreHideAll = value; }
         public bool BlockInput { get => blockInput; set => blockInput = value; }
+        public bool UnlockCursor { get => unlockCursor; set => unlockCursor = value; }
+        public Logging.Logger Logger => logger;
 
         protected virtual void Awake()
         {
@@ -67,9 +68,6 @@ namespace MasterServerToolkit.UI
 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
-
-            uiViewComponents = new Dictionary<string, IUIViewComponent>();
-            children = new Dictionary<string, Component>();
 
             Rect.anchoredPosition = Vector2.zero;
 
@@ -103,6 +101,17 @@ namespace MasterServerToolkit.UI
             }
         }
 
+        protected virtual void Update()
+        {
+            if (IsVisible)
+            {
+                foreach (var uiComponent in uiViewComponents.Values)
+                {
+                    uiComponent.OnOwnerUpdate();
+                }
+            }
+        }
+
         protected virtual void OnValidate()
         {
             if (string.IsNullOrEmpty(title))
@@ -111,12 +120,14 @@ namespace MasterServerToolkit.UI
             if (string.IsNullOrEmpty(Id))
                 id = name;
 
-            if (titleLable)
+            if (titleLable != null)
                 titleLable.Text = title;
         }
 
         protected virtual void OnDestroy()
         {
+            ViewsManager.Unregister(id);
+
             OnShowEvent.RemoveAllListeners();
             OnHideEvent.RemoveAllListeners();
             OnShowFinishedEvent.RemoveAllListeners();
@@ -125,9 +136,10 @@ namespace MasterServerToolkit.UI
 
         protected virtual void RegisterAllUIViewComponents()
         {
-            uiViewTweener = GetComponent<IUIViewTweener>();
-
-            if (uiViewTweener != null) uiViewTweener.UIView = this;
+            if (TryGetComponent(out uiViewTweener))
+            {
+                uiViewTweener.UIView = this;
+            }
 
             foreach (var uiViewComponent in GetComponentsInChildren<IUIViewComponent>(true))
             {
@@ -155,7 +167,7 @@ namespace MasterServerToolkit.UI
             }
             else
             {
-                Debug.LogError($"{key} is not registered");
+                logger.Error($"{key} is not registered");
                 return null;
             }
         }
@@ -183,15 +195,18 @@ namespace MasterServerToolkit.UI
 
         public virtual void Show(bool instantly = false)
         {
+            if (isVisible) return;
+
             if (uiViewTweener != null && !instantly)
             {
+                if (allwaysOnTop)
+                {
+                    transform.SetAsLastSibling();
+                }
+
                 isVisible = true;
-
                 OnShowEvent?.Invoke();
-
                 NotifyComponentsOnShow(true);
-
-                if (allwaysOnTop) transform.SetAsLastSibling();
 
                 uiViewTweener.OnFinished(() =>
                 {
@@ -203,28 +218,27 @@ namespace MasterServerToolkit.UI
             }
             else
             {
+                if (allwaysOnTop)
+                {
+                    transform.SetAsLastSibling();
+                }
+
                 isVisible = true;
-
                 OnShowEvent?.Invoke();
-
-                NotifyComponentsOnShow(true);
-
-                if (allwaysOnTop) transform.SetAsLastSibling();
-
                 SetCanvasActive(true);
-
+                NotifyComponentsOnShow(true);
                 OnShowFinishedEvent?.Invoke();
             }
         }
 
         public virtual void Hide(bool instantly = false)
         {
+            if (!isVisible) return;
+
             if (uiViewTweener != null && !instantly)
             {
                 isVisible = false;
-
                 OnHideEvent?.Invoke();
-
                 NotifyComponentsOnShow(false);
 
                 uiViewTweener.OnFinished(() =>
@@ -238,13 +252,9 @@ namespace MasterServerToolkit.UI
             else
             {
                 isVisible = false;
-
                 OnHideEvent?.Invoke();
-
                 NotifyComponentsOnShow(false);
-
                 SetCanvasActive(false);
-
                 OnHideFinishedEvent?.Invoke();
             }
         }
@@ -261,11 +271,12 @@ namespace MasterServerToolkit.UI
             }
         }
 
-        private Transform FindInDescendants(Transform parent, string childName)
+        private Transform FindChild(Transform parent, string childName)
         {
-            if (parent.childCount == 0) return null;
-
-            //Debug.Log($"Looking for child [{childName}] in [{parent.name}]");
+            if (parent.childCount == 0)
+            {
+                return null;
+            }
 
             Transform result = null;
 
@@ -276,16 +287,13 @@ namespace MasterServerToolkit.UI
                 if (child.name == childName)
                 {
                     result = child;
-
-                    //Debug.Log($"Child [{childName}] was found in [{parent.name}]");
-
                     break;
                 }
                 else
                 {
-                    result = FindInDescendants(child, childName);
+                    result = FindChild(child, childName);
 
-                    if (result) break;
+                    if (result != null) break;
                 }
             }
 
@@ -297,7 +305,7 @@ namespace MasterServerToolkit.UI
             if (canvasGroup)
             {
                 canvasGroup.interactable = active;
-                canvasGroup.blocksRaycasts = !useRaycastBlock ? false : active;
+                canvasGroup.blocksRaycasts = useRaycastBlock && active;
                 canvasGroup.alpha = active ? 1f : 0f;
             }
         }
@@ -325,7 +333,6 @@ namespace MasterServerToolkit.UI
         }
 
         protected virtual void OnShow() { }
-
         protected virtual void OnHide() { }
     }
 }

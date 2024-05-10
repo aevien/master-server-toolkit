@@ -98,14 +98,15 @@ namespace MasterServerToolkit.Networking
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    list = reader.ReadList(factory);
+                    //var count = reader.ReadInt32();
 
-                    for (var i = 0; i < count; i++)
-                    {
-                        var item = factory.Invoke();
-                        item.FromBinaryReader(reader);
-                        list.Add(item);
-                    }
+                    //for (var i = 0; i < count; i++)
+                    //{
+                    //    var item = factory.Invoke();
+                    //    item.FromBinaryReader(reader);
+                    //    list.Add(item);
+                    //}
                 }
             }
             return list;
@@ -400,12 +401,35 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="reader"></param>
-        /// <param name="packet"></param>
         /// <returns></returns>
-        public static T ReadPacket<T>(this EndianBinaryReader reader, T packet) where T : ISerializablePacket, new()
+        public static T ReadPacket<T>(this EndianBinaryReader reader) where T : ISerializablePacket, new()
         {
+            T packet = new T();
             packet.FromBinaryReader(reader);
             return packet;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="reader"></param>
+        /// <param name="packets"></param>
+        /// <returns></returns>
+        public static List<T> ReadPackets<T>(this EndianBinaryReader reader) where T : ISerializablePacket, new()
+        {
+            List<T> packets = new List<T>();
+
+            int count = reader.ReadInt32();
+
+            for (int i = 0; i < count; i++)
+            {
+                T packet = new T();
+                packet.FromBinaryReader(reader);
+                packets.Add(packet);
+            }
+
+            return packets;
         }
 
         /// <summary>
@@ -446,6 +470,27 @@ namespace MasterServerToolkit.Networking
             }
 
             return new Dictionary<string, string>();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="reader"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static List<TValue> ReadList<TValue>(this EndianBinaryReader reader, Func<TValue> value)
+        {
+            var length = reader.ReadInt32();
+
+            List<TValue> list = new List<TValue>();
+
+            for (int i = 0; i < length; i++)
+            {
+                list.Add(value.Invoke());
+            }
+
+            return list;
         }
 
         /// <summary>

@@ -1,6 +1,5 @@
 ﻿using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Networking;
-using MasterServerToolkit.Utils;
 using System;
 using UnityEngine;
 
@@ -78,14 +77,14 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnStartedServer()
         {
-            logger.Info($"{GetType().Name.ToSpaceByUppercase()} started and listening to: {serverIp}:{serverPort}");
+            logger.Info($"{GetType().Name.FromCamelcase()} started and listening to: {serverIp}:{serverPort}");
             base.OnStartedServer();
             OnMasterStartedEvent?.Invoke(this);
         }
 
         protected override void OnStoppedServer()
         {
-            logger.Info($"{GetType().Name.ToSpaceByUppercase()} stopped");
+            logger.Info($"{GetType().Name.FromCamelcase()} stopped");
             OnMasterStoppedEvent?.Invoke(this);
         }
     }

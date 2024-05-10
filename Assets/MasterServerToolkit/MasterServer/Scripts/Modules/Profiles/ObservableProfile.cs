@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -62,7 +61,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!Properties.ContainsKey(key))
             {
-                Logs.Error($"Observable property with key [{key}] does not exist");
+                Logs.Error($"Observable property with key [{Extensions.StringExtensions.FromHash(key)}] does not exist");
                 return null;
             }
 
@@ -186,7 +185,7 @@ namespace MasterServerToolkit.MasterServer
 
                         if (Properties.ContainsKey(key))
                         {
-                            //Logs.Debug($"{GetType().Name} from bytes property with key {key}".ToGreen());
+                            //Logs.Debug($"{GetType().Name} from bytes property with key {Extensions.StringExtensions.FromHash(key)}".ToGreen());
                             Properties[key].FromBytes(valueData);
                         }
                     }
@@ -316,32 +315,9 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        /// <summary>
-        /// Serializes all of the properties to dictionary
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, string> ToStringsDictionary()
-        {
-            var dict = new Dictionary<string, string>();
-
-            foreach (var pair in Properties)
-            {
-                dict.Add(pair.Key.ToString(), pair.Value.Serialize());
-            }
-
-            return dict;
-        }
-
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder();
-
-            foreach (var i in ToStringsDictionary())
-            {
-                result.Append($"{i.Key}:{i.Value};");
-            }
-
-            return result.ToString();
+            return ToJson().ToString();
         }
 
         /// <summary>
@@ -354,7 +330,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var property in Properties.Values)
             {
-                json.AddField(StringExtensions.FromHash(property.Key), property.ToJson());
+                json.AddField(Extensions.StringExtensions.FromHash(property.Key), property.ToJson());
             }
 
             return json;
@@ -373,7 +349,7 @@ namespace MasterServerToolkit.MasterServer
         {
             foreach (var property in Properties.Values)
             {
-                string key = StringExtensions.FromHash(property.Key);
+                string key = property.Key.ToString();
 
                 if (json.HasField(key))
                 {
@@ -392,6 +368,10 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Dispose()
         {
+            propertiesToBeSent.Clear();
+            Properties.Clear();
+            OnPropertyUpdatedEvent = null;
+
             Dispose(true);
             GC.SuppressFinalize(this);
         }

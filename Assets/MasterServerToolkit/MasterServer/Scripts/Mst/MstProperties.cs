@@ -1,6 +1,9 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,18 +11,18 @@ namespace MasterServerToolkit.MasterServer
 {
     public class MstProperties
     {
-        private Dictionary<string, string> properties;
+        private readonly ConcurrentDictionary<string, string> properties;
 
         public int Count => properties.Count;
 
         public MstProperties()
         {
-            properties = new Dictionary<string, string>();
+            properties = new ConcurrentDictionary<string, string>();
         }
 
         public MstProperties(Dictionary<string, string> options)
         {
-            properties = new Dictionary<string, string>();
+            properties = new ConcurrentDictionary<string, string>();
 
             if (options != null)
             {
@@ -29,12 +32,48 @@ namespace MasterServerToolkit.MasterServer
 
         public MstProperties(MstProperties options)
         {
-            properties = new Dictionary<string, string>();
+            properties = new ConcurrentDictionary<string, string>();
 
             if (options != null)
             {
                 Append(options);
             }
+        }
+
+        public MstProperties(IEnumerable<SerializedKeyValuePair> options)
+        {
+            properties = new ConcurrentDictionary<string, string>();
+
+            foreach (SerializedKeyValuePair pair in options)
+            {
+                properties.TryAdd(pair.key, pair.value);
+            }
+        }
+
+        /// <summary>
+        /// Converts all values from normal to escape
+        /// </summary>
+        public MstProperties EscapeValues()
+        {
+            foreach (KeyValuePair<string, string> pair in properties)
+            {
+                properties[pair.Key] = pair.Value.Escape();
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Converts all values from escape to normal
+        /// </summary>
+        public MstProperties UnescapeValues()
+        {
+            foreach (KeyValuePair<string, string> pair in properties)
+            {
+                properties[pair.Key] = pair.Value.Unscape();
+            }
+
+            return this;
         }
 
         /// <summary>
@@ -44,7 +83,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool Remove(string key)
         {
-            return properties.Remove(key);
+            return properties.TryRemove(key, out _);
         }
 
         /// <summary>
@@ -538,7 +577,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public Dictionary<string, string> ToDictionary()
         {
-            return properties;
+            return properties.ToDictionary(p => p.Key, p => p.Value);
         }
 
         /// <summary>
@@ -564,7 +603,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public byte[] ToBytes()
         {
-            return properties.ToBytes();
+            return ToDictionary().ToBytes();
         }
 
         /// <summary>
@@ -596,7 +635,9 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public MstProperties FromReadableString(string value, string itemsSplitter = ";", string kvpSplitter = ":")
         {
-            properties.FromReadableString(value, itemsSplitter, kvpSplitter);
+            var dic = new Dictionary<string, string>();
+            dic.FromReadableString(value, itemsSplitter, kvpSplitter);
+            Append(dic);
             return this;
         }
 

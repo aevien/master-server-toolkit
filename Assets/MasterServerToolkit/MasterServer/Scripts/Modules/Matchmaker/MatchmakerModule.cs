@@ -73,12 +73,6 @@ namespace MasterServerToolkit.MasterServer
                     list.Add(game);
                 }
 
-                if (list.Count == 0)
-                {
-                    message.Respond("No game found. Try to create your own game", ResponseStatus.Default);
-                    return;
-                }
-
                 // Convert to generic list and serialize to bytes
                 var bytes = list.Select(game => (ISerializablePacket)game).ToBytes();
                 message.Respond(bytes, ResponseStatus.Success);
@@ -87,7 +81,7 @@ namespace MasterServerToolkit.MasterServer
             catch (Exception e)
             {
                 logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                message.Respond(ResponseStatus.Error);
             }
         }
 

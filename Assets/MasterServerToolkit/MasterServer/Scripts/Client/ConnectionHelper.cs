@@ -32,6 +32,13 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, Tooltip("If true, will try to connect on the Start()")]
         protected bool connectOnStart = true;
 
+        [Header("Security Settings"), SerializeField, Tooltip("Whether or not to use secure connection")]
+        protected bool useSecure = false;
+        [SerializeField, Tooltip("The service to which the client can be connected")]
+        protected string service = "mst";
+        [SerializeField, Tooltip("The password that the connection will use to authenticate to the server")]
+        protected string password = "mst";
+
         [Header("Events")]
         /// <summary>
         /// Triggers when connected to server
@@ -74,6 +81,12 @@ namespace MasterServerToolkit.MasterServer
             {
                 Connection = ConnectionFactory();
             }
+
+            useSecure = Mst.Args.AsBool(Mst.Args.Names.UseSecure, useSecure);
+
+            Connection.Password = password;
+            Connection.Service = service;
+            Connection.UseSecure = useSecure;
 
             // In case this object is not at the root level of hierarchy
             // move it there, so that it won't be destroyed
@@ -119,6 +132,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 Connection.RemoveConnectionOpenListener(OnConnectedEventHandler);
                 Connection.RemoveConnectionCloseListener(OnDisconnectedEventHandler);
+                Connection.Close(false);
             }
         }
 
@@ -186,15 +200,14 @@ namespace MasterServerToolkit.MasterServer
 
             if (!Connection.IsConnected && !Connection.IsConnecting)
             {
-                logger.Info($"Starting {GetType().Name.ToSpaceByUppercase()}...".ToGreen());
-                logger.Info($"{GetType().Name.ToSpaceByUppercase()} is connecting to server at: {serverIp}:{serverPort}".ToGreen());
+                logger.Info($"Starting {GetType().Name.FromCamelcase()}...".ToGreen());
+                logger.Info($"{GetType().Name.FromCamelcase()} is connecting to server at: {serverIp}:{serverPort}".ToGreen());
             }
             else if (!Connection.IsConnected && Connection.IsConnecting)
             {
-                logger.Info($"{GetType().Name.ToSpaceByUppercase()} is retrying to connect to server at: {serverIp}:{serverPort}. Attempt: {currentAttemptToConnect}".ToGreen());
+                logger.Info($"{GetType().Name.FromCamelcase()} is retrying to connect to server at: {serverIp}:{serverPort}. Attempt: {currentAttemptToConnect}".ToGreen());
             }
 
-            Connection.UseSecure = Mst.Settings.UseSecure;
             Connection.Connect(serverIp, serverPort, timeout);
 
             // 
@@ -206,7 +219,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     if (currentAttemptToConnect == maxAttemptsToConnect)
                     {
-                        logger.Info($"{GetType().Name.ToSpaceByUppercase()} cannot to connect to server at: {serverIp}:{serverPort}".ToRed());
+                        logger.Info($"{GetType().Name.FromCamelcase()} cannot to connect to server at: {serverIp}:{serverPort}".ToRed());
                         Connection.Close();
                         OnFailedConnectEvent?.Invoke();
                     }
@@ -220,14 +233,14 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnDisconnectedEventHandler(IClientSocket client)
         {
-            logger.Info($"{GetType().Name.ToSpaceByUppercase()} disconnected from server".ToRed());
+            logger.Info($"{GetType().Name.FromCamelcase()} disconnected from server".ToRed());
             OnDisconnectedEvent?.Invoke();
         }
 
         protected virtual void OnConnectedEventHandler(IClientSocket client)
         {
             float totalConnectionTime = Time.realtimeSinceStartup - startConnectionTime;
-            logger.Info($"{GetType().Name.ToSpaceByUppercase()} connected to server at: {serverIp}:{serverPort}. Connection time is: {totalConnectionTime}s.".ToGreen());
+            logger.Info($"{GetType().Name.FromCamelcase()} connected to server at: {serverIp}:{serverPort}. Connection time is: {totalConnectionTime}s.".ToGreen());
             OnConnectedEvent?.Invoke();
         }
     }

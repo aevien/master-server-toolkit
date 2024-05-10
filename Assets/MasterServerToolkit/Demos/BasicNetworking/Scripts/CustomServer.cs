@@ -7,6 +7,17 @@ namespace MasterServerToolkit.Examples.BasicNetworking
 {
     public class CustomServer : ServerBehaviour
     {
+        protected override void Start()
+        {
+            base.Start();
+
+            // Start the server on next frame
+            MstTimer.WaitForEndOfFrame(() =>
+            {
+                StartServer();
+            });
+        }
+
         protected override void OnStartedServer()
         {
             base.OnStartedServer();

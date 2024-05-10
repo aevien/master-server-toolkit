@@ -18,8 +18,8 @@ namespace MasterServerToolkit.MasterServer
         {
             base.Initialize(server);
 
-            server.RegisterHttpRequestHandler("info", OnGetMstInfoHttpRequestHandler);
-            server.RegisterHttpRequestHandler("info-json", OnGetMstInfoJsonHttpRequestHandler);
+            server.RegisterHttpGetRequestHandler("info-json", OnGetMstInfoJsonHttpRequestHandler, UseCredentials);
+            server.RegisterHttpGetRequestHandler("info", OnGetMstInfoHttpRequestHandler, UseCredentials);
 
             systemInfo = new MstProperties();
             systemInfo.Add("Device Id", SystemInfo.deviceUniqueIdentifier);
@@ -45,8 +45,8 @@ namespace MasterServerToolkit.MasterServer
 
         private void OnGetMstInfoJsonHttpRequestHandler(HttpListenerRequest request, HttpListenerResponse response)
         {
-            MstJson json = new MstJson();
-            MstJson modulesJson = new MstJson();
+            MstJson json = MstJson.EmptyObject;
+            MstJson modulesJson = MstJson.EmptyArray;
 
             foreach (var module in MasterServer.GetInitializedModules())
             {

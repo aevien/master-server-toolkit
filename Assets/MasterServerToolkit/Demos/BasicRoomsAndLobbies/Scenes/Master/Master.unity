@@ -255,6 +255,8 @@ Transform:
   m_Children:
   - {fileID: 674311274}
   - {fileID: 978456419}
+  - {fileID: 1787512023}
+  - {fileID: 1008034224}
   m_Father: {fileID: 1005001217}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -469,7 +471,6 @@ MonoBehaviour:
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  autoStartInEditor: 1
 --- !u!4 &1005001217
 Transform:
   m_ObjectHideFlags: 0
@@ -494,6 +495,54 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1008034223
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1008034224}
+  - component: {fileID: 1008034225}
+  m_Layer: 0
+  m_Name: Profile
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1008034224
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1008034223}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 505681164}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1008034225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1008034223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 684a6143e4d5b2d4bb7f4ac5c34249a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  configuration: master_server_toolkit
+  connectionString: Server=localhost;Database=master_server_toolkit;Uid=root;Pwd=qazwsxedc123!@#;Port=3306;
+  dataProvider: SqlServer
 --- !u!1 &1152754123
 GameObject:
   m_ObjectHideFlags: 0
@@ -543,16 +592,15 @@ MonoBehaviour:
   usernameMaxChars: 12
   userPasswordMinChars: 8
   emailConfirmRequired: 1
-  enableGuestLogin: 1
+  allowGuestLogin: 1
   guestPrefix: Guest
-  saveGuestInfo: 1
   tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
   tokenSecret: t0k9n-$ecr9t
   serviceCodeMinChars: 6
-  databaseAccessorFactory: {fileID: 674311275}
+  databaseAccessorFactory: {fileID: 1787512024}
 --- !u!1 &1189862047
 GameObject:
   m_ObjectHideFlags: 0
@@ -604,7 +652,7 @@ MonoBehaviour:
   clientUpdateDebounceTime: 0.1
   editProfilePermissionLevel: 0
   ignoreProfileMissmatchError: 0
-  databaseAccessorFactory: {fileID: 978456420}
+  databaseAccessorFactory: {fileID: 1008034225}
   bronze: 100
   silver: 20
   gold: 50
@@ -715,6 +763,54 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1787512022
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1787512023}
+  - component: {fileID: 1787512024}
+  m_Layer: 0
+  m_Name: Account
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1787512023
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1787512022}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 505681164}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1787512024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1787512022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0ac332f7ae58d646b911847451b16f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  configuration: master_server_toolkit
+  connectionString: Server=localhost;Database=master_server_toolkit;Uid=root;Pwd=qazwsxedc123!@#;Port=3306;
+  dataProvider: SqlServer
 --- !u!1 &1963778960
 GameObject:
   m_ObjectHideFlags: 0
@@ -754,7 +850,7 @@ MonoBehaviour:
   killProcessesWhenStop: 0
   autoStartInEditor: 1
   overrideExePathInEditor: 1
-  exePathFromEditor: C:\UnityProjects\MST\Builds\BasicRoomsAndLobbies\Room\Room.exe
+  exePathFromEditor: E:\UnityProjects\MST\Builds\BasicRoomsAndLobbies\Room\Room.exe
   OnSpawnerStartedEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -786,7 +882,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1971139660}
   - component: {fileID: 1971139661}
-  - component: {fileID: 1971139662}
   m_Layer: 0
   m_Name: RoomsModule
   m_TagString: Untagged
@@ -823,22 +918,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   registerRoomPermissionLevel: 0
---- !u!114 &1971139662
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1971139659}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e401e71d0a64ca74e9df70f81052b6e6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logLevel: 0
-  createLobbiesPermissionLevel: 0
-  dontAllowCreatingIfJoined: 1
-  joinedLobbiesLimit: 1
 --- !u!1 &1977181801
 GameObject:
   m_ObjectHideFlags: 0

@@ -43,38 +43,28 @@ namespace MasterServerToolkit.Utils
                 yield return null;
             }
 
-            var scene = SceneManager.GetSceneByName(sceneName);
+            loadedScenes.Add(sceneName);
 
-            if (scene.isLoaded)
+            AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
+
+            if (asyncOperation == null) yield return null;
+
+            asyncOperation.completed += (op) =>
             {
+                loadedScenes.Remove(sceneName);
                 onLoaded?.Invoke();
-                yield return null;
-            }
-            else
+            };
+
+            while (!asyncOperation.isDone)
             {
-                loadedScenes.Add(sceneName);
+                onProgress?.Invoke(asyncOperation.progress);
 
-                AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
-
-                if (asyncOperation == null) yield return null;
-
-                asyncOperation.completed += (op) =>
+                if (asyncOperation.progress >= 0.9f)
                 {
-                    loadedScenes.Remove(sceneName);
-                    onLoaded?.Invoke();
-                };
-
-                while (!asyncOperation.isDone)
-                {
-                    onProgress?.Invoke(asyncOperation.progress);
-
-                    if (asyncOperation.progress >= 0.9f)
-                    {
-                        asyncOperation.allowSceneActivation = true;
-                    }
-
-                    yield return null;
+                    asyncOperation.allowSceneActivation = true;
                 }
+
+                yield return null;
             }
         }
 

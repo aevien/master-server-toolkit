@@ -123,11 +123,22 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="response"></param>
+        /// <param name="message"></param>
         /// <param name="statusCode"></param>
-        public void Respond(int response, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(int message, ResponseStatus statusCode = ResponseStatus.Default)
         {
-            Respond(MessageHelper.Create(OpCode, response), statusCode);
+            Respond(MessageHelper.Create(OpCode, message), statusCode);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="statusCode"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        public void Respond(bool message, ResponseStatus statusCode = ResponseStatus.Default)
+        {
+            Respond(MessageHelper.Create(OpCode, message), statusCode);
         }
 
         /// <summary>
@@ -159,6 +170,15 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public bool AsBool()
+        {
+            return EndianBitConverter.Big.ToBoolean(_data, 0);
+        }
+
+        /// <summary>
         /// Decodes content into a string. If there's no content,
         /// returns the <see cref="defaultValue"/>
         /// </summary>
@@ -183,9 +203,9 @@ namespace MasterServerToolkit.Networking
         /// <typeparam name="T"></typeparam>
         /// <param name="packetToBeFilled"></param>
         /// <returns></returns>
-        public T AsPacket<T>(T packetToBeFilled) where T : ISerializablePacket
+        public T AsPacket<T>() where T : ISerializablePacket, new()
         {
-            return MessageHelper.Deserialize(_data, packetToBeFilled);
+            return SerializablePacket.FromBytes<T>(_data);
         }
 
         /// <summary>
@@ -194,9 +214,9 @@ namespace MasterServerToolkit.Networking
         /// <typeparam name="T"></typeparam>
         /// <param name="packetCreator"></param>
         /// <returns></returns>
-        public IEnumerable<T> AsPacketsList<T>(Func<T> packetCreator) where T : ISerializablePacket
+        public IEnumerable<T> AsPacketsList<T>() where T : ISerializablePacket, new()
         {
-            return MessageHelper.DeserializeList(_data, packetCreator);
+            return MessageHelper.DeserializeList<T>(_data);
         }
 
         /// <summary>
@@ -205,7 +225,7 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public override string ToString()
         {
-            return AsString(base.ToString());
+            return Convert.ToBase64String(_data);
         }
     }
 }

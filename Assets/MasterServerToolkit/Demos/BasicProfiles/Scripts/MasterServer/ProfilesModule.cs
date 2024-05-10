@@ -19,6 +19,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
         [SerializeField]
         private string avatarUrl = "https://i.imgur.com/JQ9pRoD.png";
 
+        [SerializeField]
         public HelpBox _header = new HelpBox()
         {
             Text = "This script is a custom module, which sets up profiles values for new users"
@@ -125,7 +126,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                     return;
                 }
 
-                var data = message.AsPacket(new BuySellItemPacket());
+                var data = message.AsPacket<BuySellItemPacket>();
 
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
                         && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
@@ -139,7 +140,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                         }
                         else
                         {
-                            items[data.Id] = 1;
+                            items.Add(data.Id, 1);
                         }
 
                         message.Respond(ResponseStatus.Success);
@@ -172,7 +173,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
                     return;
                 }
 
-                var data = message.AsPacket(new BuySellItemPacket());
+                var data = message.AsPacket<BuySellItemPacket>();
 
                 if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
                         && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))

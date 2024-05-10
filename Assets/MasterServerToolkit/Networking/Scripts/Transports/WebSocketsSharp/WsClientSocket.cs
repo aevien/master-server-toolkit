@@ -35,6 +35,8 @@ namespace MasterServerToolkit.Networking
             }
         }
         public bool UseSecure { get; set; }
+        public string Service { get; set; } = "mst";
+        public string Password { get; set; }
         public ushort CloseCode { get; private set; }
 
         public event ConnectionDelegate OnConnectionOpenEvent;
@@ -170,7 +172,15 @@ namespace MasterServerToolkit.Networking
 
         public IPacketHandler RegisterMessageHandler(IPacketHandler handler)
         {
-            handlers[handler.OpCode] = handler;
+            if (!handlers.ContainsKey(handler.OpCode))
+            {
+                handlers[handler.OpCode] = handler;
+            }
+            else
+            {
+                Logs.Error($"Message with id [{Extensions.StringExtensions.FromHash(handler.OpCode)}] already exists");
+            }
+
             return handler;
         }
 
@@ -184,7 +194,8 @@ namespace MasterServerToolkit.Networking
         public void RemoveMessageHandler(IPacketHandler handler)
         {
             // But only if this exact handler
-            if (handlers.TryGetValue(handler.OpCode, out IPacketHandler previousHandler) && previousHandler != handler)
+            if (handlers.TryGetValue(handler.OpCode, out IPacketHandler previousHandler) 
+                && previousHandler != handler)
             {
                 return;
             }
@@ -285,11 +296,11 @@ namespace MasterServerToolkit.Networking
 
             if (UseSecure)
             {
-                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/app/{Mst.Settings.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/{Service}"));
             }
             else
             {
-                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/app/{Mst.Settings.ApplicationKey}"));
+                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/{Service}"));
             }
 
             _peer = new WsClientPeer(webSocket);

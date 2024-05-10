@@ -12,77 +12,41 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public string Username { get; set; }
         public string Password { get; set; }
         public string Email { get; set; }
-        public string PhoneNumber { get; set; }
         public string Token { get; set; }
+        public DateTime LastLogin { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Updated { get; set; }
         public bool IsAdmin { get; set; }
         public bool IsGuest { get; set; }
         public bool IsEmailConfirmed { get; set; }
+        public bool IsBanned { get; set; }
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
-        public Dictionary<string, string> Properties { get; set; }
-        public DateTime LastLogin { get; set; }
+        [BsonIgnore]
+        public Dictionary<string, string> ExtraProperties { get; set; }
 
         public event Action<IAccountInfoData> OnChangedEvent;
 
         public AccountInfoData()
         {
-            Id = Mst.Helper.CreateID_16();
+            Id = Mst.Helper.CreateGuidString();
             Username = string.Empty;
             Password = string.Empty;
             Email = string.Empty;
-            PhoneNumber = string.Empty;
             Token = string.Empty;
             IsAdmin = false;
             IsGuest = true;
             IsEmailConfirmed = false;
-            Properties = new Dictionary<string, string>();
+            IsBanned = false;
+            LastLogin = DateTime.UtcNow;
+            Created = DateTime.UtcNow;
+            Updated = DateTime.UtcNow;
+            ExtraProperties = new Dictionary<string, string>();
         }
 
         public void MarkAsDirty()
         {
             OnChangedEvent?.Invoke(this);
-        }
-
-        public bool HasToken()
-        {
-            return !string.IsNullOrEmpty(Token);
-        }
-
-        public bool IsTokenExpired()
-        {
-            Properties.TryGetValue(MstDictKeys.USER_AUTH_TOKEN_EXPIRES, out string expireTime);
-
-            if (!string.IsNullOrEmpty(expireTime))
-            {
-                long filetime = Convert.ToInt64(expireTime);
-                return DateTime.FromFileTime(filetime) <= DateTime.Now;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public void SetToken(int tokenExpiresInDays)
-        {
-            Token = Mst.Helper.CreateRandomAlphanumericString(64);
-            Properties[MstDictKeys.USER_AUTH_TOKEN_EXPIRES] = DateTime.Now.AddDays(tokenExpiresInDays).ToFileTime().ToString();
-        }
-
-        public override string ToString()
-        {
-            var properties = new MstProperties();
-            properties.Set("Id", Id);
-            properties.Set("Username", Username);
-            properties.Set("Password", Password);
-            properties.Set("Email", Email);
-            properties.Set("PhoneNumber", PhoneNumber);
-            properties.Set("IsAdmin", IsAdmin);
-            properties.Set("IsGuest", IsGuest);
-            properties.Set("IsEmailConfirmed", IsEmailConfirmed);
-            properties.Append(Properties);
-
-            return properties.ToString();
         }
     }
 }

@@ -1,5 +1,4 @@
 using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Utils;
 using MongoDB.Driver;
 using UnityEngine;
 
@@ -46,7 +45,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         private void Awake()
         {
-            ConnectionString = Mst.Args.AsString(Mst.Args.Names.DbConnectionString, defaultConnectionString);
+            ConnectionString = Mst.Args.AsString(Mst.Args.Names.DatabaseConfiguration, defaultConnectionString);
             Client = new MongoClient(ConnectionString);
 
             // TODO

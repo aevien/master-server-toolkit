@@ -590,9 +590,8 @@ MonoBehaviour:
   usernameMaxChars: 12
   userPasswordMinChars: 8
   emailConfirmRequired: 1
-  enableGuestLogin: 1
+  allowGuestLogin: 1
   guestPrefix: Guest
-  saveGuestInfo: 1
   tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}

@@ -16,8 +16,13 @@
 /[Aa]ssets/*
 !/[Aa]ssets/MasterServerToolkit/
 /[Aa]ssets/MasterServerToolkit/Templates/
-/[Aa]ssets/MasterServerToolkit/Demos/BasicSpawnerMst/
+/[Aa]ssets/MasterServerToolkit/Demos/BasicStepByStep/
+/SerializedBuildInfo/
+
 /[Aa]ssets/MasterServerToolkit/Addons/
+/[Aa]ssets/MasterServerToolkit/Editor/Addons/
+
+/[Aa]ssets/MasterServerToolkit/Bridges/QuestMachine/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
@@ -80,3 +85,4 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 Assets/MasterServerToolkit/Addons.meta
 wwwroot/
+application.cfg

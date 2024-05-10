@@ -778,7 +778,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   isGlobal: 1
-  serverIp: shooter.aevien-games.ru
+  serverIp: 127.0.0.1
   serverPort: 5000
   timeout: 5
   maxAttemptsToConnect: 5
@@ -1554,6 +1554,7 @@ MonoBehaviour:
   logLevel: 0
   initModulesAtStart: 0
   matchCreationTimeout: 60
+  customSpawnOptions: []
   OnRoomStartedEvent:
     m_PersistentCalls:
       m_Calls:

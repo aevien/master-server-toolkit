@@ -25,6 +25,8 @@ namespace MasterServerToolkit.Bridges.LiteDB
             try
             {
                 profilesAccessor = new ProfilesDatabaseAccessor(databaseName);
+                profilesAccessor.Logger = logger;
+
                 Mst.Server.DbAccessors.AddAccessor(profilesAccessor);
             }
             catch (Exception e)

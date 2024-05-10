@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028453, g: 0.2257142, b: 0.3069234, a: 1}
+  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -159,12 +159,17 @@ MonoBehaviour:
     permissionLevel: 99
   targetFrameRate: 30
   logLevel: 0
-  serverIp: 127.0.0.1
+  serverIp: localhost
   serverPort: 5000
+  service: mst
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  autoStartInEditor: 1
+  useSecure: 0
+  sslProtocols: 0
+  certificatePath: 
+  certificatePassword: 
+  password: mst
 --- !u!4 &70840830
 Transform:
   m_ObjectHideFlags: 0
@@ -273,6 +278,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  useCredentials: 0
 --- !u!1 &1112139945
 GameObject:
   m_ObjectHideFlags: 0
@@ -319,12 +325,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  heatBeatCheckInterval: 5
+  heartBeatCheckInterval: 5
+  autostart: 1
   httpAddress: 127.0.0.1
   httpPort: 5056
+  useSecure: 0
   defaultIndexPage:
   - index
   - home
+  useCredentials: 1
   username: admin
   password: admin
 --- !u!1 &1386406310

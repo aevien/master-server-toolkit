@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
 
@@ -75,6 +76,13 @@ namespace MasterServerToolkit.MasterServer
             }
 
             Properties = new MstProperties(reader.ReadDictionary());
+        }
+
+        public override MstJson ToJson()
+        {
+            var json = MstJson.EmptyObject;
+
+            return json;
         }
 
         public override string ToString()

@@ -105,6 +105,13 @@ namespace MasterServerToolkit.Networking
         T AddExtension<T>(T extension) where T : IPeerExtension;
 
         /// <summary>
+        /// Clears extension
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        bool ClearExtension<T>() where T : IPeerExtension;
+
+        /// <summary>
         /// Retrieves an extension of this peer
         /// </summary>
         /// <typeparam name="T"></typeparam>

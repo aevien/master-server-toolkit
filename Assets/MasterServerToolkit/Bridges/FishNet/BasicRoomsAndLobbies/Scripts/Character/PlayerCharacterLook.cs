@@ -29,8 +29,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
 
         #endregion
 
-        [SyncVar]
-        protected bool lookIsAllowed = true;
+        protected readonly SyncVar<bool> lookIsAllowed = new SyncVar<bool>();
 
         /// <summary>
         /// The starting parent of the camera. It is necessary to return the camera to its original place after the destruction of the current object

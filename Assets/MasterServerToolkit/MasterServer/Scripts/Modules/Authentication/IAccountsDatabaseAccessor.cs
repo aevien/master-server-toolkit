@@ -12,9 +12,9 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Gets user account from database by id
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="accountId"></param>
         /// <returns></returns>
-        Task<IAccountInfoData> GetAccountByIdAsync(string id);
+        Task<IAccountInfoData> GetAccountByIdAsync(string accountId);
         /// <summary>
         /// Gets user account from database
         /// </summary>
@@ -32,7 +32,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
-        Task<IAccountInfoData> GetAccountByPhoneNumberAsync(string phoneNumber);
+        Task<IAccountInfoData> GetAccountByExtraPropertyAsync(string propertyKey, string propertyValue);
         /// <summary>
         /// Gets user account from database by token
         /// </summary>
@@ -46,24 +46,18 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId);
         /// <summary>
-        /// Gets user account from database by property value. This method can be used for guest accounts
-        /// </summary>
-        /// <param name="propertyKey"></param>
-        /// <param name="propertyValue"></param>
-        /// <returns></returns>
-        Task<IAccountInfoData> GetAccountByPropertyAsync(string propertyKey, string propertyValue);
-        /// <summary>
         /// Saves code that user gets when reset pasword request
         /// </summary>
-        /// <param name="account"></param>
+        /// <param name="email"></param>
         /// <param name="code"></param>
-        Task SavePasswordResetCodeAsync(IAccountInfoData account, string code);
+        Task SavePasswordResetCodeAsync(string email, string code);
         /// <summary>
-        /// Get data for password reset
+        /// Checks password reset code
         /// </summary>
         /// <param name="email"></param>
+        /// <param name="code"></param>
         /// <returns></returns>
-        Task<string> GetPasswordResetDataAsync(string email);
+        Task<bool> CheckPasswordResetCodeAsync(string email, string code);
         /// <summary>
         /// Email confirmation code user gets after successful registration
         /// </summary>
@@ -71,38 +65,27 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="code"></param>
         Task SaveEmailConfirmationCodeAsync(string email, string code);
         /// <summary>
-        /// Get email confirmation code for user after successful registration
+        /// Checks email confirmation code for user after successful registration
         /// </summary>
         /// <param name="email"></param>
+        /// <param name="code"></param>
         /// <returns></returns>
-        Task<string> GetEmailConfirmationCodeAsync(string email);
-        /// <summary>
-        /// Get phone number confirmation code for user
-        /// </summary>
-        /// <param name="phoneNumber"></param>
-        /// <returns></returns>
-        Task<string> GetPhoneNumberConfirmationCodeAsync(string phoneNumber);
-        /// <summary>
-        /// Check phone number confirmation code for user
-        /// </summary>
-        /// <param name="phoneNumber"></param>
-        /// <returns></returns>
-        Task<bool> CheckPhoneNumberConfirmationCodeAsync(string confirmationCode);
+        Task<bool> CheckEmailConfirmationCodeAsync(string email, string code);
         /// <summary>
         /// Update all account information in database
         /// </summary>
         /// <param name="account"></param>
-        Task<bool> UpdateAccountAsync(IAccountInfoData account);
+        Task UpdateAccountAsync(IAccountInfoData account);
         /// <summary>
         /// Create new account in database
         /// </summary>
         /// <param name="account"></param>
-        Task<string> InsertNewAccountAsync(IAccountInfoData account);
+        Task<string> InsertAccountAsync(IAccountInfoData account);
         /// <summary>
         /// Insert account token to database
         /// </summary>
         /// <param name="account"></param>
         /// <param name="token"></param>
-        Task<bool> InsertTokenAsync(IAccountInfoData account, string token);
+        Task InsertOrUpdateTokenAsync(IAccountInfoData account, string token);
     }
 }

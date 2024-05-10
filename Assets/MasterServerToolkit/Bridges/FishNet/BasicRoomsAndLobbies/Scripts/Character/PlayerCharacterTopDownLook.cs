@@ -155,8 +155,8 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
 
             Vector3 startPoint = transform.position + lookAtPoint;
 
-            var ray = new Ray(startPoint, lookCamera.transform.forward * maxDistance * -1f);
-            Debug.DrawRay(startPoint, lookCamera.transform.forward * maxDistance * -1f);
+            var ray = new Ray(startPoint, -1f * maxDistance * lookCamera.transform.forward);
+            Debug.DrawRay(startPoint, -1f * maxDistance * lookCamera.transform.forward);
 
             if (Physics.Raycast(ray, out RaycastHit hitInfo, maxDistance))
             {

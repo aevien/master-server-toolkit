@@ -14,7 +14,7 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         public StoreOffer GetOffer(string id)
         {
-            return offers.ToList().Find(i => i.id == id);
+            return offers.Where(i => i.id == id).FirstOrDefault();
         }
 
         public bool TryGetOffer(string id, out StoreOffer storeOffer)

@@ -44,11 +44,11 @@ namespace MasterServerToolkit.MasterServer
             set
             {
                 _value = value;
-                MarkDirty();
+                MarkAsDirty();
             }
         }
 
-        public virtual void MarkDirty()
+        public virtual void MarkAsDirty()
         {
             OnDirtyEvent?.Invoke(this);
         }

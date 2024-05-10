@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MasterServerToolkit.Json;
+using System;
 using System.IO;
 
 namespace MasterServerToolkit.Networking
@@ -49,18 +50,19 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        /// Parses packet from bytes
+        /// 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="data"></param>
         /// <param name="packet"></param>
         /// <returns></returns>
-        public static T FromBytes<T>(byte[] data, T packet) where T : ISerializablePacket
+        public static T FromBytes<T>(byte[] data) where T : ISerializablePacket, new()
         {
             using (var ms = new MemoryStream(data))
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
+                    var packet = new T();
                     packet.FromBinaryReader(reader);
                     return packet;
                 }
@@ -71,65 +73,28 @@ namespace MasterServerToolkit.Networking
         /// 
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="data"></param>
+        /// <param name="value"></param>
         /// <param name="packet"></param>
         /// <returns></returns>
-        public static T FromBytes<T>(byte[] data) where T : ISerializablePacket, new()
+        public static T FromBase64String<T>(string value) where T : ISerializablePacket, new()
         {
-            return FromBytes<T>(data, new T());
+            return FromBytes<T>(Convert.FromBase64String(value));
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="value"></param>
-        /// <param name="packet"></param>
         /// <returns></returns>
-        public static T FromBase64String<T>(string value, T packet) where T : ISerializablePacket
+        public virtual MstJson ToJson()
         {
-            return FromBytes(Convert.FromBase64String(value), packet);
+            return new MstJson();
         }
 
-        /// <summary>
-        /// Write an array which length is lower than byte value
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="writer"></param>
-        public void WriteSmallArray(float[] data, EndianBinaryWriter writer)
+        public void FromJson(string json)
         {
-            writer.Write((byte)(data != null ? data.Length : 0));
-
-            if (data != null)
-            {
-                foreach (var val in data)
-                {
-                    writer.Write(val);
-                }
-            }
+            FromJson(new MstJson(json));
         }
 
-        /// <summary>
-        /// Read an array whichs length is lower than byte value
-        /// </summary>
-        /// <param name="reader"></param>
-        public float[] ReadSmallArray(EndianBinaryReader reader)
-        {
-            var length = reader.ReadByte();
-
-            // If we have no data
-            if (length == 0)
-            {
-                return null;
-            }
-
-            var result = new float[length];
-            for (var i = 0; i < length; i++)
-            {
-                result[i] = reader.ReadSingle();
-            }
-
-            return result;
-        }
+        public virtual void FromJson(MstJson json) { }
     }
 }

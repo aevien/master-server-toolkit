@@ -6,22 +6,22 @@ namespace MasterServerToolkit.UI
     public class UIMultiLable : MonoBehaviour
     {
         [Header("Components"), SerializeField]
-        private TMP_Text[] lablesText;
+        private TextMeshProUGUI[] lablesText;
 
-        public void SetLable(params string[] lables)
+        public void Text(params string[] values)
         {
-            if (lables.Length >= lablesText.Length)
+            if (values.Length >= lablesText.Length)
             {
                 for (int i = 0; i < lablesText.Length; i++)
                 {
-                    lablesText[i].text = lables[i];
+                    lablesText[i].text = values[i];
                 }
             }
-            else if (lables.Length <= lablesText.Length)
+            else if (values.Length <= lablesText.Length)
             {
-                for (int i = 0; i < lables.Length; i++)
+                for (int i = 0; i < values.Length; i++)
                 {
-                    lablesText[i].text = lables[i];
+                    lablesText[i].text = values[i];
                 }
             }
         }

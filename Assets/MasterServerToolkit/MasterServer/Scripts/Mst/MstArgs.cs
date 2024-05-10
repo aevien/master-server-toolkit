@@ -56,6 +56,11 @@ namespace MasterServerToolkit.MasterServer
         public ushort RoomPort { get; private set; }
 
         /// <summary>
+        /// Port, assigned to the spawned process (most likely a game server). Reverse-proxy version
+        /// </summary>
+        public ushort RoomClientPort { get; private set; }
+
+        /// <summary>
         /// Default room port. Set this cmd if you want a spawner to start creating room ports from your own specific value
         /// </summary>
         public int RoomDefaultPort { get; private set; }
@@ -110,7 +115,27 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Database connection string (user by some of the database implementations)
         /// </summary>
-        public string DbConnectionString { get; private set; }
+        public string DatabaseConnectionString { get; private set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseConfiguration { get; private set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseProvider { get; private set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseAutoCloseConnection { get; private set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseLanguageType { get; private set; }
 
         /// <summary>
         /// LobbyId, which is assigned to a spawned process
@@ -189,6 +214,7 @@ namespace MasterServerToolkit.MasterServer
             RoomName = AsString(Names.RoomName);
             RoomIp = AsString(Names.RoomIp, "127.0.0.1");
             RoomPort = (ushort)AsInt(Names.RoomPort, 7777);
+            RoomClientPort = (ushort)AsInt(Names.RoomClientPort, 7777);
             RoomDefaultPort = AsInt(Names.RoomDefaultPort, 1500);
             RoomExecutablePath = AsString(Names.RoomExecutablePath);
             RoomRegion = AsString(Names.RoomRegion);
@@ -202,7 +228,9 @@ namespace MasterServerToolkit.MasterServer
 
             LoadScene = AsString(Names.RoomOnlineScene);
 
-            DbConnectionString = AsString(Names.DbConnectionString);
+            DatabaseConnectionString = AsString(Names.DatabaseConnectionString);
+            DatabaseConfiguration = AsString(Names.DatabaseConfiguration);
+            DatabaseProvider = AsString(Names.DatabaseProvider);
 
             LobbyId = AsInt(Names.LobbyId);
             UseWebSockets = AsBool(Names.UseWebSockets, false);
@@ -402,6 +430,18 @@ namespace MasterServerToolkit.MasterServer
                 return Convert.ToBoolean(value);
             }
             catch
+            {
+                return defaultValue;
+            }
+        }
+
+        public T AsEnum<T>(string argName, T defaultValue = default) where T : struct, Enum
+        {
+            if (IsProvided(argName) && Enum.TryParse<T>(AsString(argName), out var value))
+            {
+                return value;
+            }
+            else
             {
                 return defaultValue;
             }

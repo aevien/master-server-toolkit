@@ -144,7 +144,7 @@ namespace MasterServerToolkit.MasterServer
                 }
                 else
                 {
-                    Logger.Debug("Room " + RoomId + " options changed successfully");
+                    //Logger.Debug("Room " + RoomId + " options changed successfully");
                     Options = options;
                 }
 
@@ -226,7 +226,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void ProvideRoomAccessCheckHandler(IIncomingMessage message)
         {
-            var provideRoomAccessCheckPacket = message.AsPacket(new ProvideRoomAccessCheckPacket());
+            var provideRoomAccessCheckPacket = message.AsPacket<ProvideRoomAccessCheckPacket>();
             var roomController = Mst.Server.Rooms.GetRoomController(provideRoomAccessCheckPacket.RoomId);
 
             if (roomController == null)

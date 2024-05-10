@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 4180842736270822491}
   - component: {fileID: 4180842736270822490}
   - component: {fileID: 4180842736270822485}
-  - component: {fileID: 3658193353867674886}
   - component: {fileID: 4180842736270822484}
   m_Layer: 5
   m_Name: UIButton
@@ -35,7 +34,6 @@ RectTransform:
   m_Children:
   - {fileID: 9184578206818738323}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -125,22 +123,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3658193353867674886
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4180842736270822486}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a0caa14608ae8d148b5cb724fcd55461, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  iconImage: {fileID: 0}
-  lableText: {fileID: 6721385568205909569}
-  iconValue: {fileID: 0}
-  lableValue: Click Me
 --- !u!114 &4180842736270822484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,6 +148,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 4180842736270822487}
     m_Modifications:
     - target: {fileID: 3063150655948333719, guid: ff504d2d5864d6241b0aa7db65bda4b5,
@@ -311,7 +294,7 @@ PrefabInstance:
     - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
         type: 3}
       propertyPath: m_fontStyle
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
         type: 3}
@@ -324,19 +307,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ff504d2d5864d6241b0aa7db65bda4b5, type: 3}
---- !u!114 &6721385568205909569 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7924280932211486323, guid: ff504d2d5864d6241b0aa7db65bda4b5,
-    type: 3}
-  m_PrefabInstance: {fileID: 3512696752753098802}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &9184578206818738323 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5749326658385338529, guid: ff504d2d5864d6241b0aa7db65bda4b5,

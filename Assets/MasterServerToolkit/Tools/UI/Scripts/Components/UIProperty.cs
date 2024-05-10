@@ -1,4 +1,6 @@
-﻿using TMPro;
+﻿using MasterServerToolkit.Utils;
+using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,7 +32,7 @@ namespace MasterServerToolkit.UI
         [SerializeField]
         protected float currentValue = 50f;
         [SerializeField]
-        protected float maxValue = 100f;
+        protected float maxValue = float.MaxValue;
         [SerializeField, Range(1f, 10f)]
         protected float progressSpeed = 1f;
         [SerializeField]
@@ -56,7 +58,9 @@ namespace MasterServerToolkit.UI
         #endregion
 
         private float currentProgressValue = 0f;
+        private float lastTargetProgressValue = 0f;
         private float targetProgressValue = 0f;
+        private TweenerActionInfo tweenerAction;
 
         public string Id
         {
@@ -98,15 +102,13 @@ namespace MasterServerToolkit.UI
             }
         }
 
-        private void Awake()
+        private void OnValidate()
         {
             SetMin(minValue);
             SetMax(maxValue);
             SetValue(currentValue);
-        }
+            Update();
 
-        private void OnValidate()
-        {
             if (string.IsNullOrEmpty(lable))
             {
                 Lable = "Lable";
@@ -134,22 +136,20 @@ namespace MasterServerToolkit.UI
             if (progressBar)
             {
                 progressBar.gameObject.SetActive(useProgress);
-                SetMin(minValue);
-                SetMax(maxValue);
-                SetValue(currentValue);
-                Update();
             }
         }
 
-        private void Update()
+        protected virtual void Awake()
+        {
+            SetMin(minValue);
+            SetMax(maxValue);
+            SetValue(currentValue);
+        }
+
+        protected virtual void Update()
         {
             if (minValue < maxValue)
             {
-                if (smoothValue && Application.isPlaying)
-                    currentProgressValue = Mathf.Lerp(currentProgressValue, targetProgressValue, Time.deltaTime * progressSpeed);
-                else
-                    currentProgressValue = targetProgressValue;
-
                 if (progressBar && progressBar.isActiveAndEnabled)
                 {
                     progressBar.fillAmount = currentProgressValue;
@@ -213,6 +213,22 @@ namespace MasterServerToolkit.UI
             }
 
             targetProgressValue = currentDifference / totalDifference;
+
+            if (smoothValue && Application.isPlaying && lastTargetProgressValue != targetProgressValue)
+            {
+                lastTargetProgressValue = targetProgressValue;
+
+                tweenerAction?.Cancel();
+
+                tweenerAction = Tweener.Float(currentProgressValue, targetProgressValue, progressSpeed, (newValue) =>
+                {
+                    currentProgressValue = newValue;
+                });
+            }
+            else
+            {
+                currentProgressValue = targetProgressValue;
+            }
         }
     }
 }

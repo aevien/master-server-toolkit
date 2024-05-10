@@ -1,5 +1,4 @@
 using MasterServerToolkit.Networking;
-using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -7,28 +6,23 @@ namespace MasterServerToolkit.MasterServer
 {
     public abstract class ObservableBaseList<T> : ObservableBase<List<T>>
     {
-        public delegate void ObservableBaseListSetEventDelegate(T oldItem, T item);
-        public delegate void ObservableBaseListAddEventDelegate(T newItem);
-        public delegate void ObservableBaseListInsertEventDelegate(int index, T insertedItem);
-        public delegate void ObservableBaseListRemoveEventDelegate(T removedItem);
+        public delegate void ObservableListSetEventDelegate(T oldItem, T item);
+        public delegate void ObservableListAddEventDelegate(T newItem);
+        public delegate void ObservableListInsertEventDelegate(int index, T insertedItem);
+        public delegate void ObservableListRemoveEventDelegate(T removedItem);
 
-        private const byte _setOperation = 0;
-        private const byte _removeOperation = 1;
-        private const byte _insertOperation = 2;
-
-        private Queue<ListUpdateEntry> _updates;
+        private readonly Queue<ListUpdateEntry> _updates = new Queue<ListUpdateEntry>();
         public int Count => _value.Count;
 
-        public event ObservableBaseListSetEventDelegate OnSetEvent;
-        public event ObservableBaseListAddEventDelegate OnAddEvent;
-        public event ObservableBaseListInsertEventDelegate OnInsertEvent;
-        public event ObservableBaseListRemoveEventDelegate OnRemoveEvent;
+        public event ObservableListSetEventDelegate OnSetEvent;
+        public event ObservableListAddEventDelegate OnAddEvent;
+        public event ObservableListInsertEventDelegate OnInsertEvent;
+        public event ObservableListRemoveEventDelegate OnRemoveEvent;
 
         protected ObservableBaseList(ushort key) : this(key, null) { }
 
         protected ObservableBaseList(ushort key, List<T> defaultValues) : base(key)
         {
-            _updates = new Queue<ListUpdateEntry>();
             _value = defaultValues ?? new List<T>();
         }
 
@@ -51,16 +45,18 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
+                var old = _value[index];
                 _value[index] = value;
 
                 _updates.Enqueue(new ListUpdateEntry()
                 {
                     index = index,
-                    operation = _setOperation,
+                    operation = ObservableListOperation.Set,
                     value = value
                 });
 
-                MarkDirty();
+                OnSetEvent?.Invoke(old, value);
+                MarkAsDirty();
             }
         }
 
@@ -75,11 +71,12 @@ namespace MasterServerToolkit.MasterServer
             _updates.Enqueue(new ListUpdateEntry()
             {
                 index = _value.Count - 1,
-                operation = _setOperation,
+                operation = ObservableListOperation.Set,
                 value = value
             });
 
-            MarkDirty();
+            OnAddEvent?.Invoke(value);
+            MarkAsDirty();
         }
 
         /// <summary>
@@ -88,22 +85,10 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="collection"></param>
         public void AddRange(IEnumerable<T> collection)
         {
-            int startIndex = _value.Count > 0 ? _value.Count - 1 : 0;
-
-            _value.AddRange(collection);
-
-            for (int i = startIndex; i < _value.Count; i++)
+            foreach (var item in collection)
             {
-                T item = _value[i];
-                _updates.Enqueue(new ListUpdateEntry()
-                {
-                    index = i,
-                    operation = _setOperation,
-                    value = item
-                });
+                Add(item);
             }
-
-            MarkDirty();
         }
 
         /// <summary>
@@ -112,15 +97,20 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="index"></param>
         public void RemoveAt(int index)
         {
-            _value.RemoveAt(index);
-
-            _updates.Enqueue(new ListUpdateEntry()
+            if (_value.Count > index)
             {
-                index = index,
-                operation = _removeOperation,
-            });
+                var removedItem = _value[index];
+                _value.RemoveAt(index);
 
-            MarkDirty();
+                _updates.Enqueue(new ListUpdateEntry()
+                {
+                    index = index,
+                    operation = ObservableListOperation.Remove,
+                });
+
+                OnRemoveEvent?.Invoke(removedItem);
+                MarkAsDirty();
+            }
         }
 
         /// <summary>
@@ -165,10 +155,11 @@ namespace MasterServerToolkit.MasterServer
             _updates.Enqueue(new ListUpdateEntry()
             {
                 index = index,
-                operation = _insertOperation,
+                operation = ObservableListOperation.Insert,
             });
 
-            MarkDirty();
+            OnInsertEvent?.Invoke(index, item);
+            MarkAsDirty();
         }
 
         /// <summary>
@@ -229,16 +220,19 @@ namespace MasterServerToolkit.MasterServer
 
                         if (i < _value.Count)
                         {
+                            var oldValue = _value[i];
                             _value[i] = value;
+                            OnSetEvent?.Invoke(oldValue, value);
                         }
                         else
                         {
                             _value.Add(value);
+                            OnAddEvent?.Invoke(value);
                         }
                     }
                 }
 
-                MarkDirty();
+                MarkAsDirty();
             }
         }
 
@@ -252,10 +246,10 @@ namespace MasterServerToolkit.MasterServer
 
                     foreach (var update in _updates)
                     {
-                        writer.Write(update.operation);
+                        writer.Write((byte)update.operation);
                         WriteIndex(update.index, writer);
 
-                        if (update.operation != _removeOperation)
+                        if (update.operation != ObservableListOperation.Remove)
                         {
                             WriteValue(update.value, writer);
                         }
@@ -276,37 +270,42 @@ namespace MasterServerToolkit.MasterServer
 
                     for (var i = 0; i < count; i++)
                     {
-                        var operation = reader.ReadByte();
+                        var operation = (ObservableListOperation)reader.ReadByte();
                         var index = ReadIndex(reader);
 
-                        if (operation == _removeOperation)
+                        if (operation == ObservableListOperation.Remove)
                         {
                             T item = this[index];
-                            RemoveAt(index);
+                            _value.RemoveAt(index);
                             OnRemoveEvent?.Invoke(item);
                             continue;
                         }
 
                         var value = ReadValue(reader);
 
-                        if (operation == _insertOperation)
+                        if (operation == ObservableListOperation.Insert)
                         {
-                            Insert(index, value);
+                            _value.Insert(index, value);
                             OnInsertEvent?.Invoke(index, value);
                             continue;
                         }
 
                         if (index < _value.Count)
                         {
-                            T old = this[index];
-                            this[index] = value;
+                            T old = _value[index];
+                            _value[index] = value;
                             OnSetEvent?.Invoke(old, value);
                         }
                         else
                         {
-                            Add(value);
+                            _value.Add(value);
                             OnAddEvent?.Invoke(value);
                         }
+                    }
+
+                    if (count > 0)
+                    {
+                        MarkAsDirty();
                     }
                 }
             }
@@ -342,18 +341,18 @@ namespace MasterServerToolkit.MasterServer
                 _updates.Enqueue(new ListUpdateEntry()
                 {
                     index = i,
-                    operation = _removeOperation,
+                    operation = ObservableListOperation.Remove,
                 });
             }
 
             _value.Clear();
 
-            MarkDirty();
+            MarkAsDirty();
         }
 
         private struct ListUpdateEntry
         {
-            public byte operation;
+            public ObservableListOperation operation;
             public int index;
             public T value;
         }

@@ -43,6 +43,7 @@ using System.Globalization;
 #if USING_UNITY
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+using MasterServerToolkit.Extensions;
 #endif
 
 namespace MasterServerToolkit.Json
@@ -142,6 +143,11 @@ namespace MasterServerToolkit.Json
             {
                 LongValue = value;
             }
+        }
+
+        public T EnumValue<T>() where T : Enum
+        {
+            return (T)Enum.Parse(typeof(T), StringValue);
         }
 
         public MstJson(ValueType type) { this.Type = type; }
@@ -1674,7 +1680,7 @@ namespace MasterServerToolkit.Json
                 }
             }
 
-            if (fail != null) fail.Invoke(name);
+            fail?.Invoke(name);
             return false;
         }
 
@@ -1976,6 +1982,11 @@ namespace MasterServerToolkit.Json
         public string ToString(bool pretty)
         {
             return Print(pretty);
+        }
+
+        public string ToBase64()
+        {
+            return ToString().ToBase64();
         }
 
         public Dictionary<string, string> ToDictionary()

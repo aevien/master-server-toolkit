@@ -3,7 +3,6 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -92,10 +91,10 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Invoked when user logs in
         /// </summary>
-        /// <param name="user"></param>
-        protected virtual void OnUserLoggedInEventHandler(IUserPeerExtension user)
+        /// <param name="userPeerExtension"></param>
+        protected virtual void OnUserLoggedInEventHandler(IUserPeerExtension userPeerExtension)
         {
-            var r = AddRecipient(user);
+            var r = AddRecipient(userPeerExtension);
 
             foreach (var message in promisedMessages)
                 r.Notify(message);
@@ -104,10 +103,10 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Invoked when user logs out
         /// </summary>
-        /// <param name="user"></param>
-        protected virtual void OnUserLoggedOutEventHandler(IUserPeerExtension user)
+        /// <param name="userPeerExtension"></param>
+        protected virtual void OnUserLoggedOutEventHandler(IUserPeerExtension userPeerExtension)
         {
-            RemoveRecipient(user.UserId);
+            RemoveRecipient(userPeerExtension.UserId);
         }
 
         public override MstJson JsonInfo()
@@ -268,7 +267,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            foreach(var recipient in registeredRecipients.Values)
+            foreach (var recipient in registeredRecipients.Values)
             {
                 recipient.Notify(textMessage);
             }
@@ -359,7 +358,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // Parse notification
-                var notification = message.AsPacket(new NotificationPacket());
+                var notification = message.AsPacket<NotificationPacket>();
 
                 if (string.IsNullOrEmpty(notification.Message))
                 {

@@ -2,8 +2,10 @@
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Net;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Policy;
 using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.Networking
@@ -20,7 +22,8 @@ namespace MasterServerToolkit.Networking
         public bool UseSecure { get; set; }
         public string CertificatePath { get; set; }
         public string CertificatePassword { get; set; }
-        public string ApplicationKey { get; set; }
+        public string Service { get; set; } = "mst";
+        public SslProtocols SslProtocols { get; set; }
         public LogLevel LogLevel
         {
             get
@@ -60,12 +63,13 @@ namespace MasterServerToolkit.Networking
         {
             try
             {
-                // Stop listening when application closes
-                MstTimer.OnApplicationQuitEvent += Stop;
-
                 server?.Stop();
 
-                if (IPAddress.TryParse(address, out var ipAddress))
+                if (address.Trim() == "localhost")
+                {
+                    server = new WebSocketServer(port, UseSecure);
+                }
+                else if (IPAddress.TryParse(address, out var ipAddress))
                 {
                     server = new WebSocketServer(ipAddress, port, UseSecure);
                 }
@@ -119,11 +123,7 @@ namespace MasterServerToolkit.Networking
                     else
                         server.SslConfiguration.ServerCertificate = new X509Certificate2(CertificatePath, CertificatePassword);
 
-                    server.SslConfiguration.EnabledSslProtocols =
-                        System.Security.Authentication.SslProtocols.Tls
-                        | System.Security.Authentication.SslProtocols.Tls11
-                        | System.Security.Authentication.SslProtocols.Tls12
-                        | System.Security.Authentication.SslProtocols.Tls13;
+                    server.SslConfiguration.EnabledSslProtocols = SslProtocols;
                 }
 
                 // Setup all services used by server
@@ -160,7 +160,7 @@ namespace MasterServerToolkit.Networking
         private void SetupService(WebSocketServer server)
         {
             // Master server service
-            server.AddWebSocketService<WsService>($"/app/{ApplicationKey}", (serviceForPeer) =>
+            server.AddWebSocketService<WsService>($"/{Service}", (serviceForPeer) =>
             {
                 var peer = new WsServerPeer(serviceForPeer)
                 {
@@ -179,7 +179,10 @@ namespace MasterServerToolkit.Networking
             });
 
             // Echo test service
-            server.AddWebSocketService<EchoService>("/echo");
+            server.AddWebSocketService<EchoService>("/echo", (echoService) =>
+            {
+                echoService.IgnoreExtensions = true;
+            });
         }
     }
 }

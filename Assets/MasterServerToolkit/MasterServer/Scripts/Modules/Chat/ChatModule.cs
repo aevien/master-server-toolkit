@@ -45,13 +45,13 @@ namespace MasterServerToolkit.MasterServer
         /// Min number of character a channel name must consist of
         /// </summary>
         [SerializeField, Tooltip("Min number of character a channel name must consist of")]
-        public int minChannelNameLength = 5;
+        protected int minChannelNameLength = 5;
 
         /// <summary>
         /// Max number of character a channel name must consist of
         /// </summary>
         [SerializeField, Tooltip("Max number of character a channel name must consist of")]
-        public int maxChannelNameLength = 25;
+        protected int maxChannelNameLength = 25;
 
         #endregion
 
@@ -68,19 +68,16 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Users connected to chats
         /// </summary>
-        public Dictionary<string, ChatUserPeerExtension> ChatUsers { get; protected set; }
+        public Dictionary<string, ChatUserPeerExtension> ChatUsers { get; protected set; } = new Dictionary<string, ChatUserPeerExtension>();
 
         /// <summary>
         /// List of available chat channels
         /// </summary>
-        public Dictionary<string, ChatChannel> ChatChannels { get; protected set; }
+        public Dictionary<string, ChatChannel> ChatChannels { get; protected set; } = new Dictionary<string, ChatChannel>();
 
         protected override void Awake()
         {
             base.Awake();
-
-            ChatUsers = new Dictionary<string, ChatUserPeerExtension>();
-            ChatChannels = new Dictionary<string, ChatChannel>();
 
             // Optional AuthModule dependency if "useAuthModule" is true
             AddOptionalDependency<AuthModule>();
@@ -137,7 +134,6 @@ namespace MasterServerToolkit.MasterServer
             if (ChatUsers.ContainsKey(username))
             {
                 logger.Error($"Trying to add user {username} to chat, but one is already connected");
-
                 return false;
             }
             else
@@ -149,7 +145,6 @@ namespace MasterServerToolkit.MasterServer
                 user.Peer.OnConnectionCloseEvent += OnClientDisconnected;
 
                 logger.Debug($"User {username} has been successfully added to chat");
-
                 return true;
             }
         }
@@ -377,28 +372,28 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Fired when new user logged in and <see cref="useAuthModule"/> is set to true
         /// </summary>
-        /// <param name="account"></param>
-        protected virtual void OnUserLoggedInEventHandler(IUserPeerExtension account)
+        /// <param name="userPeerExtension"></param>
+        protected virtual void OnUserLoggedInEventHandler(IUserPeerExtension userPeerExtension)
         {
             // Create new chat user
-            var chatUser = CreateChatUser(account.Peer, account.Username);
+            var chatUser = CreateChatUser(userPeerExtension.Peer, userPeerExtension.Username);
 
             // Add him to chat users list
             if (AddChatUser(chatUser))
             {
                 // Add the extension
-                account.Peer.AddExtension(chatUser);
+                userPeerExtension.Peer.AddExtension(chatUser);
             }
         }
 
         /// <summary>
         /// Fired if existing user logged out and <see cref="useAuthModule"/> is set to true
         /// </summary>
-        /// <param name="account"></param>
-        protected virtual void OnUserLoggedOutEventHandler(IUserPeerExtension account)
+        /// <param name="userPeerExtension"></param>
+        protected virtual void OnUserLoggedOutEventHandler(IUserPeerExtension userPeerExtension)
         {
             // Get chat user from extensions list
-            var chatUser = account.Peer.GetExtension<ChatUserPeerExtension>();
+            var chatUser = userPeerExtension.Peer.GetExtension<ChatUserPeerExtension>();
 
             // Remove it from chat users list if is not null
             if (chatUser != null)
@@ -649,7 +644,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var packet = message.AsPacket(new ChatMessagePacket());
+                var packet = message.AsPacket<ChatMessagePacket>();
 
 
 

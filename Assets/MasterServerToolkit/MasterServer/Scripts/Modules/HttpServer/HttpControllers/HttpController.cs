@@ -9,8 +9,19 @@ namespace MasterServerToolkit.MasterServer
 
         [Header("Controller Settings"), SerializeField]
         protected LogLevel logLevel = LogLevel.Info;
+        [SerializeField]
+        private bool useCredentials = false;
 
         #endregion
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool UseCredentials
+        {
+            get => useCredentials;
+            set => useCredentials = value;
+        }
 
         /// <summary>
         /// Logger connected to this module

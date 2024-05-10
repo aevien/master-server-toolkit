@@ -24,12 +24,12 @@ namespace MasterServerToolkit.Examples.BasicProfile
                 if (status == ResponseStatus.Success)
                 {
                     OnProfileSavedEvent?.Invoke();
-                    logger.Debug("Your profile is successfuly updated and saved");
+                    Logger.Debug("Your profile is successfuly updated and saved");
                 }
                 else
                 {
                     Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(response.AsString()));
-                    logger.Error(response.AsString());
+                    Logger.Error(response.AsString());
                 }
             });
         }

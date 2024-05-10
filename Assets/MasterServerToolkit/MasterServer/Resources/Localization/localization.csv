@@ -1,24 +1,49 @@
 ﻿keys;en;ru
+;;
+# Shared;;
+unknownError;Unknown error. Please contact administrator;Неизвестная ошибка. Пожалуйста, свяжитесь с администратором
+;;
+# User info;;
+authStatusUnauthorized;Unauthorized;Не авторизован
+;;
+# Connection;;
 connectionProgress;Connecting to master... Please wait.;Подключение с мастеру… Пожалуйста, подождите.
 connectionLost;The connection to the server has been lost. Please try again or contact to the developers of the game or your internet provider.;Соединение с сервером было потеряно. Пожалуйста, попробуйте повторить его или обратитесь к администратору.
+connectionStatusConnected;Client is connected to;Подключен к
+connectionStatusConnecting;Client is connecting to;Подключение к
+connectionStatusDisconnected;Client is offline;Нет подключения
+;;
+# Sign in;;
+signInTokenExpired;The authentication token has expired;Срок действия токена входа в систему истек
+signedInStatusOk;Already signed in;Вы уже вошли в систему
+signedInStatusFail;You are not signed in yet;Вы еще не вошли в систему
 signInProgress;Signing in... Please, wait.;Вход в систему. Пожалуйста, подождите
 signInSuccessResult;You are successfully logged in as;Вы успешно вошли в систему
 signInErrorResult;An error occurred while signing in:;Во время входа в систему произошла ошибка:
+signInSecurityError;Failed to sign in due to security issues;Невозможно выполнить вход по соображениям безопасности
+;;
+# Sign up;;
+signUpInProgress;Signing up is already in progress;Регистрация в процессе
 signUpProgress;Signing up... Please wait.;Создание учетной записи. Пожалуйста, подождите
 signUpSuccessResult;You have successfuly signed up. Now you may sign in;Вы успешно создали учетную запись, теперь можно войти в систему.
 signUpErrorResult;An error occurred while signing up:;Во время создания учетной записи произошла ошибка: 
+signUpSecurityError;Failed to sign up due to security issues;Невозможно выполнить регистрацию по соображениям безопасности
+;;
+# Account confirmation;;
+accountConfirmationProgress;Confirming your account... Please wait.;
+accountConfirmationErrorResult;An error occurred while confirming yor account:;
+confirmationCodeSendingProcess;Sending confirmation code... Please wait.;
+confirmationCodeSendingSuccessResult;We have sent an email with confirmation code to your address.;
+confirmationCodeSendingErrorResult;An error occurred while requesting confirmation code;
+;;
+# Account extra properties;;
+accounSaveExtraSuccessResult;Account extra properties saved successfully;
+accounSaveExtraErrorResult;Failed to save account properties;
+;;
+# Password reset;;
 changePasswordProgress;Changing password... Please wait.;Смена пароля… Пожалуйста, подождите
 changePasswordSuccessResult;You have successfuly changed your password. Now you can sign in.;
 changePasswordErrorResult;An error occurred while changing password:;
 changePasswordCodeProgress;Sending reset password code... Please wait.;
 changePasswordCodeSuccessResult;We have sent an email with reset code to your address;
 changePasswordCodeErrorResult;An error occurred while password reset code:;
-confirmationCodeSendingProcess;Sending confirmation code... Please wait.;
-confirmationCodeSendingSuccessResult;We have sent an email with confirmation code to your address.;
-confirmationCodeSendingErrorResult;An error occurred while requesting confirmation code;
-accountConfirmationProgress;Confirming your account... Please wait.;
-accountConfirmationErrorResult;An error occurred while confirming yor account:;
-connectionStatusConnected;Client is connected to;Подключен к
-connectionStatusConnecting;Client is connecting to;Подключение к
-connectionStatusDisconnected;Client is offline;Нет подключения
-authStatusUnauthorized;Unauthorized;Не авторизован

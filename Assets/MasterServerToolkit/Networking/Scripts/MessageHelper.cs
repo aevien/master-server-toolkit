@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -36,9 +35,9 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="packet"></param>
         /// <returns></returns>
-        public static T Deserialize<T>(byte[] data, T packet) where T : ISerializablePacket
+        public static T Deserialize<T>(byte[] data) where T : ISerializablePacket, new()
         {
-            return SerializablePacket.FromBytes(data, packet);
+            return SerializablePacket.FromBytes<T>(data);
         }
 
         /// <summary>
@@ -48,23 +47,13 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="packetCreator">Factory function</param>
         /// <returns></returns>
-        public static IEnumerable<T> DeserializeList<T>(byte[] data, Func<T> packetCreator) where T : ISerializablePacket
+        public static IEnumerable<T> DeserializeList<T>(byte[] data) where T : ISerializablePacket, new()
         {
             using (var ms = new MemoryStream(data))
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
-                    var list = new List<T>(count);
-
-                    for (var i = 0; i < count; i++)
-                    {
-                        var packet = packetCreator();
-                        packet.FromBinaryReader(reader);
-                        list.Add(packet);
-                    }
-
-                    return list;
+                    return reader.ReadPackets<T>();
                 }
             }
         }
@@ -112,6 +101,17 @@ namespace MasterServerToolkit.Networking
             var bytes = new byte[4];
             _converter.CopyBytes(value, bytes, 0);
             return _factory.Create(opCode, bytes);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="opCode"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static IOutgoingMessage Create(ushort opCode, bool value)
+        {
+            return _factory.Create(opCode, _converter.GetBytes(value));
         }
 
         /// <summary>

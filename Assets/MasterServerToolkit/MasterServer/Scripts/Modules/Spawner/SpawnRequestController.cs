@@ -54,7 +54,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         private static void StatusUpdateHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new SpawnStatusUpdatePacket());
+            var data = message.AsPacket<SpawnStatusUpdatePacket>();
 
             Logs.Debug($"Status changed to {data.Status}");
 

@@ -7,23 +7,20 @@ namespace MasterServerToolkit.MasterServer
 {
     public abstract class ObservableBaseDictionary<TKey, TValue> : ObservableBase<ConcurrentDictionary<TKey, TValue>>
     {
-        public delegate void ObservableBaseDictionarySetEventDelegate(TKey key, TValue oldValue, TValue newValue);
-        public delegate void ObservableBaseDictionaryAddEventDelegate(TKey newKey, TValue newValue);
-        public delegate void ObservableBaseDictionaryRemoveEventDelegate(TKey key, TValue removedValue);
+        public delegate void ObservableDictionarySetEventDelegate(TKey key, TValue oldValue, TValue newValue);
+        public delegate void ObservableDictionaryAddEventDelegate(TKey newKey, TValue newValue);
+        public delegate void ObservableDictionaryRemoveEventDelegate(TKey key, TValue removedValue);
 
-        private const int _setOperation = 0;
-        private const int _removeOperation = 1;
-        private Queue<DictionaryUpdateEntry> _updates;
+        private readonly Queue<DictionaryUpdateEntry> _updates = new Queue<DictionaryUpdateEntry>();
 
-        public event ObservableBaseDictionarySetEventDelegate OnSetEvent;
-        public event ObservableBaseDictionaryAddEventDelegate OnAddEvent;
-        public event ObservableBaseDictionaryRemoveEventDelegate OnRemoveEvent;
+        public event ObservableDictionarySetEventDelegate OnSetEvent;
+        public event ObservableDictionaryAddEventDelegate OnAddEvent;
+        public event ObservableDictionaryRemoveEventDelegate OnRemoveEvent;
 
         protected ObservableBaseDictionary(ushort key) : this(key, null) { }
 
         protected ObservableBaseDictionary(ushort key, ConcurrentDictionary<TKey, TValue> defaultValues) : base(key)
         {
-            _updates = new Queue<DictionaryUpdateEntry>();
             _value = defaultValues == null ? new ConcurrentDictionary<TKey, TValue>() : defaultValues;
         }
 
@@ -41,16 +38,18 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
+                var oldValue = _value[key];
                 _value[key] = value;
 
                 _updates.Enqueue(new DictionaryUpdateEntry()
                 {
                     key = key,
-                    operation = _setOperation,
+                    operation = ObservableListOperation.Set,
                     value = value
                 });
 
-                MarkDirty();
+                OnSetEvent?.Invoke(key, oldValue, value);
+                MarkAsDirty();
             }
         }
 
@@ -99,11 +98,12 @@ namespace MasterServerToolkit.MasterServer
                 _updates.Enqueue(new DictionaryUpdateEntry()
                 {
                     key = key,
-                    operation = _setOperation,
+                    operation = ObservableListOperation.Set,
                     value = item
                 });
 
-                MarkDirty();
+                OnAddEvent?.Invoke(key, item);
+                MarkAsDirty();
             }
         }
 
@@ -114,15 +114,16 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool Remove(TKey key)
         {
-            if (_value.TryRemove(key, out _))
+            if (_value.TryRemove(key, out TValue removedItem))
             {
                 _updates.Enqueue(new DictionaryUpdateEntry()
                 {
                     key = key,
-                    operation = _removeOperation,
+                    operation = ObservableListOperation.Remove,
                 });
 
-                MarkDirty();
+                OnRemoveEvent?.Invoke(key, removedItem);
+                MarkAsDirty();
                 return true;
             }
 
@@ -203,13 +204,20 @@ namespace MasterServerToolkit.MasterServer
                         var value = ReadValue(reader);
 
                         if (_value.ContainsKey(key))
+                        {
+                            var oldValue = _value[key];
                             _value[key] = value;
+                            OnSetEvent?.Invoke(key, oldValue, value);
+                        }
                         else
+                        {
                             _value.TryAdd(key, value);
+                            OnAddEvent?.Invoke(key, value);
+                        }
                     }
                 }
 
-                MarkDirty();
+                MarkAsDirty();
             }
         }
 
@@ -223,10 +231,10 @@ namespace MasterServerToolkit.MasterServer
 
                     foreach (var update in _updates)
                     {
-                        writer.Write(update.operation);
+                        writer.Write((byte)update.operation);
                         WriteKey(update.key, writer);
 
-                        if (update.operation != _removeOperation)
+                        if (update.operation != ObservableListOperation.Remove)
                         {
                             WriteValue(update.value, writer);
                         }
@@ -247,10 +255,10 @@ namespace MasterServerToolkit.MasterServer
 
                     for (var i = 0; i < count; i++)
                     {
-                        var operation = reader.ReadByte();
+                        var operation = (ObservableListOperation)reader.ReadByte();
                         var key = ReadKey(reader);
 
-                        if (operation == _removeOperation
+                        if (operation == ObservableListOperation.Remove
                             && _value.TryRemove(key, out var valueToBeRemoved))
                         {
                             OnRemoveEvent?.Invoke(key, valueToBeRemoved);
@@ -261,13 +269,13 @@ namespace MasterServerToolkit.MasterServer
 
                         if (ContainsKey(key))
                         {
-                            var oldValue = this[key];
-                            this[key] = value;
+                            var oldValue = _value[key];
+                            _value[key] = value;
                             OnSetEvent?.Invoke(key, oldValue, value);
                         }
                         else
                         {
-                            Add(key, value);
+                            _value.TryAdd(key, value);
                             OnAddEvent?.Invoke(key, value);
                         }
                     }
@@ -303,7 +311,7 @@ namespace MasterServerToolkit.MasterServer
 
         private struct DictionaryUpdateEntry
         {
-            public byte operation;
+            public ObservableListOperation operation;
             public TKey key;
             public TValue value;
         }

@@ -15,7 +15,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Logger assigned to this module
         /// </summary>
-        protected Logging.Logger logger;
+        public Logging.Logger Logger { get; set; }
 
         /// <summary>
         /// Log level of this module
@@ -39,8 +39,8 @@ namespace MasterServerToolkit.MasterServer
         {
             handlers = new Dictionary<ushort, IPacketHandler>();
 
-            logger = Mst.Create.Logger(GetType().Name);
-            logger.LogLevel = logLevel;
+            Logger = Mst.Create.Logger(GetType().Name);
+            Logger.LogLevel = logLevel;
         }
 
         protected virtual void Start()

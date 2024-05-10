@@ -16,7 +16,7 @@ namespace MasterServerToolkit.MasterServer
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
             RoomId = reader.ReadInt32();
-            Options = reader.ReadPacket(new RoomOptions());
+            Options = reader.ReadPacket<RoomOptions>();
         }
     }
 }

@@ -2,7 +2,7 @@ var LibraryWebSockets = {
     $webSocketInstances: [],
 
     MstSocketCreate: function (url) {
-        var str = Pointer_stringify(url);
+        var str = UTF8ToString(url);
 
         var socket = {
             socket: new WebSocket(str),

@@ -16,8 +16,10 @@ namespace MasterServerToolkit.UI
         [Header("Progress Settings"), SerializeField]
         protected float progressMaxValue;
 
-        protected virtual void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             if (progressImage && progressImage.type != Image.Type.Filled)
             {
                 progressImage.type = Image.Type.Filled;
@@ -27,8 +29,10 @@ namespace MasterServerToolkit.UI
             targetValue = progressMaxValue;
         }
 
-        protected virtual void Update()
+        protected override void Update()
         {
+            base.Update();
+
             if (progressImage)
             {
                 progressImage.fillAmount = Mathf.Lerp(progressImage.fillAmount, targetValue, Time.deltaTime * 2f);

@@ -58,7 +58,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="options"></param>
         public SpawnerController(int spawnerId, IClientSocket connection, SpawnerOptions spawnerOptions)
         {
-            Logger = Mst.Create.Logger(typeof(SpawnerController).Name, MasterServerToolkit.Logging.LogLevel.All);
+            Logger = Mst.Create.Logger(typeof(SpawnerController).Name, LogLevel.All);
 
             Connection = connection;
             SpawnerId = spawnerId;
@@ -84,7 +84,7 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
-                var data = message.AsPacket(new SpawnRequestPacket());
+                var data = message.AsPacket<SpawnRequestPacket>();
                 ISpawnerController controller = Mst.Server.Spawners.GetSpawnerController(data.SpawnerId);
 
                 if (controller == null)
@@ -112,7 +112,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         private static void KillProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket(new KillSpawnedProcessRequestPacket());
+            var data = message.AsPacket<KillSpawnedProcessRequestPacket>();
             var controller = Mst.Server.Spawners.GetSpawnerController(data.SpawnerId) as SpawnerController;
 
             if (controller == null)
@@ -172,7 +172,7 @@ namespace MasterServerToolkit.MasterServer
 
             /************************************************************************/
             // Create process args string
-            var processArguments = data.Options;
+            var processArguments = data.Options.EscapeValues();
 
             /************************************************************************/
             // Check if we're overriding an IP to master server

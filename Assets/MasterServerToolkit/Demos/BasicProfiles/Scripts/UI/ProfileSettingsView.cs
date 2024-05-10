@@ -41,6 +41,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
             data.Set("avatarUrl", avatarUrlInputField.text);
 
             profileBehaviour.UpdateProfile(data);
+
+            Hide();
         }
 
         private void OnProfileLoadedEventHandler()

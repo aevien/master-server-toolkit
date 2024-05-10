@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.DebounceThrottle;
+using MasterServerToolkit.Networking;
 using System;
 
 namespace MasterServerToolkit.MasterServer
@@ -21,9 +22,19 @@ namespace MasterServerToolkit.MasterServer
         public IPeer ClientPeer { get; set; }
 
         /// <summary>
-        /// Should this profile to be saved to database
+        /// 
         /// </summary>
-        public bool ShouldBeSavedToDatabase { get; set; } = true;
+        public DebounceDispatcher SaveThrottleDispatcher { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DebounceDispatcher SendDebounceDispatcher { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DebounceDispatcher UnloadDebounceDispatcher { get; set; }
 
         /// <summary>
         /// Fires when profile modified in server
@@ -36,9 +47,9 @@ namespace MasterServerToolkit.MasterServer
         public event Action<ObservableServerProfile> OnDisposedEvent;
 
         /// <summary>
-        /// Creates new instance of obsrvable profile
+        /// 
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userId"></param>
         public ObservableServerProfile(string userId)
         {
             UserId = userId;
@@ -47,7 +58,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Creates new instance of obsrvable profile
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userId"></param>
         /// <param name="peer"></param>
         public ObservableServerProfile(string userId, IPeer peer)
         {

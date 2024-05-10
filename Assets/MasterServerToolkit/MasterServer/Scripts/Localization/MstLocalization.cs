@@ -8,7 +8,7 @@ namespace MasterServerToolkit.Localization
     public class MstLocalization
     {
         private string selectedLang = "en";
-        private Dictionary<string, Dictionary<string, string>> _localization = new Dictionary<string, Dictionary<string, string>>();
+        private readonly Dictionary<string, Dictionary<string, string>> _localization = new Dictionary<string, Dictionary<string, string>>();
 
         /// <summary>
         /// Current selected language
@@ -40,9 +40,16 @@ namespace MasterServerToolkit.Localization
         {
             get
             {
-                if (_localization.TryGetValue(selectedLang, out var dictionary) && dictionary != null && dictionary.ContainsKey(key))
+                if (_localization.TryGetValue(selectedLang, out var dictionary) && dictionary != null)
                 {
-                    return dictionary[key];
+                    if (dictionary.ContainsKey(key) && !string.IsNullOrEmpty(dictionary[key]))
+                    {
+                        return dictionary[key];
+                    }
+                    else
+                    {
+                        return key;
+                    }
                 }
                 else
                 {
@@ -66,15 +73,22 @@ namespace MasterServerToolkit.Localization
         private void LoadLocalization()
         {
             var localizationFile = Resources.Load<TextAsset>("Localization/localization");
+            var customLocalizationFile = Resources.Load<TextAsset>("Localization/custom_localization");
 
+            ParseLocalization(localizationFile);
+            ParseLocalization(customLocalizationFile);
+        }
+
+        private void ParseLocalization(TextAsset localizationFile)
+        {
             if (localizationFile != null && !string.IsNullOrEmpty(localizationFile.text))
             {
                 string[] rows = localizationFile.text.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-                string[] langCols = rows[0].Split(";", StringSplitOptions.RemoveEmptyEntries);
+                string[] langCols = rows[0].Split(";");
 
                 for (int i = 1; i < rows.Length; i++)
                 {
-                    string[] valueCols = rows[i].Trim().Split(";", StringSplitOptions.RemoveEmptyEntries);
+                    string[] valueCols = rows[i].Trim().Split(";");
 
                     for (int j = 1; j < valueCols.Length; j++)
                     {
@@ -92,12 +106,14 @@ namespace MasterServerToolkit.Localization
         /// <param name="value"></param>
         public void RegisterKey(string lang, string key, string value)
         {
-            string lankValue = lang.ToLower();
+            if (string.IsNullOrEmpty(lang) || string.IsNullOrEmpty(key)) return;
 
-            if (!_localization.ContainsKey(lankValue))
-                _localization[lankValue] = new Dictionary<string, string>();
+            string langValue = lang.ToLower();
 
-            _localization[lankValue][key] = value;
+            if (!_localization.ContainsKey(langValue))
+                _localization[langValue] = new Dictionary<string, string>();
+
+            _localization[langValue][key] = value;
         }
     }
 }

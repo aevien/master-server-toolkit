@@ -107,7 +107,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var access = response.AsPacket(new RoomAccessPacket());
+                var access = response.AsPacket<RoomAccessPacket>();
                 ReceivedAccess = access;
                 callback.Invoke(access, null);
                 OnAccessReceivedEvent?.Invoke(access);

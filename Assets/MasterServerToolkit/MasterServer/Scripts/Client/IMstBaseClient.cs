@@ -5,6 +5,8 @@ namespace MasterServerToolkit.MasterServer
 {
     public interface IMstBaseClient
     {
+        Logger Logger { get; set; }
+
         /// <summary>
         /// Current module connection
         /// </summary>

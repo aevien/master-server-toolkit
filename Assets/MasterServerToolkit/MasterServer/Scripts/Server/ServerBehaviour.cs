@@ -7,8 +7,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -42,10 +44,13 @@ namespace MasterServerToolkit.MasterServer
         protected LogLevel logLevel = LogLevel.Info;
 
         [SerializeField, Tooltip("IP address, to which server will listen to")]
-        protected string serverIp = "127.0.0.1";
+        protected string serverIp = "localhost";
 
         [SerializeField, Tooltip("Port, to which server will listen to")]
         protected int serverPort = 5000;
+
+        [SerializeField, Tooltip("The service to which the client can be connected")]
+        protected string service = "mst";
 
         [SerializeField, Tooltip("The max number of allowed connections. If 0 - means unlimeted")]
         protected ushort maxConnections = 0;
@@ -55,6 +60,22 @@ namespace MasterServerToolkit.MasterServer
 
         [SerializeField]
         protected float validationTimeout = 5f;
+
+        [Header("Security Settings")]
+        [SerializeField, Tooltip("Use this option to make server to use only secure connections. This option will be overriden by -mstUseSecure argument")]
+        protected bool useSecure = false;
+
+        [SerializeField, Tooltip("Use this option to set ssl protocol for secure connection. This option is ignored if useSecure is false")]
+        protected SslProtocols sslProtocols = SslProtocols.Tls12;
+
+        [SerializeField]
+        protected string certificatePath = "";
+
+        [SerializeField]
+        protected string certificatePassword = "";
+
+        [SerializeField, Tooltip("The password that is used to verify the authenticity of the connection")]
+        protected string password = "mst";
 
         #endregion
 
@@ -121,7 +142,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Gets peers count currently connected to server
         /// </summary>
-        public int CurrentPeersCount => connectedPeers.Count;
+        public int PeersCount => connectedPeers.Count;
 
         /// <summary>
         /// Server local IP address
@@ -155,14 +176,13 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Awake()
         {
-            // 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
         }
 
         protected virtual void Start()
         {
-            if (!Mst.Settings.HasApplicationKey)
+            if (string.IsNullOrEmpty(service))
                 throw new Exception("ApplicationKey is not defined");
 
             if (!Mst.Runtime.IsEditor)
@@ -177,10 +197,11 @@ namespace MasterServerToolkit.MasterServer
             socket.LogLevel = logLevel;
 
             // Setup secure connection in Start method
-            socket.UseSecure = Mst.Settings.UseSecure;
-            socket.CertificatePath = Mst.Settings.CertificatePath;
-            socket.CertificatePassword = Mst.Settings.CertificatePassword;
-            socket.ApplicationKey = Mst.Settings.ApplicationKey;
+            socket.UseSecure = Mst.Args.AsBool(Mst.Args.Names.UseSecure, useSecure);
+            socket.CertificatePath = Mst.Args.AsString(Mst.Args.Names.CertificatePath, certificatePath);
+            socket.CertificatePassword = Mst.Args.AsString(Mst.Args.Names.CertificatePassword, certificatePassword);
+            socket.Service = service;
+            socket.SslProtocols = sslProtocols;
 
             socket.OnPeerConnectedEvent += OnPeerConnectedEventHandle;
             socket.OnPeerDisconnectedEvent += OnPeerDisconnectedEventHandler;
@@ -197,6 +218,11 @@ namespace MasterServerToolkit.MasterServer
         }
 
         protected virtual void OnDestroy()
+        {
+            StopServer();
+        }
+
+        protected virtual void OnApplicationQuit()
         {
             StopServer();
         }
@@ -224,17 +250,17 @@ namespace MasterServerToolkit.MasterServer
             {
                 info.AddField("initializedModules", GetInitializedModules().Count);
                 info.AddField("unitializedModules", GetUninitializedModules().Count);
-                info.AddField("activeClients", CurrentPeersCount);
+                info.AddField("activeClients", PeersCount);
                 info.AddField("inactiveClients", currentInactivePeersCount);
                 info.AddField("unauthenticatedPeers", unauthenticatedPeers.Count);
                 info.AddField("totalClients", totalPeersCount);
                 info.AddField("highestClients", highestPeersCount);
                 info.AddField("peersAccepted", totalPeersCount);
                 info.AddField("peersRejected", rejectedPeersCount);
-                info.AddField("useSecure", Mst.Settings.UseSecure);
-                info.AddField("certificatePath", Mst.Settings.CertificatePath);
-                info.AddField("certificatePassword", Mst.Settings.CertificatePassword);
-                info.AddField("applicationKey", Mst.Settings.ApplicationKey);
+                info.AddField("useSecure", useSecure);
+                info.AddField("certificatePath", certificatePath);
+                info.AddField("certificatePassword", "************");
+                info.AddField("service", service);
                 info.AddField("localIp", Address);
                 info.AddField("publicIp", Address);
                 info.AddField("port", Port);
@@ -258,18 +284,17 @@ namespace MasterServerToolkit.MasterServer
             MstProperties info = new MstProperties();
             info.Set("Initialized modules", GetInitializedModules().Count);
             info.Set("Unitialized modules", GetUninitializedModules().Count);
-            info.Set("Active clients", CurrentPeersCount);
+            info.Set("Active clients", PeersCount);
             info.Set("Inactive clients", currentInactivePeersCount);
             info.Add("Unauthenticated clients", unauthenticatedPeers.Count);
             info.Set("Total clients", totalPeersCount);
             info.Set("Highest clients", highestPeersCount);
-            //info.Set("Updatebles", MstUpdateRunner.Instance.Count);
             info.Set("Peers accepted", totalPeersCount);
             info.Set("Peers rejected", rejectedPeersCount);
-            info.Set("Use SSL", Mst.Settings.UseSecure);
-            info.Set("Certificate Path", Mst.Settings.CertificatePath);
-            info.Set("Certificate Password", Mst.Settings.CertificatePassword);
-            info.Set("Application Key", Mst.Settings.ApplicationKey);
+            info.Set("Use SSL", useSecure);
+            info.Set("Certificate Path", certificatePath);
+            info.Set("Certificate Password", "************");
+            info.Set("Service", service);
             info.Set("Local Ip", Address);
             info.Set("Public Ip", Address);
             info.Set("Port", Port);
@@ -336,12 +361,12 @@ namespace MasterServerToolkit.MasterServer
 
             MstProperties startInfo = new MstProperties();
             startInfo.Add("\tFPS is", Application.targetFrameRate);
-            startInfo.Add("\tApp key", socket.ApplicationKey);
+            startInfo.Add("\tApp key", socket.Service);
             startInfo.Add("\tSecure", socket.UseSecure);
             startInfo.Add("\tCertificate Path", !socket.UseSecure ? "Undefined" : socket.CertificatePath);
             startInfo.Add("\tCertificate Pass", string.IsNullOrEmpty(socket.CertificatePath) || !socket.UseSecure ? "Undefined" : "********");
 
-            logger.Info($"Starting {GetType().Name.ToSpaceByUppercase()}...\n{startInfo.ToReadableString(";\n", " ")}");
+            logger.Info($"Starting {GetType().Name.FromCamelcase()}...\n{startInfo.ToReadableString(";\n", " ")}");
 
             socket.Listen(listenToIp, listenToPort);
             LookForModules();
@@ -349,14 +374,10 @@ namespace MasterServerToolkit.MasterServer
             OnStartedServer();
             OnServerStartedEvent?.Invoke();
 
-            MstTimer.OnTickEvent += Instance_OnTickEvent;
+            MstTimer.OnTickEvent += MstTimer_OnTickEvent;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="currentTick"></param>
-        private void Instance_OnTickEvent(long currentTick)
+        private void MstTimer_OnTickEvent(long currentTick)
         {
             // Searching peers that are not connected and their inactivity time is out
             var inactivePeers = connectedPeers.Values
@@ -397,7 +418,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (uninitializedModules.Count > 0)
                 {
-                    logger.Warn($"Some of the {GetType().Name.ToSpaceByUppercase()} modules failed to initialize: \n{string.Join(" \n", uninitializedModules.Select(m => m.GetType().ToString()).ToArray())}");
+                    logger.Warn($"Some of the {GetType().Name.FromCamelcase()} modules failed to initialize: \n{string.Join(" \n", uninitializedModules.Select(m => m.GetType().ToString()).ToArray())}");
                 }
             }
         }
@@ -407,18 +428,22 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void StopServer()
         {
-            MstTimer.OnTickEvent -= Instance_OnTickEvent;
-            IsRunning = false;
-
-            if (socket != null)
+            if (IsRunning)
             {
-                socket.OnPeerConnectedEvent -= OnPeerConnectedEventHandle;
-                socket.OnPeerDisconnectedEvent -= OnPeerDisconnectedEventHandler;
-                socket.Stop();
-            }
+                IsRunning = false;
 
-            OnServerStoppedEvent?.Invoke();
-            OnStoppedServer();
+                MstTimer.OnTickEvent -= MstTimer_OnTickEvent;
+
+                if (socket != null)
+                {
+                    socket.OnPeerConnectedEvent -= OnPeerConnectedEventHandle;
+                    socket.OnPeerDisconnectedEvent -= OnPeerDisconnectedEventHandler;
+                    socket.Stop();
+                }
+
+                OnServerStoppedEvent?.Invoke();
+                OnStoppedServer();
+            }
         }
 
         /// <summary>
@@ -456,21 +481,25 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         private void OnPeerDisconnectedEventHandler(IPeer peer)
         {
-            // Remove listener to messages
-            peer.OnMessageReceivedEvent -= OnMessageReceived;
+            try
+            {
+                // Remove listener to messages
+                peer.OnMessageReceivedEvent -= OnMessageReceived;
 
-            // Remove the peer
-            connectedPeers.TryRemove(peer.Id, out var _);
+                // Remove the peer
+                connectedPeers.TryRemove(peer.Id, out var _);
 
-            //
-            OnPeerDisconnected(peer);
+                OnPeerDisconnected(peer);
+                OnPeerDisconnectedEvent?.Invoke(peer);
 
-            // Invoke the event
-            OnPeerDisconnectedEvent?.Invoke(peer);
+                peer?.Dispose();
 
-            peer?.Dispose();
-
-            logger.Debug($"Client {peer.Id} disconnected from server. Total clients are: {connectedPeers.Count}");
+                logger.Debug($"Client {peer.Id} disconnected from server. Total clients are: {connectedPeers.Count}");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
 
         /// <summary>
@@ -832,12 +861,12 @@ namespace MasterServerToolkit.MasterServer
             // Generate a random key
             var aesKey = Mst.Helper.CreateRandomAlphanumericString(8);
 
-            var clientsPublicKeyXml = message.AsString();
-
-            // Deserialize public key
-            var sr = new System.IO.StringReader(clientsPublicKeyXml);
-            var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-            var clientsPublicKey = (RSAParameters)xs.Deserialize(sr);
+            var clientsPublicKeyData = message.AsPacket<RSAParametersPacket>();
+            var clientsPublicKey = new RSAParameters()
+            {
+                Exponent = clientsPublicKeyData.exponent,
+                Modulus = clientsPublicKeyData.modulus
+            };
 
             byte[] encryptedAes = await Task.Run(() =>
             {
@@ -865,10 +894,10 @@ namespace MasterServerToolkit.MasterServer
         private void ServerAccessRequestHandler(IIncomingMessage message)
         {
             // Get access check options
-            var accessCheckOptions = message.AsPacket(new ProvideServerAccessCheckPacket());
+            var accessCheckOptions = message.AsPacket<ProvideServerAccessCheckPacket>();
 
             // Request access code from client
-            Mst.Security.ValidateConnection(accessCheckOptions, (isSuccess, error) =>
+            ValidateConnection(accessCheckOptions, (isSuccess, error) =>
             {
                 if (!isSuccess)
                 {
@@ -909,6 +938,18 @@ namespace MasterServerToolkit.MasterServer
                     logger.Debug($"Client {peer.Id} connected to server. Total clients are: {connectedPeers.Count}");
                 }
             });
+        }
+
+        protected virtual void ValidateConnection(ProvideServerAccessCheckPacket accessCheckOptions, SuccessCallback callback)
+        {
+            if (Mst.Security.ValidatePassword(password, accessCheckOptions.Password))
+            {
+                callback?.Invoke(true, string.Empty);
+            }
+            else
+            {
+                callback?.Invoke(false, "Password is not valid");
+            }
         }
 
         #endregion

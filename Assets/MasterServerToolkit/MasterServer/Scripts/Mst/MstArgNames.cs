@@ -68,6 +68,11 @@
         public string RoomPort => "-mstRoomPort";
 
         /// <summary>
+        /// Use this cmd to setup port of the spawned room server
+        /// </summary>
+        public string RoomClientPort => "-mstRoomClientPort";
+
+        /// <summary>
         /// Use this cmd if you want a spawner to start creating room ports from your own specific value
         /// </summary>
         public string RoomDefaultPort => "-mstRoomDefaultPort";
@@ -116,7 +121,27 @@
         /// <summary>
         /// Use this cmd if youwant to connect to you database with some connection string
         /// </summary>
-        public string DbConnectionString => "-mstDbConnectionString";
+        public string DatabaseConnectionString => "-mstDatabaseConnectionString";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseConfiguration => "-mstDatabaseConfiguration";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseAutoCloseConnection => "-mstDatabaseAutoCloseConnection";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseLanguageType => "-mstDatabaseLanguageType";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DatabaseProvider => "-mstDatabaseProvider";
 
         /// <summary>
         /// Id of the lobby, for which the process was spawned
@@ -127,11 +152,6 @@
         /// Use this cmd to setup the max number of processes the spawner can spawn 
         /// </summary>
         public string MaxProcesses => "-mstMaxProcesses";
-
-        /// <summary>
-        /// Application key
-        /// </summary>
-        public string ApplicationKey => "-mstAppKey";
 
         /// <summary>
         /// Whether or not to use secure connection

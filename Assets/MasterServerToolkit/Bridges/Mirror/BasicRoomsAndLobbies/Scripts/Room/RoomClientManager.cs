@@ -27,7 +27,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         /// <summary>
         /// Mirror network manager
         /// </summary>
-        protected RoomNetworkManager networkManager => NetworkManager.singleton as RoomNetworkManager;
+        protected RoomNetworkManager NetworkManager => Mirror.NetworkManager.singleton as RoomNetworkManager;
 
         protected override void Awake()
         {
@@ -39,10 +39,10 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             base.Start();
 
-            if (networkManager)
+            if (NetworkManager)
             {
-                networkManager.OnConnectedEvent += NetworkManager_OnConnectedEvent;
-                networkManager.OnDisconnectedEvent += NetworkManager_OnDisconnectedEvent;
+                NetworkManager.OnConnectedEvent += NetworkManager_OnConnectedEvent;
+                NetworkManager.OnDisconnectedEvent += NetworkManager_OnDisconnectedEvent;
             }
             else
             {
@@ -54,10 +54,10 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         {
             base.OnDestroy();
 
-            if (networkManager)
+            if (NetworkManager)
             {
-                networkManager.OnConnectedEvent -= NetworkManager_OnConnectedEvent;
-                networkManager.OnDisconnectedEvent -= NetworkManager_OnDisconnectedEvent;
+                NetworkManager.OnConnectedEvent -= NetworkManager_OnConnectedEvent;
+                NetworkManager.OnDisconnectedEvent -= NetworkManager_OnDisconnectedEvent;
             }
         }
 
@@ -71,17 +71,17 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             if (isChangingZone)
                 StartDisconnection();
 
-            if (networkManager && !NetworkClient.isConnected)
+            if (NetworkManager && !NetworkClient.isConnected)
             {
                 // Set room IP
-                networkManager.SetAddress(access.RoomIp);
-                networkManager.SetPort(access.RoomPort);
+                NetworkManager.SetAddress(access.RoomIp);
+                NetworkManager.SetPort(access.RoomPort);
 
                 logger.Info($"Start joining a room at {access.RoomIp}:{access.RoomPort}. Scene: {access.SceneName}");
                 logger.Info($"Custom info: {access.CustomOptions}");
 
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Start joining a room at {access.RoomIp}:{access.RoomPort}");
-                networkManager.StartClient();
+                NetworkManager.StartClient();
             }
             else
             {
@@ -99,8 +99,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
             else
                 currentOfflineRoomScene = offlineRoomScene;
 
-            if (networkManager)
-                networkManager.StopClient();
+            if (NetworkManager)
+                NetworkManager.StopClient();
 
             isChangingZone = false;
         }
@@ -184,7 +184,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 if (!NetworkClient.ready)
                     NetworkClient.Ready();
 
-                if (networkManager.autoCreatePlayer)
+                if (NetworkManager.autoCreatePlayer)
                     NetworkClient.AddPlayer();
             });
         }

@@ -223,7 +223,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signInProgress"]);
 
-            logger.Debug(Mst.Localization["signInProgress"]);
+            Logger.Debug(Mst.Localization["signInProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -235,7 +235,7 @@ namespace MasterServerToolkit.Bridges
                     {
                         if (accountInfo.IsEmailConfirmed)
                         {
-                            logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
+                            Logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
                         }
                         else
                         {
@@ -247,7 +247,7 @@ namespace MasterServerToolkit.Bridges
                     else
                     {
                         string outputMessage = $"{Mst.Localization["signInErrorResult"]} {error}";
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
                         {
@@ -265,7 +265,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signInProgress"]);
 
-            logger.Debug(Mst.Localization["signInProgress"]);
+            Logger.Debug(Mst.Localization["signInProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -277,12 +277,12 @@ namespace MasterServerToolkit.Bridges
                     {
                         Mst.Events.Invoke(MstEventKeys.hideSignInView);
 
-                        logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
+                        Logger.Debug($"{Mst.Localization["signInSuccessResult"]}\n{Mst.Client.Auth.AccountInfo}");
                     }
                     else
                     {
                         string outputMessage = $"{Mst.Localization["signInErrorResult"]} {error}";
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
                         {
@@ -300,7 +300,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signInProgress"]);
 
-            logger.Debug(Mst.Localization["signInProgress"]);
+            Logger.Debug(Mst.Localization["signInProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -312,7 +312,7 @@ namespace MasterServerToolkit.Bridges
                     {
                         if (accountInfo.IsGuest || accountInfo.IsEmailConfirmed)
                         {
-                            logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
+                            Logger.Debug($"{Mst.Localization["signInSuccessResult"]} {Mst.Client.Auth.AccountInfo}");
                         }
                         else
                         {
@@ -322,7 +322,7 @@ namespace MasterServerToolkit.Bridges
                     else
                     {
                         outputMessage = $"{Mst.Localization["signInErrorResult"]} {error}";
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showSignInView);
                     }
@@ -337,7 +337,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["signUpProgress"]);
 
-            logger.Debug(Mst.Localization["signUpProgress"]);
+            Logger.Debug(Mst.Localization["signUpProgress"]);
 
             var credentials = new MstProperties();
             credentials.Set(MstDictKeys.USER_NAME, username);
@@ -356,12 +356,12 @@ namespace MasterServerToolkit.Bridges
                         Mst.Events.Invoke(MstEventKeys.showSignInView);
                         Mst.Events.Invoke(MstEventKeys.setSignInDefaultCredentials, credentials);
 
-                        logger.Debug(Mst.Localization["signUpSuccessResult"]);
+                        Logger.Debug(Mst.Localization["signUpSuccessResult"]);
                     }
                     else
                     {
                         string outputMessage = Mst.Localization["signUpErrorResult"];
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
                         {
@@ -382,7 +382,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["changePasswordProgress"]);
 
-            logger.Debug(Mst.Localization["changePasswordProgress"]);
+            Logger.Debug(Mst.Localization["changePasswordProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -399,7 +399,7 @@ namespace MasterServerToolkit.Bridges
                     else
                     {
                         string outputMessage = $"{Mst.Localization["changePasswordErrorResult"]} {error}";
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
                         {
@@ -418,7 +418,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["changePasswordCodeSuccessResult"]);
 
-            logger.Debug(Mst.Localization["changePasswordCodeSuccessResult"]);
+            Logger.Debug(Mst.Localization["changePasswordCodeSuccessResult"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -437,7 +437,7 @@ namespace MasterServerToolkit.Bridges
                     else
                     {
                         string outputMessage = $"{Mst.Localization["changePasswordCodeErrorResult"]} {error}";
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
 
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, () =>
                         {
@@ -453,7 +453,7 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public virtual void SignOut()
         {
-            logger.Debug("Sign out");
+            Logger.Debug("Sign out");
             Mst.Client.Auth.SignOut(true);
 
             MstTimer.WaitForSeconds(0.1f, () =>
@@ -470,7 +470,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["confirmationCodeSendingProcess"]);
 
-            logger.Debug(Mst.Localization["confirmationCodeSendingProcess"]);
+            Logger.Debug(Mst.Localization["confirmationCodeSendingProcess"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -486,7 +486,7 @@ namespace MasterServerToolkit.Bridges
                     {
                         string outputMessage = $"{Mst.Localization["confirmationCodeSendingErrorResult"]}: {error}";
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
                     }
                 });
             });
@@ -499,7 +499,7 @@ namespace MasterServerToolkit.Bridges
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, Mst.Localization["accountConfirmationProgress"]);
 
-            logger.Debug(Mst.Localization["accountConfirmationProgress"]);
+            Logger.Debug(Mst.Localization["accountConfirmationProgress"]);
 
             MstTimer.WaitForSeconds(0.1f, () =>
             {
@@ -515,7 +515,7 @@ namespace MasterServerToolkit.Bridges
                     {
                         string outputMessage = $"{Mst.Localization["accountConfirmationErrorResult"]} {error}";
                         Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(outputMessage, null));
-                        logger.Error(outputMessage);
+                        Logger.Error(outputMessage);
                     }
                 });
             });

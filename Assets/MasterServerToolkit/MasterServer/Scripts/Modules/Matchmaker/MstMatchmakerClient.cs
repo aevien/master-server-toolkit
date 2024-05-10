@@ -56,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                Regions = response.AsPacket(new RegionsPacket()).Regions;
+                Regions = response.AsPacket<RegionsPacket>().Regions;
 
                 int totalRegions = Regions.Count;
 
@@ -121,12 +121,12 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (status != ResponseStatus.Success)
                 {
-                    Logs.Warn(response.AsString("Unknown error occured while requesting a list of games"));
+                    Logs.Error(response.AsString("Unknown error occured while requesting a list of games"));
                     callback?.Invoke(new List<GameInfoPacket>());
                     return;
                 }
 
-                Games = response.AsPacketsList(() => new GameInfoPacket()).ToList();
+                Games = response.AsPacketsList<GameInfoPacket>().ToList();
                 callback?.Invoke(Games);
             });
         }

@@ -175,7 +175,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking.Character
             }
             else
             {
-                calculatedMovementDirection += Physics.gravity * gravityMultiplier * Time.deltaTime;
+                calculatedMovementDirection += gravityMultiplier * Time.deltaTime * Physics.gravity;
             }
 
             characterController.Move(calculatedMovementDirection * Time.deltaTime);

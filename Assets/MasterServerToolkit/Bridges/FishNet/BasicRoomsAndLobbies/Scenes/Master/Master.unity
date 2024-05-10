@@ -332,6 +332,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
+  useCredentials: 0
 --- !u!1 &839013358
 GameObject:
   m_ObjectHideFlags: 0
@@ -528,10 +529,15 @@ MonoBehaviour:
   logLevel: 0
   serverIp: 127.0.0.1
   serverPort: 5000
+  service: mst
   maxConnections: 0
   inactivityTimeout: 5
   validationTimeout: 5
-  autoStartInEditor: 1
+  useSecure: 0
+  sslProtocols: 3072
+  certificatePath: 
+  certificatePassword: 
+  password: mst
 --- !u!4 &1005001217
 Transform:
   m_ObjectHideFlags: 0
@@ -602,6 +608,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
+  useCredentials: 0
   notificationModule: {fileID: 993273403}
 --- !u!1 &1112139945
 GameObject:
@@ -654,6 +661,7 @@ MonoBehaviour:
   autostart: 1
   httpAddress: 127.0.0.1
   httpPort: 8080
+  useSecure: 0
   defaultIndexPage:
   - index
   - home
@@ -709,9 +717,10 @@ MonoBehaviour:
   usernameMaxChars: 12
   userPasswordMinChars: 8
   emailConfirmRequired: 1
-  enableGuestLogin: 1
+  useAccessKeys: 0
+  accessKeysFile: access_codes
+  allowGuestLogin: 1
   guestPrefix: '#'
-  saveGuestInfo: 1
   tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
@@ -857,6 +866,9 @@ MonoBehaviour:
   maxAttemptsToConnect: 5
   waitAndConnect: 0.2
   connectOnStart: 1
+  useSecure: 0
+  service: mst
+  password: mst
   OnConnectedEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -933,7 +945,7 @@ MonoBehaviour:
   killProcessesWhenStop: 1
   autoStartInEditor: 1
   overrideExePathInEditor: 1
-  exePathFromEditor: C:\UnityProjects\MST\Builds\FishNet\BasicRoomsAndLobbies\Room\Room.exe
+  exePathFromEditor: E:\UnityProjects\MST\Builds\FishNet\BasicRoomsAndLobbies\Room\Room.exe
   OnSpawnerStartedEvent:
     m_PersistentCalls:
       m_Calls: []

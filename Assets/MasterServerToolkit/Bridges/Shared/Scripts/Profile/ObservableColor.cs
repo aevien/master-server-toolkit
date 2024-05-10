@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Bridges
             if (!_value.Equals(value))
             {
                 _value = value;
-                MarkDirty();
+                MarkAsDirty();
             }
         }
 
@@ -45,7 +45,7 @@ namespace MasterServerToolkit.Bridges
         public override void FromBytes(byte[] data)
         {
             Deserialize(Encoding.UTF8.GetString(data));
-            MarkDirty();
+            MarkAsDirty();
         }
 
         public override byte[] GetUpdates()

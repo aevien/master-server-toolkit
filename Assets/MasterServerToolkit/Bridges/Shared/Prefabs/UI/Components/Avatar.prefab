@@ -31,7 +31,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6645725475604745017}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -108,7 +107,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6645725475604745017}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -164,7 +162,7 @@ GameObject:
   - component: {fileID: 6645725475604745017}
   - component: {fileID: 6645725475604745015}
   - component: {fileID: 6645725475604745016}
-  - component: {fileID: 6101715003176991423}
+  - component: {fileID: 2041279479260902079}
   m_Layer: 5
   m_Name: Avatar
   m_TagString: Untagged
@@ -187,7 +185,6 @@ RectTransform:
   - {fileID: 3980630196166552904}
   - {fileID: 8921588299916855547}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -232,7 +229,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &6101715003176991423
+--- !u!114 &2041279479260902079
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -241,8 +238,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6645725475604745018}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 523bab5dcca03c84692ce4964d498404, type: 3}
+  m_Script: {fileID: 11500000, guid: 15724b7cc04278d43b02cc25d83e078b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   icon: {fileID: 6777838591043395377}
   progressImage: {fileID: 9172241199275983684}
+  defaultSprite: {fileID: 21300000, guid: cb86885a885938f4a9c568045c3aa655, type: 3}

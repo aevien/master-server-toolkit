@@ -28,7 +28,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Inform that property is changed
         /// </summary>
-        void MarkDirty();
+        void MarkAsDirty();
 
         /// <summary>
         /// Should serialize the whole value to bytes

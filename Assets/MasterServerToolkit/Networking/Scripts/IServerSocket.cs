@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
+using System.Security.Authentication;
 
 namespace MasterServerToolkit.Networking
 {
@@ -30,7 +31,12 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Applications key
         /// </summary>
-        string ApplicationKey { get; set; }
+        string Service { get; set; }
+
+        /// <summary>
+        /// Ssl Protocols
+        /// </summary>
+        SslProtocols SslProtocols { get; set; }
 
         /// <summary>
         /// Log level of the server socket

@@ -1001,7 +1001,7 @@ PrefabInstance:
     - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
       propertyPath: m_text
-      value: Games List <sprite index=18 tint=>
+      value: Games List
       objectReference: {fileID: 0}
     - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
@@ -1190,6 +1190,15 @@ MonoBehaviour:
   logLevel: 0
   initModulesAtStart: 0
   matchCreationTimeout: 60
+  customSpawnOptions:
+  - key: -room.customTextOption
+    value: Here is room custom option
+  - key: -room.customIdOption
+    value: 1234567890
+  - key: -room.customDateTimeOption
+    value: 22.08.2023 18:36
+  - key: -room.masterUser
+    value: MyUserName
   OnRoomStartedEvent:
     m_PersistentCalls:
       m_Calls:
@@ -1217,7 +1226,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  OnRoomStartAbortedEvent:
+  OnRoomStartFailedEvent:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &849141272
@@ -1499,6 +1508,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_textInfo.characterCount
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Sign out
       objectReference: {fileID: 0}
     - target: {fileID: 9184578206818738323, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
@@ -2754,6 +2768,11 @@ PrefabInstance:
       propertyPath: m_textInfo.characterCount
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6721385568205909569, guid: 6f139267009e9a44cb68786e53bdb5dc,
+        type: 3}
+      propertyPath: m_text
+      value: Quit
+      objectReference: {fileID: 0}
     - target: {fileID: 9184578206818738323, guid: 6f139267009e9a44cb68786e53bdb5dc,
         type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -3344,6 +3363,11 @@ PrefabInstance:
     - target: {fileID: 6947553236508510613, guid: 6806bba2cf0114648824a9808cd98024,
         type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8796252147922736992, guid: 6806bba2cf0114648824a9808cd98024,
+        type: 3}
+      propertyPath: m_PresetInfoIsWorld
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8796252147922736994, guid: 6806bba2cf0114648824a9808cd98024,

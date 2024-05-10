@@ -12,6 +12,9 @@
         Failed,
         NotConnected,
         NotHandled,
-        NotFound
+        NotFound,
+        AlreadyExists,
+        DuplicateLogin,
+        Banned
     }
 }

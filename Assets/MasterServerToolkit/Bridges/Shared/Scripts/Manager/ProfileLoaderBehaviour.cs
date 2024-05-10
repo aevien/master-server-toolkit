@@ -1,6 +1,4 @@
 ﻿using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Networking;
-using MasterServerToolkit.Utils;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.Bridges
@@ -34,7 +32,15 @@ namespace MasterServerToolkit.Bridges
         protected override void Awake()
         {
             base.Awake();
-            Profile = new ObservableProfile();
+
+            if (Mst.Client.Profiles.HasProfile == false)
+            {
+                Profile = new ObservableProfile();
+            }
+            else
+            {
+                Profile = Mst.Client.Profiles.Current;
+            }
         }
 
         /// <summary>
@@ -55,12 +61,13 @@ namespace MasterServerToolkit.Bridges
             {
                 if (isSuccessful)
                 {
+                    Logger.Info($"Profile is loaded");
                     OnProfileLoaded();
                     OnProfileLoadedEvent?.Invoke();
                 }
                 else
                 {
-                    logger.Error($"Could not load user profile. Error: {error}");
+                    Logger.Error($"Could not load user profile. Error: {error}");
 
                     OnProfileLoadFailed();
                     OnProfileLoadFailedEvent?.Invoke();

@@ -1,11 +1,13 @@
 #if FISHNET
 using FishNet;
+using FishNet.Component.Scenes;
 using FishNet.Managing;
 using FishNet.Managing.Client;
 using FishNet.Managing.Scened;
 using FishNet.Transporting;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
+using System;
 using UnityEngine;
 using UnitySceneManager = UnityEngine.SceneManagement.SceneManager;
 
@@ -26,15 +28,15 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         /// <summary>
         /// InstanceFinder.NetworkManager.
         /// </summary>
-        private NetworkManager _networkManager => InstanceFinder.NetworkManager;
+        private NetworkManager NetworkManager => InstanceFinder.NetworkManager;
         /// <summary>
         /// InstanceFinder.ClientManager.
         /// </summary>
-        private ClientManager _clientManager => InstanceFinder.ClientManager;
+        private ClientManager ClientManager => InstanceFinder.ClientManager;
         /// <summary>
         /// InstanceFinder.SceneManager.
         /// </summary>
-        private SceneManager _sceneManager => InstanceFinder.SceneManager;
+        private SceneManager SceneManager => InstanceFinder.SceneManager;
 
         private DefaultScene defaultScene;
         private LocalConnectionState connectionState;
@@ -44,14 +46,14 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             base.Start();
 
             // Start listening to connection and scenes loaded events for client.
-            if (_networkManager != null)
+            if (NetworkManager != null)
             {
-                defaultScene = _networkManager.GetComponent<DefaultScene>();
+                defaultScene = NetworkManager.GetComponent<DefaultScene>();
 
-                _clientManager.OnClientConnectionState += ClientManager_OnClientConnectionState;
-                _sceneManager.OnLoadStart += _sceneManager_OnLoadStart;
-                _sceneManager.OnLoadPercentChange += _sceneManager_OnLoadPercentChange;
-                _sceneManager.OnLoadEnd += _sceneManager_OnLoadEnd;
+                ClientManager.OnClientConnectionState += ClientManager_OnClientConnectionState;
+                SceneManager.OnLoadStart += SceneManager_OnLoadStart;
+                SceneManager.OnLoadPercentChange += SceneManager_OnLoadPercentChange;
+                SceneManager.OnLoadEnd += SceneManager_OnLoadEnd;
             }
             else
             {
@@ -59,17 +61,17 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             }
         }
 
-        private void _sceneManager_OnLoadStart(SceneLoadStartEventArgs _)
+        private void SceneManager_OnLoadStart(SceneLoadStartEventArgs _)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene 0% ... Please wait!");
         }
 
-        private void _sceneManager_OnLoadPercentChange(SceneLoadPercentEventArgs args)
+        private void SceneManager_OnLoadPercentChange(SceneLoadPercentEventArgs args)
         {
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(args.Percent * 100f)}% ... Please wait!");
         }
 
-        private void _sceneManager_OnLoadEnd(SceneLoadEndEventArgs _)
+        private void SceneManager_OnLoadEnd(SceneLoadEndEventArgs _)
         {
             Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
         }
@@ -82,17 +84,17 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             {
                 logger.Info("You have just been disconnected from the server");
 
-                _clientManager.UnregisterBroadcast<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler);
+                ClientManager.UnregisterBroadcast<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler);
             }
             else if (state.ConnectionState == LocalConnectionState.Started)
             {
                 logger.Debug($"Validating access to room server with token [{Mst.Client.Rooms.ReceivedAccess.Token}]");
 
                 // Register listener for access validation message from room server
-                _clientManager.RegisterBroadcast<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler);
+                ClientManager.RegisterBroadcast<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler);
 
                 // Send validation message to room server
-                _clientManager.Broadcast(new ValidateRoomAccessRequestMessage()
+                ClientManager.Broadcast(new ValidateRoomAccessRequestMessage()
                 {
                     Token = Mst.Client.Rooms.ReceivedAccess.Token
                 });
@@ -105,12 +107,12 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         {
             base.OnDestroy();
 
-            if (_networkManager != null)
+            if (NetworkManager != null)
             {
-                _clientManager.OnClientConnectionState -= ClientManager_OnClientConnectionState;
-                _sceneManager.OnLoadStart -= _sceneManager_OnLoadStart;
-                _sceneManager.OnLoadPercentChange -= _sceneManager_OnLoadPercentChange;
-                _sceneManager.OnLoadEnd -= _sceneManager_OnLoadEnd;
+                ClientManager.OnClientConnectionState -= ClientManager_OnClientConnectionState;
+                SceneManager.OnLoadStart -= SceneManager_OnLoadStart;
+                SceneManager.OnLoadPercentChange -= SceneManager_OnLoadPercentChange;
+                SceneManager.OnLoadEnd -= SceneManager_OnLoadEnd;
             }
         }
 
@@ -119,7 +121,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             if (isChangingZone)
                 StartDisconnection();
 
-            if (_clientManager && !_clientManager.Started)
+            if (ClientManager && !ClientManager.Started)
             {
                 defaultScene.SetOnlineScene(access.SceneName);
 
@@ -130,7 +132,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
                 MstTimer.WaitWhile(() => connectionState != LocalConnectionState.Stopped, (isSuccess) =>
                 {
-                    _clientManager.StartConnection(access.RoomIp, access.RoomPort);
+                    ClientManager.StartConnection(access.RoomIp, access.RoomPort);
                 }, 10f);
             }
         }
@@ -145,8 +147,8 @@ namespace MasterServerToolkit.Bridges.FishNetworking
             else
                 defaultScene.SetOfflineScene(offlineRoomScene);
 
-            if (_clientManager)
-                _clientManager.StopConnection();
+            if (ClientManager)
+                ClientManager.StopConnection();
 
             isChangingZone = false;
         }
@@ -154,13 +156,13 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         /// <summary>
         /// Fires when room server send message about access validation result
         /// </summary>
-        /// <param name="conn"></param>
-        /// <param name="msg"></param>
-        protected virtual void ValidateRoomAccessResultHandler(ValidateRoomAccessResultMessage msg)
+        /// <param name="message"></param>
+        /// <param name="channel"></param>
+        protected virtual void ValidateRoomAccessResultHandler(ValidateRoomAccessResultMessage message, Channel channel)
         {
-            if (msg.Status != ResponseStatus.Success)
+            if (message.Status != ResponseStatus.Success)
             {
-                logger.Error(msg.Error);
+                logger.Error(message.Error);
                 StartDisconnection();
                 return;
             }

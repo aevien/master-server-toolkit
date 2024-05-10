@@ -1,4 +1,3 @@
-using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 
 namespace MasterServerToolkit.MasterServer
@@ -69,16 +68,6 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(CpuCount);
             writer.Write(Ram);
             writer.Write(Error);
-        }
-
-        public MstJson ToJson()
-        {
-            return MstJson.EmptyObject;
-        }
-
-        public static SystemInfoPacket FromJson(MstJson json)
-        {
-            return new SystemInfoPacket();
         }
     }
 }

@@ -21,7 +21,7 @@ namespace MasterServerToolkit.MasterServer
                 if (_value != value)
                 {
                     _value = value;
-                    MarkDirty();
+                    MarkAsDirty();
                 }
             }
         }
@@ -34,7 +34,7 @@ namespace MasterServerToolkit.MasterServer
         public override void FromBytes(byte[] data)
         {
             _value = Encoding.UTF8.GetString(data);
-            MarkDirty();
+            MarkAsDirty();
         }
 
         public override string Serialize()

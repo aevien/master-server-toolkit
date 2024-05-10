@@ -1,3 +1,4 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 using UnityEngine;
 
@@ -30,6 +31,19 @@ namespace MasterServerToolkit.Bridges
             writer.Write(Color.g);
             writer.Write(Color.b);
             writer.Write(Color.a);
+        }
+
+        public override MstJson ToJson()
+        {
+            var json = new MstJson
+            {
+                Color.r,
+                Color.g,
+                Color.b,
+                Color.a
+            };
+
+            return json;
         }
     }
 }
