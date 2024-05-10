@@ -349,7 +349,7 @@ namespace MasterServerToolkit.MasterServer
         {
             foreach (var property in Properties.Values)
             {
-                string key = property.Key.ToString();
+                string key = Extensions.StringExtensions.FromHash(property.Key);
 
                 if (json.HasField(key))
                 {
