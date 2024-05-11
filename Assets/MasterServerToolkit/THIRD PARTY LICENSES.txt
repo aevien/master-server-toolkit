@@ -1,14 +1,11 @@
 WebSockets Sharp https://github.com/sta/websocket-sharp
 path "Assets\MasterServerToolkit\Networking\Plugins\WebSocketSharp"
 
-LiteDB https://www.litedb.org/
+LiteDB https://www.litedb.org
 path "Assets\MasterServerToolkit\Bridges\LiteDB\Plugins"
 
-MongoDB https://www.mongodb.com/
+MongoDB https://www.mongodb.com
 path "Assets\MasterServerToolkit\Bridges\MongoDB\Plugins"
 
-Linq2Db https://linq2db.github.io/
-path "Assets\MasterServerToolkit\Bridges\Linq2Db\Plugins"
-
-MySQL.Data https://www.nuget.org/packages/linq2db.MySql
-path "Assets\MasterServerToolkit\Bridges\Linq2Db\Plugins"
+SqlSugar https://github.com/DotNetNext/SqlSugar
+path "Assets\MasterServerToolkit\Bridges\SqlSugar\Plugins"
