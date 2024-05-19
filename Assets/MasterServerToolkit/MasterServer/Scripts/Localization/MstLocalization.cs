@@ -1,6 +1,9 @@
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace MasterServerToolkit.Localization
@@ -81,20 +84,40 @@ namespace MasterServerToolkit.Localization
 
         private void ParseLocalization(TextAsset localizationFile)
         {
-            if (localizationFile != null && !string.IsNullOrEmpty(localizationFile.text))
+            try
             {
-                string[] rows = localizationFile.text.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-                string[] langCols = rows[0].Split(";");
-
-                for (int i = 1; i < rows.Length; i++)
+                if (localizationFile != null && !string.IsNullOrEmpty(localizationFile.text))
                 {
-                    string[] valueCols = rows[i].Trim().Split(";");
+                    string nPattern = @"\n+";
+                    string sPattern = @"\s+";
 
-                    for (int j = 1; j < valueCols.Length; j++)
+                    List<string> rows = localizationFile.text.Split("\n", StringSplitOptions.RemoveEmptyEntries)
+                        .Where(r => !r.StartsWith("#") && !r.StartsWith(";"))
+                        .Select(r =>
+                        {
+                            var cleanRow = Regex.Replace(r, nPattern, "");
+                            cleanRow = Regex.Replace(cleanRow, sPattern, " ");
+                            return cleanRow;
+                        })
+                        .ToList();
+
+                    List<string> langCols = rows[0].Trim().Split(";").ToList();
+
+                    for (int i = 1; i < rows.Count; i++)
                     {
-                        RegisterKey(langCols[j].Trim(), valueCols[0].Trim(), valueCols[j].Trim());
+                        string[] valueCols = rows[i].Split(";");
+
+                        for (int j = 1; j < valueCols.Length; j++)
+                        {
+                            RegisterKey(langCols[j].Trim(), valueCols[0].Trim(), valueCols[j].Trim());
+                        }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                Logs.Error("An error occurred during localization parsing");
+                Logs.Error(e);
             }
         }
 

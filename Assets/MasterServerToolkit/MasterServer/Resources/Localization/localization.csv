@@ -2,6 +2,8 @@
 ;;
 # Shared;;
 unknownError;Unknown error. Please contact administrator;Неизвестная ошибка. Пожалуйста, свяжитесь с администратором
+# Scenes Manager
+loadingScene;Loading scene... Please, wait;Загрузка сцены... Пожалуйста, подождите
 ;;
 # User info;;
 authStatusUnauthorized;Unauthorized;Не авторизован

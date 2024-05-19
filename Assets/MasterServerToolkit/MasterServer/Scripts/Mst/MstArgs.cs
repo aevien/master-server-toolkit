@@ -61,6 +61,11 @@ namespace MasterServerToolkit.MasterServer
         public ushort RoomClientPort { get; private set; }
 
         /// <summary>
+        /// This parameter is passed to the client to specify which connection to the room it should make, secure or not. Reverse-proxy version
+        /// </summary>
+        public bool RoomClientUseSecure { get; private set; }
+
+        /// <summary>
         /// Default room port. Set this cmd if you want a spawner to start creating room ports from your own specific value
         /// </summary>
         public int RoomDefaultPort { get; private set; }
@@ -216,6 +221,7 @@ namespace MasterServerToolkit.MasterServer
             RoomPort = (ushort)AsInt(Names.RoomPort, 7777);
             RoomClientPort = (ushort)AsInt(Names.RoomClientPort, 7777);
             RoomDefaultPort = AsInt(Names.RoomDefaultPort, 1500);
+            RoomClientUseSecure = AsBool(Names.RoomClientUseSecure, false);
             RoomExecutablePath = AsString(Names.RoomExecutablePath);
             RoomRegion = AsString(Names.RoomRegion);
             RoomMaxConnections = (ushort)AsInt(Names.RoomMaxConnections, 10);

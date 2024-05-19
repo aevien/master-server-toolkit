@@ -68,9 +68,14 @@
         public string RoomPort => "-mstRoomPort";
 
         /// <summary>
-        /// Use this cmd to setup port of the spawned room server
+        /// Port, assigned to the spawned process (most likely a game server). Reverse-proxy version
         /// </summary>
         public string RoomClientPort => "-mstRoomClientPort";
+
+        /// <summary>
+        /// This parameter is passed to the client to specify which connection to the room it should make, secure or not. Reverse-proxy version
+        /// </summary>
+        public string RoomClientUseSecure => "-mstRoomClientUseSecure";
 
         /// <summary>
         /// Use this cmd if you want a spawner to start creating room ports from your own specific value
@@ -154,7 +159,7 @@
         public string MaxProcesses => "-mstMaxProcesses";
 
         /// <summary>
-        /// Whether or not to use secure connection
+        /// Whether or not to use secure connection to server(not room)
         /// </summary>
         public string UseSecure => "-mstUseSecure";
 
