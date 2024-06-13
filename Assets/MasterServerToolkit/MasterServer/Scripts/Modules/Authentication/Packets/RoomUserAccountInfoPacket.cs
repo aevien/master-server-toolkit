@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class PeerAccountInfoPacket : SerializablePacket
+    public class RoomUserAccountInfoPacket : SerializablePacket
     {
         public int PeerId { get; set; }
         public string Username { get; set; }

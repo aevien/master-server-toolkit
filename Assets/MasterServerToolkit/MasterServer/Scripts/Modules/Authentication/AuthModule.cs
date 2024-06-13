@@ -187,7 +187,8 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.GetEmailConfirmationCode, GetEmailConfirmationCodeMessageHandler);
             server.RegisterMessageHandler(MstOpCodes.ConfirmEmail, ConfirmEmailMessageHandler);
 
-            server.RegisterMessageHandler(MstOpCodes.GetPeerAccountInfo, GetPeerAccountInfoMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetAccountInfoByPeer, GetAccountInfoByPeerMessageHandler);
+            server.RegisterMessageHandler(MstOpCodes.GetAccountInfoByUsername, GetAccountInfoByUsernameMessageHandler);
 
             server.RegisterMessageHandler(MstOpCodes.BindExtraProperties, BindExtraPropertiesMessageHandler);
         }
@@ -784,11 +785,43 @@ namespace MasterServerToolkit.MasterServer
             message.Respond(ResponseStatus.Success);
         }
 
+        private void GetAccountInfoByUsernameMessageHandler(IIncomingMessage message)
+        {
+            if (!HasGetPeerInfoPermissions(message.Peer))
+            {
+                message.Respond(ResponseStatus.Unauthorized);
+                return;
+            }
+
+            string username = message.AsString();
+            var userPeerExtension = GetLoggedInUserByUsername(username);
+
+            if (userPeerExtension == null)
+            {
+                logger.Error($"User with a given username {username} is not in the game");
+                message.Respond(ResponseStatus.NotFound);
+                return;
+            }
+
+            var userAccount = userPeerExtension.Account;
+
+            var userAccountPacket = new RoomUserAccountInfoPacket()
+            {
+                PeerId = userPeerExtension.Peer.Id,
+                ExtraProperties = userAccount.ExtraProperties,
+                Username = userAccount.Username,
+                UserId = userAccount.Id,
+                IsGuest = userAccount.IsGuest,
+            };
+
+            message.Respond(userAccountPacket, ResponseStatus.Success);
+        }
+
         /// <summary>
         /// Handles a request to retrieve account information
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void GetPeerAccountInfoMessageHandler(IIncomingMessage message)
+        protected virtual void GetAccountInfoByPeerMessageHandler(IIncomingMessage message)
         {
             if (!HasGetPeerInfoPermissions(message.Peer))
             {
@@ -817,7 +850,7 @@ namespace MasterServerToolkit.MasterServer
 
             var userAccount = userPeerExtension.Account;
 
-            var userAccountPacket = new PeerAccountInfoPacket()
+            var userAccountPacket = new RoomUserAccountInfoPacket()
             {
                 PeerId = userPeerId,
                 ExtraProperties = userAccount.ExtraProperties,

@@ -1,3 +1,4 @@
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using TMPro;
@@ -47,7 +48,8 @@ namespace MasterServerToolkit.Bridges
             {
                 if (lableText != null)
                 {
-                    lableText.text = Mst.Localization[localizationKey];
+                    string text = Mst.Localization[localizationKey];
+                    lableText.text = text;
                 }
             }
             catch (Exception e)

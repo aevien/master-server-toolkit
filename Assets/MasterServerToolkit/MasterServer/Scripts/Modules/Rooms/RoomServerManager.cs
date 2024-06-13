@@ -269,7 +269,7 @@ namespace MasterServerToolkit.MasterServer
                     Logger.Info($"Client {roomPeerId} is successfully validated");
                     Logger.Info("Trying to load his account info...");
 
-                    Mst.Server.Auth.GetPeerAccountInfo(usernameAndPeerId.PeerId, (accountInfo, accountError) =>
+                    Mst.Server.Auth.GetAccountInfoByPeer(usernameAndPeerId.PeerId, (accountInfo, accountError) =>
                     {
                         if (accountInfo == null)
                         {
@@ -532,7 +532,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 Logger.Info($"Trying to load prfile of player {username}:{player.RoomPeerId}");
 
-                Mst.Server.Profiles.FillInProfileValues(player.Profile, (isSuccess, error) =>
+                Mst.Server.Profiles.FillProfileValues(player.Profile, (isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {

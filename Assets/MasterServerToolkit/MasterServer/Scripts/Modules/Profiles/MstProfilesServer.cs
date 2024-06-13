@@ -42,14 +42,14 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void FillProfileValues(ObservableServerProfile profile, SuccessCallback callback)
         {
-            FillInProfileValues(profile, callback, Connection);
+            FillProfileValues(profile, callback, Connection);
         }
 
         /// <summary>
         /// Sends a request to server, retrieves all profile values, and applies them to a provided
         /// profile
         /// </summary>
-        public void FillInProfileValues(ObservableServerProfile profile, SuccessCallback callback, IClientSocket connection)
+        public void FillProfileValues(ObservableServerProfile profile, SuccessCallback callback, IClientSocket connection)
         {
             if (!connection.IsConnected)
             {
