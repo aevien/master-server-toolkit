@@ -9,6 +9,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         [Header("Components"), SerializeField]
         private MongoDbClientFactory mongoDbClientFactory;
+        [SerializeField] private bool saveDataAsBytes = true;
 
         #endregion
 
@@ -17,7 +18,10 @@ namespace MasterServerToolkit.Bridges.MongoDB
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
             try
             {
-                Mst.Server.DbAccessors.AddAccessor(new ProfilesDatabaseAccessor(mongoDbClientFactory.Client, mongoDbClientFactory.Database));
+                if(saveDataAsBytes) 
+                    Mst.Server.DbAccessors.AddAccessor(new ProfilesDatabaseAccessor(mongoDbClientFactory.Client, mongoDbClientFactory.Database));
+                else
+                    Mst.Server.DbAccessors.AddAccessor(new ProfilesDocumentDatabaseAccessor(mongoDbClientFactory.Client, mongoDbClientFactory.Database));
             }
             catch (System.Exception e)
             {
