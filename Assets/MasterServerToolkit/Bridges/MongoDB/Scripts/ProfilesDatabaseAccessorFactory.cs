@@ -9,7 +9,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         [Header("Components"), SerializeField]
         private MongoDbClientFactory mongoDbClientFactory;
-        [SerializeField] private bool saveDataAsBytes = true;
+        [SerializeField] private bool saveDataAsBytes;
 
         #endregion
 
