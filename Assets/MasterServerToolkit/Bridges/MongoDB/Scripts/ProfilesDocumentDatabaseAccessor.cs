@@ -1,11 +1,11 @@
 ﻿#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MongoDB.Driver;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.MongoDB
 {
@@ -43,8 +43,8 @@ namespace MasterServerToolkit.Bridges.MongoDB
             try
             {
                 var data = await FindOrCreateData(profile);
-                var document = data.Document.ToDictionary(x => x.Key.ToUint16Hash(), x => x.Value);
-                //profile.FromStrings(document);
+                var json = new MstJson(data.Document.ToDictionary(x => x.Key, x => x.Value));
+                profile.FromJson(json);
             }
             catch (Exception e)
             {
@@ -55,7 +55,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public async Task UpdateProfileAsync(ObservableServerProfile profile)
         {
             var data = await FindOrCreateData(profile);
-            data.Document = profile.ToDictionary(x => StringExtensions.FromHash(x.Key), x => x.Serialize());
+            data.Document = profile.ToJson().ToDictionary();
 
             var filter = Builders<ProfileInfoDocumentMongoDB>.Filter.Eq(e => e.UserId, profile.UserId);
 
@@ -79,7 +79,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
                 data = new ProfileInfoDocumentMongoDB()
                 {
                     UserId = profile.UserId,
-                    Document = profile.ToDictionary(x => StringExtensions.FromHash(x.Key), x => x.Serialize())
+                    Document = profile.ToJson().ToDictionary()
                 };
 
                 await Task.Run(() =>
