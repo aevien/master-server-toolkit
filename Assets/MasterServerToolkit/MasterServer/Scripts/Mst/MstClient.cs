@@ -5,20 +5,14 @@ namespace MasterServerToolkit.MasterServer
     public partial class MstClient : MstBaseClient
     {
         public MstRoomsClient Rooms { get; private set; }
-
         public MstSpawnersClient Spawners { get; private set; }
-
         public MstMatchmakerClient Matchmaker { get; private set; }
-
         public MstAuthClient Auth { get; private set; }
-
         public MstChatClient Chat { get; private set; }
-
         public MstLobbiesClient Lobbies { get; private set; }
-
         public MstProfilesClient Profiles { get; private set; }
-
         public MstNotificationClient Notifications { get; private set; }
+        public AchievementsModuleClient Achievements { get; private set; }
 
         public MstClient(IClientSocket connection) : base(connection)
         {
@@ -30,6 +24,7 @@ namespace MasterServerToolkit.MasterServer
             Lobbies = new MstLobbiesClient(connection);
             Profiles = new MstProfilesClient(connection);
             Notifications = new MstNotificationClient(connection);
+            Achievements = new AchievementsModuleClient(connection);
         }
     }
 }

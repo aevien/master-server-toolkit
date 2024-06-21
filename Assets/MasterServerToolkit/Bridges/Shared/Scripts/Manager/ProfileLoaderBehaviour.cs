@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.Bridges
@@ -6,6 +7,9 @@ namespace MasterServerToolkit.Bridges
     public class ProfileLoaderBehaviour : BaseClientBehaviour
     {
         #region INSPECTOR
+
+        [SerializeField]
+        private ObservableBasePopulator[] populators;
 
         /// <summary>
         /// Invokes when profile is loaded
@@ -35,7 +39,7 @@ namespace MasterServerToolkit.Bridges
 
             if (Mst.Client.Profiles.HasProfile == false)
             {
-                Profile = new ObservableProfile();
+                Profile = CreateProfile();
             }
             else
             {
@@ -51,6 +55,18 @@ namespace MasterServerToolkit.Bridges
         /// 
         /// </summary>
         protected virtual void OnProfileLoadFailed() { }
+
+        protected ObservableProfile CreateProfile()
+        {
+            var profile = new ObservableProfile();
+
+            foreach (var populator in populators)
+            {
+                profile.Add(populator.Populate());
+            }
+
+            return profile;
+        }
 
         /// <summary>
         /// Get profile data from master
@@ -68,7 +84,6 @@ namespace MasterServerToolkit.Bridges
                 else
                 {
                     Logger.Error($"Could not load user profile. Error: {error}");
-
                     OnProfileLoadFailed();
                     OnProfileLoadFailedEvent?.Invoke();
                 }

@@ -29,9 +29,6 @@ namespace MasterServerToolkit.Examples.BasicProfile
         {
             base.Initialize(server);
 
-            // Set the new factory in ProfilesModule
-            ProfileFactory = CreateProfileInServer;
-
             server.RegisterMessageHandler(MstOpCodes.UpdateDisplayNameRequest, UpdateDisplayNameRequestHandler);
             server.RegisterMessageHandler(MessageOpCodes.BuyDemoItem, BuyDemoItemMessageHandler);
             server.RegisterMessageHandler(MessageOpCodes.SellDemoItem, SellDemoItemMessageHandler);
@@ -46,9 +43,9 @@ namespace MasterServerToolkit.Examples.BasicProfile
         /// <param name="userId"></param>
         /// <param name="clientPeer"></param>
         /// <returns></returns>
-        private ObservableServerProfile CreateProfileInServer(string userId, IPeer clientPeer)
+        protected override ObservableServerProfile CreateProfile(string userId, IPeer clientPeer)
         {
-            var profile = new ObservableServerProfile(userId, clientPeer);
+            var profile = base.CreateProfile(userId, clientPeer);
 
             ProfileProperties.Fill(profile);
 

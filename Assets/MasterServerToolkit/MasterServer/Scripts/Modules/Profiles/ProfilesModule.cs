@@ -11,8 +11,6 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public delegate ObservableServerProfile ObservableProfileFactoryDelegate(string userId, IPeer clientPeer);
-
     /// <summary>
     /// Handles player profiles within master server.
     /// Listens to changes in player profiles, and sends updates to
@@ -24,7 +22,7 @@ namespace MasterServerToolkit.MasterServer
         #region INSPECTOR
 
         [Header("General Settings")]
-        [SerializeField, Tooltip("If true, chat module will subscribe to auth module, and automatically setup chat users when they log in")]
+        [SerializeField, Tooltip("If true, profiles module will subscribe to auth module, and automatically setup user profile when they log in")]
         protected bool useAuthModule = true;
 
         /// <summary>
@@ -54,16 +52,13 @@ namespace MasterServerToolkit.MasterServer
         public int editProfilePermissionLevel = 0;
 
         /// <summary>
-        /// Ignore errors occurred when profile data mismatch
-        /// </summary>
-        [Tooltip("Ignore errors occurred when profile data mismatch")]
-        public bool ignoreProfileMissmatchError = false;
-
-        /// <summary>
         /// Database accessor factory that helps to create integration with profile db
         /// </summary>
         [Tooltip("Database accessor factory that helps to create integration with profile db")]
         public DatabaseAccessorFactory databaseAccessorFactory;
+
+        [SerializeField]
+        private ObservableBasePopulator[] populators;
 
         #endregion
 
@@ -85,25 +80,19 @@ namespace MasterServerToolkit.MasterServer
         protected readonly ConcurrentDictionary<string, ObservableServerProfile> profilesList = new ConcurrentDictionary<string, ObservableServerProfile>();
 
         /// <summary>
-        /// By default, profiles module will use this factory to create a profile for users.
-        /// If you're using profiles, you will need to change this factory to construct the
-        /// structure of a profile.
-        /// </summary>
-        public ObservableProfileFactoryDelegate ProfileFactory { get; set; }
-
-        /// <summary>
         /// Gets list of userprofiles
         /// </summary>
         public IEnumerable<ObservableServerProfile> Profiles => profilesList.Values;
 
         /// <summary>
-        /// Ignore errors occurred when profile data mismatch. False by default
+        /// It is performed after initialization of the profile structure
         /// </summary>
-        public bool IgnoreProfileMissmatchError
-        {
-            get { return ignoreProfileMissmatchError; }
-            set { ignoreProfileMissmatchError = value; }
-        }
+        public event Action<ObservableServerProfile> OnProfileCreated;
+
+        /// <summary>
+        /// It is performed after loading the profile from the database
+        /// </summary>
+        public event Action<ObservableServerProfile> OnProfileLoaded;
 
         protected override void Awake()
         {
@@ -142,9 +131,9 @@ namespace MasterServerToolkit.MasterServer
                 }
             }
 
-            server.RegisterMessageHandler(MstOpCodes.ServerFillInProfileValues, GameServerProfileRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.ServerFillInProfileValues, ServerFillInProfileValuesRequestHandler);
             server.RegisterMessageHandler(MstOpCodes.ServerUpdateProfileValues, ServerUpdateProfileValuesHandler);
-            server.RegisterMessageHandler(MstOpCodes.ClientFillInProfileValues, ClientFillInProfileValuesHandler);
+            server.RegisterMessageHandler(MstOpCodes.ClientFillInProfileValues, ClientFillInProfileValuesRequestHandler);
         }
 
         public override MstProperties Info()
@@ -194,8 +183,12 @@ namespace MasterServerToolkit.MasterServer
                     // Restore profile data from database
                     await profileDatabaseAccessor.RestoreProfileAsync(profile);
 
+                    logger.Info(profile);
+
                     // Listen to profile events
                     profile.OnModifiedInServerEvent += OnProfileChangedEventHandler;
+
+                    OnProfileLoaded?.Invoke(profile);
                 }
 
                 // 
@@ -228,10 +221,16 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual ObservableServerProfile CreateProfile(string userId, IPeer clientPeer)
         {
-            if (ProfileFactory != null)
-                return ProfileFactory.Invoke(userId, clientPeer);
+            var profile = new ObservableServerProfile(userId, clientPeer);
 
-            return new ObservableServerProfile(userId, clientPeer);
+            foreach (var populator in populators)
+            {
+                profile.Add(populator.Populate());
+            }
+
+            OnProfileCreated?.Invoke(profile);
+
+            return profile;
         }
 
         /// <summary>
@@ -390,7 +389,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a request from client to get profile
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void ClientFillInProfileValuesHandler(IIncomingMessage message)
+        protected virtual async void ClientFillInProfileValuesRequestHandler(IIncomingMessage message)
         {
             var user = message.Peer.GetExtension<IUserPeerExtension>();
 
@@ -416,17 +415,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var clientPropertiesCount = message.AsInt();
-
             profileExt.Profile.ClientPeer = message.Peer;
-
-            if (!ignoreProfileMissmatchError && clientPropertiesCount != profileExt.Profile.Count)
-            {
-                logger.Error(string.Format($"Client requested a profile with {clientPropertiesCount} properties, but server " +
-                                           $"constructed a profile with {profileExt.Profile.Count}. Make sure that you've changed the " +
-                                           "profile factory on the ProfilesModule"));
-            }
-
             message.Respond(profileExt.Profile.ToBytes(), ResponseStatus.Success);
         }
 
@@ -434,7 +423,7 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a request from game server to get a profile
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void GameServerProfileRequestHandler(IIncomingMessage message)
+        protected virtual async void ServerFillInProfileValuesRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -467,7 +456,9 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                message.Respond(profile.ToBytes(), ResponseStatus.Success);
+                byte[] rawProfile = profile.ToBytes();
+
+                message.Respond(rawProfile, ResponseStatus.Success);
             }
             catch (Exception e)
             {

@@ -65,7 +65,7 @@ namespace MasterServerToolkit.Bridges
             }
         }
 
-        private void Notifications_OnNotificationReceivedEvent(string message)
+        protected virtual void Notifications_OnNotificationReceivedEvent(string message)
         {
             Show();
 

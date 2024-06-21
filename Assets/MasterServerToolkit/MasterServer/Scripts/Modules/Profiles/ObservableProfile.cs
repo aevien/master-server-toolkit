@@ -194,23 +194,6 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Restores profile from dictionary of strings
-        /// </summary>
-        /// <param name="dataData"></param>
-        public void FromStrings(Dictionary<ushort, string> dataData)
-        {
-            foreach (var pair in dataData)
-            {
-                Properties.TryGetValue(pair.Key, out IObservableProperty property);
-
-                if (property != null)
-                {
-                    property.Deserialize(pair.Value);
-                }
-            }
-        }
-
-        /// <summary>
         /// Returns observable properties changes, writen to byte array
         /// </summary>
         /// <returns></returns>
@@ -315,6 +298,10 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return ToJson().ToString();
@@ -336,6 +323,10 @@ namespace MasterServerToolkit.MasterServer
             return json;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="json"></param>
         public void FromJson(string json)
         {
             FromJson(new MstJson(json));
@@ -404,7 +395,6 @@ namespace MasterServerToolkit.MasterServer
                 propertiesToBeSent.TryAdd(property.Key, property);
 
             //Logs.Info($"<color=#FF0000>{GetType().Name} OnDirtyPropertyEventHandler for {property.Key}</color>");
-
             OnPropertyUpdatedEvent?.Invoke(property.Key, property);
         }
 

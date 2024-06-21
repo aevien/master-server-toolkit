@@ -96,5 +96,10 @@ namespace MasterServerToolkit.Networking
         }
 
         public virtual void FromJson(MstJson json) { }
+
+        public override string ToString()
+        {
+            return ToJson().ToString();
+        }
     }
 }

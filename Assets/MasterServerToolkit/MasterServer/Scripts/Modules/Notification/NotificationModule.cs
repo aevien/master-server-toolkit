@@ -226,6 +226,16 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="recipient"></param>
+        /// <param name="textMessage"></param>
+        public virtual void NoticeToRecipient(int recipient, string textMessage)
+        {
+            NoticeToRecipients(new List<int> { recipient }, textMessage);
+        }
+
+        /// <summary>
         /// Sends notice to players given in <paramref name="recipients"/>
         /// </summary>
         /// <param name="recipients"></param>

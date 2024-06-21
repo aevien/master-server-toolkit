@@ -2,42 +2,34 @@ using UnityEngine;
 
 namespace MasterServerToolkit.UI
 {
-    [RequireComponent(typeof(CanvasGroup))]
     public class UIViewPanel : MonoBehaviour, IUIViewComponent
     {
         #region INSPECTOR
+
+        [Header("Components"), SerializeField]
+        protected GameObject panel;
 
         [Header("Settings"), SerializeField]
         protected bool hideOnStart = true;
 
         #endregion
 
-        private CanvasGroup canvasGroup;
-
         public IUIView Owner { get; set; }
         public Logging.Logger Logger { get; set; }
-        public bool IsVisible { get; protected set; } = true;
+        public bool IsVisible => panel.activeSelf;
 
         public void SetVisible(bool visible)
         {
-            if (!Owner.IsVisible)
-            {
-                return;
-            }
+            panel.SetActive(visible);
 
             if (IsVisible != visible)
             {
-                canvasGroup.alpha = visible ? 1 : 0;
-                canvasGroup.blocksRaycasts = visible;
-                IsVisible = visible;
                 OnSetVisible(visible);
             }
         }
 
         public virtual void OnOwnerAwake()
         {
-            canvasGroup = GetComponent<CanvasGroup>();
-
             if (hideOnStart)
             {
                 SetVisible(false);

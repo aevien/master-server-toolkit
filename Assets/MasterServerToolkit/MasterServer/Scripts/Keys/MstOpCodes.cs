@@ -108,5 +108,10 @@ namespace MasterServerToolkit.MasterServer
         public static ushort SystemInfo = nameof(SystemInfo).ToUint16Hash();
         public static ushort ServerInfo = nameof(ServerInfo).ToUint16Hash();
         public static ushort ModulesInfo = nameof(ModulesInfo).ToUint16Hash();
+
+        public static ushort ClientUpdateAchievementProgress = nameof(ClientUpdateAchievementProgress).ToUint16Hash();
+        public static ushort ClientCheckAchievementProgress = nameof(ClientCheckAchievementProgress).ToUint16Hash();
+        public static ushort ClientAchievementProgressIsMet = nameof(ClientAchievementProgressIsMet).ToUint16Hash();
+        public static ushort ServerUpdateAchievementProgress = nameof(ServerUpdateAchievementProgress).ToUint16Hash();
     }
 }
