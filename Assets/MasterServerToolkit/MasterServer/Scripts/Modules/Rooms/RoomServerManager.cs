@@ -19,7 +19,7 @@ namespace MasterServerToolkit.MasterServer
 
     public delegate ObservableServerProfile ProfileFactoryDelegate(string userId);
 
-    public class RoomServerManager : BaseClientBehaviour
+    public class RoomServerManager : BaseClientBehaviour 
     {
         #region INSPECTOR
 
