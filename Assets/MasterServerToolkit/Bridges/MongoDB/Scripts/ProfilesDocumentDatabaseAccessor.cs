@@ -44,7 +44,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
             {
                 var data = await FindOrCreateData(profile);
                 var document = data.Document.ToDictionary(x => x.Key.ToUint16Hash(), x => x.Value);
-                profile.FromStrings(document);
+                //profile.FromStrings(document);
             }
             catch (Exception e)
             {

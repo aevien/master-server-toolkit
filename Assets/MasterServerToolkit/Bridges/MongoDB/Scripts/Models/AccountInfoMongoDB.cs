@@ -32,7 +32,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         public AccountInfoMongoDB()
         {
-            Id = Mst.Helper.CreateID_10();
+            Id = Mst.Helper.CreateGuidString();
             Username = string.Empty;
             Password = string.Empty;
             Email = string.Empty;
