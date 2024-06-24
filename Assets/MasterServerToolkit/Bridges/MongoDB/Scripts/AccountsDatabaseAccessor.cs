@@ -15,6 +15,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
         private readonly IMongoDatabase database;
 
         private readonly IMongoCollection<AccountInfoMongoDB> accountsCollection;
+        private readonly IMongoCollection<ExtraPropertyDataMongoDB> extraPropertiesCollection;
         private readonly IMongoCollection<PasswordResetDataMongoDB> resetCodesCollection;
         private readonly IMongoCollection<EmailConfirmationDataMongoDB> emailConfirmations;
 
@@ -30,6 +31,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
             database = this.client.GetDatabase(databaseName);
 
             accountsCollection = database.GetCollection<AccountInfoMongoDB>("accounts");
+            extraPropertiesCollection = database.GetCollection<ExtraPropertyDataMongoDB>("extraProperties");
             resetCodesCollection = database.GetCollection<PasswordResetDataMongoDB>("resetCodes");
             emailConfirmations = database.GetCollection<EmailConfirmationDataMongoDB>("emailConfirmationCodes");
 
@@ -38,7 +40,16 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
             accountsCollection.Indexes.CreateOne(
                 new CreateIndexModel<AccountInfoMongoDB>(
-                    Builders<AccountInfoMongoDB>.IndexKeys.Ascending(e => e.Username), new CreateIndexOptions() { Unique = true }
+                    Builders<AccountInfoMongoDB>.IndexKeys.Ascending(e => e.Username), new CreateIndexOptions() {Unique = true}
+                )
+            );
+
+            extraPropertiesCollection.Indexes.CreateOne(
+                new CreateIndexModel<ExtraPropertyDataMongoDB>(
+                    Builders<ExtraPropertyDataMongoDB>.IndexKeys
+                        .Ascending(e => e.PropertyKey)
+                        .Ascending(e => e.PropertyValue),
+                    new CreateIndexOptions {Unique = true}
                 )
             );
 
@@ -63,19 +74,43 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public async Task<IAccountInfoData> GetAccountByIdAsync(string id)
         {
             var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, id);
-            return await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            var account = await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            if (account != null)
+            {
+                account.LastLogin = DateTime.UtcNow;
+                await accountsCollection.ReplaceOneAsync(Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, account.Id), account);
+                account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+            }
+
+            return account;
         }
 
         public async Task<IAccountInfoData> GetAccountByUsernameAsync(string username)
         {
             var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Username, username);
-            return await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            var account = await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            if (account != null)
+            {
+                account.LastLogin = DateTime.UtcNow;
+                await accountsCollection.ReplaceOneAsync(Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, account.Id), account);
+                account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+            }
+
+            return account;
         }
 
         public async Task<IAccountInfoData> GetAccountByEmailAsync(string email)
         {
             var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Email, email);
-            return await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            var account = await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            if (account != null)
+            {
+                account.LastLogin = DateTime.UtcNow;
+                await accountsCollection.ReplaceOneAsync(Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, account.Id), account);
+                account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+            }
+
+            return account;
         }
 
         public async Task<IAccountInfoData> GetAccountByExtraPropertyAsync(string phoneNumber)
@@ -87,13 +122,29 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public async Task<IAccountInfoData> GetAccountByTokenAsync(string token)
         {
             var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Token, token);
-            return await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            var account = await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            if (account != null)
+            {
+                account.LastLogin = DateTime.UtcNow;
+                await accountsCollection.ReplaceOneAsync(Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, account.Id), account);
+                account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+            }
+
+            return account;
         }
 
         public async Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId)
         {
             var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.DeviceId, deviceId.ToLower());
-            return await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            var account = await accountsCollection.Find(filter).FirstOrDefaultAsync();
+            if (account != null)
+            {
+                account.LastLogin = DateTime.UtcNow;
+                await accountsCollection.ReplaceOneAsync(Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, account.Id), account);
+                account.ExtraProperties = await GetExtraPropertiesAsync(account.Id);
+            }
+
+            return account;
         }
 
         public async Task SavePasswordResetCodeAsync(string email, string code)
@@ -145,12 +196,14 @@ namespace MasterServerToolkit.Bridges.MongoDB
         {
             var filter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, account.Id);
             await accountsCollection.ReplaceOneAsync(filter, account as AccountInfoMongoDB);
+            await InsertOrUpdateExtraProperties(account.Id, account.ExtraProperties);
         }
 
         public async Task<string> InsertAccountAsync(IAccountInfoData account)
         {
             var acc = account as AccountInfoMongoDB;
             await accountsCollection.InsertOneAsync(acc);
+            await InsertOrUpdateExtraProperties(acc.Id, account.ExtraProperties);
             return acc.Id;
         }
 
@@ -181,19 +234,42 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         public async Task<IAccountInfoData> GetAccountByExtraPropertyAsync(string propertyKey, string propertyValue)
         {
-            // TODO: Very slowly. Need to create index for each extra property like LiteDB.
-            var account = await accountsCollection.Find(e => e.ExtraProperties[propertyKey] == propertyValue).SingleOrDefaultAsync();
-            return account;
+            var filter = Builders<ExtraPropertyDataMongoDB>.Filter.And(
+                Builders<ExtraPropertyDataMongoDB>.Filter.Eq(e => e.PropertyKey, propertyKey),
+                Builders<ExtraPropertyDataMongoDB>.Filter.Eq(e => e.PropertyValue, propertyValue)
+            );
+            var extraProperty = await extraPropertiesCollection.Find(filter).FirstOrDefaultAsync();
+            if (extraProperty == null)
+            {
+                return null;
+            }
+
+            var accountFilter = Builders<AccountInfoMongoDB>.Filter.Eq(e => e.Id, extraProperty.AccountId);
+            return await accountsCollection.Find(accountFilter).FirstOrDefaultAsync();
         }
 
-        public Task InsertOrUpdateExtraProperties(string accountId, Dictionary<string, string> properties)
+        private async Task InsertOrUpdateExtraProperties(string accountId, Dictionary<string, string> properties)
         {
-            throw new NotImplementedException();
+            foreach (var (key, value) in properties)
+            {
+                var filter = Builders<ExtraPropertyDataMongoDB>.Filter.And(
+                    Builders<ExtraPropertyDataMongoDB>.Filter.Eq(e => e.AccountId, accountId),
+                    Builders<ExtraPropertyDataMongoDB>.Filter.Eq(e => e.PropertyKey, key)
+                );
+
+                var update = Builders<ExtraPropertyDataMongoDB>.Update.Set(e => e.PropertyValue, value);
+
+                var options = new UpdateOptions {IsUpsert = true};
+
+                await extraPropertiesCollection.UpdateOneAsync(filter, update, options);
+            }
         }
 
-        public Task<Dictionary<string, string>> GetExtraPropertiesAsync(string accountId)
+        public async Task<Dictionary<string, string>> GetExtraPropertiesAsync(string accountId)
         {
-            throw new NotImplementedException();
+            var filter = Builders<ExtraPropertyDataMongoDB>.Filter.Eq(e => e.AccountId, accountId);
+            var extraProperties = await extraPropertiesCollection.Find(filter).ToListAsync();
+            return extraProperties.ToDictionary(e => e.PropertyKey, e => e.PropertyValue);
         }
 
         public async Task<bool> CheckPasswordResetCodeAsync(string email, string code)
