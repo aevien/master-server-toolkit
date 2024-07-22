@@ -25,10 +25,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private ProfileLoaderBehaviour profileLoader;
 
-        protected override void Start()
+        protected void Start()
         {
-            base.Start();
-
             profileLoader = FindObjectOfType<ProfileLoaderBehaviour>();
             profileLoader.OnProfileLoadedEvent.AddListener(OnProfileLoadedEventHandler);
         }

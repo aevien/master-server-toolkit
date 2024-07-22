@@ -18,10 +18,8 @@ namespace MasterServerToolkit.Bridges
             }
         }
 
-        protected override void Start()
+        protected void Start()
         {
-            base.Start();
-
             // Listen to show/hide events
             Mst.Events.AddListener(MstEventKeys.showEmailConfirmationView, OnShowEmailConfirmationEventHandler);
             Mst.Events.AddListener(MstEventKeys.hideEmailConfirmationView, OnHideEmailConfirmationEventHandler);

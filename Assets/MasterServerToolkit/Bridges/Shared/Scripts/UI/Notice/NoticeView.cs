@@ -37,10 +37,8 @@ namespace MasterServerToolkit.Bridges
             messagesContainer.RemoveChildren();
         }
 
-        protected override void Start()
+        protected void Start()
         {
-            base.Start();
-
             // Initialize all items for notice items
             InitAllNotices();
         }

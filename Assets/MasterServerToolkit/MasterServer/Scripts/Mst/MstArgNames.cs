@@ -63,6 +63,11 @@
         public string RoomIp => "-mstRoomIp";
 
         /// <summary>
+        /// Use this cmd to setup local IP address of the spawned room server. Fro reverse-proxy or NAT
+        /// </summary>
+        public string RoomLocalIp => "-mstLoalRoomIp";
+
+        /// <summary>
         /// Use this cmd to setup port of the spawned room server
         /// </summary>
         public string RoomPort => "-mstRoomPort";
@@ -70,7 +75,7 @@
         /// <summary>
         /// Port, assigned to the spawned process (most likely a game server). Reverse-proxy version
         /// </summary>
-        public string RoomClientPort => "-mstRoomClientPort";
+        public string RoomLocalPort => "-mstRoomLocalPort";
 
         /// <summary>
         /// This parameter is passed to the client to specify which connection to the room it should make, secure or not. Reverse-proxy version

@@ -33,10 +33,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private readonly Dictionary<string, ItemUI> itemUis = new Dictionary<string, ItemUI>();
 
-        protected override void Start()
+        protected  void Start()
         {
-            base.Start();
-
             DrawStoreOffers();
             Mst.Client.Profiles.OnProfileLoadedEvent += Profiles_OnProfileLoadedEvent;
         }

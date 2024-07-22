@@ -3,6 +3,8 @@
 using UnityEngine;
 using UnityEditor;
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Utils;
+
 #if UNITY_2017_1_OR_NEWER
 using UnityEngine.Networking;
 #endif
@@ -46,46 +48,16 @@ namespace MasterServerToolkit.Json.Editor
             }
 
             EditorGUILayout.Separator();
+
             url = EditorGUILayout.TextField("URL", url);
+
             if (GUILayout.Button("Load and validate"))
             {
                 Debug.Log(url);
-#if UNITY_2017_1_OR_NEWER
-                var test = new UnityWebRequest(url);
-
-#if UNITY_2017_2_OR_NEWER
-                test.SendWebRequest();
-#else
-				test.Send();
-#endif
-
-#if UNITY_2020_1_OR_NEWER
-                while (!test.isDone && test.result != UnityWebRequest.Result.ConnectionError) { }
-#else
-				while (!test.isDone && !test.isNetworkError) { }
-#endif
-
-#else
-				var test = new WWW(url);
- 				while (!test.isDone) { }
-#endif
-
-                if (!string.IsNullOrEmpty(test.error))
-                {
-                    Debug.Log(test.error);
-                }
-                else
-                {
-#if UNITY_2017_1_OR_NEWER
-                    var text = test.downloadHandler.text;
-#else
-					var text = test.text;
-#endif
-
-                    Debug.Log(text);
-                    jsonObject = new MstJson(text);
-                    Debug.Log(jsonObject.ToString(true));
-                }
+                string text = NetWebRequests.Get(url);
+                Debug.Log(text);
+                jsonObject = new MstJson(text);
+                Debug.Log(jsonObject.ToString(true));
             }
 
             if (jsonObject)

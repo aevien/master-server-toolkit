@@ -1,10 +1,9 @@
-﻿using System;
-
-namespace MasterServerToolkit.MasterServer
+﻿namespace MasterServerToolkit.MasterServer
 {
-    public class EventMessage : EventArgs
+    public class EventMessage
     {
         private object _data;
+        public static EventMessage Empty => new EventMessage();
 
         public EventMessage() : this(new object()) { }
 

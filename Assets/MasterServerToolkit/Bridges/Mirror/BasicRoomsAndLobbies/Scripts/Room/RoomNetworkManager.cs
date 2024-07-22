@@ -1,10 +1,8 @@
 ﻿#if MIRROR
-using kcp2k;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using Mirror;
-using Mirror.SimpleWeb;
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -156,17 +154,9 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
         public void SetPort(int port)
         {
             // Set room port
-            if (Transport.active is KcpTransport kcpTransport)
+            if (Transport.active is PortTransport portTransport)
             {
-                kcpTransport.Port = (ushort)port;
-            }
-            else if (Transport.active is TelepathyTransport telepathyTransport)
-            {
-                telepathyTransport.port = (ushort)port;
-            }
-            else if (Transport.active is SimpleWebTransport swTransport)
-            {
-                swTransport.port = (ushort)port;
+                portTransport.Port = (ushort)port;
             }
         }
 

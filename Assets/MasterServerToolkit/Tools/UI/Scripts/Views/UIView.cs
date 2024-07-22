@@ -1,7 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -80,35 +79,9 @@ namespace MasterServerToolkit.UI
                 Logs.Warn($"Id field is empty therefore this UIView cannot be registered in {nameof(ViewsManager)}");
             }
 
-            RegisterAllUIViewComponents();
-
-            foreach (var uiViewComponent in uiViewComponents.Values)
-            {
-                uiViewComponent.OnOwnerAwake();
-            }
-
             if (hideOnStart)
             {
                 Hide(true);
-            }
-        }
-
-        protected virtual void Start()
-        {
-            foreach (var uiComponent in uiViewComponents.Values)
-            {
-                uiComponent.OnOwnerStart();
-            }
-        }
-
-        protected virtual void Update()
-        {
-            if (IsVisible)
-            {
-                foreach (var uiComponent in uiViewComponents.Values)
-                {
-                    uiComponent.OnOwnerUpdate();
-                }
             }
         }
 
@@ -132,65 +105,6 @@ namespace MasterServerToolkit.UI
             OnHideEvent.RemoveAllListeners();
             OnShowFinishedEvent.RemoveAllListeners();
             OnHideFinishedEvent.RemoveAllListeners();
-        }
-
-        protected virtual void RegisterAllUIViewComponents()
-        {
-            if (TryGetComponent(out uiViewTweener))
-            {
-                uiViewTweener.UIView = this;
-            }
-
-            foreach (var uiViewComponent in GetComponentsInChildren<IUIViewComponent>(true))
-            {
-                var key = uiViewComponent.GetType().Name;
-
-                if (!uiViewComponents.ContainsKey(key))
-                {
-                    uiViewComponent.Owner = this;
-                    uiViewComponents.Add(key, uiViewComponent);
-                }
-                else
-                {
-                    Debug.LogError($"{key} is allready registered");
-                }
-            }
-        }
-
-        public T ViewComponent<T>() where T : class, IUIViewComponent
-        {
-            var key = typeof(T).Name;
-
-            if (uiViewComponents.ContainsKey(key))
-            {
-                return (T)uiViewComponents[key];
-            }
-            else
-            {
-                logger.Error($"{key} is not registered");
-                return null;
-            }
-        }
-
-        public T ChildComponent<T>(string childName) where T : Component
-        {
-            string childId = $"{childName}_{typeof(T).Name}";
-
-            if (children.TryGetValue(childId, out Component child))
-            {
-                return (T)child;
-            }
-            else
-            {
-                var newChild = GetComponentsInChildren<T>(true).Where(c => c.name == childName).FirstOrDefault();
-
-                if (newChild)
-                {
-                    children.Add(childId, newChild);
-                }
-
-                return newChild;
-            }
         }
 
         public virtual void Show(bool instantly = false)
@@ -316,7 +230,7 @@ namespace MasterServerToolkit.UI
             {
                 OnShow();
 
-                foreach (var uiComponent in uiViewComponents.Values)
+                foreach (var uiComponent in GetComponentsInChildren<IUIViewComponent>())
                 {
                     uiComponent.OnOwnerShow(this);
                 }
@@ -325,7 +239,7 @@ namespace MasterServerToolkit.UI
             {
                 OnHide();
 
-                foreach (var uiComponent in uiViewComponents.Values)
+                foreach (var uiComponent in GetComponentsInChildren<IUIViewComponent>())
                 {
                     uiComponent.OnOwnerHide(this);
                 }

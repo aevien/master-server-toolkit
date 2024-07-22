@@ -1,6 +1,9 @@
 using MasterServerToolkit.MasterServer;
-using SqlSugar;
 using UnityEngine;
+
+#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
+using SqlSugar;
+#endif
 
 namespace MasterServerToolkit.Bridges.SqlSugar
 {
@@ -8,6 +11,7 @@ namespace MasterServerToolkit.Bridges.SqlSugar
     {
         #region INSPECTOR
 
+#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
         [Header("Settings"), SerializeField]
         protected string connectionString = "Server=localhost;Database=master_server_toolkit;Uid=root;Pwd=qazwsxedc123!@#;Port=3306;";
         [SerializeField]
@@ -16,15 +20,19 @@ namespace MasterServerToolkit.Bridges.SqlSugar
         protected LanguageType language = LanguageType.English;
         [SerializeField]
         protected DbType dataProvider = DbType.MySql;
+#endif
 
         #endregion
 
+#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
         protected ConnectionConfig configuration;
+#endif
 
         protected override void Awake()
         {
             base.Awake();
 
+#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
             connectionString = Mst.Args.AsString(Mst.Args.Names.DatabaseConnectionString, connectionString);
             autoCloseConnection = Mst.Args.AsBool(Mst.Args.Names.DatabaseAutoCloseConnection, autoCloseConnection);
             language = Mst.Args.AsEnum(Mst.Args.Names.DatabaseLanguageType, language);
@@ -43,6 +51,7 @@ namespace MasterServerToolkit.Bridges.SqlSugar
             //{
             //    logger.Info(sql);
             //};
+#endif
         }
 
         public override void CreateAccessors() { }

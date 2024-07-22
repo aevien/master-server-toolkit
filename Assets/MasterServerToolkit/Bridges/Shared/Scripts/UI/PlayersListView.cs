@@ -29,10 +29,8 @@ namespace MasterServerToolkit.Bridges
             Mst.Events.AddListener(MstEventKeys.hidePlayersListView, OnHidePlayersListEventHandler);
         }
 
-        protected override void Start()
+        protected void Start()
         {
-            base.Start();
-
             if (listContainer)
             {
                 foreach (Transform t in listContainer)

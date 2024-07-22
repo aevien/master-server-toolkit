@@ -23,9 +23,8 @@ namespace MasterServerToolkit.Bridges
             });
         }
 
-        protected override void Start()
+        protected  void Start()
         {
-            base.Start();
             usernameInputField.text = SimpleNameGenerator.GenerateFirstName(Gender.Male);
         }
 

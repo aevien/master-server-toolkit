@@ -18,10 +18,8 @@ namespace MasterServerToolkit.Examples.BasicProfile
 
         private DemoProfilesBehaviour profileBehaviour;
 
-        protected override void Start()
+        protected void Start()
         {
-            base.Start();
-
             profileBehaviour = FindObjectOfType<DemoProfilesBehaviour>();
             profileBehaviour.OnProfileLoadedEvent.AddListener(OnProfileLoadedEventHandler);
         }

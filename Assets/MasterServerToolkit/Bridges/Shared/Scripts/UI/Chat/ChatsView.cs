@@ -40,10 +40,8 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         private string username;
 
-        protected override void Start()
+        protected  void Start()
         {
-            base.Start();
-
             chanelItemsList = new List<ChatChannelItemUI>();
 
             Mst.Client.Chat.OnMessageReceivedEvent += Chat_OnMessageReceivedEvent;

@@ -370,7 +370,10 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Sends a generic login request
         /// </summary>
-        public void SignIn(MstProperties data, SignInCallback callback, IClientSocket connection)
+        /// <param name="credentials"></param>
+        /// <param name="callback"></param>
+        /// <param name="connection"></param>
+        public void SignIn(MstProperties credentials, SignInCallback callback, IClientSocket connection)
         {
             if (IsNowSigningIn)
                 return;
@@ -383,6 +386,9 @@ namespace MasterServerToolkit.MasterServer
 
             IsNowSigningIn = true;
 
+            credentials.Set(MstDictKeys.USER_DEVICE_ID, DeviceId());
+            credentials.Set(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
+
             // We first need to get an aes key 
             // so that we can encrypt our login data
             Mst.Security.GetAesKey(aesKey =>
@@ -394,7 +400,7 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
-                var encryptedData = Mst.Security.EncryptAES(data.ToBytes(), aesKey);
+                var encryptedData = Mst.Security.EncryptAES(credentials.ToBytes(), aesKey);
 
                 connection.SendMessage(MstOpCodes.SignIn, encryptedData, (status, response) =>
                 {
@@ -424,27 +430,6 @@ namespace MasterServerToolkit.MasterServer
                     OnSignedInEvent?.Invoke();
                 });
             }, connection);
-        }
-
-        /// <summary>
-        /// Binds social media account to your mst account
-        /// </summary>
-        /// <param name="socialMediaCredentials"></param>
-        /// <param name="callback"></param>
-        public void BindSocialMediaAccount(MstProperties socialMediaCredentials, SignInCallback callback)
-        {
-            BindSocialMediaAccount(socialMediaCredentials, callback, Connection);
-        }
-
-        /// <summary>
-        /// Binds social media account to your mst account
-        /// </summary>
-        /// <param name="socialMediaCredentials"></param>
-        /// <param name="callback"></param>
-        /// <param name="connection"></param>
-        public void BindSocialMediaAccount(MstProperties socialMediaCredentials, SignInCallback callback, IClientSocket connection)
-        {
-            SignIn(socialMediaCredentials, callback, connection);
         }
 
         /// <summary>

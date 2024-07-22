@@ -106,6 +106,7 @@ namespace MasterServerToolkit.MasterServer
             Runtime = new MstRuntime();
 
             Connection = Settings.ClientSocketFactory();
+
             Client = new MstClient(Connection);
             Server = new MstServer(Connection);
             Security = new MstSecurity(Connection);

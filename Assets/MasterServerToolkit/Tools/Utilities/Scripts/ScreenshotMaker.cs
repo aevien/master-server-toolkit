@@ -44,6 +44,7 @@ namespace MasterServerToolkit.Utils
 
         private void TakeScreenshot()
         {
+#if !UNITY_WEBGL || UNITY_EDITOR
             RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
             Texture2D screenShot = new Texture2D(resWidth, resHeight, format, false);
             Camera.main.targetTexture = rt;
@@ -59,6 +60,7 @@ namespace MasterServerToolkit.Utils
             File.WriteAllBytes(filename, bytes);
             Debug.Log(string.Format("Took screenshot to: {0}", filename));
             Application.OpenURL(filename);
+#endif
         }
     }
 }

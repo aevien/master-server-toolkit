@@ -64,7 +64,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool Invoke(string eventName)
         {
-            return Invoke(eventName, new EventMessage());
+            return Invoke(eventName, EventMessage.Empty);
         }
 
         /// <summary>

@@ -51,14 +51,19 @@ namespace MasterServerToolkit.MasterServer
         public string RoomIp { get; private set; }
 
         /// <summary>
-        /// Port, assigned to the spawned process (most likely a game server)
+        /// Local ip of the machine, on which the process is running. Use this parameter for reverse-proxy or NAT
+        /// </summary>
+        public string RoomLocalIp { get; private set; }
+
+        /// <summary>
+        /// Port, assigned to the spawned room process (most likely a game server)
         /// </summary>
         public ushort RoomPort { get; private set; }
 
         /// <summary>
         /// Port, assigned to the spawned process (most likely a game server). Reverse-proxy version
         /// </summary>
-        public ushort RoomClientPort { get; private set; }
+        public ushort RoomLocalPort { get; private set; }
 
         /// <summary>
         /// This parameter is passed to the client to specify which connection to the room it should make, secure or not. Reverse-proxy version
@@ -219,7 +224,8 @@ namespace MasterServerToolkit.MasterServer
             RoomName = AsString(Names.RoomName);
             RoomIp = AsString(Names.RoomIp, "127.0.0.1");
             RoomPort = (ushort)AsInt(Names.RoomPort, 7777);
-            RoomClientPort = (ushort)AsInt(Names.RoomClientPort, 7777);
+            RoomLocalIp = AsString(Names.RoomLocalIp, "192.168.0.0");
+            RoomLocalPort = (ushort)AsInt(Names.RoomLocalPort, 7777);
             RoomDefaultPort = AsInt(Names.RoomDefaultPort, 1500);
             RoomClientUseSecure = AsBool(Names.RoomClientUseSecure, false);
             RoomExecutablePath = AsString(Names.RoomExecutablePath);

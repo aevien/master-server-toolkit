@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Logging;
+using MasterServerToolkit.Utils;
 using System;
 using System.IO;
 using System.Net;
@@ -183,39 +184,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="callback"></param>
         public string GetPublicIp()
         {
-            try
-            {
-                // Create a request for the URL. 		
-                WebRequest request = WebRequest.Create("https://ifconfig.co/ip");
-                // Get the response.
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    Stream dataStream = response.GetResponseStream();
-                    StreamReader reader = new StreamReader(dataStream);
-                    string responseFromServer = reader.ReadToEnd();
-                    reader.Close();
-                    dataStream.Close();
-                    response.Close();
-                    return responseFromServer;
-                }
-                else
-                {
-                    Logs.Error($"The following error occurred : {response.StatusCode}, {response.StatusDescription}");
-                    return string.Empty;
-                }
-            }
-            catch (WebException e)
-            {
-                Logs.Error($"The following error occurred : {e.Status}");
-                return string.Empty;
-            }
-            catch (Exception e)
-            {
-                Logs.Error($"The following Exception was raised : {e.Message}");
-                return string.Empty;
-            }
+            return NetWebRequests.Get("https://ifconfig.co/ip");
         }
 
         /// <summary>

@@ -1,51 +1,52 @@
-﻿keys;en;ru
-;;
-# Shared;;
-unknownError;Unknown error. Please contact administrator;Неизвестная ошибка. Пожалуйста, свяжитесь с администратором
+﻿keys;ru;en;tr
+
+# Shared
+unknownError;Неизвестная ошибка. Пожалуйста, свяжитесь с администратором;Unknown error. Please contact the administrator;Bilinmeyen hata. Lütfen yöneticiyle iletişime geçin
+
 # Scenes Manager
-loadingScene;Loading scene... Please, wait;Загрузка сцены... Пожалуйста, подождите
-;;
-# User info;;
-authStatusUnauthorized;Unauthorized;Не авторизован
-;;
-# Connection;;
-connectionProgress;Connecting to master... Please wait.;Подключение с мастеру… Пожалуйста, подождите.
-connectionLost;The connection to the server has been lost. Please try again or contact to the developers of the game or your internet provider.;Соединение с сервером было потеряно. Пожалуйста, попробуйте повторить его или обратитесь к администратору.
-connectionStatusConnected;Client is connected to;Подключен к
-connectionStatusConnecting;Client is connecting to;Подключение к
-connectionStatusDisconnected;Client is offline;Нет подключения
-;;
-# Sign in;;
-signInTokenExpired;The authentication token has expired;Срок действия токена входа в систему истек
-signedInStatusOk;Already signed in;Вы уже вошли в систему
-signedInStatusFail;You are not signed in yet;Вы еще не вошли в систему
-signInProgress;Signing in... Please, wait.;Вход в систему. Пожалуйста, подождите
-signInSuccessResult;You are successfully logged in as;Вы успешно вошли в систему
-signInErrorResult;An error occurred while signing in:;Во время входа в систему произошла ошибка:
-signInSecurityError;Failed to sign in due to security issues;Невозможно выполнить вход по соображениям безопасности
-;;
-# Sign up;;
-signUpInProgress;Signing up is already in progress;Регистрация в процессе
-signUpProgress;Signing up... Please wait.;Создание учетной записи. Пожалуйста, подождите
-signUpSuccessResult;You have successfuly signed up. Now you may sign in;Вы успешно создали учетную запись, теперь можно войти в систему.
-signUpErrorResult;An error occurred while signing up:;Во время создания учетной записи произошла ошибка: 
-signUpSecurityError;Failed to sign up due to security issues;Невозможно выполнить регистрацию по соображениям безопасности
-;;
-# Account confirmation;;
-accountConfirmationProgress;Confirming your account... Please wait.;
-accountConfirmationErrorResult;An error occurred while confirming yor account:;
-confirmationCodeSendingProcess;Sending confirmation code... Please wait.;
-confirmationCodeSendingSuccessResult;We have sent an email with confirmation code to your address.;
-confirmationCodeSendingErrorResult;An error occurred while requesting confirmation code;
-;;
-# Account extra properties;;
-accounSaveExtraSuccessResult;Account extra properties saved successfully;
-accounSaveExtraErrorResult;Failed to save account properties;
-;;
-# Password reset;;
-changePasswordProgress;Changing password... Please wait.;Смена пароля… Пожалуйста, подождите
-changePasswordSuccessResult;You have successfuly changed your password. Now you can sign in.;
-changePasswordErrorResult;An error occurred while changing password:;
-changePasswordCodeProgress;Sending reset password code... Please wait.;
-changePasswordCodeSuccessResult;We have sent an email with reset code to your address;
-changePasswordCodeErrorResult;An error occurred while password reset code:;
+loadingScene;Загрузка сцены... Пожалуйста, подождите;Loading scene... Please wait;Sahne yükleniyor... Lütfen bekleyin
+
+# User info
+authStatusUnauthorized;Не авторизован;Not authorized;Yetkili değil
+
+# Connection
+connectionProgress;Подключение с мастеру… Пожалуйста, подождите.;Connecting with the master... Please wait.;Master'a bağlanılıyor... Lütfen bekleyin.
+connectionLost;Соединение с сервером было потеряно. Пожалуйста, попробуйте повторить его или обратитесь к администратору.;The connection to the server was lost. Please try again or contact your administrator.;Sunucuyla bağlantı kesildi. Lütfen tekrar deneyin veya yöneticinizle iletişime geçin.
+connectionStatusConnected;Подключен к;Connected to;Bağlı
+connectionStatusConnecting;Подключение к;Connecting to;Bağlantı
+connectionStatusDisconnected;Нет подключения;No connection;Bağlantı yok
+
+# Sign in
+signInTokenExpired;Срок действия токена входа в систему истек;Login token has expired;Giriş jetonunun süresi doldu
+signedInStatusOk;Вы уже вошли в систему;You are already logged in.;zaten giriş yaptınız
+signedInStatusFail;Вы еще не вошли в систему;You are not logged in yet;Henüz giriş yapmadınız
+signInProgress;Вход в систему. Пожалуйста, подождите;Login. Please wait;Giriş yapmak. Lütfen bekleyin
+signInSuccessResult;Вы успешно вошли в систему;You have successfully logged in;Başarıyla giriş yaptınız
+signInErrorResult;Во время входа в систему произошла ошибка:;An error occurred during login:;Oturum açma sırasında bir hata oluştu:
+signInSecurityError;Невозможно выполнить вход по соображениям безопасности;Unable to sign in for security reasons;Güvenlik nedeniyle oturum açılamıyor
+
+# Sign up
+signUpInProgress;Регистрация в процессе;Registration in progress;Kayıt devam ediyor
+signUpProgress;Создание учетной записи. Пожалуйста, подождите;Create an account. Please wait;Bir hesap oluşturun. Lütfen bekleyin
+signUpSuccessResult;Вы успешно создали учетную запись, теперь можно войти в систему.;You have successfully created an account, you can now log in.;Başarıyla bir hesap oluşturdunuz, artık giriş yapabilirsiniz.
+signUpErrorResult;Во время создания учетной записи произошла ошибка:;An error occurred during account creation:;Hesap oluşturma sırasında bir hata oluştu:
+signUpSecurityError;Невозможно выполнить регистрацию по соображениям безопасности;Unable to register due to security reasons;Güvenlik nedeniyle kayıt yapılamıyor
+
+# Account confirmation
+accountConfirmationProgress;Подтверждение учетной записи… Пожалуйста, подождите.;Account confirmation... Please wait.;Hesap onayı... Lütfen bekleyin.
+accountConfirmationErrorResult;Во время подтверждения учетной записи возникла ошибка:;An error occurred while confirming your account:;Hesabınız onaylanırken bir hata oluştu:
+confirmationCodeSendingProcess;Отправляем код подтверждения… Пожалуйста, подождите.;We are sending a verification code... Please wait.;Doğrulama kodu gönderiyoruz... Lütfen bekleyin.
+confirmationCodeSendingSuccessResult;Код подтверждения был отправлен на указанный вами адрес электронной почты;A verification code has been sent to the email address you provided.;Verdiğiniz e-posta adresine bir doğrulama kodu gönderildi.
+confirmationCodeSendingErrorResult;Во время отправки кода подтверждения возникла ошибка:;An error occurred while sending the verification code:;Doğrulama kodu gönderilirken bir hata oluştu:
+
+# Account extra properties
+accounSaveExtraSuccessResult;Экстра свойства учетной записи были успешно сохранены;Extra account properties were successfully saved;Ekstra hesap özellikleri başarıyla kaydedildi
+accounSaveExtraErrorResult;Невозможно сохранить свойства учетной записи;Unable to save account properties;Hesap özellikleri kaydedilemiyor
+
+# Password reset
+changePasswordProgress;Смена пароля… Пожалуйста, подождите;Changing password... Please wait;Şifre değiştiriliyor... Lütfen bekleyin
+changePasswordSuccessResult;Вы успешно изменили свой пароль. Теперь вы можете войти в свою учетную запись;You have successfully changed your password. You can now log in to your account.;Şifrenizi başarıyla değiştirdiniz. Artık hesabınıza giriş yapabilirsiniz
+changePasswordErrorResult;Во время смены пароля возникла ошибка:;An error occurred while changing the password:;Şifre değiştirilirken bir hata oluştu:
+changePasswordCodeProgress;Отправляем код сброса пароля… Пожалуйста, подождите;We are sending a password reset code... Please wait;Şifre sıfırlama kodu gönderiyoruz... Lütfen bekleyin
+changePasswordCodeSuccessResult;Код сброса пароля был отправлен на указанный вами адрес электронной почты;A password reset code has been sent to the email address you provided.;Belirttiğiniz e-posta adresine şifre sıfırlama kodu gönderildi.
+changePasswordCodeErrorResult;Во время отправки кода сброса пароля возникла ошибка:;An error occurred while sending the password reset code:;Şifre sıfırlama kodu gönderilirken bir hata oluştu:

@@ -10,7 +10,10 @@ namespace MasterServerToolkit.Localization
 {
     public class MstLocalization
     {
-        private string selectedLang = "en";
+        private string comments = "#";
+        private string rowsSeparator = "\n";
+        private string colsSeparator = ";";
+        private string selectedLang = "ru";
         private readonly Dictionary<string, Dictionary<string, string>> _localization = new Dictionary<string, Dictionary<string, string>>();
 
         /// <summary>
@@ -25,7 +28,7 @@ namespace MasterServerToolkit.Localization
             set
             {
                 string prevLanguage = selectedLang;
-                selectedLang = !string.IsNullOrEmpty(value) ? value.ToLower() : "en";
+                selectedLang = !string.IsNullOrEmpty(value) ? value.ToLower() : "ru";
 
                 if (prevLanguage != selectedLang)
                 {
@@ -91,21 +94,27 @@ namespace MasterServerToolkit.Localization
                     string nPattern = @"\n+";
                     string sPattern = @"\s+";
 
-                    List<string> rows = localizationFile.text.Split("\n", StringSplitOptions.RemoveEmptyEntries)
-                        .Where(r => !r.StartsWith("#") && !r.StartsWith(";"))
+                    List<string> rows = localizationFile.text.Split(rowsSeparator, StringSplitOptions.RemoveEmptyEntries)
+                        .Where(r => !r.StartsWith(comments) && !r.StartsWith(colsSeparator))
                         .Select(r =>
                         {
                             var cleanRow = Regex.Replace(r, nPattern, "");
                             cleanRow = Regex.Replace(cleanRow, sPattern, " ");
                             return cleanRow;
-                        })
-                        .ToList();
+                        }).ToList();
 
-                    List<string> langCols = rows[0].Trim().Split(";").ToList();
+                    string[] langCols = rows[0].Split(colsSeparator);
 
                     for (int i = 1; i < rows.Count; i++)
                     {
-                        string[] valueCols = rows[i].Split(";");
+                        string[] valueCols = rows[i].Split(colsSeparator);
+
+                        if (valueCols.Length > langCols.Length)
+                        {
+                            throw new Exception($"The row with the key {valueCols[0]} has more " +
+                                $"columns than the table has. Make sure that the string does " +
+                                $"not have an extra separator {colsSeparator}");
+                        }
 
                         for (int j = 1; j < valueCols.Length; j++)
                         {

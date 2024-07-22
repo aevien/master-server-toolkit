@@ -5,7 +5,9 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 {
     public class ProfilesDatabaseAccessorFactory : SqlSugarDatabaseAccessorFactory
     {
+#if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
         private ProfilesDatabaseAccessor accessor;
+#endif
 
         private void OnDestroy()
         {

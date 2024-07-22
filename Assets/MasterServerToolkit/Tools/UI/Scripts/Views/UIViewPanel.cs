@@ -28,7 +28,7 @@ namespace MasterServerToolkit.UI
             }
         }
 
-        public virtual void OnOwnerAwake()
+        protected virtual void Awake()
         {
             if (hideOnStart)
             {
@@ -36,8 +36,6 @@ namespace MasterServerToolkit.UI
             }
         }
 
-        public virtual void OnOwnerStart() { }
-        public virtual void OnOwnerUpdate() { }
         public virtual void OnOwnerHide(IUIView owner) { }
         public virtual void OnOwnerShow(IUIView owner) { }
         protected virtual void OnSetVisible(bool visible) { }
