@@ -252,6 +252,7 @@ namespace MasterServerToolkit.MasterServer
                 logger.Info($"Spawner stopped. Id: {spawnerController.SpawnerId}");
 
             // Destroy spawner
+            spawnerController.Dispose();
             spawnerController = null;
 
             OnSpawnerStoppedEvent?.Invoke();

@@ -172,15 +172,13 @@ namespace MasterServerToolkit.Networking
 
         public IPacketHandler RegisterMessageHandler(IPacketHandler handler)
         {
-            if (!handlers.ContainsKey(handler.OpCode))
+            if (handlers.ContainsKey(handler.OpCode))
             {
-                handlers[handler.OpCode] = handler;
-            }
-            else
-            {
-                Logs.Error($"Message with id [{Extensions.StringExtensions.FromHash(handler.OpCode)}] already exists");
+                Logs.Warn($"The handler with code [{Extensions.StringExtensions.FromHash(handler.OpCode)}] has already been registered. " +
+                    $"Overwriting it with new one");
             }
 
+            handlers[handler.OpCode] = handler;
             return handler;
         }
 
@@ -191,16 +189,14 @@ namespace MasterServerToolkit.Networking
             return handler;
         }
 
-        public void RemoveMessageHandler(IPacketHandler handler)
+        public void UnregisterMessageHandler(IPacketHandler handler)
         {
-            // But only if this exact handler
-            if (handlers.TryGetValue(handler.OpCode, out IPacketHandler previousHandler) 
-                && previousHandler != handler)
-            {
-                return;
-            }
+            UnregisterMessageHandler(handler);
+        }
 
-            handlers.Remove(handler.OpCode);
+        public void UnregisterMessageHandler(ushort opCode)
+        {
+            handlers.Remove(opCode);
         }
 
         public void Reconnect(bool fireEvent = true)
@@ -327,8 +323,7 @@ namespace MasterServerToolkit.Networking
 
         public void Close(ushort code, string reason, bool fireEvent = true)
         {
-            if (webSocket != null)
-                webSocket.Close(code, reason);
+                webSocket?.Close(code, reason);
 
             if (_peer != null)
             {

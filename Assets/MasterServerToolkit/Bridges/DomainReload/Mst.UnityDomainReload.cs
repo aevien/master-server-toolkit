@@ -2,14 +2,14 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
+#if UNITY_EDITOR
     public partial class Mst
     {
-#if UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void RunOnStart()
         {
             Initialize();
         }
-#endif
     }
+#endif
 }

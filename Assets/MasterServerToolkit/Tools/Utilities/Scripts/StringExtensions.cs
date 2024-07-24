@@ -132,42 +132,46 @@ namespace MasterServerToolkit.Extensions
         /// <returns></returns>
         public static string ToCamelcase(this string value)
         {
-            string[] split = value.Split(new char[] { ',', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string result = string.Empty;
-            int index = 0;
-
-            foreach (string s in split)
+            if (string.IsNullOrEmpty(value))
             {
-                string formated = "";
-
-                if (s.Length > 1)
-                {
-                    if (index == 0)
-                    {
-                        formated = $"{char.ToLower(s[0])}{s.Substring(1, s.Length - 1)}";
-                    }
-                    else
-                    {
-                        formated = $"{char.ToUpper(s[0])}{s.Substring(1, s.Length - 1)}";
-                    }
-                }
-                else
-                {
-                    if (index == 0)
-                    {
-                        formated = s.ToLower();
-                    }
-                    else
-                    {
-                        formated = s.ToUpper();
-                    }
-                }
-
-                index++;
-                result += formated;
+                return value;
             }
 
-            return result;
+            string[] words = Regex.Split(value, @"[\s\.\,\-\n\r\t]+");
+
+            if (words.Length == 0)
+            {
+                return value;
+            }
+
+            StringBuilder result = new StringBuilder(words[0].ToLower());
+
+            for (int i = 1; i < words.Length; i++)
+            {
+                if (words[i].Length > 0)
+                {
+                    result.Append(char.ToUpper(words[i][0]));
+                    result.Append(words[i].Substring(1).ToLower());
+                }
+            }
+
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string ToSnakeCase(this string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            var startUnderscores = Regex.Match(value, @"^[A-Z]+(?=[A-Z][a-z])|^[A-Z]");
+            return startUnderscores + Regex.Replace(value, @"([a-z0-9])([A-Z])", "$1_$2").ToLower();
         }
 
         /// <summary>

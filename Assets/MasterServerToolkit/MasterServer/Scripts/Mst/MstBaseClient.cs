@@ -28,7 +28,7 @@ namespace MasterServerToolkit.MasterServer
 
         public MstBaseClient(IClientSocket connection)
         {
-            Connection = connection;
+            ChangeConnection(connection, true);
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     foreach (var handler in handlers.Values)
                     {
-                        Connection.RemoveMessageHandler(handler);
+                        Connection.UnregisterMessageHandler(handler);
                     }
 
                     handlers.Clear();
@@ -59,13 +59,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void RegisterMessageHandler(IPacketHandler handler)
         {
-            if (!handlers.ContainsKey(handler.OpCode))
-            {
-                handlers[handler.OpCode] = handler;
-                Connection?.RegisterMessageHandler(handler);
-            }
-            else
-                Logger.Error($"Handler with opcode {handler.OpCode} is already registered");
+            handlers[handler.OpCode] = Connection?.RegisterMessageHandler(handler);
         }
 
         /// <summary>
@@ -86,7 +80,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void UnregisterMessageHandler(IPacketHandler handler)
         {
-            Connection?.RemoveMessageHandler(handler);
+            Connection?.UnregisterMessageHandler(handler);
         }
 
         /// <summary>
@@ -94,12 +88,12 @@ namespace MasterServerToolkit.MasterServer
         /// to new connection.
         /// </summary>
         /// <param name="socket"></param>
-        public void ChangeConnection(IClientSocket socket)
+        public void ChangeConnection(IClientSocket socket, bool clearHandlers = false)
         {
             if (Connection == socket) return;
 
             // Clear just connection but not handlers
-            ClearConnection(false);
+            ClearConnection(clearHandlers);
 
             // Change connections
             Connection = socket;
@@ -112,16 +106,6 @@ namespace MasterServerToolkit.MasterServer
 
             Connection.OnStatusChangedEvent += OnConnectionStatusChanged;
             OnConnectionSocketChanged(Connection);
-        }
-
-        /// <summary>
-        /// Cast this client behaviour to derived class <typeparamref name="T"/>
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T CastTo<T>() where T : class
-        {
-            return this as T;
         }
 
         /// <summary>

@@ -454,13 +454,10 @@ namespace MasterServerToolkit.Bridges
         public virtual void SignOut()
         {
             Logger.Debug("Sign out");
-            Mst.Client.Auth.SignOut(true);
+            Mst.Client.Auth.SignOut();
 
-            MstTimer.WaitForSeconds(0.1f, () =>
-            {
-                ViewsManager.HideAllViews();
-                Mst.Events.Invoke(MstEventKeys.showSignInView);
-            });
+            ViewsManager.HideAllViews();
+            Mst.Events.Invoke(MstEventKeys.showSignInView);
         }
 
         /// <summary>

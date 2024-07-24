@@ -132,12 +132,17 @@
         /// Adds a packet handler, which will be invoked when a message of
         /// specific operation code is received
         /// </summary>
+        /// <param name="handler"></param>
+        /// <returns></returns>
         IPacketHandler RegisterMessageHandler(IPacketHandler handler);
 
         /// <summary>
         /// Adds a packet handler, which will be invoked when a message of
         /// specific operation code is received
         /// </summary>
+        /// <param name="opCode"></param>
+        /// <param name="handlerMethod"></param>
+        /// <returns></returns>
         IPacketHandler RegisterMessageHandler(ushort opCode, IncommingMessageHandler handlerMethod);
 
         /// <summary>
@@ -145,7 +150,13 @@
         /// was used
         /// </summary>
         /// <param name="handler"></param>
-        void RemoveMessageHandler(IPacketHandler handler);
+        void UnregisterMessageHandler(IPacketHandler handler);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="opCode"></param>
+        void UnregisterMessageHandler(ushort opCode);
 
         /// <summary>
         /// Disconnects and connects again

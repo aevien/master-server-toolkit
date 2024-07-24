@@ -194,17 +194,16 @@ namespace MasterServerToolkit.MasterServer
         /// Initiates a log out. In the process, disconnects and connects
         /// back to the server to ensure no state data is left on the server.
         /// </summary>
-        /// <param name="permanent">If you wish to delete auth token</param>
-        public void SignOut(bool permanent = false)
+        public void SignOut()
         {
-            SignOut(Connection, permanent);
+            SignOut(Connection);
         }
 
         /// <summary>
         /// Initiates a log out. In the process, disconnects and connects
         /// back to the server to ensure no state data is left on the server.
         /// </summary>
-        public void SignOut(IClientSocket connection, bool permanent = false)
+        public void SignOut(IClientSocket connection)
         {
             if (!IsSignedIn)
             {
@@ -213,7 +212,6 @@ namespace MasterServerToolkit.MasterServer
 
             AccountInfo = null;
 
-            if (permanent)
                 ClearAuthToken();
 
             if (!connection.IsConnected)

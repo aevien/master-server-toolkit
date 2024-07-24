@@ -296,7 +296,8 @@ namespace MasterServerToolkit.MasterServer
                 profile.ClearUpdates();
 
                 // Send these data to client
-                profile.ClientPeer.SendMessage(MessageHelper.Create(MstOpCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
+                if (profile.ClientPeer.IsConnected)
+                    profile.ClientPeer.SendMessage(MessageHelper.Create(MstOpCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
             });
         }
 

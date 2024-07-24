@@ -86,7 +86,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     foreach (var handler in handlers.Values)
                     {
-                        Connection.RemoveMessageHandler(handler);
+                        Connection.UnregisterMessageHandler(handler);
                     }
 
                     handlers.Clear();
@@ -103,8 +103,12 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void RegisterMessageHandler(IPacketHandler handler)
         {
-            handlers[handler.OpCode] = handler;
-            Connection?.RegisterMessageHandler(handler);
+            var registeredHandler = Connection?.RegisterMessageHandler(handler);
+
+            if(registeredHandler != null)
+            {
+                handlers[handler.OpCode] = registeredHandler;
+            }
         }
 
         /// <summary>
@@ -125,27 +129,27 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void UnregisterMessageHandler(IPacketHandler handler)
         {
-            Connection?.RemoveMessageHandler(handler);
+            Connection?.UnregisterMessageHandler(handler);
         }
 
         /// <summary>
         /// Changes the connection object, and sets all of the message handlers of this object
         /// to new connection.
         /// </summary>
-        /// <param name="socket"></param>
-        public void ChangeConnection(IClientSocket socket)
+        /// <param name="connection"></param>
+        public void ChangeConnection(IClientSocket connection, bool clearHandlers = false)
         {
             // Clear just connection but not handlers
-            ClearConnection(false);
+            ClearConnection(clearHandlers);
 
             // Change connections
-            Connection = socket;
+            Connection = connection;
 
             if (Connection != null)
             {
                 // Override packet handlers
                 foreach (var packetHandler in handlers.Values)
-                    socket.RegisterMessageHandler(packetHandler);
+                    connection.RegisterMessageHandler(packetHandler);
 
                 Connection.OnStatusChangedEvent += OnConnectionStatusChanged;
                 OnConnectionSocketChanged(Connection);

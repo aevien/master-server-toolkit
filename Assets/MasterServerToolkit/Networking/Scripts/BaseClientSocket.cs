@@ -18,18 +18,21 @@
         public void SendMessage(ushort opCode, ISerializablePacket packet, DeliveryMethod method)
         {
             var msg = MessageHelper.Create(opCode, packet.ToBytes());
+
             Peer.SendMessage(msg, method);
         }
 
         public void SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback)
         {
             var msg = MessageHelper.Create(opCode, packet.ToBytes());
+
             Peer.SendMessage(msg, responseCallback);
         }
 
         public void SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback, int timeoutSecs)
         {
             var msg = MessageHelper.Create(opCode, packet.ToBytes());
+
             Peer.SendMessage(msg, responseCallback, timeoutSecs);
         }
 
@@ -47,18 +50,21 @@
         public void SendMessage(ushort opCode, byte[] data, DeliveryMethod method)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, method);
         }
 
         public void SendMessage(ushort opCode, byte[] data, ResponseCallback responseCallback)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, responseCallback);
         }
 
         public void SendMessage(ushort opCode, byte[] data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, responseCallback, timeoutSecs);
         }
 
@@ -70,18 +76,21 @@
         public void SendMessage(ushort opCode, string data, DeliveryMethod method)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, method);
         }
 
         public void SendMessage(ushort opCode, string data, ResponseCallback responseCallback)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, responseCallback);
         }
 
         public void SendMessage(ushort opCode, string data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, responseCallback, timeoutSecs);
         }
 
@@ -93,18 +102,21 @@
         public void SendMessage(ushort opCode, int data, DeliveryMethod method)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, method);
         }
 
         public void SendMessage(ushort opCode, int data, ResponseCallback responseCallback)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, responseCallback);
         }
 
         public void SendMessage(ushort opCode, int data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var msg = MessageHelper.Create(opCode, data);
+
             Peer.SendMessage(msg, responseCallback, timeoutSecs);
         }
 

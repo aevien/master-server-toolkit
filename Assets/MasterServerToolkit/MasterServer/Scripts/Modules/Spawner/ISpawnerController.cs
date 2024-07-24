@@ -4,7 +4,7 @@ using System;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public interface ISpawnerController
+    public interface ISpawnerController : IDisposable
     {
         event Action OnProcessStartedEvent;
         event Action OnProcessKilledEvent;

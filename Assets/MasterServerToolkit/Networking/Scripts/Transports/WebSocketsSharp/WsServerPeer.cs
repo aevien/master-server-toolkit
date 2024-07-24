@@ -9,9 +9,9 @@ namespace MasterServerToolkit.Networking
     {
         private readonly WsService serviceForPeer;
         private Queue<byte[]> delayedMessages;
-        private bool isConnected = false;
 
-        public override bool IsConnected => isConnected;
+        public override bool IsConnected => serviceForPeer != null 
+            && serviceForPeer.ReadyState == WebSocketState.Open;
 
         public WsServerPeer(WsService session) : base()
         {
@@ -23,10 +23,6 @@ namespace MasterServerToolkit.Networking
             serviceForPeer.OnMessageEvent += ServiceForPeer_OnMessageEvent;
 
             delayedMessages = new Queue<byte[]>();
-
-            // TODO
-            // Why is this true by default?
-            isConnected = true;
         }
 
         private void ServiceForPeer_OnMessageEvent(byte[] data)
@@ -37,19 +33,16 @@ namespace MasterServerToolkit.Networking
         private void ServiceForPeer_OnOpenEvent()
         {
             _ = SendDelayedMessages();
-            isConnected = true;
             NotifyConnectionOpenEvent();
         }
 
         private void ServiceForPeer_OnCloseEvent(ushort code, string reason)
         {
-            isConnected = false;
             NotifyConnectionCloseEvent(code, reason);
         }
 
         private void ServiceForPeer_OnErrorEvent(string error)
         {
-            isConnected = false;
             logger.Error(error);
             NotifyConnectionCloseEvent((ushort)CloseStatusCode.Abnormal, error);
         }
@@ -98,7 +91,7 @@ namespace MasterServerToolkit.Networking
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
-            if (serviceForPeer.ReadyState == WebSocketState.Open)
+            if (IsConnected)
             {
                 // There's a bug in websockets
                 // When server sends a message to client right after client

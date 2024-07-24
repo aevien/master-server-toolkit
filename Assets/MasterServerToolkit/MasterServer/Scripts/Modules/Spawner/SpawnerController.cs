@@ -38,7 +38,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        public MasterServerToolkit.Logging.Logger Logger { get; protected set; }
+        public Logger Logger { get; protected set; }
 
         /// <summary>
         /// Fired when process is started
@@ -343,6 +343,12 @@ namespace MasterServerToolkit.MasterServer
         public int ProcessesCount()
         {
             return processes != null ? processes.Count : 0;
+        }
+
+        public void Dispose()
+        {
+            Connection?.UnregisterMessageHandler(MstOpCodes.SpawnProcessRequest);
+            Connection?.UnregisterMessageHandler(MstOpCodes.KillProcessRequest);
         }
     }
 }

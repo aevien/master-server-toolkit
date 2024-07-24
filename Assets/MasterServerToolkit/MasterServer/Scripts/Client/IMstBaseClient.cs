@@ -27,6 +27,7 @@ namespace MasterServerToolkit.MasterServer
         /// to communicate with server
         /// </summary>
         /// <param name="handler"></param>
+        /// <param name="doOverride"></param>
         void RegisterMessageHandler(IPacketHandler handler);
 
         /// <summary>
@@ -48,14 +49,7 @@ namespace MasterServerToolkit.MasterServer
         /// Changes the connection object, and sets all of the message handlers of this object
         /// to new connection.
         /// </summary>
-        /// <param name="socket"></param>
-        void ChangeConnection(IClientSocket socket);
-
-        /// <summary>
-        /// Cast this client behaviour to derived class <typeparamref name="T"/>
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        T CastTo<T>() where T : class;
+        /// <param name="connection"></param>
+        void ChangeConnection(IClientSocket connection, bool clearHandlers = false);
     }
 }

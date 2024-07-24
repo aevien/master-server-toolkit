@@ -211,7 +211,7 @@ namespace MasterServerToolkit.Networking
             socket.OnError += (sender, e) =>
             {
                 Error = e.Message;
-                logger.Error(e.Exception);
+                logger.Error(e.Message);
             };
 
             // Listen to connection close

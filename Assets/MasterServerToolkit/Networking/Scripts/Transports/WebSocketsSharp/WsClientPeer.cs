@@ -19,7 +19,7 @@ namespace MasterServerToolkit.Networking
             delayedMessages = new Queue<byte[]>();
         }
 
-        public override bool IsConnected => socket != null ? socket.IsConnected : false;
+        public override bool IsConnected => socket != null && socket.IsConnected;
 
         public void SendDelayedMessages()
         {
@@ -54,6 +54,8 @@ namespace MasterServerToolkit.Networking
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
+            if (!IsConnected) return;
+
             if (delayedMessages != null)
             {
                 lock (delayedMessages)
