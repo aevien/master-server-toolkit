@@ -1,4 +1,4 @@
-![Master Server Toolkit Logo](https://master-toolkit.com/media/th4iz2gx/msf_logo.jpg)
+![Master Server Toolkit Logo](https://mst.aevien.ru/media/th4iz2gx/msf_logo.jpg)
 
 # What is Master Server Toolkit?
 This is an independent, free and at the same time powerful solution to many of the problems you face when developing online multiplayer games and applications. Among those problems are:
