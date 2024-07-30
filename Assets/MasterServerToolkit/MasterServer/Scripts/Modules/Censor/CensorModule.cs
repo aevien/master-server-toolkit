@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -8,13 +7,12 @@ namespace MasterServerToolkit.MasterServer
 {
     public class CensorModule : BaseServerModule
     {
-        [SerializeField]
-        protected List<string> censoredWords;
+        protected HashSet<string> censoredWords;
 
         [Header("Settings"), SerializeField]
         private TextAsset[] wordsLists;
         [SerializeField, TextArea(5, 10)]
-        private string matchPattern = @"\s*{0}(\s|\W)+";
+        private string matchPattern = @"\b{0}\b";
 
         public override void Initialize(IServer server)
         {
@@ -23,13 +21,15 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void ParseTextFiles()
         {
-            censoredWords = new List<string>();
-
-            char[] splitter = new char[] { ',' };
+            censoredWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (TextAsset words in wordsLists)
             {
-                censoredWords.AddRange(words.text.Split(splitter, StringSplitOptions.RemoveEmptyEntries).Select(word => word.Trim()));
+                var wordsArray = words.text.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var word in wordsArray)
+                {
+                    censoredWords.Add(word.Trim());
+                }
             }
         }
 
@@ -47,8 +47,8 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (var word in censoredWords)
             {
-                string pattern = string.Format(matchPattern, word);
-                Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                string pattern = string.Format(matchPattern, Regex.Escape(word));
+                Regex regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
                 if (regex.IsMatch(text))
                 {

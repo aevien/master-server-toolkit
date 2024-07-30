@@ -411,13 +411,13 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as string
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public string AsString(string key, string defValue = "")
+        public string AsString(string key, string defaultValue = "")
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return properties[key];
@@ -427,13 +427,13 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as integer
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public int AsInt(string key, int defValue = 0)
+        public int AsInt(string key, int defaultValue = 0)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToInt32(properties[key]);
@@ -443,13 +443,13 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as float
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public float AsFloat(string key, float defValue = 0f)
+        public float AsFloat(string key, float defaultValue = 0f)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToSingle(properties[key]);
@@ -459,13 +459,13 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as double
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public double AsDouble(string key, double defValue = 0d)
+        public double AsDouble(string key, double defaultValue = 0d)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToDouble(properties[key]);
@@ -475,13 +475,13 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as decimal
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public decimal AsDecimal(string key, decimal defValue = 0)
+        public decimal AsDecimal(string key, decimal defaultValue = 0)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToDecimal(properties[key]);
@@ -491,29 +491,48 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as bool
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public bool AsBool(string key, bool defValue = false)
+        public bool AsBool(string key, bool defaultValue = false)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToBoolean(properties[key]);
         }
 
         /// <summary>
+        /// Casts property to enum
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
+        public T AsEnum<T>(string key, T defaultValue = default) where T : struct, Enum
+        {
+            if (Has(key) && Enum.TryParse<T>(AsString(key), out var value))
+            {
+                return value;
+            }
+            else
+            {
+                return defaultValue;
+            }
+        }
+
+        /// <summary>
         /// Get item as short
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public short AsInt16(string key, short defValue = 0)
+        public short AsInt16(string key, short defaultValue = 0)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToInt16(properties[key]);
@@ -523,13 +542,13 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as short
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public ushort AsUInt16(string key, ushort defValue = 0)
+        public ushort AsUInt16(string key, ushort defaultValue = 0)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToUInt16(properties[key]);
@@ -539,13 +558,13 @@ namespace MasterServerToolkit.MasterServer
         /// Get item as byte
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defValue"></param>
+        /// <param name="defaultValue"></param>
         /// <returns></returns>
-        public byte AsByte(string key, byte defValue = 0)
+        public byte AsByte(string key, byte defaultValue = 0)
         {
             if (!Has(key))
             {
-                return defValue;
+                return defaultValue;
             }
 
             return Convert.ToByte(properties[key]);
