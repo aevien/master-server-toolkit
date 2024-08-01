@@ -5,7 +5,6 @@ using System.Net;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Policy;
 using WebSocketSharp.Server;
 
 namespace MasterServerToolkit.Networking

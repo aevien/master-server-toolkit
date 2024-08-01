@@ -71,17 +71,13 @@ namespace MasterServerToolkit.Networking
             CloseAsync(code, reason);
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
+                    // Освобождение управляемых ресурсов
                     OnOpenEvent = null;
                     OnCloseEvent = null;
                     OnErrorEvent = null;
@@ -90,6 +86,17 @@ namespace MasterServerToolkit.Networking
 
                 disposedValue = true;
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~WsService()
+        {
+            Dispose(false);
         }
     }
 }

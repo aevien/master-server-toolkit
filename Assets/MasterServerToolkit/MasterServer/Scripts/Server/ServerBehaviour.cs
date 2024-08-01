@@ -10,7 +10,6 @@ using System.Linq;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -266,6 +265,15 @@ namespace MasterServerToolkit.MasterServer
                 info.AddField("port", Port);
                 info.AddField("incomingTraffic", Mst.TrafficStatistics.TotalReceived);
                 info.AddField("outgoingTraffic", Mst.TrafficStatistics.TotalSent);
+
+                var modulesArray = MstJson.EmptyArray;
+
+                foreach(var module in modules.Values)
+                {
+                    modulesArray.Add(module.JsonInfo());
+                }
+
+                info.AddField("modules", modulesArray);
             }
             catch (Exception e)
             {
