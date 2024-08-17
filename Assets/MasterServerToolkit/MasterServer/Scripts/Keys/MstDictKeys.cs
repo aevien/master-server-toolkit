@@ -2,7 +2,6 @@
 {
     public struct MstDictKeys
     {
-        public const string GAME_STARTED = "gameStarted";
         public const string ROOM_ID = "-roomId";
         public const string LOBBY_FACTORY_ID = "-lobbyFactory";
         public const string LOBBY_NAME = "-lobbyName";
@@ -23,5 +22,6 @@
         public const string RESET_PASSWORD_CODE = "-resetPasswordCode";
         public const string RESET_PASSWORD_EMAIL = "-resetPasswordEmail";
         public const string WORLD_ZONE = "-room.worldZone";
+        public const string ROOM_CONNECTION_TYPE = "-roomConnectionType";
     }
 }

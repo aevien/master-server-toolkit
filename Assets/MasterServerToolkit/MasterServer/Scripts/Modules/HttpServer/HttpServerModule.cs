@@ -904,7 +904,7 @@ namespace MasterServerToolkit.MasterServer
             var requestActions = MstJson.EmptyArray;
 
             foreach (var requestAction in httpRequestActions.Keys)
-                controllers.Add(requestAction);
+                requestActions.Add(requestAction);
 
             info.AddField("requestActions", requestActions);
 
