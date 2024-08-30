@@ -38,7 +38,6 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -928,6 +927,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aab5ad002bb1a8b4bbdfa6d7b201a512, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  logLevel: 3
+  isGlobal: 1
+  roomConnectionTimeout: 10
+  autoStartInEditor: 0
+  autoStartDelay: 1
+  signInAsGuest: 1
+  username: qwerty
+  password: qwerty12345
+  offlineRoomScene: Client
 --- !u!4 &472155956
 Transform:
   m_ObjectHideFlags: 0
@@ -2180,6 +2188,11 @@ PrefabInstance:
         type: 3}
       propertyPath: OnRoomRegisteredEvent.m_PersistentCalls.m_Calls.Array.size
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 643701551274921334, guid: 3114b2bf90808704bae88ad10a2aafd1,
+        type: 3}
+      propertyPath: headlessStartMode
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8973327076234395987, guid: 3114b2bf90808704bae88ad10a2aafd1,
         type: 3}

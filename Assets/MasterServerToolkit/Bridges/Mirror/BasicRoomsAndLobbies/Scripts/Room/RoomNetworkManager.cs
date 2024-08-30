@@ -101,7 +101,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
                 roomServerManager = GetComponent<RoomServerManager>();
 
             // Prevent start network manager in headless mode automatically
-            autoStartServerBuild = false;
+            headlessStartMode = HeadlessStartOptions.DoNothing;
         }
 
         public void StartRoomServer()
