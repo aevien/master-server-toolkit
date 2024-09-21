@@ -3,7 +3,7 @@ using MasterServerToolkit.Extensions;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 
-namespace MasterServerToolkit.Examples.BasicWorlds
+namespace MasterServerToolkit.Demos.BasicWorlds
 {
     public class WorldView : UIView
     {

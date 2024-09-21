@@ -4,7 +4,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace MasterServerToolkit.Examples.BasicTelegramBotLogger
+namespace MasterServerToolkit.Demos.BasicTelegramBotLogger
 {
     public delegate void TelegramBotWebRequestHandler(MstJson response, string error);
 

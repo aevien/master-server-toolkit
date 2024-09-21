@@ -1,6 +1,6 @@
 using MasterServerToolkit.Networking;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     public class BuySellItemPacket : SerializablePacket
     {

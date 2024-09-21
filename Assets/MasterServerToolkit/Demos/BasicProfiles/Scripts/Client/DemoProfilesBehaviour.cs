@@ -3,7 +3,7 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using UnityEngine.Events;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     public class DemoProfilesBehaviour : ProfileLoaderBehaviour
     {

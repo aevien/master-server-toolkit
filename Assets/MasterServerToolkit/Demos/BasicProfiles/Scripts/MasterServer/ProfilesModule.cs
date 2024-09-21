@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     public class ProfilesModule : MasterServer.ProfilesModule
     {

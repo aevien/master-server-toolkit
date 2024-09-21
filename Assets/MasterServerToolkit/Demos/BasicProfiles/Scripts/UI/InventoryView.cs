@@ -5,7 +5,7 @@ using MasterServerToolkit.UI;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     public class InventoryView : UIView
     {

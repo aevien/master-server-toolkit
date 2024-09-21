@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace MasterServerToolkit.Examples.BasicRoomsAndLobbies
+namespace MasterServerToolkit.Demos.BasicRoomsAndLobbies
 {
     public class RoomInfoPanel : MonoBehaviour
     {

@@ -3,7 +3,7 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 
-namespace MasterServerToolkit.Examples.BasicNetworking
+namespace MasterServerToolkit.Demos.BasicNetworking
 {
     public class CustomServer : ServerBehaviour
     {

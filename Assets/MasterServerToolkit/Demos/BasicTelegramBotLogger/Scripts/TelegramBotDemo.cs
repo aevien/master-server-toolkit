@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicTelegramBotLogger
+namespace MasterServerToolkit.Demos.BasicTelegramBotLogger
 {
     public class TelegramBotDemo : MonoBehaviour
     {

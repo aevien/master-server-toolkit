@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     [Serializable]
     public class StoreOffer

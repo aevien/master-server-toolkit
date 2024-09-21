@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicAuthorization
+namespace MasterServerToolkit.Demos.BasicAuthorization
 {
     public class BasicAuthorizationPlayerBuild
     {

@@ -1,6 +1,6 @@
 using MasterServerToolkit.MasterServer;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     public static class ProfileProperties
     {

@@ -7597,8 +7597,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
         type: 3}
+      propertyPath: terminateRoomWhenDisconnected
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
+        type: 3}
       propertyPath: terminateRoomWhenLastPlayerQuits
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 643701551274921291, guid: 3114b2bf90808704bae88ad10a2aafd1,
         type: 3}

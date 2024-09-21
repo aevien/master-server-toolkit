@@ -371,7 +371,7 @@ namespace MasterServerToolkit.MasterServer
             RoomOptions = new RoomOptions
             {
                 // Just the name of the room
-                Name = Mst.Args.AsString(Mst.Args.Names.RoomName, $"Room-{Mst.Helper.CreateFriendlyId()}").Unscape(),
+                Name = Mst.Args.AsString(Mst.Args.Names.RoomName, $"Room-{Mst.Helper.CreateFriendlyId()}").Unescape(),
 
                 // Room IP that will be used by players to connect to this room
                 RoomIp = Mst.Args.RoomIp,

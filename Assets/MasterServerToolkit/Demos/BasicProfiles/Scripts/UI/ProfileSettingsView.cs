@@ -3,7 +3,7 @@ using MasterServerToolkit.UI;
 using TMPro;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     public class ProfileSettingsView : UIView
     {

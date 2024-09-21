@@ -246,7 +246,7 @@ namespace MasterServerToolkit.MasterServer
         public void SignInAsGuest(SignInCallback callback, IClientSocket connection)
         {
             var credentials = new MstProperties();
-            credentials.Add(MstDictKeys.USER_IS_GUEST);
+            credentials.Add(MstDictKeys.USER_IS_GUEST, true);
             credentials.Add(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
             credentials.Add(MstDictKeys.USER_DEVICE_ID, DeviceId(true));
 

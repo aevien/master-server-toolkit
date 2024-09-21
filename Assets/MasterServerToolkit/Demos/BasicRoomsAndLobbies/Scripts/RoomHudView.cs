@@ -1,7 +1,7 @@
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
 
-namespace MasterServerToolkit.Examples.BasicRoomsAndLobbies
+namespace MasterServerToolkit.Demos.BasicRoomsAndLobbies
 {
     public class RoomHudView : UIView
     {

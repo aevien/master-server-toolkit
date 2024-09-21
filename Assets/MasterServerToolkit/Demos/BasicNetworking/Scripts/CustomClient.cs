@@ -3,7 +3,7 @@ using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 
-namespace MasterServerToolkit.Examples.BasicNetworking
+namespace MasterServerToolkit.Demos.BasicNetworking
 {
     public class CustomClient : SingletonBehaviour<CustomClient>
     {

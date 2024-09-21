@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicRoomsAndLobbies
+namespace MasterServerToolkit.Demos.BasicRoomsAndLobbies
 {
     public class BasicRoomsAndLobbiesAndLobbiesBuild
     {

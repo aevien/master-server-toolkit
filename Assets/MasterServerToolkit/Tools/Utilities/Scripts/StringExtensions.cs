@@ -189,7 +189,7 @@ namespace MasterServerToolkit.Extensions
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static string Unscape(this string value)
+        public static string Unescape(this string value)
         {
             return Uri.UnescapeDataString(value);
         }

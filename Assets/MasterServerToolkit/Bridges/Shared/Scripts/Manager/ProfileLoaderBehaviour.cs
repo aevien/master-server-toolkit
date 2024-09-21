@@ -73,21 +73,24 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public virtual void LoadProfile()
         {
-            Mst.Client.Profiles.FillInProfileValues(Profile, (isSuccessful, error) =>
+            if (Mst.Client.Profiles.HasProfile == false)
             {
-                if (isSuccessful)
+                Mst.Client.Profiles.FillInProfileValues(Profile, (isSuccessful, error) =>
                 {
-                    Logger.Info($"Profile is loaded");
-                    OnProfileLoaded();
-                    OnProfileLoadedEvent?.Invoke();
-                }
-                else
-                {
-                    Logger.Error($"Could not load user profile. Error: {error}");
-                    OnProfileLoadFailed();
-                    OnProfileLoadFailedEvent?.Invoke();
-                }
-            });
+                    if (isSuccessful)
+                    {
+                        Logger.Info($"Profile is loaded");
+                        OnProfileLoaded();
+                        OnProfileLoadedEvent?.Invoke();
+                    }
+                    else
+                    {
+                        Logger.Error($"Could not load user profile. Error: {error}");
+                        OnProfileLoadFailed();
+                        OnProfileLoadFailedEvent?.Invoke();
+                    }
+                });
+            }
         }
     }
 }

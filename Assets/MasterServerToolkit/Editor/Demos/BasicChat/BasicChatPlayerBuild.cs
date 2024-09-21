@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicChat
+namespace MasterServerToolkit.Demos.BasicChat
 {
     public class BasicChatPlayerBuild
     {

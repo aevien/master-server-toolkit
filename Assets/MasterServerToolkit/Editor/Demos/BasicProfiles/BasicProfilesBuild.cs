@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicProfiles
+namespace MasterServerToolkit.Demos.BasicProfiles
 {
     public class BasicProfilesBuild
     {

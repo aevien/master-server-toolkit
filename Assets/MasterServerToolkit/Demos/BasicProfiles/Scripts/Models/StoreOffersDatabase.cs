@@ -2,7 +2,7 @@ using MasterServerToolkit.MasterServer;
 using System.Linq;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     [CreateAssetMenu(fileName = "StoreOffersDatabase", menuName = MstConstants.CreateMenu + "Examples/BasicProfile/Create store offers database")]
     public class StoreOffersDatabase : ScriptableObject

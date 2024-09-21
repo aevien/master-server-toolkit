@@ -1,7 +1,7 @@
 using MasterServerToolkit.CommandTerminal;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicNetworking
+namespace MasterServerToolkit.Demos.BasicNetworking
 {
     public class CustomClientTerminal : MonoBehaviour
     {

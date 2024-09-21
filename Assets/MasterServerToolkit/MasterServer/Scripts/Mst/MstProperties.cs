@@ -70,7 +70,7 @@ namespace MasterServerToolkit.MasterServer
         {
             foreach (KeyValuePair<string, string> pair in properties)
             {
-                properties[pair.Key] = pair.Value.Unscape();
+                properties[pair.Key] = pair.Value.Unescape();
             }
 
             return this;

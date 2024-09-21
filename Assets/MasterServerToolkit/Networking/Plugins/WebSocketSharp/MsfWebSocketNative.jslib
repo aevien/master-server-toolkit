@@ -1,4 +1,4 @@
-var LibraryWebSockets = {
+const LibraryWebSockets = {
     $webSocketInstances: [],
 
     MstSocketCreate: function (url) {

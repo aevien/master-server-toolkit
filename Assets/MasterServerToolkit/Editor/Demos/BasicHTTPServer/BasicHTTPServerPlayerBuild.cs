@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicHTTPServer
+namespace MasterServerToolkit.Demos.BasicHTTPServer
 {
     public class BasicHTTPServerPlayerBuild
     {

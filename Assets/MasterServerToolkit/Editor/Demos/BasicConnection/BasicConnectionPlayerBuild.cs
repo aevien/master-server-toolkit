@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicConnection
+namespace MasterServerToolkit.Demos.BasicConnection
 {
     public class BasicConnectionPlayerBuild
     {

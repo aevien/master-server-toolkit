@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace MasterServerToolkit.Examples.BasicWorlds
+namespace MasterServerToolkit.Demos.BasicWorlds
 {
     public class BasicWorldsBuild
     {

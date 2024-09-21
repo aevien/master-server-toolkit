@@ -1,6 +1,6 @@
 using MasterServerToolkit.Extensions;
 
-namespace MasterServerToolkit.Examples.BasicProfile
+namespace MasterServerToolkit.Demos.BasicProfile
 {
     public struct MessageOpCodes
     {
