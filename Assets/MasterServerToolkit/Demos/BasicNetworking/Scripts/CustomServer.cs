@@ -2,6 +2,7 @@ using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Demos.BasicNetworking
 {
@@ -26,15 +27,17 @@ namespace MasterServerToolkit.Demos.BasicNetworking
             RegisterMessageHandler(MessageCodes.MessageWithResponse, OnMessageWithResponseReceivedHandler);
         }
 
-        private void OnMessageWithResponseReceivedHandler(IIncomingMessage message)
+        private async Task OnMessageWithResponseReceivedHandler(IIncomingMessage message)
         {
             Logs.Info($"Server received messge from client: {message.AsString()}. Sending response to client");
             message.Respond("Hello from server!");
+            await Task.CompletedTask;
         }
 
-        private void OnMessageReceivedHandler(IIncomingMessage message)
+        private async Task OnMessageReceivedHandler(IIncomingMessage message)
         {
             Logs.Info($"Server received messge from client: {message.AsString()}");
+            await Task.CompletedTask;
         }
     }
 

@@ -3,6 +3,7 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -295,7 +296,7 @@ namespace MasterServerToolkit.MasterServer
 
         #region MESSAGE HANDLERS
 
-        protected virtual void OnSubscribeToNotificationsMessageHandler(IIncomingMessage message)
+        protected virtual Task OnSubscribeToNotificationsMessageHandler(IIncomingMessage message)
         {
             try
             {
@@ -307,14 +308,14 @@ namespace MasterServerToolkit.MasterServer
                 {
                     message.Respond(ResponseStatus.Unauthorized);
                     logger.Error("Unauthorized user is trying to subscribe to notifications");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // If is already subscribed
                 if (HasRecipient(userExtension.UserId))
                 {
                     message.Respond(ResponseStatus.Success);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Add new recipient
@@ -322,16 +323,16 @@ namespace MasterServerToolkit.MasterServer
 
                 // Respond about successfull subscription
                 message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
             // If we got another exception
             catch (Exception e)
             {
-                logger.Error(e.Message);
-                message.Respond(ResponseStatus.Error);
+                return Task.FromException(e);
             }
         }
 
-        protected virtual void OnUnsubscribeFromNotificationsMessageHandler(IIncomingMessage message)
+        protected virtual Task OnUnsubscribeFromNotificationsMessageHandler(IIncomingMessage message)
         {
             try
             {
@@ -347,16 +348,16 @@ namespace MasterServerToolkit.MasterServer
 
                 // Respond about successfull unsubscription
                 message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
             // If we got another exception
             catch (Exception e)
             {
-                logger.Error(e.Message);
-                message.Respond(ResponseStatus.Error);
+                return Task.FromException(e);
             }
         }
 
-        protected virtual void OnNotificationMessageHandler(IIncomingMessage message)
+        protected virtual Task OnNotificationMessageHandler(IIncomingMessage message)
         {
             try
             {
@@ -364,7 +365,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     message.Respond(ResponseStatus.Unauthorized);
                     logger.Error("The room tries to send a notification, but does not have the right to do so");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Parse notification
@@ -374,7 +375,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     message.Respond(ResponseStatus.Invalid);
                     logger.Error("Message cannot be empty");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Check if notification for room users
@@ -388,12 +389,12 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
             // If we got another exception
             catch (Exception e)
             {
-                logger.Error(e.Message);
-                message.Respond(ResponseStatus.Error);
+                return Task.FromException(e);
             }
         }
 

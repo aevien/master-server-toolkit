@@ -1,5 +1,6 @@
 using MasterServerToolkit.Networking;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -68,57 +69,75 @@ namespace MasterServerToolkit.MasterServer
 
         #region MESSAGES
 
-        private void ClientUpdateAchievementProgressRequestHandler(IIncomingMessage message)
+        private Task ClientUpdateAchievementProgressRequestHandler(IIncomingMessage message)
         {
-            var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
-
-            if (userExtension == null)
+            try
             {
-                message.Respond(ResponseStatus.Unauthorized);
-                return;
+                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+
+                if (userExtension == null)
+                {
+                    message.Respond(ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                var data = message.AsPacket<UpdateAchievementProgressPacket>();
+                var profileExtension = userExtension.Peer.GetExtension<ProfilePeerExtension>();
+                var achievementInfo = GetInfoById(data.id);
+
+                if (achievementInfo == null)
+                {
+                    message.Respond(ResponseStatus.NotFound);
+                    return Task.CompletedTask;
+                }
+
+                var achievementsProperty = profileExtension.Profile.Get<ObservableAchievements>(ProfilePropertyOpCodes.achievements);
+
+                if (!achievementsProperty.IsProgressMet(data.id))
+                {
+                    achievementsProperty.UpdateProgress(data.id, data.value, achievementInfo.value);
+                }
+
+                return Task.CompletedTask;
             }
-
-            var data = message.AsPacket<UpdateAchievementProgressPacket>();
-            var profileExtension = userExtension.Peer.GetExtension<ProfilePeerExtension>();
-            var achievementInfo = GetInfoById(data.id);
-
-            if (achievementInfo == null)
+            catch (System.Exception ex)
             {
-                message.Respond(ResponseStatus.NotFound);
-                return;
-            }
-
-            var achievementsProperty = profileExtension.Profile.Get<ObservableAchievements>(ProfilePropertyOpCodes.achievements);
-
-            if (!achievementsProperty.IsProgressMet(data.id))
-            {
-                achievementsProperty.UpdateProgress(data.id, data.value, achievementInfo.value);
+                return Task.FromException(ex);
             }
         }
 
-        private void ClientCheckAchievementProgressRequestHandler(IIncomingMessage message)
+        private Task ClientCheckAchievementProgressRequestHandler(IIncomingMessage message)
         {
-            var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
-
-            if (userExtension == null)
+            try
             {
-                message.Respond(ResponseStatus.Unauthorized);
-                return;
+                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+
+                if (userExtension == null)
+                {
+                    message.Respond(ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                var data = message.AsPacket<UpdateAchievementProgressPacket>();
+                var profileExtension = userExtension.Peer.GetExtension<ProfilePeerExtension>();
+                var achievementInfo = GetInfoById(message.AsString());
+
+                var achievementsProperty = profileExtension.Profile.Get<ObservableAchievements>(ProfilePropertyOpCodes.achievements);
+
+                if (achievementsProperty.ContainsProgress(data.id))
+                {
+                    message.Respond(achievementsProperty.IsProgressMet(data.id), ResponseStatus.Success);
+                }
+                else
+                {
+                    message.Respond(ResponseStatus.NotFound);
+                }
+
+                return Task.CompletedTask;
             }
-
-            var data = message.AsPacket<UpdateAchievementProgressPacket>();
-            var profileExtension = userExtension.Peer.GetExtension<ProfilePeerExtension>();
-            var achievementInfo = GetInfoById(message.AsString());
-
-            var achievementsProperty = profileExtension.Profile.Get<ObservableAchievements>(ProfilePropertyOpCodes.achievements);
-
-            if (achievementsProperty.ContainsProgress(data.id))
+            catch (System.Exception ex)
             {
-                message.Respond(achievementsProperty.IsProgressMet(data.id), ResponseStatus.Success);
-            }
-            else
-            {
-                message.Respond(ResponseStatus.NotFound);
+                return Task.FromException(ex);
             }
         }
 

@@ -13,7 +13,7 @@ namespace MasterServerToolkit.Localization
         private string comments = "#";
         private string rowsSeparator = "\n";
         private string colsSeparator = ";";
-        private string selectedLang = "ru";
+        private string selectedLang = "en";
         private readonly Dictionary<string, Dictionary<string, string>> _localization = new Dictionary<string, Dictionary<string, string>>();
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace MasterServerToolkit.Localization
             set
             {
                 string prevLanguage = selectedLang;
-                selectedLang = !string.IsNullOrEmpty(value) ? value.ToLower() : "ru";
+                selectedLang = !string.IsNullOrEmpty(value) ? value.ToLower() : "en";
 
                 if (prevLanguage != selectedLang)
                 {

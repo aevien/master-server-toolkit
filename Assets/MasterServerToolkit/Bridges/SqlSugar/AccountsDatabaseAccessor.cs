@@ -33,60 +33,38 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 
         public async Task<bool> CheckEmailConfirmationCodeAsync(string email, string code)
         {
-            return await Task.Run(() =>
+            using (SqlSugarClient db = new SqlSugarClient(configuration))
             {
-                try
-                {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
-                    {
-                        var entry = db.Queryable<EmailConfirmationData>().Where(i => i.Email == email).First();
+                var entry = await db.Queryable<EmailConfirmationData>().Where(i => i.Email == email).FirstAsync();
 
-                        if (entry != null && entry.Code == code)
-                        {
-                            db.Deleteable<EmailConfirmationData>().Where(i => i.Email == email).ExecuteCommand();
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                }
-                catch (Exception ex)
+                if (entry != null && entry.Code == code)
                 {
-                    Logger.Error(ex);
+                    await db.Deleteable<EmailConfirmationData>().Where(i => i.Email == email).ExecuteCommandAsync();
+                    return true;
+                }
+                else
+                {
                     return false;
                 }
-            });
+            }
         }
 
         public async Task<bool> CheckPasswordResetCodeAsync(string email, string code)
         {
-            return await Task.Run(() =>
+            using (SqlSugarClient db = new SqlSugarClient(configuration))
             {
-                try
-                {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
-                    {
-                        var entry = db.Queryable<PasswordResetData>().Where(i => i.Email == email).First();
+                var entry = await db.Queryable<PasswordResetData>().Where(i => i.Email == email).FirstAsync();
 
-                        if (entry != null && entry.Code == code)
-                        {
-                            db.Deleteable<PasswordResetData>().Where(i => i.Email == email).ExecuteCommand();
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                }
-                catch (Exception ex)
+                if (entry != null && entry.Code == code)
                 {
-                    Logger.Error(ex);
+                    await db.Deleteable<PasswordResetData>().Where(i => i.Email == email).ExecuteCommandAsync();
+                    return true;
+                }
+                else
+                {
                     return false;
                 }
-            });
+            }
         }
 
         public IAccountInfoData CreateAccountInstance()
@@ -96,339 +74,301 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 
         public void Dispose() { }
 
-        private void UpdateLastLogin(SqlSugarClient db, AccountInfoData account)
+        private async Task UpdateLastLogin(SqlSugarClient db, AccountInfoData account)
         {
-            try
-            {
-                account.LastLogin = DateTime.UtcNow;
-                db.Updateable<AccountInfoData>(a => a.LastLogin == account.LastLogin).Where(a => a.Id == account.Id).ExecuteCommand();
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex);
-            }
+            account.LastLogin = DateTime.UtcNow;
+            await db.Updateable<AccountInfoData>(a => a.LastLogin == account.LastLogin).Where(a => a.Id == account.Id).ExecuteCommandAsync();
         }
 
         public async Task<IAccountInfoData> GetAccountByDeviceIdAsync(string deviceId)
         {
-            return await Task.Run(async () =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    var account = await db.Queryable<AccountInfoData>().Where(a => a.DeviceId == deviceId).FirstAsync();
+
+                    if (account != null)
                     {
-                        var account = db.Queryable<AccountInfoData>().Where(a => a.DeviceId == deviceId).First();
-
-                        if (account != null)
-                        {
-                            account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
-                            UpdateLastLogin(db, account);
-                        }
-
-                        return account;
+                        account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
+                        await UpdateLastLogin(db, account);
                     }
+
+                    return account;
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                    return null;
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
         }
 
         public async Task<IAccountInfoData> GetAccountByEmailAsync(string email)
         {
-            return await Task.Run(async () =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    var account = await db.Queryable<AccountInfoData>().Where(a => a.Email == email).FirstAsync();
+
+                    if (account != null)
                     {
-                        var account = db.Queryable<AccountInfoData>().Where(a => a.Email == email).First();
-
-                        if (account != null)
-                        {
-                            account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
-                            UpdateLastLogin(db, account);
-                        }
-
-                        return account;
+                        account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
+                        await UpdateLastLogin(db, account);
                     }
+
+                    return account;
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                    return null;
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
         }
 
         public async Task<IAccountInfoData> GetAccountByExtraPropertyAsync(string propertyKey, string propertyValue)
         {
-            return await Task.Run(async () =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    var property = await db.Queryable<ExtraPropertyData>()
+                        .Where(ep => ep.PropertyKey == propertyKey
+                         && ep.PropertyValue == propertyValue).FirstAsync();
+
+                    if (property != null)
                     {
-                        var property = db.Queryable<ExtraPropertyData>()
-                            .Where(ep => ep.PropertyKey == propertyKey
-                             && ep.PropertyValue == propertyValue).First();
-
-                        if (property != null)
-                        {
-                            return await GetAccountByIdAsync(property.AccountId);
-                        }
-
-                        return null;
+                        return await GetAccountByIdAsync(property.AccountId);
                     }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
+
                     return null;
                 }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
         }
 
         public async Task<IAccountInfoData> GetAccountByIdAsync(string accountId)
         {
-            return await Task.Run(async () =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    var account = await db.Queryable<AccountInfoData>().Where(a => a.Id == accountId).FirstAsync();
+
+                    if (account != null)
                     {
-                        var account = db.Queryable<AccountInfoData>().Where(a => a.Id == accountId).First();
-
-                        if (account != null)
-                        {
-                            account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
-                            UpdateLastLogin(db, account);
-                        }
-
-                        return account;
+                        account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
+                        await UpdateLastLogin(db, account);
                     }
+
+                    return account;
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                    return null;
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
         }
 
         public async Task<IAccountInfoData> GetAccountByTokenAsync(string token)
         {
-            return await Task.Run(async () =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    var account = await db.Queryable<AccountInfoData>().Where(a => a.Token == token).FirstAsync();
+
+                    if (account != null)
                     {
-                        var account = db.Queryable<AccountInfoData>().Where(a => a.Token == token).First();
-
-                        if (account != null)
-                        {
-                            account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
-                            UpdateLastLogin(db, account);
-                        }
-
-                        return account;
+                        account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
+                        await UpdateLastLogin(db, account);
                     }
+
+                    return account;
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                    return null;
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
         }
 
         public async Task<IAccountInfoData> GetAccountByUsernameAsync(string username)
         {
-            return await Task.Run(async () =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    var account = await db.Queryable<AccountInfoData>().Where(a => a.Username == username).FirstAsync();
+
+                    if (account != null)
                     {
-                        var account = db.Queryable<AccountInfoData>().Where(a => a.Username == username).First();
-
-                        if (account != null)
-                        {
-                            account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
-                            UpdateLastLogin(db, account);
-                        }
-
-                        return account;
+                        account.ExtraProperties = await GetExtraPropertiesAsync(db, account.Id);
+                        await UpdateLastLogin(db, account);
                     }
+
+                    return account;
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                    return null;
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
         }
 
         public async Task<Dictionary<string, string>> GetExtraPropertiesAsync(SqlSugarClient db, string accountId)
         {
-            return await Task.Run(() =>
+            try
             {
-                try
-                {
-                    var extraProperties = new Dictionary<string, string>();
+                var extraProperties = new Dictionary<string, string>();
 
-                    foreach (var property in db.Queryable<ExtraPropertyData>().Where(p => p.AccountId == accountId).ToList())
-                    {
-                        extraProperties.Add(property.PropertyKey, property.PropertyValue);
-                    }
-
-                    return extraProperties;
-                }
-                catch (Exception ex)
+                foreach (var property in await db.Queryable<ExtraPropertyData>().Where(p => p.AccountId == accountId).ToListAsync())
                 {
-                    Logger.Error(ex);
-                    return new Dictionary<string, string>();
+                    extraProperties.Add(property.PropertyKey, property.PropertyValue);
                 }
-            });
+
+                return extraProperties;
+            }
+            catch
+            {
+                Logger.Error("Could not get extra properties");
+                return null;
+            }
         }
 
-        public Task<string> InsertAccountAsync(IAccountInfoData account)
+        public async Task<string> InsertAccountAsync(IAccountInfoData account)
         {
-            return Task.Run(() =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    await db.Insertable<AccountInfoData>(account).ExecuteCommandAsync();
+
+                    List<ExtraPropertyData> extraProperties = new List<ExtraPropertyData>();
+
+                    foreach (var property in account.ExtraProperties)
                     {
-                        db.Insertable<AccountInfoData>(account).ExecuteCommand();
-
-                        List<ExtraPropertyData> extraProperties = new List<ExtraPropertyData>();
-
-                        foreach (var property in account.ExtraProperties)
+                        extraProperties.Add(new ExtraPropertyData()
                         {
-                            extraProperties.Add(new ExtraPropertyData()
-                            {
-                                AccountId = account.Id,
-                                PropertyKey = property.Key,
-                                PropertyValue = property.Value
-                            });
-                        }
-
-                        if (extraProperties.Count > 0)
-                        {
-                            db.Insertable(extraProperties).ExecuteCommand();
-                        }
+                            AccountId = account.Id,
+                            PropertyKey = property.Key,
+                            PropertyValue = property.Value
+                        });
                     }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
+
+                    if (extraProperties.Count > 0)
+                    {
+                        await db.Insertable(extraProperties).ExecuteCommandAsync();
+                    }
                 }
 
                 return account.Id;
-            });
+            }
+            catch
+            {
+                Logger.Error($"Could not insert user {account.Username} account with id {account.Id}");
+                throw;
+            }
         }
 
-        public Task InsertOrUpdateTokenAsync(IAccountInfoData account, string token)
+        public async Task InsertOrUpdateTokenAsync(IAccountInfoData account, string token)
         {
-            return Task.Run(() =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
-                    {
-                        db.Updateable<AccountInfoData>(a => a.Token == token).Where(a => a.Id == account.Id).ExecuteCommand();
-                    }
+                    await db.Updateable<AccountInfoData>(a => a.Token == token).Where(a => a.Id == account.Id).ExecuteCommandAsync();
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                }
-            });
+            }
+            catch
+            {
+                Logger.Error($"Could not insert token of account {account.Username} with id {account.Id}");
+                throw;
+            }
         }
 
-        public Task SaveEmailConfirmationCodeAsync(string email, string code)
+        public async Task SaveEmailConfirmationCodeAsync(string email, string code)
         {
-            return Task.Run(() =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    await db.Storageable(new EmailConfirmationData()
                     {
-                        db.Storageable(new EmailConfirmationData()
-                        {
-                            Email = email,
-                            Code = code
-                        }).WhereColumns(new string[] { "email" }).ExecuteCommand();
-                    }
+                        Email = email,
+                        Code = code
+                    }).WhereColumns(new string[] { "email" }).ExecuteCommandAsync();
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                }
-            });
+            }
+            catch
+            {
+                Logger.Error($"Could not save email conformation code. Email {email}");
+                throw;
+            }
         }
 
-        public Task SavePasswordResetCodeAsync(string email, string code)
+        public async Task SavePasswordResetCodeAsync(string email, string code)
         {
-            return Task.Run(() =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    await db.Storageable(new PasswordResetData()
                     {
-                        db.Storageable(new PasswordResetData()
-                        {
-                            Email = email,
-                            Code = code
-                        }).WhereColumns(new string[] { "email" }).ExecuteCommand();
-                    }
+                        Email = email,
+                        Code = code
+                    }).WhereColumns(new string[] { "email" }).ExecuteCommandAsync();
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Could not save pasword reset code. Email {email}");
+                throw;
+            }
         }
 
-        public Task UpdateAccountAsync(IAccountInfoData account)
+        public async Task UpdateAccountAsync(IAccountInfoData account)
         {
-            return Task.Run(() =>
+            try
             {
-                try
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    using (SqlSugarClient db = new SqlSugarClient(configuration))
+                    account.Updated = DateTime.UtcNow;
+
+                    await db.Updateable<AccountInfoData>(account).WhereColumns(new string[] { "id" }).ExecuteCommandAsync();
+
+                    List<ExtraPropertyData> extraProperties = new List<ExtraPropertyData>();
+
+                    foreach (var property in account.ExtraProperties)
                     {
-                        account.Updated = DateTime.UtcNow;
-
-                        db.Updateable<AccountInfoData>(account).WhereColumns(new string[] { "id" }).ExecuteCommand();
-
-                        List<ExtraPropertyData> extraProperties = new List<ExtraPropertyData>();
-
-                        foreach (var property in account.ExtraProperties)
+                        extraProperties.Add(new ExtraPropertyData()
                         {
-                            extraProperties.Add(new ExtraPropertyData()
-                            {
-                                AccountId = account.Id,
-                                PropertyKey = property.Key,
-                                PropertyValue = property.Value
-                            });
-                        }
+                            AccountId = account.Id,
+                            PropertyKey = property.Key,
+                            PropertyValue = property.Value
+                        });
+                    }
 
-                        if (extraProperties.Count > 0)
-                        {
-                            db.Storageable(extraProperties).WhereColumns(new string[] { "account_id", "property_key" }).ExecuteCommand();
-                        }
+                    if (extraProperties.Count > 0)
+                    {
+                        await db.Storageable(extraProperties).WhereColumns(new string[] { "account_id", "property_key" }).ExecuteCommandAsync();
                     }
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                throw;
+            }
         }
     }
 }

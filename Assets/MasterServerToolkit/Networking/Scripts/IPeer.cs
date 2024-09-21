@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Networking
 {
+    public delegate Task AsyncIncommingMessageHandler(IIncomingMessage message);
     public delegate void IncommingMessageHandler(IIncomingMessage message);
     public delegate void ResponseCallback(ResponseStatus status, IIncomingMessage response);
 

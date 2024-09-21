@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -438,151 +439,182 @@ namespace MasterServerToolkit.MasterServer
         /// Fired whe connected client has made request to spawn process
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void ClientsSpawnRequestHandler(IIncomingMessage message)
+        protected virtual Task ClientsSpawnRequestHandler(IIncomingMessage message)
         {
-            // Parse data from message
-            var options = MstProperties.FromBytes(message.AsBytes());
-            var peer = message.Peer;
-
-            logger.Info($"Client {peer.Id} requested to spawn room with options: {options}");
-
-            if (spawnersList.Count == 0)
+            try
             {
-                logger.Error("But no registered spawner was found!");
-                message.Respond("No registered spawner was found", ResponseStatus.Failed);
-                return;
-            }
+                // Parse data from message
+                var options = MstProperties.FromBytes(message.AsBytes());
+                var peer = message.Peer;
 
-            if (!CanClientSpawn(peer, options))
-            {
-                logger.Error("Unauthorized request");
-                message.Respond(ResponseStatus.Unauthorized);
-                return;
-            }
+                logger.Info($"Client {peer.Id} requested to spawn room with options: {options}");
 
-            // Try to find existing request to prevent new one
-            SpawnTask prevRequest = peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
-
-            if (prevRequest != null && !prevRequest.IsDoneStartingProcess)
-            {
-                logger.Warn("And he already has an active request");
-                // Client has unfinished request
-                message.Respond("You already have an active request", ResponseStatus.Failed);
-                return;
-            }
-
-            // Create a new spawn task
-            var task = Spawn(options, options.AsString(Mst.Args.Names.RoomRegion));
-
-            // If spawn task is not created
-            if (task == null)
-            {
-                logger.Warn("But all the servers are busy. Let him try again later");
-                message.Respond("All the servers are busy. Try again later", ResponseStatus.Failed);
-                return;
-            }
-
-            // Save spawn task requester
-            task.Requester = peer;
-
-            // Save the task as peer property
-            peer.SetProperty(MstPeerPropertyCodes.ClientSpawnRequest, task);
-
-            // Listen to status changes
-            task.OnStatusChangedEvent += (status) =>
-            {
-                // Send status update
-                var msg = Mst.Create.Message(MstOpCodes.SpawnRequestStatusChange, new SpawnStatusUpdatePacket()
+                if (spawnersList.Count == 0)
                 {
-                    SpawnId = task.Id,
-                    Status = status
-                });
-
-                if (task.Requester != null && task.Requester.IsConnected)
-                {
-                    peer.SendMessage(msg);
+                    logger.Error("But no registered spawner was found!");
+                    message.Respond("No registered spawner was found", ResponseStatus.Failed);
+                    return Task.CompletedTask;
                 }
-            };
 
-            message.Respond(task.Id, ResponseStatus.Success);
+                if (!CanClientSpawn(peer, options))
+                {
+                    logger.Error("Unauthorized request");
+                    message.Respond(ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                // Try to find existing request to prevent new one
+                SpawnTask prevRequest = peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
+
+                if (prevRequest != null && !prevRequest.IsDoneStartingProcess)
+                {
+                    logger.Warn("And he already has an active request");
+                    // Client has unfinished request
+                    message.Respond("You already have an active request", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // Create a new spawn task
+                var task = Spawn(options, options.AsString(Mst.Args.Names.RoomRegion));
+
+                // If spawn task is not created
+                if (task == null)
+                {
+                    logger.Warn("But all the servers are busy. Let him try again later");
+                    message.Respond("All the servers are busy. Try again later", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // Save spawn task requester
+                task.Requester = peer;
+
+                // Save the task as peer property
+                peer.SetProperty(MstPeerPropertyCodes.ClientSpawnRequest, task);
+
+                // Listen to status changes
+                task.OnStatusChangedEvent += (status) =>
+                {
+                    // Send status update
+                    var msg = Mst.Create.Message(MstOpCodes.SpawnRequestStatusChange, new SpawnStatusUpdatePacket()
+                    {
+                        SpawnId = task.Id,
+                        Status = status
+                    });
+
+                    if (task.Requester != null && task.Requester.IsConnected)
+                    {
+                        peer.SendMessage(msg);
+                    }
+                };
+
+                message.Respond(task.Id, ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
-        private void AbortSpawnRequestHandler(IIncomingMessage message)
+        private Task AbortSpawnRequestHandler(IIncomingMessage message)
         {
-            SpawnTask prevRequest = message.Peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
-
-            if (prevRequest == null)
+            try
             {
-                message.Respond("There's nothing to abort", ResponseStatus.Failed);
-                return;
-            }
+                SpawnTask prevRequest = message.Peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
 
-            if (prevRequest.Status >= SpawnStatus.Finalized)
+                if (prevRequest == null)
+                {
+                    message.Respond("There's nothing to abort", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (prevRequest.Status >= SpawnStatus.Finalized)
+                {
+                    message.Respond("You can't abort a completed request", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (prevRequest.Status <= SpawnStatus.None)
+                {
+                    message.Respond("Already aborting", ResponseStatus.Success);
+                    return Task.CompletedTask;
+                }
+
+                logger.Debug($"Client [{message.Peer.Id}] requested to terminate process [{prevRequest.Id}]");
+
+                prevRequest.Abort();
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
             {
-                message.Respond("You can't abort a completed request", ResponseStatus.Failed);
-                return;
+                return Task.FromException(ex);
             }
-
-            if (prevRequest.Status <= SpawnStatus.None)
-            {
-                message.Respond("Already aborting", ResponseStatus.Success);
-                return;
-            }
-
-            logger.Debug($"Client [{message.Peer.Id}] requested to terminate process [{prevRequest.Id}]");
-
-            prevRequest.Abort();
-
-            message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void GetCompletionDataRequestHandler(IIncomingMessage message)
+        protected virtual Task GetCompletionDataRequestHandler(IIncomingMessage message)
         {
-            var spawnId = message.AsInt();
-
-            if (!spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
+            try
             {
-                message.Respond("Invalid request", ResponseStatus.Failed);
-                return;
-            }
+                var spawnId = message.AsInt();
 
-            if (task.Requester != message.Peer)
+                if (!spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
+                {
+                    message.Respond("Invalid request", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (task.Requester != message.Peer)
+                {
+                    message.Respond("You're not the requester", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                if (task.FinalizationPacket == null)
+                {
+                    message.Respond("Task has no completion data", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // Respond with data (dictionary of strings)
+                message.Respond(task.FinalizationPacket.FinalizationData.ToBytes(), ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
             {
-                message.Respond("You're not the requester", ResponseStatus.Unauthorized);
-                return;
+                return Task.FromException(ex);
             }
-
-            if (task.FinalizationPacket == null)
-            {
-                message.Respond("Task has no completion data", ResponseStatus.Failed);
-                return;
-            }
-
-            // Respond with data (dictionary of strings)
-            message.Respond(task.FinalizationPacket.FinalizationData.ToBytes(), ResponseStatus.Success);
         }
 
-        protected virtual void RegisterSpawnerRequestHandler(IIncomingMessage message)
+        protected virtual Task RegisterSpawnerRequestHandler(IIncomingMessage message)
         {
-            logger.Debug($"Client [{message.Peer.Id}] requested to be registered as spawner");
-
-            // Check if peer has permissions to register spawner
-            if (!HasCreationPermissions(message.Peer))
+            try
             {
-                message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
-                return;
+                logger.Debug($"Client [{message.Peer.Id}] requested to be registered as spawner");
+
+                // Check if peer has permissions to register spawner
+                if (!HasCreationPermissions(message.Peer))
+                {
+                    message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                // Read options
+                var options = message.AsPacket<SpawnerOptions>();
+
+                // Create new spawner
+                var spawner = CreateSpawner(message.Peer, options);
+
+                logger.Debug($"Client [{message.Peer.Id}] was successfully registered as spawner [{spawner.SpawnerId}] with options: {options}");
+
+                // Respond with spawner id
+                message.Respond(spawner.SpawnerId, ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-
-            // Read options
-            var options = message.AsPacket<SpawnerOptions>();
-
-            // Create new spawner
-            var spawner = CreateSpawner(message.Peer, options);
-
-            logger.Debug($"Client [{message.Peer.Id}] was successfully registered as spawner [{spawner.SpawnerId}] with options: {options}");
-
-            // Respond with spawner id
-            message.Respond(spawner.SpawnerId, ResponseStatus.Success);
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
         /// <summary>
@@ -590,89 +622,133 @@ namespace MasterServerToolkit.MasterServer
         /// to notify server that it was started
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void RegisterSpawnedProcessRequestHandler(IIncomingMessage message)
+        protected virtual Task RegisterSpawnedProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket<RegisterSpawnedProcessPacket>();
-
-            // Try get spawn task by ID
-            if (!spawnTasksList.TryGetValue(data.SpawnId, out SpawnTask task))
+            try
             {
-                message.Respond("Invalid spawn task", ResponseStatus.Failed);
-                logger.Error("Process tried to register to an unknown task");
-                return;
-            }
+                var data = message.AsPacket<RegisterSpawnedProcessPacket>();
 
-            // Check spawn task unique code
-            if (task.UniqueCode != data.SpawnCode)
+                // Try get spawn task by ID
+                if (!spawnTasksList.TryGetValue(data.SpawnId, out SpawnTask task))
+                {
+                    message.Respond("Invalid spawn task", ResponseStatus.Failed);
+                    logger.Error("Process tried to register to an unknown task");
+                    return Task.CompletedTask;
+                }
+
+                // Check spawn task unique code
+                if (task.UniqueCode != data.SpawnCode)
+                {
+                    message.Respond("Unauthorized", ResponseStatus.Unauthorized);
+                    logger.Error("Spawned process tried to register, but failed due to mismaching unique code");
+                    return Task.CompletedTask;
+                }
+
+                // Set task as registered
+                task.OnRegistered(message.Peer);
+
+                // Invoke event
+                OnSpawnedProcessRegisteredEvent?.Invoke(task, message.Peer);
+
+                // Respon to requester
+                message.Respond(task.Options.ToBytes(), ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
             {
-                message.Respond("Unauthorized", ResponseStatus.Unauthorized);
-                logger.Error("Spawned process tried to register, but failed due to mismaching unique code");
-                return;
+                return Task.FromException(ex);
             }
-
-            // Set task as registered
-            task.OnRegistered(message.Peer);
-
-            // Invoke event
-            OnSpawnedProcessRegisteredEvent?.Invoke(task, message.Peer);
-
-            // Respon to requester
-            message.Respond(task.Options.ToBytes(), ResponseStatus.Success);
         }
 
-        protected virtual void CompleteSpawnProcessRequestHandler(IIncomingMessage message)
+        protected virtual Task CompleteSpawnProcessRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket<SpawnFinalizationPacket>();
-
-            if (spawnTasksList.TryGetValue(data.SpawnTaskId, out SpawnTask task))
+            try
             {
-                if (task.RegisteredPeer != message.Peer)
+                var data = message.AsPacket<SpawnFinalizationPacket>();
+
+                if (spawnTasksList.TryGetValue(data.SpawnTaskId, out SpawnTask task))
                 {
-                    message.Respond(ResponseStatus.Unauthorized);
-                    logger.Error("Spawned process tried to complete spawn task, but it's not the same peer who registered to the task");
+                    if (task.RegisteredPeer != message.Peer)
+                    {
+                        message.Respond(ResponseStatus.Unauthorized);
+                        logger.Error("Spawned process tried to complete spawn task, but it's not the same peer who registered to the task");
+                    }
+                    else
+                    {
+                        task.OnFinalized(data);
+                        message.Respond(ResponseStatus.Success);
+                    }
                 }
                 else
                 {
-                    task.OnFinalized(data);
-                    message.Respond(ResponseStatus.Success);
+                    message.Respond(ResponseStatus.Invalid);
+                    logger.Error("Process tried to complete to an unknown task");
                 }
-            }
-            else
-            {
-                message.Respond(ResponseStatus.Invalid);
-                logger.Error("Process tried to complete to an unknown task");
-            }
-        }
 
-        protected virtual void SetProcessKilledRequestHandler(IIncomingMessage message)
-        {
-            var spawnId = message.AsInt();
-
-            if (spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
             {
-                task.OnProcessKilled();
-                task.Spawner.OnProcessKilled();
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void SetProcessStartedRequestHandler(IIncomingMessage message)
+        protected virtual Task SetProcessKilledRequestHandler(IIncomingMessage message)
         {
-            var spawnId = message.AsInt();
-
-            if (spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
+            try
             {
-                task.OnProcessStarted();
-                task.Spawner.OnProcessStarted();
+                var spawnId = message.AsInt();
+
+                if (spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
+                {
+                    task.OnProcessKilled();
+                    task.Spawner.OnProcessKilled();
+                }
+
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex) ;
             }
         }
 
-        private void SetSpawnedProcessesCountRequestHandler(IIncomingMessage message)
+        protected virtual Task SetProcessStartedRequestHandler(IIncomingMessage message)
         {
-            var packet = message.AsPacket<IntPairPacket>();
-
-            if (spawnersList.TryGetValue(packet.A, out RegisteredSpawner spawner))
+            try
             {
-                spawner.UpdateProcessesCount(packet.B);
+                var spawnId = message.AsInt();
+
+                if (spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
+                {
+                    task.OnProcessStarted();
+                    task.Spawner.OnProcessStarted();
+                }
+
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
+        }
+
+        private Task SetSpawnedProcessesCountRequestHandler(IIncomingMessage message)
+        {
+            try
+            {
+                var packet = message.AsPacket<IntPairPacket>();
+
+                if (spawnersList.TryGetValue(packet.A, out RegisteredSpawner spawner))
+                {
+                    spawner.UpdateProcessesCount(packet.B);
+                }
+
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
             }
         }
 

@@ -1,6 +1,8 @@
 ﻿using MasterServerToolkit.Networking;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -160,308 +162,450 @@ namespace MasterServerToolkit.MasterServer
 
         #region INCOMING MESSAGES HANDLERS
 
-        protected virtual void CreateLobbyHandle(IIncomingMessage message)
+        protected virtual Task CreateLobbyHandle(IIncomingMessage message)
         {
-            // We may need to check permission of requester
-            if (!HasPermissionToCreate(message.Peer))
+            try
             {
-                message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
-                return;
+                // We may need to check permission of requester
+                if (!HasPermissionToCreate(message.Peer))
+                {
+                    message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                // Let's get or create new lobby user peer extension
+                var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
+
+                // If peer is already in a lobby and system does not allow to create if user is joined
+                if (dontAllowCreatingIfJoined && lobbyUser.CurrentLobby != null)
+                {
+                    message.Respond("You are already in a lobby", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // Deserialize properties of the lobby
+                var options = MstProperties.FromBytes(message.AsBytes());
+
+                // Get lobby factory Id or empty string
+                string lobbyFactoryId = options.AsString(MstDictKeys.LOBBY_FACTORY_ID);
+
+                if (string.IsNullOrEmpty(lobbyFactoryId))
+                {
+                    message.Respond("Invalid request (undefined factory)", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // Get the lobby factory
+                factories.TryGetValue(lobbyFactoryId, out ILobbyFactory factory);
+
+                if (factory == null)
+                {
+                    message.Respond("Unavailable lobby factory", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                var newLobby = factory.CreateLobby(options, message.Peer);
+
+                if (!AddLobby(newLobby))
+                {
+                    message.Respond("Lobby registration failed", ResponseStatus.Error);
+                    return Task.CompletedTask;
+                }
+
+                logger.Info("Lobby created: " + newLobby.Id);
+
+                // Respond with success and lobby id
+                message.Respond(newLobby.Id, ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-
-            // Let's get or create new lobby user peer extension
-            var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
-
-            // If peer is already in a lobby and system does not allow to create if user is joined
-            if (dontAllowCreatingIfJoined && lobbyUser.CurrentLobby != null)
+            catch (Exception ex)
             {
-                message.Respond("You are already in a lobby", ResponseStatus.Failed);
-                return;
+                return Task.FromException(ex);
             }
-
-            // Deserialize properties of the lobby
-            var options = MstProperties.FromBytes(message.AsBytes());
-
-            // Get lobby factory Id or empty string
-            string lobbyFactoryId = options.AsString(MstDictKeys.LOBBY_FACTORY_ID);
-
-            if (string.IsNullOrEmpty(lobbyFactoryId))
-            {
-                message.Respond("Invalid request (undefined factory)", ResponseStatus.Failed);
-                return;
-            }
-
-            // Get the lobby factory
-            factories.TryGetValue(lobbyFactoryId, out ILobbyFactory factory);
-
-            if (factory == null)
-            {
-                message.Respond("Unavailable lobby factory", ResponseStatus.Failed);
-                return;
-            }
-
-            var newLobby = factory.CreateLobby(options, message.Peer);
-
-            if (!AddLobby(newLobby))
-            {
-                message.Respond("Lobby registration failed", ResponseStatus.Error);
-                return;
-            }
-
-            logger.Info("Lobby created: " + newLobby.Id);
-
-            // Respond with success and lobby id
-            message.Respond(newLobby.Id, ResponseStatus.Success);
         }
 
         /// <summary>
         /// Handles a request from user to join a lobby
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void JoinLobbyHandler(IIncomingMessage message)
+        protected virtual Task JoinLobbyHandler(IIncomingMessage message)
         {
-            var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
-
-            if (lobbyUser.CurrentLobby != null)
+            try
             {
-                message.Respond("You're already in a lobby", ResponseStatus.Failed);
-                return;
+                var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
+
+                if (lobbyUser.CurrentLobby != null)
+                {
+                    message.Respond("You're already in a lobby", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                var lobbyId = message.AsInt();
+
+                lobbies.TryGetValue(lobbyId, out ILobby lobby);
+
+                if (lobby == null)
+                {
+                    message.Respond("Lobby was not found", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (!lobby.AddPlayer(lobbyUser, out string error))
+                {
+                    message.Respond(error ?? "Failed to add player to lobby", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                var data = lobby.GenerateLobbyData(lobbyUser);
+
+                message.Respond(data, ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-
-            var lobbyId = message.AsInt();
-
-            lobbies.TryGetValue(lobbyId, out ILobby lobby);
-
-            if (lobby == null)
+            catch (Exception ex)
             {
-                message.Respond("Lobby was not found", ResponseStatus.Failed);
-                return;
+                return Task.FromException(ex);
             }
-
-            if (!lobby.AddPlayer(lobbyUser, out string error))
-            {
-                message.Respond(error ?? "Failed to add player to lobby", ResponseStatus.Failed);
-                return;
-            }
-
-            var data = lobby.GenerateLobbyData(lobbyUser);
-
-            message.Respond(data, ResponseStatus.Success);
         }
 
         /// <summary>
         /// Handles a request from user to leave a lobby
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void LeaveLobbyHandler(IIncomingMessage message)
+        protected virtual Task LeaveLobbyHandler(IIncomingMessage message)
         {
-            var lobbyId = message.AsInt();
-
-            lobbies.TryGetValue(lobbyId, out ILobby lobby);
-
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
-
-            if (lobby != null)
+            try
             {
-                lobby.RemovePlayer(lobbiesExt);
-            }
+                var lobbyId = message.AsInt();
 
-            message.Respond(ResponseStatus.Success);
-        }
+                lobbies.TryGetValue(lobbyId, out ILobby lobby);
 
-        protected virtual void SetLobbyPropertiesMessageHandler(IIncomingMessage message)
-        {
-            var data = message.AsPacket<LobbyPropertiesSetPacket>();
+                var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
 
-            lobbies.TryGetValue(data.LobbyId, out ILobby lobby);
-
-            if (lobby == null)
-            {
-                message.Respond("Lobby was not found", ResponseStatus.Failed);
-                return;
-            }
-
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
-
-            foreach (var dataProperty in data.Properties.ToDictionary())
-            {
-                if (!lobby.SetProperty(lobbiesExt, dataProperty.Key, dataProperty.Value))
+                if (lobby != null)
                 {
-                    message.Respond("Failed to set the property: " + dataProperty.Key,
-                        ResponseStatus.Failed);
-                    return;
+                    lobby.RemovePlayer(lobbiesExt);
                 }
-            }
 
-            message.Respond(ResponseStatus.Success);
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
-        private void SetMyPropertiesMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task SetLobbyPropertiesMessageHandler(IIncomingMessage message)
         {
-            // Get lobby user peer extension
-            var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
-
-            // Get current lobby this user joined in
-            var lobby = lobbyUser.CurrentLobby;
-
-            if (lobby == null)
+            try
             {
-                message.Respond("Lobby was not found", ResponseStatus.Failed);
-                return;
-            }
+                var data = message.AsPacket<LobbyPropertiesSetPacket>();
 
-            // Properties to be changed
-            var properties = new Dictionary<string, string>().FromBytes(message.AsBytes());
+                lobbies.TryGetValue(data.LobbyId, out ILobby lobby);
 
-            // Get member of lobby by its lobby user extension
-            var member = lobby.GetMemberByExtension(lobbyUser);
-
-            foreach (var dataProperty in properties)
-            {
-                // We don't change properties directly,
-                // because we want to allow an implementation of lobby
-                // to do "sanity" checking
-                if (!lobby.SetPlayerProperty(member, dataProperty.Key, dataProperty.Value))
+                if (lobby == null)
                 {
-                    message.Respond("Failed to set property: " + dataProperty.Key, ResponseStatus.Failed);
-                    return;
+                    message.Respond("Lobby was not found", ResponseStatus.Failed);
+                    return Task.CompletedTask;
                 }
-            }
 
-            message.Respond(ResponseStatus.Success);
+                var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
+
+                foreach (var dataProperty in data.Properties.ToDictionary())
+                {
+                    if (!lobby.SetProperty(lobbiesExt, dataProperty.Key, dataProperty.Value))
+                    {
+                        message.Respond("Failed to set the property: " + dataProperty.Key,
+                            ResponseStatus.Failed);
+
+                        return Task.CompletedTask;
+                    }
+                }
+
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
-        protected virtual void SetLobbyAsReadyMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        private Task SetMyPropertiesMessageHandler(IIncomingMessage message)
         {
-            var isReady = message.AsInt() > 0;
-
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
-            var lobby = lobbiesExt.CurrentLobby;
-
-            if (lobby == null)
+            try
             {
-                message.Respond("You're not in a lobby", ResponseStatus.Failed);
-                return;
+                // Get lobby user peer extension
+                var lobbyUser = GetOrCreateLobbyUserPeerExtension(message.Peer);
+
+                // Get current lobby this user joined in
+                var lobby = lobbyUser.CurrentLobby;
+
+                if (lobby == null)
+                {
+                    message.Respond("Lobby was not found", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // Properties to be changed
+                var properties = new Dictionary<string, string>().FromBytes(message.AsBytes());
+
+                // Get member of lobby by its lobby user extension
+                var member = lobby.GetMemberByExtension(lobbyUser);
+
+                foreach (var dataProperty in properties)
+                {
+                    // We don't change properties directly,
+                    // because we want to allow an implementation of lobby
+                    // to do "sanity" checking
+                    if (!lobby.SetPlayerProperty(member, dataProperty.Key, dataProperty.Value))
+                    {
+                        message.Respond("Failed to set property: " + dataProperty.Key, ResponseStatus.Failed);
+                        return Task.CompletedTask;
+                    }
+                }
+
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-
-            var member = lobby.GetMemberByExtension(lobbiesExt);
-
-            if (member == null)
+            catch (Exception ex)
             {
-                message.Respond("Invalid request", ResponseStatus.Failed);
-                return;
+                return Task.FromException(ex);
             }
-
-            lobby.SetReadyState(member, isReady);
-            message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void JoinLobbyTeamMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task SetLobbyAsReadyMessageHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket<LobbyJoinTeamPacket>();
-
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
-            var lobby = lobbiesExt.CurrentLobby;
-
-            if (lobby == null)
+            try
             {
-                message.Respond("You're not in a lobby", ResponseStatus.Failed);
-                return;
+                var isReady = message.AsInt() > 0;
+
+                var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
+                var lobby = lobbiesExt.CurrentLobby;
+
+                if (lobby == null)
+                {
+                    message.Respond("You're not in a lobby", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                var member = lobby.GetMemberByExtension(lobbiesExt);
+
+                if (member == null)
+                {
+                    message.Respond("Invalid request", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                lobby.SetReadyState(member, isReady);
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-
-            var player = lobby.GetMemberByExtension(lobbiesExt);
-
-            if (player == null)
+            catch (Exception ex)
             {
-                message.Respond("Invalid request", ResponseStatus.Failed);
-                return;
+                return Task.FromException(ex);
             }
-
-            if (!lobby.TryJoinTeam(data.TeamName, player))
-            {
-                message.Respond("Failed to join a team: " + data.TeamName, ResponseStatus.Failed);
-                return;
-            }
-
-            message.Respond(ResponseStatus.Success);
         }
 
-        protected virtual void SendMessageToLobbyChatMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task JoinLobbyTeamMessageHandler(IIncomingMessage message)
         {
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
-            var lobby = lobbiesExt.CurrentLobby;
-
-            var member = lobby.GetMemberByExtension(lobbiesExt);
-
-            // Invalid request
-            if (member == null)
+            try
             {
-                return;
-            }
+                var data = message.AsPacket<LobbyJoinTeamPacket>();
 
-            lobby.ChatMessageHandler(member, message);
+                var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
+                var lobby = lobbiesExt.CurrentLobby;
+
+                if (lobby == null)
+                {
+                    message.Respond("You're not in a lobby", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                var player = lobby.GetMemberByExtension(lobbiesExt);
+
+                if (player == null)
+                {
+                    message.Respond("Invalid request", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (!lobby.TryJoinTeam(data.TeamName, player))
+                {
+                    message.Respond("Failed to join a team: " + data.TeamName, ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
-        protected virtual void StartLobbyGameMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task SendMessageToLobbyChatMessageHandler(IIncomingMessage message)
         {
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
-            var lobby = lobbiesExt.CurrentLobby;
-
-            if (!lobby.StartGameManually(lobbiesExt))
+            try
             {
-                message.Respond("Failed starting the game", ResponseStatus.Failed);
-                return;
-            }
+                var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
+                var lobby = lobbiesExt.CurrentLobby;
 
-            message.Respond(ResponseStatus.Success);
+                var member = lobby.GetMemberByExtension(lobbiesExt);
+
+                // Invalid request
+                if (member == null)
+                {
+                    return Task.CompletedTask;
+                }
+
+                lobby.ChatMessageHandler(member, message);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
-        protected virtual void GetLobbyRoomAccessMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task StartLobbyGameMessageHandler(IIncomingMessage message)
         {
-            var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
-            var lobby = lobbiesExt.CurrentLobby;
+            try
+            {
+                var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
+                var lobby = lobbiesExt.CurrentLobby;
 
-            lobby.GameAccessRequestHandler(message);
+                if (!lobby.StartGameManually(lobbiesExt))
+                {
+                    message.Respond("Failed starting the game", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
-        protected virtual void GetLobbyMemberDataMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task GetLobbyRoomAccessMessageHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket<IntPairPacket>();
-            var lobbyId = data.A;
-            var peerId = data.B;
-
-            lobbies.TryGetValue(lobbyId, out ILobby lobby);
-
-            if (lobby == null)
+            try
             {
-                message.Respond("Lobby not found", ResponseStatus.Failed);
-                return;
+                var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
+                var lobby = lobbiesExt.CurrentLobby;
+
+                lobby.GameAccessRequestHandler(message);
+                return Task.CompletedTask;
             }
-
-            var member = lobby.GetMemberByPeerId(peerId);
-
-            if (member == null)
+            catch (Exception ex)
             {
-                message.Respond("Player is not in the lobby", ResponseStatus.Failed);
-                return;
+                return Task.FromException(ex);
             }
-
-            message.Respond(member.GenerateDataPacket(), ResponseStatus.Success);
         }
 
-        protected virtual void GetLobbyInfoMessageHandler(IIncomingMessage message)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task GetLobbyMemberDataMessageHandler(IIncomingMessage message)
         {
-            var lobbyId = message.AsInt();
-
-            lobbies.TryGetValue(lobbyId, out ILobby lobby);
-
-            if (lobby == null)
+            try
             {
-                message.Respond("Lobby not found", ResponseStatus.Failed);
-                return;
-            }
+                var data = message.AsPacket<IntPairPacket>();
+                var lobbyId = data.A;
+                var peerId = data.B;
 
-            message.Respond(lobby.GenerateLobbyData(), ResponseStatus.Success);
+                lobbies.TryGetValue(lobbyId, out ILobby lobby);
+
+                if (lobby == null)
+                {
+                    message.Respond("Lobby not found", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                var member = lobby.GetMemberByPeerId(peerId);
+
+                if (member == null)
+                {
+                    message.Respond("Player is not in the lobby", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                message.Respond(member.GenerateDataPacket(), ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        protected virtual Task GetLobbyInfoMessageHandler(IIncomingMessage message)
+        {
+            try
+            {
+                var lobbyId = message.AsInt();
+
+                lobbies.TryGetValue(lobbyId, out ILobby lobby);
+
+                if (lobby == null)
+                {
+                    message.Respond("Lobby not found", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                message.Respond(lobby.GenerateLobbyData(), ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
         #endregion

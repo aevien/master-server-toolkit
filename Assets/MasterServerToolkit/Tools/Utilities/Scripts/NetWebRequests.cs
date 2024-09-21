@@ -1,5 +1,6 @@
 using MasterServerToolkit.Logging;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 
@@ -7,12 +8,22 @@ namespace MasterServerToolkit.Utils
 {
     public class NetWebRequests
     {
-        public static string Get(string url)
+        public static string Get(string url, Dictionary<string, string> headers = null)
         {
             try
             {
                 // Create a request for the URL. 		
                 WebRequest request = WebRequest.Create(url);
+                request.Method = "GET";
+
+                if (headers != null)
+                {
+                    foreach (var item in headers)
+                    {
+                        request.Headers.Add(item.Key, item.Value);
+                    }
+                }
+
                 // Get the response.
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 

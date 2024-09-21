@@ -340,13 +340,13 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a message from game server, which includes player profiles updates
         /// </summary>
         /// <param name="message"></param>
-        protected virtual void ServerUpdateProfileValuesHandler(IIncomingMessage message)
+        protected virtual Task ServerUpdateProfileValuesHandler(IIncomingMessage message)
         {
             if (!HasPermissionToEditProfiles(message.Peer))
             {
                 logger.Error("Master server received an update for a profile, but peer who tried to " +
                            "update it did not have sufficient permissions");
-                return;
+                return Task.CompletedTask;
             }
 
             var data = message.AsBytes();
@@ -384,13 +384,15 @@ namespace MasterServerToolkit.MasterServer
                     }
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// Handles a request from client to get profile
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void ClientFillInProfileValuesRequestHandler(IIncomingMessage message)
+        protected virtual async Task ClientFillInProfileValuesRequestHandler(IIncomingMessage message)
         {
             var user = message.Peer.GetExtension<IUserPeerExtension>();
 
@@ -424,47 +426,39 @@ namespace MasterServerToolkit.MasterServer
         /// Handles a request from game server to get a profile
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void ServerFillInProfileValuesRequestHandler(IIncomingMessage message)
+        protected virtual async Task ServerFillInProfileValuesRequestHandler(IIncomingMessage message)
         {
-            try
+            if (!HasPermissionToEditProfiles(message.Peer))
             {
-                if (!HasPermissionToEditProfiles(message.Peer))
-                {
-                    logger.Error("Master server received a request to get a profile, but peer who tried to " +
-                               "update it did not have sufficient permissions");
-                    message.Respond(ResponseStatus.Unauthorized);
-                    return;
-                }
-
-                int totalTime = 0;
-                var userId = message.AsString();
-
-                ObservableServerProfile profile = null;
-
-                // Wait for user profile
-                while (totalTime < timeToWaitProfile)
-                {
-                    await Task.Delay(100);
-                    totalTime += 100;
-
-                    if (profilesList.TryGetValue(userId, out profile) && profile != null)
-                        break;
-                }
-
-                if (profile == null)
-                {
-                    message.Respond(ResponseStatus.Failed);
-                    return;
-                }
-
-                byte[] rawProfile = profile.ToBytes();
-
-                message.Respond(rawProfile, ResponseStatus.Success);
+                logger.Error("Master server received a request to get a profile, but peer who tried to " +
+                           "update it did not have sufficient permissions");
+                message.Respond(ResponseStatus.Unauthorized);
+                return;
             }
-            catch (Exception e)
+
+            int totalTime = 0;
+            var userId = message.AsString();
+
+            ObservableServerProfile profile = null;
+
+            // Wait for user profile
+            while (totalTime < timeToWaitProfile)
             {
-                logger.Error(e);
+                await Task.Delay(100);
+                totalTime += 100;
+
+                if (profilesList.TryGetValue(userId, out profile) && profile != null)
+                    break;
             }
+
+            if (profile == null)
+            {
+                message.Respond(ResponseStatus.Failed);
+                return;
+            }
+
+            byte[] rawProfile = profile.ToBytes();
+            message.Respond(rawProfile, ResponseStatus.Success);
         }
 
         #endregion

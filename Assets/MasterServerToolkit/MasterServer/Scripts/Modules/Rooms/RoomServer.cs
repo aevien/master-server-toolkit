@@ -1,5 +1,6 @@
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -96,24 +97,33 @@ namespace MasterServerToolkit.MasterServer
 
         #region MESSAGE_HANDLERS
 
-        protected virtual void ValidateRoomAccessRequestHandler(IIncomingMessage message)
+        protected virtual Task ValidateRoomAccessRequestHandler(IIncomingMessage message)
         {
-            if (roomServerManager)
+            try
             {
-                roomServerManager.ValidateRoomAccess(message.Peer.Id, message.AsString(), (isSuccess, error) =>
+                if (roomServerManager)
                 {
-                    if (!isSuccess)
+                    roomServerManager.ValidateRoomAccess(message.Peer.Id, message.AsString(), (isSuccess, error) =>
                     {
-                        logger.Error("Unauthorized access to room was rejected");
-                        message.Peer.Disconnect("Unauthorized access to room was rejected");
-                    }
+                        if (!isSuccess)
+                        {
+                            logger.Error("Unauthorized access to room was rejected");
+                            message.Peer.Disconnect("Unauthorized access to room was rejected");
+                        }
 
-                    message.Respond(ResponseStatus.Success);
-                });
+                        message.Respond(ResponseStatus.Success);
+                    });
+                }
+                else
+                {
+                    message.Peer.Disconnect("Room is invalid");
+                }
+
+                return Task.CompletedTask;
             }
-            else
+            catch (System.Exception ex)
             {
-                message.Peer.Disconnect("Room is invalid");
+                return Task.FromException(ex);
             }
         }
 

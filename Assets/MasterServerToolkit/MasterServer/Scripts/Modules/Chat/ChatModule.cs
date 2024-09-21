@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -422,14 +423,14 @@ namespace MasterServerToolkit.MasterServer
 
         #region Message Handlers
 
-        protected virtual void OnPickUsernameRequestHandler(IIncomingMessage message)
+        protected virtual Task OnPickUsernameRequestHandler(IIncomingMessage message)
         {
             try
             {
                 if (!allowUsernamePicking)
                 {
                     message.Respond("Username picking is disabled", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var username = message.AsString();
@@ -437,7 +438,7 @@ namespace MasterServerToolkit.MasterServer
                 if (username.Contains(" "))
                 {
                     message.Respond("Username cannot contain whitespaces", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var chatUser = message.Peer.GetExtension<ChatUserPeerExtension>();
@@ -445,13 +446,13 @@ namespace MasterServerToolkit.MasterServer
                 if (chatUser != null)
                 {
                     message.Respond($"You're already identified as: {chatUser.Username}", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 if (ChatUsers.ContainsKey(username))
                 {
                     message.Respond("There's already a user who has the same username", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 chatUser = CreateChatUser(message.Peer, username);
@@ -459,7 +460,7 @@ namespace MasterServerToolkit.MasterServer
                 if (!AddChatUser(chatUser))
                 {
                     message.Respond("Failed to add user to chat", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Add the extension
@@ -467,16 +468,15 @@ namespace MasterServerToolkit.MasterServer
 
                 // Send response
                 message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-            // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void OnJoinChannelRequestHandler(IIncomingMessage message)
+        protected virtual Task OnJoinChannelRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -487,7 +487,7 @@ namespace MasterServerToolkit.MasterServer
                 if (chatUser == null)
                 {
                     message.Respond("Chat cannot identify you", ResponseStatus.Unauthorized);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Get channel name
@@ -499,7 +499,7 @@ namespace MasterServerToolkit.MasterServer
                 if (channel == null || !channel.AddUser(chatUser))
                 {
                     message.Respond($"Failed to join a channel \"{channelName}\"", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 if (setFirstChannelAsLocal && chatUser.CurrentChannels.Count == 1)
@@ -508,16 +508,15 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-            // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void OnLeaveChannelRequestHandler(IIncomingMessage message)
+        protected virtual Task OnLeaveChannelRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -528,7 +527,7 @@ namespace MasterServerToolkit.MasterServer
                 if (chatUser == null)
                 {
                     message.Respond("Chat cannot identify you", ResponseStatus.Unauthorized);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Get channel name
@@ -538,7 +537,7 @@ namespace MasterServerToolkit.MasterServer
                 if (!ChatChannels.TryGetValue(channelName, out ChatChannel channel))
                 {
                     message.Respond("This channel does not exist", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Remove user from channel
@@ -550,16 +549,15 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-            // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void OnSetDefaultChannelRequestHandler(IIncomingMessage message)
+        protected virtual Task OnSetDefaultChannelRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -569,7 +567,7 @@ namespace MasterServerToolkit.MasterServer
                 if (chatUser == null)
                 {
                     message.Respond("Chat cannot identify you", ResponseStatus.Unauthorized);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var channelName = message.AsString();
@@ -578,7 +576,7 @@ namespace MasterServerToolkit.MasterServer
                 if (channel == null)
                 {
                     message.Respond("This channel is forbidden", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // Add user to channel
@@ -589,16 +587,15 @@ namespace MasterServerToolkit.MasterServer
 
                 // Respond with a "success" status
                 message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-            // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void OnGetUsersInChannelRequestHandler(IIncomingMessage message)
+        protected virtual Task OnGetUsersInChannelRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -608,7 +605,7 @@ namespace MasterServerToolkit.MasterServer
                 if (chatUser == null)
                 {
                     message.Respond("Chat cannot identify you", ResponseStatus.Unauthorized);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var channelName = message.AsString();
@@ -617,21 +614,20 @@ namespace MasterServerToolkit.MasterServer
                 if (channel == null)
                 {
                     message.Respond("This channel is forbidden", ResponseStatus.Failed);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var users = channel.Users.Select(u => u.Username);
                 message.Respond(users.ToBytes(), ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-            // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void OnChatMessageHandler(IIncomingMessage message)
+        protected virtual Task OnChatMessageHandler(IIncomingMessage message)
         {
             try
             {
@@ -641,28 +637,26 @@ namespace MasterServerToolkit.MasterServer
                 if (chatUser == null)
                 {
                     message.Respond("Chat cannot identify you", ResponseStatus.Unauthorized);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var packet = message.AsPacket<ChatMessagePacket>();
 
-
-
                 if (!TryHandleChatMessage(packet, chatUser, message))
                 {
                     message.Respond("Invalid message", ResponseStatus.NotHandled);
-                    return;
+                    return Task.CompletedTask;
                 }
+
+                return Task.CompletedTask;
             }
-            // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void OnGetCurrentChannelsRequestHandler(IIncomingMessage message)
+        protected virtual Task OnGetCurrentChannelsRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -672,7 +666,7 @@ namespace MasterServerToolkit.MasterServer
                 if (chatUser == null)
                 {
                     message.Respond("Chat cannot identify you", ResponseStatus.Unauthorized);
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var channels = chatUser.CurrentChannels.Select(c =>
@@ -688,12 +682,13 @@ namespace MasterServerToolkit.MasterServer
                 {
                     Channels = channels.ToList()
                 }, ResponseStatus.Success);
+
+                return Task.CompletedTask;
             }
-            // If we got another exception
-            catch (Exception e)
+
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 

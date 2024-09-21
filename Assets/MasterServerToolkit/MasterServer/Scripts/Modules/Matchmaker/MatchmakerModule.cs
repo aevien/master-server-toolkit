@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -61,7 +62,7 @@ namespace MasterServerToolkit.MasterServer
 
         #region INCOMING MESSAGES HANDLERS
 
-        protected virtual void FindGamesRequestHandler(IIncomingMessage message)
+        protected virtual Task FindGamesRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -76,16 +77,16 @@ namespace MasterServerToolkit.MasterServer
                 // Convert to generic list and serialize to bytes
                 var bytes = list.Select(game => (ISerializablePacket)game).ToBytes();
                 message.Respond(bytes, ResponseStatus.Success);
+                return Task.CompletedTask;
             }
             // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 
-        protected virtual void GetRegionsRequestHandler(IIncomingMessage message)
+        protected virtual Task GetRegionsRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -93,7 +94,7 @@ namespace MasterServerToolkit.MasterServer
                 {
                     message.Respond("Getting a list of regions is not allowed", ResponseStatus.Failed);
                     logger.Error("No spawner module found");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 var list = spawnersModule.GetRegions();
@@ -102,19 +103,19 @@ namespace MasterServerToolkit.MasterServer
                 {
                     message.Respond("No regions found. Please start spawner to get regions", ResponseStatus.Failed);
                     logger.Error("No spawner started");
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 message.Respond(new RegionsPacket()
                 {
                     Regions = list
                 }, ResponseStatus.Success);
+                return Task.CompletedTask;
             }
             // If we got another exception
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e.Message);
-                message.Respond(e.Message, ResponseStatus.Error);
+                return Task.FromException(ex);
             }
         }
 

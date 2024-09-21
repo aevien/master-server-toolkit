@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -316,165 +317,212 @@ namespace MasterServerToolkit.MasterServer
 
         #region Message Handlers
 
-        protected virtual void RegisterRoomRequestHandler(IIncomingMessage message)
+        protected virtual Task RegisterRoomRequestHandler(IIncomingMessage message)
         {
-            logger.Debug($"Client {message.Peer.Id} requested to register new room server");
-
-            if (!HasRoomRegistrationPermissions(message.Peer))
+            try
             {
-                logger.Debug($"But it has no permission");
-                message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
-                return;
-            }
+                logger.Debug($"Client {message.Peer.Id} requested to register new room server");
 
-            var options = message.AsPacket<RoomOptions>();
-            var room = RegisterRoom(message.Peer, options);
-
-            logger.Debug($"Room {room.RoomId} has been successfully registered with options: {options}");
-
-            // Respond with a room id
-            message.Respond(room.RoomId, ResponseStatus.Success);
-        }
-
-        protected virtual void DestroyRoomRequestHandler(IIncomingMessage message)
-        {
-            var roomId = message.AsInt();
-
-            logger.Debug($"Client {message.Peer.Id} requested to destroy room server with id {roomId}");
-
-            if (!TryGetRoom(roomId, out RegisteredRoom room))
-            {
-                logger.Debug($"But this room does not exist");
-                message.Respond("Room does not exist", ResponseStatus.Failed);
-                return;
-            }
-
-            if (message.Peer != room.Peer)
-            {
-                logger.Debug($"But it is not the creator of the room");
-                message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            DestroyRoom(room);
-
-            message.Respond(ResponseStatus.Success);
-        }
-
-        protected virtual void ValidateRoomAccessRequestHandler(IIncomingMessage message)
-        {
-            // Parse message
-            var data = message.AsPacket<RoomAccessValidatePacket>();
-
-            // Trying to find room in list of registered
-            if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
-            {
-                message.Respond("Room does not exist", ResponseStatus.Failed);
-                return;
-            }
-
-            // if this message is not received from owner of room
-            if (message.Peer != room.Peer)
-            {
-                // Wrong peer of room registrar
-                message.Respond("You're not the registrar of the room", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            // Trying to validate room access token
-            if (!room.ValidateAccess(data.Token, out IPeer playerPeer))
-            {
-                message.Respond("Failed to confirm the access", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            var packet = new UsernameAndPeerIdPacket()
-            {
-                PeerId = playerPeer.Id
-            };
-
-            // Add username if available
-            var userExt = playerPeer.GetExtension<IUserPeerExtension>();
-            if (userExt != null)
-            {
-                packet.Username = userExt.Username ?? "";
-            }
-
-            // Respond with success and player's peer id
-            message.Respond(packet, ResponseStatus.Success);
-        }
-
-        protected virtual void SaveRoomOptionsRequestHandler(IIncomingMessage message)
-        {
-            var data = message.AsPacket<SaveRoomOptionsPacket>();
-
-            if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
-            {
-                message.Respond("Room does not exist", ResponseStatus.Failed);
-                return;
-            }
-
-            if (message.Peer != room.Peer)
-            {
-                // Wrong peer unregistering the room
-                message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            ChangeRoomOptions(room, data.Options);
-            message.Respond(ResponseStatus.Success);
-        }
-
-        protected virtual void GetRoomAccessRequestHandler(IIncomingMessage message)
-        {
-            var data = message.AsPacket<RoomAccessRequestPacket>();
-
-            // Let's find a room by Id which the player wants to join
-            if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
-            {
-                message.Respond("Room does not exist", ResponseStatus.Failed);
-                return;
-            }
-
-            // If room requires the password and given password is not valid
-            if (!string.IsNullOrEmpty(room.Options.Password) && room.Options.Password != data.Password)
-            {
-                message.Respond("Invalid password", ResponseStatus.Unauthorized);
-                return;
-            }
-
-            // Send room access request to peer who owns it
-            room.GetAccess(message.Peer, data.CustomOptions, (packet, error) =>
-            {
-                if (packet == null)
+                if (!HasRoomRegistrationPermissions(message.Peer))
                 {
-                    message.Respond(error, ResponseStatus.Unauthorized);
-                    return;
+                    logger.Debug($"But it has no permission");
+                    message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
                 }
 
-                message.Respond(packet, ResponseStatus.Success);
-            });
+                var options = message.AsPacket<RoomOptions>();
+                var room = RegisterRoom(message.Peer, options);
+
+                logger.Debug($"Room {room.RoomId} has been successfully registered with options: {options}");
+
+                // Respond with a room id
+                message.Respond(room.RoomId, ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
-        protected virtual void PlayerLeftRoomRequestHandler(IIncomingMessage message)
+        protected virtual Task DestroyRoomRequestHandler(IIncomingMessage message)
         {
-            var data = message.AsPacket<PlayerLeftRoomPacket>();
-
-            if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+            try
             {
-                message.Respond("Room does not exist", ResponseStatus.Failed);
-                return;
-            }
+                var roomId = message.AsInt();
 
-            if (message.Peer != room.Peer)
+                logger.Debug($"Client {message.Peer.Id} requested to destroy room server with id {roomId}");
+
+                if (!TryGetRoom(roomId, out RegisteredRoom room))
+                {
+                    logger.Debug($"But this room does not exist");
+                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (message.Peer != room.Peer)
+                {
+                    logger.Debug($"But it is not the creator of the room");
+                    message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                DestroyRoom(room);
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
             {
-                // Wrong peer unregistering the room
-                message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
-                return;
+                return Task.FromException(ex);
             }
+        }
 
-            room.RemovePlayer(data.PeerId);
-            message.Respond(ResponseStatus.Success);
+        protected virtual Task ValidateRoomAccessRequestHandler(IIncomingMessage message)
+        {
+            try
+            {
+                // Parse message
+                var data = message.AsPacket<RoomAccessValidatePacket>();
+
+                // Trying to find room in list of registered
+                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                {
+                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // if this message is not received from owner of room
+                if (message.Peer != room.Peer)
+                {
+                    // Wrong peer of room registrar
+                    message.Respond("You're not the registrar of the room", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                // Trying to validate room access token
+                if (!room.ValidateAccess(data.Token, out IPeer playerPeer))
+                {
+                    message.Respond("Failed to confirm the access", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                var packet = new UsernameAndPeerIdPacket()
+                {
+                    PeerId = playerPeer.Id
+                };
+
+                // Add username if available
+                var userExt = playerPeer.GetExtension<IUserPeerExtension>();
+                if (userExt != null)
+                {
+                    packet.Username = userExt.Username ?? "";
+                }
+
+                // Respond with success and player's peer id
+                message.Respond(packet, ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
+        }
+
+        protected virtual Task SaveRoomOptionsRequestHandler(IIncomingMessage message)
+        {
+            try
+            {
+                var data = message.AsPacket<SaveRoomOptionsPacket>();
+
+                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                {
+                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (message.Peer != room.Peer)
+                {
+                    // Wrong peer unregistering the room
+                    message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                ChangeRoomOptions(room, data.Options);
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
+        }
+
+        protected virtual Task GetRoomAccessRequestHandler(IIncomingMessage message)
+        {
+            try
+            {
+                var data = message.AsPacket<RoomAccessRequestPacket>();
+
+                // Let's find a room by Id which the player wants to join
+                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                {
+                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                // If room requires the password and given password is not valid
+                if (!string.IsNullOrEmpty(room.Options.Password) && room.Options.Password != data.Password)
+                {
+                    message.Respond("Invalid password", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                // Send room access request to peer who owns it
+                room.GetAccess(message.Peer, data.CustomOptions, (packet, error) =>
+                {
+                    if (packet == null)
+                    {
+                        message.Respond(error, ResponseStatus.Unauthorized);
+                    }
+
+                    message.Respond(packet, ResponseStatus.Success);
+                });
+
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
+        }
+
+        protected virtual Task PlayerLeftRoomRequestHandler(IIncomingMessage message)
+        {
+            try
+            {
+                var data = message.AsPacket<PlayerLeftRoomPacket>();
+
+                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                {
+                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    return Task.CompletedTask;
+                }
+
+                if (message.Peer != room.Peer)
+                {
+                    // Wrong peer unregistering the room
+                    message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                room.RemovePlayer(data.PeerId);
+                message.Respond(ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
         }
 
         #endregion

@@ -106,7 +106,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Server messages handlers list
         /// </summary>
-        private readonly ConcurrentDictionary<ushort, IPacketHandler> handlers = new ConcurrentDictionary<ushort, IPacketHandler>();
+        private readonly ConcurrentDictionary<ushort, IAsyncPacketHandler> handlers = new ConcurrentDictionary<ushort, IAsyncPacketHandler>();
 
         /// <summary>
         /// Server modules
@@ -268,7 +268,7 @@ namespace MasterServerToolkit.MasterServer
 
                 var modulesArray = MstJson.EmptyArray;
 
-                foreach(var module in modules.Values)
+                foreach (var module in modules.Values)
                 {
                     modulesArray.Add(module.JsonInfo());
                 }
@@ -531,9 +531,15 @@ namespace MasterServerToolkit.MasterServer
             try
             {
                 message.Peer.LastActivity = DateTime.Now;
-                handlers.TryGetValue(message.OpCode, out IPacketHandler handler);
 
-                if (handler == null)
+                if (handlers.TryGetValue(message.OpCode, out IAsyncPacketHandler handler))
+                {
+                    Task.Run(async () =>
+                    {
+                        await handler.HandleAsync(message);
+                    });
+                }
+                else
                 {
                     logger.Error($"You are trying to handle message with OpCode [{Extensions.StringExtensions.FromHash(message.OpCode)}]. " +
                         $"But a handler for this message does not exist. " +
@@ -544,33 +550,15 @@ namespace MasterServerToolkit.MasterServer
                         message.Respond(ResponseStatus.NotHandled);
                         return;
                     }
-
-                    return;
                 }
-
-                handler.Handle(message);
             }
             catch (Exception e)
             {
-                if (Mst.Runtime.IsEditor)
-                {
-                    throw;
-                }
-
                 logger.Error($"An error occurred while handling a message from client. Message OpCode: [{Extensions.StringExtensions.FromHash(message.OpCode)}], Error: {e}");
 
-                if (!message.IsExpectingResponse)
-                {
-                    return;
-                }
-
-                try
+                if (message.IsExpectingResponse)
                 {
                     message.Respond(ResponseStatus.Error);
-                }
-                catch (Exception exception)
-                {
-                    Logs.Error(exception);
                 }
             }
         }
@@ -741,7 +729,7 @@ namespace MasterServerToolkit.MasterServer
         /// Set message handler
         /// </summary>
         /// <param name="handler"></param>
-        public void RegisterMessageHandler(IPacketHandler handler)
+        public void RegisterMessageHandler(IAsyncPacketHandler handler)
         {
             if (!handlers.ContainsKey(handler.OpCode))
                 handlers[handler.OpCode] = handler;
@@ -754,9 +742,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="handler"></param>
-        public void RegisterMessageHandler(ushort opCode, IncommingMessageHandler handler)
+        public void RegisterMessageHandler(ushort opCode, AsyncIncommingMessageHandler handler)
         {
-            RegisterMessageHandler(new PacketHandler(opCode, handler));
+            RegisterMessageHandler(new AsyncPacketHandler(opCode, handler));
         }
 
         /// <summary>
@@ -764,7 +752,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="handler"></param>
-        public void RegisterMessageHandler(string opCode, IncommingMessageHandler handler)
+        public void RegisterMessageHandler(string opCode, AsyncIncommingMessageHandler handler)
         {
             ushort code = opCode.ToUint16Hash();
             RegisterMessageHandler(code, handler);
@@ -789,7 +777,7 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void PeerGuidRequestHandler(IIncomingMessage message)
+        protected virtual async Task PeerGuidRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
 
@@ -809,7 +797,7 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void PermissionLevelRequestHandler(IIncomingMessage message)
+        protected virtual async Task PermissionLevelRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
 
@@ -852,7 +840,7 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        protected virtual async void AesKeyRequestHandler(IIncomingMessage message)
+        protected virtual async Task AesKeyRequestHandler(IIncomingMessage message)
         {
             var extension = message.Peer.GetExtension<SecurityInfoPeerExtension>();
             var encryptedKey = extension.AesKeyEncrypted;
@@ -898,8 +886,7 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        /// <exception cref="NotImplementedException"></exception>
-        private void ServerAccessRequestHandler(IIncomingMessage message)
+        private async Task ServerAccessRequestHandler(IIncomingMessage message)
         {
             // Get access check options
             var accessCheckOptions = message.AsPacket<ProvideServerAccessCheckPacket>();

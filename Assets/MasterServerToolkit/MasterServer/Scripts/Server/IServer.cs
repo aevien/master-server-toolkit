@@ -63,23 +63,23 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Adds a message handler to the collection of handlers.
         /// It will be invoked when server receives a message with
-        /// OpCode <see cref="IPacketHandler.OpCode"/>
+        /// OpCode <see cref="IAsyncPacketHandler.OpCode"/>
         /// </summary>
-        void RegisterMessageHandler(IPacketHandler handler);
+        void RegisterMessageHandler(IAsyncPacketHandler handler);
 
         /// <summary>
         /// Adds a message handler to the collection of handlers.
         /// It will be invoked when server receives a message with
         /// OpCode <see cref="opCode"/>
         /// </summary>
-        void RegisterMessageHandler(ushort opCode, IncommingMessageHandler handler);
+        void RegisterMessageHandler(ushort opCode, AsyncIncommingMessageHandler handler);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="handler"></param>
-        void RegisterMessageHandler(string opCode, IncommingMessageHandler handler);
+        void RegisterMessageHandler(string opCode, AsyncIncommingMessageHandler handler);
 
         /// <summary>
         /// Returns a connected peer with a given ID

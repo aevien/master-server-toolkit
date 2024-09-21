@@ -71,46 +71,54 @@ namespace MasterServerToolkit.MasterServer
 
         #region MESSAGE HANDLERS
 
-        private void GetZoneRoomInfoMessageHandler(IIncomingMessage message)
+        private Task GetZoneRoomInfoMessageHandler(IIncomingMessage message)
         {
-            var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
-
-            if (userExtension == null)
+            try
             {
-                message.Respond(ResponseStatus.Unauthorized);
-                return;
+                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+
+                if (userExtension == null)
+                {
+                    message.Respond(ResponseStatus.Unauthorized);
+                    return Task.CompletedTask;
+                }
+
+                string zoneId = message.AsString();
+
+                RegisteredRoom zoneRoom = roomsList.Values
+                    .Where(r => r.Options.CustomOptions.AsString(MstDictKeys.WORLD_ZONE) == zoneId)
+                    .FirstOrDefault();
+
+                if (zoneRoom == null)
+                {
+                    logger.Error($"No room found for zone {zoneId}");
+                    message.Respond(ResponseStatus.NotFound);
+                    return Task.CompletedTask;
+                }
+
+                var game = new GameInfoPacket
+                {
+                    Id = zoneRoom.RoomId,
+                    Address = zoneRoom.Options.RoomIp + ":" + zoneRoom.Options.RoomPort,
+                    MaxPlayers = zoneRoom.Options.MaxConnections,
+                    Name = zoneRoom.Options.Name,
+                    OnlinePlayers = zoneRoom.OnlineCount,
+                    Properties = GetPublicRoomOptions(message.Peer, zoneRoom, null),
+                    IsPasswordProtected = !string.IsNullOrEmpty(zoneRoom.Options.Password),
+                    Type = GameInfoType.Room,
+                    Region = zoneRoom.Options.Region
+                };
+
+                var players = zoneRoom.Players.Values.Where(pl => pl.HasExtension<IUserPeerExtension>()).Select(pl => pl.GetExtension<IUserPeerExtension>().Username);
+                game.OnlinePlayersList = players.ToList();
+
+                message.Respond(game, ResponseStatus.Success);
+                return Task.CompletedTask;
             }
-
-            string zoneId = message.AsString();
-
-            RegisteredRoom zoneRoom = roomsList.Values
-                .Where(r => r.Options.CustomOptions.AsString(MstDictKeys.WORLD_ZONE) == zoneId)
-                .FirstOrDefault();
-
-            if (zoneRoom == null)
+            catch (System.Exception ex)
             {
-                logger.Error($"No room found for zone {zoneId}");
-                message.Respond(ResponseStatus.NotFound);
-                return;
+                return Task.FromException(ex);
             }
-
-            var game = new GameInfoPacket
-            {
-                Id = zoneRoom.RoomId,
-                Address = zoneRoom.Options.RoomIp + ":" + zoneRoom.Options.RoomPort,
-                MaxPlayers = zoneRoom.Options.MaxConnections,
-                Name = zoneRoom.Options.Name,
-                OnlinePlayers = zoneRoom.OnlineCount,
-                Properties = GetPublicRoomOptions(message.Peer, zoneRoom, null),
-                IsPasswordProtected = !string.IsNullOrEmpty(zoneRoom.Options.Password),
-                Type = GameInfoType.Room,
-                Region = zoneRoom.Options.Region
-            };
-
-            var players = zoneRoom.Players.Values.Where(pl => pl.HasExtension<IUserPeerExtension>()).Select(pl => pl.GetExtension<IUserPeerExtension>().Username);
-            game.OnlinePlayersList = players.ToList();
-
-            message.Respond(game, ResponseStatus.Success);
         }
 
         #endregion

@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -27,9 +28,10 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.Ping, OnPingRequestListener);
         }
 
-        private void OnPingRequestListener(IIncomingMessage message)
+        private Task OnPingRequestListener(IIncomingMessage message)
         {
             message.Respond(pongMessage, ResponseStatus.Success);
+            return Task.CompletedTask;
         }
 
         public override MstJson JsonInfo()

@@ -4,6 +4,7 @@ using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.Demos.BasicProfile
@@ -79,7 +80,7 @@ namespace MasterServerToolkit.Demos.BasicProfile
             }
         }
 
-        private void UpdateDisplayNameRequestHandler(IIncomingMessage message)
+        private async Task UpdateDisplayNameRequestHandler(IIncomingMessage message)
         {
             var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
 
@@ -109,100 +110,92 @@ namespace MasterServerToolkit.Demos.BasicProfile
             {
                 message.Respond($"Internal Server Error: {e}", ResponseStatus.Error);
             }
+
+            await Task.CompletedTask;
         }
 
-        private void BuyDemoItemMessageHandler(IIncomingMessage message)
+        private async Task BuyDemoItemMessageHandler(IIncomingMessage message)
         {
-            try
+            var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+
+            if (userExtension == null || userExtension.Account == null)
             {
-                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                return;
+            }
 
-                if (userExtension == null || userExtension.Account == null)
+            var data = message.AsPacket<BuySellItemPacket>();
+
+            if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
+                    && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
+            {
+                if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty)
+                    && currencyProperty.Subtract(data.Price, 0))
                 {
-                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
-                    return;
-                }
-
-                var data = message.AsPacket<BuySellItemPacket>();
-
-                if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
-                        && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
-                {
-                    if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty)
-                        && currencyProperty.Subtract(data.Price, 0))
+                    if (items.ContainsKey(data.Id))
                     {
-                        if (items.ContainsKey(data.Id))
-                        {
-                            items[data.Id]++;
-                        }
-                        else
-                        {
-                            items.Add(data.Id, 1);
-                        }
-
-                        message.Respond(ResponseStatus.Success);
+                        items[data.Id]++;
                     }
                     else
                     {
-                        message.Respond($"You don't have enough {data.Currency}", ResponseStatus.Failed);
+                        items.Add(data.Id, 1);
                     }
+
+                    message.Respond(ResponseStatus.Success);
                 }
                 else
                 {
-                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                    message.Respond($"You don't have enough {data.Currency}", ResponseStatus.Failed);
                 }
             }
-            catch (Exception e)
+            else
             {
-                message.Respond($"Internal Server Error: {e}", ResponseStatus.Error);
+                message.Respond("Invalid session", ResponseStatus.Unauthorized);
             }
+
+            await Task.CompletedTask;
         }
 
-        private void SellDemoItemMessageHandler(IIncomingMessage message)
+        private async Task SellDemoItemMessageHandler(IIncomingMessage message)
         {
-            try
+            var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+
+            if (userExtension == null || userExtension.Account == null)
             {
-                var userExtension = message.Peer.GetExtension<IUserPeerExtension>();
+                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                return;
+            }
 
-                if (userExtension == null || userExtension.Account == null)
+            var data = message.AsPacket<BuySellItemPacket>();
+
+            if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
+                    && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
+            {
+                if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty))
                 {
-                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
-                    return;
-                }
-
-                var data = message.AsPacket<BuySellItemPacket>();
-
-                if (profilesList.TryGetValue(userExtension.UserId, out ObservableServerProfile profile)
-                        && profile.TryGet(ProfilePropertyOpCodes.items, out ObservableDictStringInt items))
-                {
-                    if (profile.TryGet(data.Currency.ToUint16Hash(), out ObservableInt currencyProperty))
+                    if (items.ContainsKey(data.Id))
                     {
-                        if (items.ContainsKey(data.Id))
-                        {
-                            items[data.Id]--;
+                        items[data.Id]--;
 
-                            if (items[data.Id] <= 0)
-                                items.Remove(data.Id);
+                        if (items[data.Id] <= 0)
+                            items.Remove(data.Id);
 
-                            currencyProperty.Add(data.Price);
-                        }
-
-                        message.Respond(ResponseStatus.Success);
+                        currencyProperty.Add(data.Price);
                     }
-                    else
-                    {
-                        message.Respond($"Our store does not accept {data.Currency} as currency", ResponseStatus.Failed);
-                    }
+
+                    message.Respond(ResponseStatus.Success);
                 }
                 else
                 {
-                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                    message.Respond($"Our store does not accept {data.Currency} as currency", ResponseStatus.Failed);
                 }
             }
-            catch (Exception e)
+            else
             {
-                message.Respond($"Internal Server Error: {e}", ResponseStatus.Error);
+                message.Respond("Invalid session", ResponseStatus.Unauthorized);
             }
+
+            await Task.CompletedTask;
         }
     }
 }
