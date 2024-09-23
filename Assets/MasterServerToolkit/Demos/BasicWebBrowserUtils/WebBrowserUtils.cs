@@ -15,7 +15,7 @@ namespace MasterServerToolkit.Demos.WebBrowserUtils
 
         public void OnClickGetQueryStringData()
         {
-            var json = WebBrowser.GetQueryStringData();
+            var json = MstWebBrowser.GetQueryStringData();
             output.text = json.Print(true);
 
             if (json.HasField("pw3_auth"))

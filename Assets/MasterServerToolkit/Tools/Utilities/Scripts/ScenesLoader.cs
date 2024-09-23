@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.Utils
 {
-    public class ScenesLoader : DynamicSingletonBehaviour<ScenesLoader>
+    public class ScenesLoader : SingletonBehaviour<ScenesLoader>
     {
         private List<string> loadedScenes = new List<string>();
 

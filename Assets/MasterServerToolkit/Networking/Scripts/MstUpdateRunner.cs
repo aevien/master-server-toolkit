@@ -7,7 +7,7 @@ namespace MasterServerToolkit.Networking
     /// This is an object which gets spawned into game once.
     /// It's main purpose is to call update methods
     /// </summary>
-    public class MstUpdateRunner : DynamicSingletonBehaviour<MstUpdateRunner>
+    public class MstUpdateRunner : SingletonBehaviour<MstUpdateRunner>
     {
         /// <summary>
         /// List of <see cref="IUpdatable"/>

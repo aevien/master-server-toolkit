@@ -15,6 +15,7 @@ namespace MasterServerToolkit.Utils
                 // Create a request for the URL. 		
                 WebRequest request = WebRequest.Create(url);
                 request.Method = "GET";
+                request.ContentType = "application/json";
 
                 if (headers != null)
                 {

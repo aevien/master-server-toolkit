@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace MasterServerToolkit.Utils
 {
-    public class WebBrowser
+    public class MstWebBrowser
     {
         [DllImport("__Internal")]
         private static extern IntPtr GetQueryStringFromBrowser();

@@ -15,7 +15,7 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public delegate void WaitPingCallback(int time);
 
-    public class MstTimer : DynamicSingletonBehaviour<MstTimer>
+    public class MstTimer : SingletonBehaviour<MstTimer>
     {
         /// <summary>
         /// List of main thread actions
