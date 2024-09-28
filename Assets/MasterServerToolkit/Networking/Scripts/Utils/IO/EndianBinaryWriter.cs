@@ -1,3 +1,4 @@
+using MasterServerToolkit.Json;
 using System;
 using System.IO;
 using System.Text;
@@ -343,6 +344,24 @@ namespace MasterServerToolkit.Networking
 
             Write((short)data.Length);
             WriteInternal(data, data.Length);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        public void Write(MstJson value)
+        {
+            Write(value.ToString());
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        public void Write(Enum value)
+        {
+            Write(Convert.ToUInt16(value));
         }
 
         /// <summary>

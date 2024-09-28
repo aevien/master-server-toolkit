@@ -43,7 +43,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
             try
             {
                 var data = await FindOrCreateData(profile);
-                var json = new MstJson(data.Document.ToDictionary(x => x.Key, x => x.Value));
+                var json = MstJson.Create(data.Document.ToDictionary(x => x.Key, x => x.Value));
                 profile.FromJson(json);
             }
             catch (Exception e)

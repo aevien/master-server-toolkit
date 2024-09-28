@@ -99,14 +99,6 @@ namespace MasterServerToolkit.Networking
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
                     list = reader.ReadList(factory);
-                    //var count = reader.ReadInt32();
-
-                    //for (var i = 0; i < count; i++)
-                    //{
-                    //    var item = factory.Invoke();
-                    //    item.FromBinaryReader(reader);
-                    //    list.Add(item);
-                    //}
                 }
             }
             return list;

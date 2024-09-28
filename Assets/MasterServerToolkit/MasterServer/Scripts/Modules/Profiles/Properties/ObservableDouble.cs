@@ -105,7 +105,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void FromJson(string json)
         {
-            FromJson(new MstJson(Convert.ToDouble(json)));
+            FromJson(MstJson.Create(Convert.ToDouble(json)));
         }
     }
 }

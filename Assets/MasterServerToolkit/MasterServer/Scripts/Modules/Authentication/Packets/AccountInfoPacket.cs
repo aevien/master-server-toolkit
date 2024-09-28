@@ -72,7 +72,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override MstJson ToJson()
         {
-            var json = new MstJson();
+            var json = base.ToJson();
             json.AddField("id", Id);
             json.AddField("username", Username);
             json.AddField("email", Email);
@@ -84,7 +84,7 @@ namespace MasterServerToolkit.MasterServer
             json.AddField("isGuest", IsGuest);
             json.AddField("isEmailConfirmed", IsEmailConfirmed);
             json.AddField("isBanned", IsBanned);
-            json.AddField("extraProperties", new MstJson(ExtraProperties.ToDictionary()));
+            json.AddField("extraProperties", MstJson.Create(ExtraProperties.ToDictionary()));
 
             return json;
         }

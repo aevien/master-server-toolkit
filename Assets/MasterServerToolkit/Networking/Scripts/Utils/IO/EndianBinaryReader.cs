@@ -1,3 +1,4 @@
+using MasterServerToolkit.Json;
 using System;
 using System.IO;
 using System.Text;
@@ -233,6 +234,17 @@ namespace MasterServerToolkit.Networking
         {
             ReadInternal(buffer, 8);
             return BitConverter.ToUInt64(buffer, 0);
+        }
+
+        /// <summary>
+        /// Reads a value of the specified enum type.
+        /// </summary>
+        /// <typeparam name="T">The enum type to convert the read value to. Must be an enum.</typeparam>
+        /// <returns>The enum value of type <typeparamref name="T"/> that corresponds to the read 16-bit unsigned integer.</returns>
+        public T ReadEnum<T>() where T : Enum
+        {
+            ushort value = ReadUInt16();
+            return (T)Enum.ToObject(typeof(T), value);
         }
 
         /// <summary>
@@ -537,6 +549,16 @@ namespace MasterServerToolkit.Networking
             var data = new byte[bytesToRead];
             ReadInternal(data, bytesToRead);
             return Encoding.GetString(data, 0, data.Length);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public MstJson ReadJson()
+        {
+            string json = ReadString();
+            return new MstJson(json);
         }
 
         /// <summary>

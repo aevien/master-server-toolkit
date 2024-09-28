@@ -94,7 +94,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Respond with data (message is created internally)
         /// </summary>
-        /// <param name="data"></param>
+        /// <param name="packet"></param>
         /// <param name="statusCode"></param>
         public void Respond(ISerializablePacket packet, ResponseStatus statusCode = ResponseStatus.Default)
         {

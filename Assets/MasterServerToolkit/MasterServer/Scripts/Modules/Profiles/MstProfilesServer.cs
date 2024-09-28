@@ -122,7 +122,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            sendUpdatesCoroutine = SafeCoroutine.PermanentRunner.StartCoroutine(KeepSendingUpdates(connection));
+            sendUpdatesCoroutine = MstTimer.Instance.StartCoroutine(KeepSendingUpdates(connection));
         }
 
         private void OnProfileDisposed(ObservableServerProfile profile)

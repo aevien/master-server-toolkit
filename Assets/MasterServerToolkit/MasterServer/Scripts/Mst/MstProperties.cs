@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
 using System;
@@ -667,6 +668,22 @@ namespace MasterServerToolkit.MasterServer
         public override string ToString()
         {
             return ToReadableString();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public MstJson ToJson()
+        {
+            var json = MstJson.EmptyObject;
+
+            foreach(var property in properties)
+            {
+                json.AddField(property.Key, property.Value);
+            }
+
+            return json;
         }
 
         /// <summary>

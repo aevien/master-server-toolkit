@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Utils;
+﻿using MasterServerToolkit.Networking;
+using MasterServerToolkit.Utils;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace MasterServerToolkit.MasterServer
 
         public void StartAutomation()
         {
-            SafeCoroutine.PermanentRunner.StartCoroutine(StartTimer());
+            MstTimer.Instance.StartCoroutine(StartTimer());
         }
 
         protected IEnumerator StartTimer()

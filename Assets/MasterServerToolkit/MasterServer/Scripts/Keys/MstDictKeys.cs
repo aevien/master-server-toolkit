@@ -9,14 +9,14 @@
         public const string LOBBY_TEAM = "-lobbyTeam";
         public const string USER_ID = "-userId";
         public const string USER_DEVICE_ID = "-userDeviceId";
-        public const string USER_GUEST_DEVICE_ID = "-userGuestDeviceId";
         public const string USER_DEVICE_NAME = "-userDeviceName";
+        public const string USER_REMEMBER_ME = "-userUserRememberMe";
         public const string USER_NAME = "-userName";
         public const string USER_PASSWORD = "-userPassword";
         public const string USER_EMAIL = "-userEmail";
         public const string USER_PHONE_NUMBER = "-userPhoneNumber";
         public const string USER_IS_GUEST = "-userIsGuest";
-        public const string USER_AUTH_TOKEN = "token";
+        public const string USER_AUTH_TOKEN = "-userAuthToken";
         public const string USER_AUTH_TOKEN_EXPIRES = "expires";
         public const string RESET_PASSWORD = "-resetPassword";
         public const string RESET_PASSWORD_CODE = "-resetPasswordCode";

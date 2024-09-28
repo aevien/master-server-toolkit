@@ -56,48 +56,61 @@ namespace MasterServerToolkit.MasterServer
         public MstAuthClient(IClientSocket connection) : base(connection) { }
 
         /// <summary>
+        /// Generated device id. Not unity's device id if user is guest
+        /// </summary>
+        /// <param name="isGuest"></param>
+        /// <returns></returns>
+        public string DeviceId()
+        {
+            if (SystemInfo.deviceUniqueIdentifier != SystemInfo.unsupportedIdentifier)
+            {
+                return SystemInfo.deviceUniqueIdentifier;
+            }
+            else
+            {
+                if (PlayerPrefs.HasKey(MstDictKeys.USER_DEVICE_ID))
+                {
+                    return PlayerPrefs.GetString(MstDictKeys.USER_DEVICE_ID);
+                }
+                else
+                {
+                    string deviceId = Mst.Helper.CreateGuidStringN();
+                    PlayerPrefs.SetString(MstDictKeys.USER_DEVICE_ID, deviceId);
+                    PlayerPrefs.Save();
+                    return deviceId;
+                }
+            }
+        }
+
+        public string DeviceName()
+        {
+            if (SystemInfo.deviceName != SystemInfo.unsupportedIdentifier)
+            {
+                return SystemInfo.deviceName;
+            }
+            else
+            {
+                if (PlayerPrefs.HasKey(MstDictKeys.USER_DEVICE_NAME))
+                {
+                    return PlayerPrefs.GetString(MstDictKeys.USER_DEVICE_NAME);
+                }
+                else
+                {
+                    string deviceName = $"device-{Mst.Helper.CreateFriendlyId()}";
+                    PlayerPrefs.SetString(MstDictKeys.USER_DEVICE_NAME, deviceName);
+                    PlayerPrefs.Save();
+                    return deviceName;
+                }
+            }
+        }
+
+        /// <summary>
         /// Save authentication token
         /// </summary>
         private void SaveAuthToken(string token)
         {
             PlayerPrefs.SetString(MstDictKeys.USER_AUTH_TOKEN, token);
             PlayerPrefs.Save();
-        }
-
-        /// <summary>
-        /// Generated device id
-        /// </summary>
-        /// <returns></returns>
-        public string DeviceId()
-        {
-            return DeviceId(false);
-        }
-
-        /// <summary>
-        /// Generated device id. Not unity's device id if user is guest
-        /// </summary>
-        /// <param name="isGuest"></param>
-        /// <returns></returns>
-        public string DeviceId(bool isGuest)
-        {
-            if (!isGuest && SystemInfo.deviceUniqueIdentifier != SystemInfo.unsupportedIdentifier)
-            {
-                return SystemInfo.deviceUniqueIdentifier;
-            }
-            else
-            {
-                if (PlayerPrefs.HasKey(isGuest ? MstDictKeys.USER_GUEST_DEVICE_ID : MstDictKeys.USER_DEVICE_ID))
-                {
-                    return PlayerPrefs.GetString(isGuest ? MstDictKeys.USER_GUEST_DEVICE_ID : MstDictKeys.USER_DEVICE_ID);
-                }
-                else
-                {
-                    string deviceId = Mst.Helper.CreateGuidStringN();
-                    PlayerPrefs.SetString(isGuest ? MstDictKeys.USER_GUEST_DEVICE_ID : MstDictKeys.USER_DEVICE_ID, deviceId);
-                    PlayerPrefs.Save();
-                    return deviceId;
-                }
-            }
         }
 
         /// <summary>
@@ -212,7 +225,7 @@ namespace MasterServerToolkit.MasterServer
 
             AccountInfo = null;
 
-                ClearAuthToken();
+            ClearAuthToken();
 
             if (!connection.IsConnected)
             {
@@ -247,9 +260,6 @@ namespace MasterServerToolkit.MasterServer
         {
             var credentials = new MstProperties();
             credentials.Add(MstDictKeys.USER_IS_GUEST, true);
-            credentials.Add(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
-            credentials.Add(MstDictKeys.USER_DEVICE_ID, DeviceId(true));
-
             SignIn(credentials, callback, connection);
         }
 
@@ -378,7 +388,7 @@ namespace MasterServerToolkit.MasterServer
 
             if (!connection.IsConnected)
             {
-                callback.Invoke(null, Mst.Localization["connectionStatusDisconnected"]);
+                callback?.Invoke(null, Mst.Localization["connectionStatusDisconnected"]);
                 return;
             }
 
@@ -386,6 +396,7 @@ namespace MasterServerToolkit.MasterServer
 
             credentials.Set(MstDictKeys.USER_DEVICE_ID, DeviceId());
             credentials.Set(MstDictKeys.USER_DEVICE_NAME, SystemInfo.deviceName);
+            credentials.Set(MstDictKeys.USER_REMEMBER_ME, RememberMe);
 
             // We first need to get an aes key 
             // so that we can encrypt our login data
@@ -394,7 +405,7 @@ namespace MasterServerToolkit.MasterServer
                 if (string.IsNullOrEmpty(aesKey))
                 {
                     IsNowSigningIn = false;
-                    callback.Invoke(null, Mst.Localization["signInSecurityError"]);
+                    callback?.Invoke(null, Mst.Localization["signInSecurityError"]);
                     return;
                 }
 
@@ -408,20 +419,18 @@ namespace MasterServerToolkit.MasterServer
                     {
                         ClearAuthToken();
 
-                        callback.Invoke(null, response.AsString(Mst.Localization["unknownError"]));
+                        callback?.Invoke(null, response.AsString(Mst.Localization["unknownError"]));
                         return;
                     }
 
                     AccountInfo = response.AsPacket<AccountInfoPacket>();
 
-                    // If RememberMe is checked on and we are not guset, then save auth token
-                    if (RememberMe && !AccountInfo.IsGuest && !string.IsNullOrEmpty(AccountInfo.Token))
+                    bool hasToken = !string.IsNullOrEmpty(AccountInfo.Token);
+
+                    // If RememberMe is checked
+                    if ((RememberMe && hasToken) || (AccountInfo.IsGuest && hasToken))
                     {
                         SaveAuthToken(AccountInfo.Token);
-                    }
-                    else
-                    {
-                        ClearAuthToken();
                     }
 
                     callback?.Invoke(AccountInfo, null);

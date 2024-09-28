@@ -54,7 +54,7 @@ namespace MasterServerToolkit.MasterServer
             json.AddField("room_peer_id", RoomPeerId);
             json.AddField("master_peer_id", MasterPeerId);
             json.AddField("profile", Profile.ToJson());
-            json.AddField("extra_properties", new MstJson(ExtraProperties.ToDictionary()));
+            json.AddField("extra_properties", MstJson.Create(ExtraProperties.ToDictionary()));
             return json.ToString();
         }
     }

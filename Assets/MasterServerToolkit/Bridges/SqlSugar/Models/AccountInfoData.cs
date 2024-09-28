@@ -16,7 +16,7 @@ namespace MasterServerToolkit.Bridges.SqlSugar
         public string Password { get; set; }
         [SugarColumn(ColumnName = "email", ColumnDataType = "varchar(45)", IsNullable = true)]
         public string Email { get; set; }
-        [SugarColumn(ColumnName = "token", ColumnDataType = "varchar(128)", IsNullable = true)]
+        [SugarColumn(ColumnName = "token", ColumnDataType = "varchar(512)", IsNullable = true)]
         public string Token { get; set; }
         [SugarColumn(ColumnName = "last_login", ColumnDataType = "datetime", IsNullable = true)]
         public DateTime LastLogin { get; set; }

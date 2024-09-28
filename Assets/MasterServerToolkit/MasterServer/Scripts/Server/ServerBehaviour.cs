@@ -528,37 +528,37 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="message"></param>
         protected virtual void OnMessageReceived(IIncomingMessage message)
         {
-            try
-            {
-                message.Peer.LastActivity = DateTime.Now;
+            message.Peer.LastActivity = DateTime.Now;
 
-                if (handlers.TryGetValue(message.OpCode, out IAsyncPacketHandler handler))
+            if (handlers.TryGetValue(message.OpCode, out IAsyncPacketHandler handler))
+            {
+                Task.Run(async () =>
                 {
-                    Task.Run(async () =>
+                    try
                     {
                         await handler.HandleAsync(message);
-                    });
-                }
-                else
-                {
-                    logger.Error($"You are trying to handle message with OpCode [{Extensions.StringExtensions.FromHash(message.OpCode)}]. " +
-                        $"But a handler for this message does not exist. " +
-                        $"This may have happened because you did not initialize the server module that should handle this message or did not register the message handler properly.");
-
-                    if (message.IsExpectingResponse)
-                    {
-                        message.Respond(ResponseStatus.NotHandled);
-                        return;
                     }
-                }
+                    catch (Exception e)
+                    {
+                        logger.Error($"An error occurred while handling a message from client. Message OpCode: [{Extensions.StringExtensions.FromHash(message.OpCode)}], Error: {e}");
+
+                        if (message.IsExpectingResponse)
+                        {
+                            message.Respond(ResponseStatus.Error);
+                        }
+                    }
+                });
             }
-            catch (Exception e)
+            else
             {
-                logger.Error($"An error occurred while handling a message from client. Message OpCode: [{Extensions.StringExtensions.FromHash(message.OpCode)}], Error: {e}");
+                logger.Error($"You are trying to handle message with OpCode [{Extensions.StringExtensions.FromHash(message.OpCode)}]. " +
+                    $"But a handler for this message does not exist. " +
+                    $"This may have happened because you did not initialize the server module that should handle this message or did not register the message handler properly.");
 
                 if (message.IsExpectingResponse)
                 {
-                    message.Respond(ResponseStatus.Error);
+                    message.Respond(ResponseStatus.NotHandled);
+                    return;
                 }
             }
         }

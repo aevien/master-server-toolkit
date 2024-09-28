@@ -41,7 +41,7 @@ namespace MasterServerToolkit.Json.Editor
 				jsonObject.ToString(true);
 				Profiler.EndSample();
 #else
-                jsonObject = MstJson.Create(testJsonString);
+                jsonObject = new MstJson(testJsonString);
 #endif
 
                 Debug.Log(jsonObject.ToString(true));
@@ -54,9 +54,9 @@ namespace MasterServerToolkit.Json.Editor
             if (GUILayout.Button("Load and validate"))
             {
                 Debug.Log(url);
-                string text = NetWebRequests.Get(url);
-                Debug.Log(text);
-                jsonObject = new MstJson(text);
+                var json = NetWebRequests.Get(url);
+                Debug.Log(json);
+                jsonObject = json;
                 Debug.Log(jsonObject.ToString(true));
             }
 

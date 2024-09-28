@@ -23,7 +23,7 @@ namespace MasterServerToolkit.Networking
 
         public void SendDelayedMessages()
         {
-            SafeCoroutine.PermanentRunner.StartCoroutine(SendDelayedMessagesCoroutine());
+            MstTimer.Instance.StartCoroutine(SendDelayedMessagesCoroutine());
         }
 
         public IEnumerator SendDelayedMessagesCoroutine()

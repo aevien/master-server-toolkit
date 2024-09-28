@@ -25,10 +25,6 @@ THE SOFTWARE.
 //#define JSONOBJECT_USE_FLOAT //Use floats for numbers instead of doubles (enable if you don't need support for doubles and want to cut down on significant digits in output)
 //#define JSONOBJECT_POOLING //Create MstJsons from a pool and prevent finalization by returning objects to the pool
 
-// ReSharper disable ArrangeAccessorOwnerBody
-// ReSharper disable MergeConditionalExpression
-// ReSharper disable UseStringInterpolation
-
 #if UNITY_2 || UNITY_3 || UNITY_4 || UNITY_5 || UNITY_5_3_OR_NEWER
 #define USING_UNITY
 #endif
@@ -44,6 +40,7 @@ using System.Globalization;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using MasterServerToolkit.Extensions;
+using System.Text.RegularExpressions;
 #endif
 
 namespace MasterServerToolkit.Json
@@ -150,121 +147,18 @@ namespace MasterServerToolkit.Json
             return (T)Enum.Parse(typeof(T), StringValue);
         }
 
-        public MstJson(ValueType type) { this.Type = type; }
-
-        public MstJson(bool value)
-        {
-            Type = ValueType.Bool;
-            BoolValue = value;
-        }
-
-        public MstJson(float value)
-        {
-            Type = ValueType.Number;
-#if JSONOBJECT_USE_FLOAT
-			FloatValue = value;
-#else
-            DoubleValue = value;
-#endif
-        }
-
-        public MstJson(double value)
-        {
-            Type = ValueType.Number;
-#if JSONOBJECT_USE_FLOAT
-			FloatValue = (float)value;
-#else
-            DoubleValue = value;
-#endif
-        }
-
-        public MstJson(int value)
-        {
-            Type = ValueType.Number;
-            LongValue = value;
-            IsInteger = true;
-#if JSONOBJECT_USE_FLOAT
-			FloatValue = value;
-#else
-            DoubleValue = value;
-#endif
-        }
-
-        public MstJson(long value)
-        {
-            Type = ValueType.Number;
-            LongValue = value;
-            IsInteger = true;
-#if JSONOBJECT_USE_FLOAT
-			FloatValue = value;
-#else
-            DoubleValue = value;
-#endif
-        }
-
-        public MstJson(Dictionary<string, string> dictionary)
-        {
-            Type = ValueType.Object;
-            Keys = new List<string>();
-            Values = new List<MstJson>();
-            foreach (KeyValuePair<string, string> kvp in dictionary)
-            {
-                Keys.Add(kvp.Key);
-                Values.Add(Create(kvp.Value));
-            }
-        }
-
-        public MstJson(Dictionary<string, MstJson> dictionary)
-        {
-            Type = ValueType.Object;
-            Keys = new List<string>();
-            Values = new List<MstJson>();
-            foreach (KeyValuePair<string, MstJson> kvp in dictionary)
-            {
-                Keys.Add(kvp.Key);
-                Values.Add(kvp.Value);
-            }
-        }
-
-        public MstJson(AddJsonContentsHandler content)
-        {
-            content.Invoke(this);
-        }
-
-        public MstJson(MstJson[] objects)
-        {
-            Type = ValueType.Array;
-            Values = new List<MstJson>(objects);
-        }
-
-        public MstJson(List<MstJson> objects)
-        {
-            Type = ValueType.Array;
-            Values = objects;
-        }
-
         public void Absorb(MstJson other)
         {
-            var otherList = other.Values;
-            if (otherList != null)
+            if (other.Values != null)
             {
-                if (Values == null)
-                {
-                    Values = new List<MstJson>();
-                }
-
-                Values.AddRange(otherList);
+                Values ??= new List<MstJson>();
+                Values.AddRange(other.Values);
             }
 
-            var otherKeys = other.Keys;
-            if (otherKeys != null)
+            if (other.Keys != null)
             {
-                if (Keys == null)
-                {
-                    Keys = new List<string>();
-                }
-
-                Keys.AddRange(otherKeys);
+                Keys ??= new List<string>();
+                Keys.AddRange(other.Keys);
             }
 
             StringValue = other.StringValue;
@@ -369,24 +263,29 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(string value)
         {
-            string parsed = value;
-
-            if (!string.IsNullOrEmpty(parsed))
+            // Check if the input is null or empty, and assign an empty string if true
+            if (string.IsNullOrEmpty(value))
             {
-                if (parsed.StartsWith('\"'))
-                {
-                    parsed = parsed.Substring(1);
-                }
+                value = string.Empty;
+            }
+            else
+            {
+                // Remove surrounding double quotes if present
+                value = value.Trim('"');
 
-                if (parsed.EndsWith('\"'))
-                {
-                    parsed = parsed.Substring(0, parsed.Length - 1);
-                }
+                // Unescape the string to convert escape sequences like \n, \t, etc., to their actual characters
+                value = Regex.Unescape(value);
+
+                // Remove new line, tab, and other unwanted whitespace characters
+                value = Regex.Replace(value, @"[\r\n\t]", string.Empty);
+
+                // Trim any additional spaces that might still exist at the start and end of the string
+                value = value.Trim();
             }
 
             var jsonObject = Create();
             jsonObject.Type = ValueType.String;
-            jsonObject.StringValue = parsed;
+            jsonObject.StringValue = value;
             return jsonObject;
         }
 
@@ -399,22 +298,10 @@ namespace MasterServerToolkit.Json
         }
 
         /// <summary>
-        /// Create a MstJson (using pooling if enabled) using a string containing valid JSON
+        /// 
         /// </summary>
-        /// <param name="json">A string containing valid JSON to be parsed into objects</param>
-        /// <param name="offset">An offset into the string at which to start parsing</param>
-        /// <param name="endOffset">The length of the string after the offset to parse
-        /// Specify a length of -1 (default) to use the full string length</param>
-        /// <param name="maxDepth">The maximum depth for the parser to search.</param>
-        /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked MstJsons</param>
-        /// <returns>A MstJson containing the parsed data</returns>
-        public static MstJson Create(string json, int offset = 0, int endOffset = -1, int maxDepth = -1, bool storeExcessLevels = false)
-        {
-            var jsonObject = Create();
-            Parse(json, ref offset, endOffset, jsonObject, maxDepth, storeExcessLevels);
-            return jsonObject;
-        }
-
+        /// <param name="content"></param>
+        /// <returns></returns>
         public static MstJson Create(AddJsonContentsHandler content)
         {
             var jsonObject = Create();
@@ -422,6 +309,11 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="objects"></param>
+        /// <returns></returns>
         public static MstJson Create(MstJson[] objects)
         {
             var jsonObject = EmptyArray;
@@ -429,6 +321,11 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="objects"></param>
+        /// <returns></returns>
         public static MstJson Create(List<MstJson> objects)
         {
             var jsonObject = EmptyArray;
@@ -436,6 +333,11 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <returns></returns>
         public static MstJson Create(Dictionary<string, string> dictionary)
         {
             var jsonObject = EmptyObject;
@@ -448,6 +350,11 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <returns></returns>
         public static MstJson Create(Dictionary<string, MstJson> dictionary)
         {
             var jsonObject = EmptyObject;
@@ -502,11 +409,81 @@ namespace MasterServerToolkit.Json
             Parse(json, ref offset, endOffset, this, maxDepth, storeExcessLevels);
         }
 
-        // ReSharper disable UseNameofExpression
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static bool IsJson(string input)
+        {
+            // Check if the input string is null, empty, or consists only of whitespace characters.
+            // If true, it's not a valid JSON, so return false.
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            // Trim whitespace from the start and end of the input to simplify further checks.
+            // This removes any unnecessary spaces that might interfere with pattern matching.
+            input = input.Trim();
+
+            // Check if the string has the basic structure of a JSON object or array:
+            // - Objects should start with '{' and end with '}'.
+            // - Arrays should start with '[' and end with ']'.
+            if ((input.StartsWith("{") && input.EndsWith("}")) || (input.StartsWith("[") && input.EndsWith("]")))
+            {
+                try
+                {
+                    // If the string starts with '{', it's potentially a JSON object.
+                    if (input.StartsWith("{"))
+                    {
+                        // Minimal check for an object: look for the presence of at least one colon (':') and double quotes ('"').
+                        // These characters are required to form a key-value pair in a JSON object, e.g., {"key": "value"}.
+                        return input.Contains(":") && input.Contains("\"");
+                    }
+
+                    // If the string starts with '[', it's potentially a JSON array.
+                    if (input.StartsWith("["))
+                    {
+                        // Check for signs that indicate a JSON array:
+                        // - Contains commas (',') which separate elements in an array.
+                        // - Contains nested objects ('{') or strings ('"'), which are common in JSON arrays.
+                        // For example, ["item1", {"key": "value"}, "item2"].
+                        return input.Contains(",") || input.Contains("{") || input.Contains("\"");
+                    }
+                }
+                catch
+                {
+                    // If any error occurs during the checks (though unlikely with these basic checks), 
+                    // assume it's not a valid JSON and return false.
+                    return false;
+                }
+            }
+
+            // If the input does not match the basic structure of a JSON object or array, return false.
+            // This means it doesn't start and end with the correct symbols ('{}' or '[]').
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputString"></param>
+        /// <param name="offset"></param>
+        /// <param name="endOffset"></param>
+        /// <param name="container"></param>
+        /// <param name="maxDepth"></param>
+        /// <param name="storeExcessLevels"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
         static bool BeginParse(string inputString, int offset, ref int endOffset, MstJson container, int maxDepth, bool storeExcessLevels)
         {
             if (container == null)
                 throw new ArgumentNullException("container");
+
+            if (string.IsNullOrEmpty(inputString))
+            {
+                return false;
+            }
 
             if (maxDepth == 0)
             {
@@ -524,13 +501,9 @@ namespace MasterServerToolkit.Json
             }
 
             var stringLength = inputString.Length;
+
             if (endOffset == -1)
                 endOffset = stringLength - 1;
-
-            if (string.IsNullOrEmpty(inputString))
-            {
-                return false;
-            }
 
             if (endOffset >= stringLength)
             {
@@ -1532,8 +1505,10 @@ namespace MasterServerToolkit.Json
 
         public void AddField(string name, MstJson jsonObject)
         {
-            if (jsonObject == null)
+            if (string.IsNullOrEmpty(name) || jsonObject == null)
+            {
                 return;
+            }
 
             // Convert to object if needed to support fields
             Type = ValueType.Object;

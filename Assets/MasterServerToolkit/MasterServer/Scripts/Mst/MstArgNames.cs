@@ -277,5 +277,25 @@
         /// 
         /// </summary>
         public string DefaultLanguage => "-mstDefaultLanguage";
+
+        /// <summary>
+        /// Use this cmd to set the secret key for token encryption and decryption.
+        /// </summary>
+        public string TokenSecret => "-mstTokenSecret";
+
+        /// <summary>
+        /// Use this cmd to define the number of days before the generated token expires.
+        /// </summary>
+        public string TokenExpiresInDays => "-mstTokenExpiresInDays";
+
+        /// <summary>
+        /// Use this cmd to specify the issuer of the token for authentication purposes.
+        /// </summary>
+        public string TokenIssuer => "-mstTokenIssuer";
+
+        /// <summary>
+        /// Use this cmd to define the audience for which the token is intended.
+        /// </summary>
+        public string TokenAudience => "-mstTokenAudience";
     }
 }

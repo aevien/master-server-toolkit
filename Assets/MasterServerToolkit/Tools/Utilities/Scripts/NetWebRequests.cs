@@ -1,18 +1,21 @@
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Utils
 {
     public class NetWebRequests
     {
-        public static string Get(string url, Dictionary<string, string> headers = null)
+        public static async Task<MstJson> GetAsync(string url, Dictionary<string, string> headers = null)
         {
+            MstJson result = MstJson.EmptyObject;
+
             try
             {
-                // Create a request for the URL. 		
                 WebRequest request = WebRequest.Create(url);
                 request.Method = "GET";
                 request.ContentType = "application/json";
@@ -25,35 +28,46 @@ namespace MasterServerToolkit.Utils
                     }
                 }
 
-                // Get the response.
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
+                {
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        using (Stream dataStream = response.GetResponseStream())
+                        using (StreamReader reader = new StreamReader(dataStream))
+                        {
+                            string responseFromServer = await reader.ReadToEndAsync();
 
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    Stream dataStream = response.GetResponseStream();
-                    StreamReader reader = new StreamReader(dataStream);
-                    string responseFromServer = reader.ReadToEnd();
-                    reader.Close();
-                    dataStream.Close();
-                    response.Close();
-                    return responseFromServer;
-                }
-                else
-                {
-                    Logs.Error($"The following error occurred : {response.StatusCode}, {response.StatusDescription}");
-                    return string.Empty;
+                            if (MstJson.IsJson(responseFromServer))
+                            {
+                                result.SetField("data", new MstJson(responseFromServer));
+                            }
+                            else
+                            {
+                                result.SetField("data", MstJson.Create(responseFromServer));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        result.SetField("error", $"Error: {response.StatusCode}, {response.StatusDescription}");
+                    }
                 }
             }
             catch (WebException e)
             {
-                Logs.Error($"The following error occurred : {e.Status}");
-                return string.Empty;
+                result.SetField("error", $"WebException: {e.Message}");
             }
             catch (Exception e)
             {
-                Logs.Error($"The following Exception was raised : {e.Message}");
-                return string.Empty;
+                result.SetField("error", $"Exception: {e.Message}");
             }
+
+            return result;
+        }
+
+        public static MstJson Get(string url, Dictionary<string, string> headers = null)
+        {
+            return Task.Run(() => GetAsync(url, headers)).GetAwaiter().GetResult();
         }
     }
 }

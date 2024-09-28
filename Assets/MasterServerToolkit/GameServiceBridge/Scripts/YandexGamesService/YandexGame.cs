@@ -1,5 +1,5 @@
+using MasterServerToolkit.MasterServer;
 using System.Collections;
-using UnityEngine.Events;
 
 namespace MasterServerToolkit.GameService
 {
@@ -10,17 +10,22 @@ namespace MasterServerToolkit.GameService
             Id = GameServiceId.YandexGames;
         }
 
-        public override IEnumerator Authenticate(UnityAction<bool> callback)
-        {
-            yield break;
-        }
-
-        public override IEnumerator GetProducts(UnityAction<bool> callback)
+        public override IEnumerator Authenticate(SuccessCallback callback)
         {
             throw new System.NotImplementedException();
         }
 
-        public override IEnumerator GetProductPurchases(UnityAction<bool> callback)
+        public override IEnumerator GetProductPurchases(SuccessCallback callback)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override IEnumerator GetProducts(SuccessCallback callback)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override IEnumerator Init()
         {
             throw new System.NotImplementedException();
         }

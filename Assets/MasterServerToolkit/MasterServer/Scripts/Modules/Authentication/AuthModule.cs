@@ -1,10 +1,14 @@
 ﻿using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -51,9 +55,6 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, Tooltip("Guest names will start with this prefix")]
         protected string guestPrefix = "user_";
 
-        [Header("Permission Settings"), SerializeField, Tooltip("How many days token will be valid before expire. The token will also be updated each login")]
-        protected byte tokenExpiresInDays = 60;
-
         [SerializeField, Tooltip("Minimal permission level, required to retrieve peer account information")]
         protected int getPeerDataPermissionsLevel = 0;
 
@@ -63,11 +64,17 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField, TextArea(3, 10)]
         protected string emailAddressValidationTemplate = @"^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$";
 
-        [Header("Security"), SerializeField, Tooltip("Secret code to create user auth token. Change it for your own project")]
-        protected string tokenSecret = "t0k9n-$ecr9t";
-
         [Header("Generic"), SerializeField, Tooltip("Min number of characters the service code must contain")]
         protected int serviceCodeMinChars = 6;
+        
+        [Header("Security"), SerializeField, Tooltip("Secret code to create user auth token. Change it for your own project")]
+        protected string tokenSecret = "t0k9n-$ecr9t";
+        [SerializeField, Tooltip("How many days token will be valid before expire. The token will also be updated each login")]
+        protected int tokenExpiresInDays = 7;
+        [SerializeField]
+        protected string tokenIssuer = "http://mst.game.com";
+        [SerializeField]
+        protected string tokenAudience = "http://mst.game.com/users";
 
         /// <summary>
         /// Database accessor factory that helps to create integration with accounts db
@@ -159,6 +166,11 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
+            tokenSecret = Mst.Args.AsString(Mst.Args.Names.TokenSecret, tokenSecret);
+            tokenExpiresInDays = Mst.Args.AsInt(Mst.Args.Names.TokenSecret, tokenExpiresInDays);
+            tokenIssuer = Mst.Args.AsString(Mst.Args.Names.TokenIssuer, tokenIssuer);
+            tokenAudience = Mst.Args.AsString(Mst.Args.Names.TokenAudience, tokenAudience);
+
             if (databaseAccessorFactory != null)
                 databaseAccessorFactory.CreateAccessors();
 
@@ -526,38 +538,94 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        protected virtual bool IsTokenExpired(string token)
+        protected virtual bool ValidateToken(MstProperties userCredentials)
         {
-            if (string.IsNullOrEmpty(token))
+            try
+            {
+                string token = userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN);
+                string deviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
+                string deviceName = userCredentials.AsString(MstDictKeys.USER_DEVICE_NAME);
+
+                // Split the token into its encrypted part and signature
+                var parts = token.Split('.');
+
+                if (parts.Length != 2) 
+                    return false;
+
+                var encryptedToken = parts[0];
+                var signature = parts[1];
+
+                // Verify the signature using HMACSHA256
+                var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(tokenSecret));
+                var computedSignature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(encryptedToken)));
+                
+                if (computedSignature != signature) 
+                    return false;
+
+                // Decrypt the token using AES
+                var decryptedToken = Mst.Security.DecryptStringAES(encryptedToken, tokenSecret);
+
+                // Parse the decrypted token data
+                var tokenData = new MstJson(decryptedToken);
+
+                // Check the expiration time of the token
+                var expirationTime = tokenData[2].LongValue;
+                var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                if (currentTime > expirationTime) 
+                    return false; // Token has expired
+
+                // Validate the Issuer and Audience parameters
+                var issuer = tokenData[3].StringValue;
+                var audience = tokenData[4].StringValue;
+
+                if (issuer != tokenIssuer || audience != tokenAudience)
+                {
+                    // The token is not from an authorized application or service
+                    return false;
+                }
+
+                if (tokenData[5].StringValue != deviceId
+                    || tokenData[6].StringValue != deviceName)
+                {
+                    return false;
+                }
+
+                // Return the parsed token data if validation is successful
                 return true;
-
-            string decryptedToken = Mst.Security.DecryptStringAES(token, tokenSecret);
-            var tokenJson = new MstJson(decryptedToken);
-
-            if (tokenJson.Count < 3)
-                return true;
-
-            var expireDate = DateTimeOffset.FromUnixTimeSeconds(tokenJson[2].LongValue);
-
-            return DateTimeOffset.UtcNow >= expireDate;
+            }
+            catch
+            {
+                // Handle validation errors
+                return false;
+            }
         }
 
         /// <summary>
         /// Creates and saves account token
         /// </summary>
         /// <param name="account"></param>
-        protected virtual async Task CreateAccountToken(IAccountInfoData account)
+        protected virtual async Task<string> CreateAccountToken(IAccountInfoData account)
         {
-            var dt = DateTimeOffset.UtcNow;
-            dt = dt.AddDays(tokenExpiresInDays);
+            var dt = DateTimeOffset.UtcNow.AddDays(tokenExpiresInDays);
 
             var tokenJson = MstJson.EmptyArray;
             tokenJson.Add(account.Id);
             tokenJson.Add(account.Username);
             tokenJson.Add(dt.ToUnixTimeSeconds());
+            tokenJson.Add(tokenIssuer);
+            tokenJson.Add(tokenAudience);
+            tokenJson.Add(account.DeviceId);
+            tokenJson.Add(account.DeviceName);
 
-            account.Token = Mst.Security.EncryptStringAES(tokenJson.ToString(), tokenSecret);
+            var encryptedToken = Mst.Security.EncryptStringAES(tokenJson.ToString(), tokenSecret);
+            var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(tokenSecret));
+            var signature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(encryptedToken)));
+
+            var finalToken = $"{encryptedToken}.{signature}";
+            account.Token = finalToken;
             await authDatabaseAccessor.InsertOrUpdateTokenAsync(account, account.Token);
+            return finalToken;
         }
 
         /// <summary>
@@ -1116,6 +1184,9 @@ namespace MasterServerToolkit.MasterServer
 
             // Get user email
             var userEmail = userCredentials.AsString(MstDictKeys.USER_EMAIL);
+            bool userRememberMe = userCredentials.AsBool(MstDictKeys.USER_REMEMBER_ME);
+            var userDeviceName = userCredentials.AsString(MstDictKeys.USER_DEVICE_NAME);
+            var userDeviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
 
             // if email is not in valid format
             if (!IsEmailValid(userEmail))
@@ -1150,6 +1221,8 @@ namespace MasterServerToolkit.MasterServer
                 account.IsGuest = false;
                 account.Password = Mst.Security.CreateHash(newPassword);
                 account.IsEmailConfirmed = true;
+                account.DeviceId = userDeviceId;
+                account.DeviceName = userDeviceName;
 
                 await authDatabaseAccessor.InsertAccountAsync(account);
             }
@@ -1158,6 +1231,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 account.Password = Mst.Security.CreateHash(newPassword);
                 await authDatabaseAccessor.UpdateAccountAsync(account);
+            }
+
+            if (userRememberMe)
+            {
+                await CreateAccountToken(account);
             }
 
             if (mailer == null)
@@ -1205,11 +1283,11 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            // Get username
             var userName = userCredentials.AsString(MstDictKeys.USER_NAME);
-
-            // Get user password
             var userPassword = userCredentials.AsString(MstDictKeys.USER_PASSWORD);
+            bool userRememberMe = userCredentials.AsBool(MstDictKeys.USER_REMEMBER_ME);
+            var userDeviceName = userCredentials.AsString(MstDictKeys.USER_DEVICE_NAME);
+            var userDeviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
 
             // If another session found
             if (IsUserLoggedInByUsername(userName))
@@ -1234,8 +1312,10 @@ namespace MasterServerToolkit.MasterServer
             }
             else
             {
-                // Let's save user auth token
-                await CreateAccountToken(account);
+                if (userRememberMe)
+                {
+                    await CreateAccountToken(account);
+                }
 
                 FinalizeSingIn(account, userPeerExtension, message);
             }
@@ -1260,16 +1340,16 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            // Get token
-            string token = userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN);
-
             // If token has expired
-            if (IsTokenExpired(token))
+            if (!ValidateToken(userCredentials))
             {
                 logger.Warn($"Session token has expired");
                 message.Respond(ResponseStatus.TokenExpired);
                 return;
             }
+
+            // Get token from credentials
+            string token = userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN);
 
             // Get account by token
             IAccountInfoData account = await authDatabaseAccessor.GetAccountByTokenAsync(token);
@@ -1286,8 +1366,10 @@ namespace MasterServerToolkit.MasterServer
                 logger.Error($"Another user with {account.Username} is already logged in");
                 message.Respond(ResponseStatus.Failed);
             }
+            // Finalize login
             else
             {
+                await CreateAccountToken(account);
                 FinalizeSingIn(account, userPeerExtension, message);
             }
         }
@@ -1323,27 +1405,15 @@ namespace MasterServerToolkit.MasterServer
             var userDeviceName = userCredentials.AsString(MstDictKeys.USER_DEVICE_NAME);
             var userDeviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
 
-            // Trying to get user account by user device id
-            IAccountInfoData account = await authDatabaseAccessor.GetAccountByDeviceIdAsync(userDeviceId);
+            // Create new guest account
+            IAccountInfoData account = authDatabaseAccessor.CreateAccountInstance();
+            account.Username = GenerateGuestUsername();
+            account.DeviceId = userDeviceId;
+            account.DeviceName = userDeviceName;
 
-            // If current client is on the same device
-            bool anotherGuestOnTheSameDevice = account != null && IsUserLoggedInById(account.Id);
-
-            // If guest has no account create it
-            if (account == null || anotherGuestOnTheSameDevice)
-            {
-                account = authDatabaseAccessor.CreateAccountInstance();
-                account.Username = GenerateGuestUsername();
-                account.DeviceId = userDeviceId;
-                account.DeviceName = userDeviceName;
-
-                // If guest may save his data and this guest is not on the same device
-                if (!anotherGuestOnTheSameDevice)
-                {
-                    // Save account and return its id in DB
-                    await authDatabaseAccessor.InsertAccountAsync(account);
-                }
-            }
+            // Save account and return its id in DB
+            await authDatabaseAccessor.InsertAccountAsync(account);
+            await CreateAccountToken(account);
 
             FinalizeSingIn(account, userPeerExtension, message);
         }

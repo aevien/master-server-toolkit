@@ -2,6 +2,7 @@ using MasterServerToolkit.Json;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -59,25 +60,20 @@ namespace MasterServerToolkit.GameService
             var headers = CreateHeaders();
             string url = CreateGetWalletUrl(authKey);
 
-            string result = await Task.Run(() =>
-            {
-                return NetWebRequests.Get(url, headers);
-            });
-
-            var json = new MstJson(result);
+            MstJson json = await NetWebRequests.GetAsync(url, headers);
 
             if (json.HasField("wallet"))
             {
                 message.Respond(json["wallet"].StringValue, ResponseStatus.Success);
             }
-            else if (json.HasField("detail"))
+            else if (json.HasField("error"))
             {
-                logger.Error(json["detail"].StringValue);
-                message.Respond(ResponseStatus.Failed);
+                logger.Error(json["error"].StringValue);
+                message.Respond(json["error"].StringValue, ResponseStatus.Failed);
             }
             else
             {
-                message.Respond(ResponseStatus.NotFound);
+                message.Respond(ResponseStatus.NotFound.ToString(), ResponseStatus.NotFound);
             }
         }
 
@@ -87,25 +83,42 @@ namespace MasterServerToolkit.GameService
             var headers = CreateHeaders();
             string url = CreateGetArtifactsUrl(data.A, data.B);
 
-            string result = await Task.Run(() =>
-            {
-                return NetWebRequests.Get(url, headers);
-            });
+            MstJson json = await NetWebRequests.GetAsync(url, headers);
 
-            var json = new MstJson(result);
-
-            if (json.IsArray)
+            if (json.HasField("data") && json["data"].IsArray)
             {
-                message.Respond(json.ToString(), ResponseStatus.Success);
+                var products = new List<ProductInfo>();
+
+                foreach (var item in json["data"])
+                {
+                    var product = new ProductInfo()
+                    {
+                        Id = item["id"].IntValue.ToString(),
+                        Title = item["title"].StringValue,
+                        Description = item["description"].StringValue,
+                        ImageUrl = MstJson.EmptyObject,
+                        PriceValue = item["price_value"].IntValue,
+                        PriceCurrencyCode = item["price_currency"].StringValue,
+                        Platform = GameServiceId.PlayWeb3
+                    };
+
+                    product.PriceFormat = $"{product.PriceValue} {product.PriceCurrencyCode}";
+                    product.ExtraProperties.Add("game_id", item["game_id"].IntValue);
+                    product.ExtraProperties.Add("kind", item["kind"].StringValue);
+
+                    products.Add(product);
+                }
+
+                message.Respond(products.ToBytes(), ResponseStatus.Success);
             }
-            else if (json.HasField("detail"))
+            else if (json.HasField("error"))
             {
-                logger.Error(json["detail"].StringValue);
+                logger.Error(json["error"].StringValue);
                 message.Respond(ResponseStatus.Failed);
             }
             else
             {
-                message.Respond(ResponseStatus.NotFound);
+                message.Respond(ResponseStatus.NotFound.ToString(), ResponseStatus.NotFound);
             }
         }
 
@@ -115,25 +128,20 @@ namespace MasterServerToolkit.GameService
             var headers = CreateHeaders();
             string url = CreateGetArtifactPurchasesUrl(data.skip, data.limit, data.wallet);
 
-            string result = await Task.Run(() =>
-            {
-                return NetWebRequests.Get(url, headers);
-            });
-
-            var json = new MstJson(result);
+            MstJson json = await NetWebRequests.GetAsync(url, headers);
 
             if (json.IsArray)
             {
                 message.Respond(json.ToString(), ResponseStatus.Success);
             }
-            else if (json.HasField("detail"))
+            else if (json.HasField("error"))
             {
-                logger.Error(json["detail"].StringValue);
-                message.Respond(ResponseStatus.Failed);
+                logger.Error(json["error"].StringValue);
+                message.Respond(json["error"].StringValue, ResponseStatus.Failed);
             }
             else
             {
-                message.Respond(ResponseStatus.NotFound);
+                message.Respond(ResponseStatus.NotFound.ToString(), ResponseStatus.NotFound);
             }
         }
 

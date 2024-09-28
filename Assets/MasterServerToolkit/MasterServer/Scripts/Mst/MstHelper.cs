@@ -1,9 +1,5 @@
-﻿using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Logging;
-using MasterServerToolkit.Utils;
+﻿using MasterServerToolkit.Utils;
 using System;
-using System.IO;
-using System.Net;
 using System.Text;
 using UnityEngine;
 
@@ -98,24 +94,29 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public string CreateFriendlyId()
         {
-            string rawValue = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).ToUint32Hash().ToString("x");
+            // Generate a new GUID and convert it to a 16-character hex string
+            string rawValue = CreateGuidStringN().Substring(0, 12).ToUpper();
 
+            // If the length of rawValue is less than 12, append random hex digits to make it 12 characters long
             while (rawValue.Length < 12)
             {
                 rawValue += Random.Next(0, 16).ToString("X");
             }
 
-            string result = "";
+            // Use StringBuilder for efficient concatenation
+            StringBuilder result = new StringBuilder();
 
             for (int i = 0; i < rawValue.Length; i++)
             {
-                if (i % 4 == 0 && result.Length > 0)
-                    result += "-";
+                if (i > 0 && i % 4 == 0)
+                {
+                    result.Append("-");
+                }
 
-                result += rawValue[i];
+                result.Append(rawValue[i]);
             }
 
-            return result;
+            return result.ToString();
         }
 
         /// <summary>
@@ -159,50 +160,12 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public ushort CreateUInt16Hash(string value)
-        {
-            return value.ToUint16Hash();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public uint CreateUInt32Hash(string value)
-        {
-            return value.ToUint32Hash();
-        }
-
-        /// <summary>
         /// Retrieves current public IP
         /// </summary>
         /// <param name="callback"></param>
         public string GetPublicIp()
         {
-            return NetWebRequests.Get("https://ifconfig.co/ip");
-        }
-
-        /// <summary>
-        /// Join command terminal arguments to one string
-        /// </summary>
-        /// <param name="args"></param>
-        /// <param name="from"></param>
-        /// <returns></returns>
-        public string JoinCommandArgs(string[] args, int from)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            for (int i = from; i < args.Length; i++)
-            {
-                sb.Append($"{args[i].Trim()} ");
-            }
-
-            return sb.ToString();
+            return NetWebRequests.Get("https://ifconfig.co/ip").StringValue;
         }
     }
 }

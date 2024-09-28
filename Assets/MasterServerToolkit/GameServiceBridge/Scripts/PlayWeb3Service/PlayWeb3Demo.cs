@@ -1,6 +1,5 @@
 using MasterServerToolkit.Bridges;
 using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Utils;
 using TMPro;
 using UnityEngine;
 
@@ -20,16 +19,15 @@ namespace MasterServerToolkit.GameService
         {
             if (GameBridge.Service.Id == GameServiceId.PlayWeb3)
             {
-                GameBridge.Authenticate((isSuccess) =>
+                GameBridge.Authenticate((isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Error"));
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error));
                     }
                     else
                     {
-                        output.text = GameBridge.Service.PlayerId;
-                        Debug.Log(GameBridge.Service.PlayerId);
+                        output.text = GameBridge.Player.Id;
                     }
                 });
             }
@@ -43,15 +41,15 @@ namespace MasterServerToolkit.GameService
         {
             if (GameBridge.Service.Id == GameServiceId.PlayWeb3)
             {
-                GameBridge.GetProducts((isSuccess) =>
+                GameBridge.GetProducts((isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Error"));
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error));
                     }
                     else
                     {
-                        output.text = GameBridge.Service.Products.Print(true);
+                        //output.text = GameBridge.Service.Products.Print(true);
                         Debug.Log(GameBridge.Service.Products);
                     }
                 });
@@ -66,11 +64,11 @@ namespace MasterServerToolkit.GameService
         {
             if (GameBridge.Service.Id == GameServiceId.PlayWeb3)
             {
-                GameBridge.GetProductPurchases((isSuccess) =>
+                GameBridge.GetProductPurchases((isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Error"));
+                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error));
                     }
                     else
                     {
