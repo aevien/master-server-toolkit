@@ -14,9 +14,7 @@ namespace MasterServerToolkit.DebounceThrottle
         /// It ensures that a function is invoked only once within a specified interval, even if multiple invocations are requested.
         /// </summary>
         /// <param name="interval">The minimum interval in milliseconds between invocations of the debounced function.</param>
-        public DebounceDispatcher(int interval) : base(interval)
-        {
-        }
+        public DebounceDispatcher(int interval) : base(interval) { }
 
         /// <summary>
         /// Method manages the debouncing of the function invocation.
@@ -26,7 +24,7 @@ namespace MasterServerToolkit.DebounceThrottle
         /// <returns>Returns Task to be executed with minimal delay</returns>
         public Task DebounceAsync(Func<Task> function, CancellationToken cancellationToken = default)
         {
-            return base.DebounceAsync(async () =>
+            return DebounceAsync(async () =>
             {
                 await function.Invoke();
                 return true;

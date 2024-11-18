@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -19,5 +20,11 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="profile"></param>
         Task UpdateProfileAsync(ObservableServerProfile profile);
+
+        /// <summary>
+        /// Should save updated profiles into database
+        /// </summary>
+        /// <param name="profile"></param>
+        Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profile);
     }
 }

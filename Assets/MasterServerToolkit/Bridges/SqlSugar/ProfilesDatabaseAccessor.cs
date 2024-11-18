@@ -17,7 +17,20 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 
             using (SqlSugarClient db = new SqlSugarClient(configuration))
             {
-                db.CodeFirst.InitTables(typeof(ProfilePropertyData));
+                var tableTypes = new[]
+                {
+                    typeof(ProfilePropertyData)
+                };
+
+                foreach (var tableType in tableTypes)
+                {
+                    var tableName = db.EntityMaintenance.GetTableName(tableType);
+
+                    if (!db.DbMaintenance.IsAnyTable(tableName))
+                    {
+                        db.CodeFirst.InitTables(tableType);
+                    }
+                }
             }
         }
 
@@ -50,16 +63,25 @@ namespace MasterServerToolkit.Bridges.SqlSugar
             }
         }
 
-        public Task UpdateProfileAsync(ObservableServerProfile profile)
+        public async Task UpdateProfileAsync(ObservableServerProfile profile)
         {
-            return Task.Run(() =>
+            await UpdateProfilesAsync(new List<ObservableServerProfile>()
             {
-                using (SqlSugarClient db = new SqlSugarClient(configuration))
-                {
-                    try
-                    {
-                        List<ProfilePropertyData> entries = new List<ProfilePropertyData>();
+                profile
+            });
+        }
 
+        public async Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profiles)
+        {
+            using (SqlSugarClient db = new SqlSugarClient(configuration))
+            {
+                try
+                {
+                    // Prepare a list to store all profile property data
+                    List<ProfilePropertyData> entries = new List<ProfilePropertyData>();
+
+                    foreach (var profile in profiles)
+                    {
                         foreach (var property in profile)
                         {
                             entries.Add(new ProfilePropertyData()
@@ -69,17 +91,19 @@ namespace MasterServerToolkit.Bridges.SqlSugar
                                 PropertyValue = property.ToJson().ToString()
                             });
                         }
+                    }
 
-                        db.Storageable(entries)
-                        .WhereColumns(new string[] { "account_id", "property_key" })
-                        .ExecuteCommand();
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex);
-                    }
+                    // Use Storageable for batch update/insert
+                    await db.Storageable(entries)
+                      .WhereColumns(new string[] { "account_id", "property_key" }) // Define unique keys for matching
+                      .ExecuteCommandAsync(); // Automatically handles insert or update
                 }
-            });
+                catch (Exception ex)
+                {
+                    // Log the error for debugging
+                    Logger.Error(ex);
+                }
+            }
         }
     }
 }

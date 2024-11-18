@@ -25,7 +25,7 @@ namespace MasterServerToolkit.DebounceThrottle
         /// <returns></returns>
         public Task ThrottleAsync(Func<Task> function, CancellationToken cancellationToken = default)
         {
-            return base.ThrottleAsync(async () =>
+            return ThrottleAsync(async () =>
             {
                 await function.Invoke();
                 return true;

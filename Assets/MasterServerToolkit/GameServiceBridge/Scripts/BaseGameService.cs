@@ -1,28 +1,62 @@
 using MasterServerToolkit.Json;
 using MasterServerToolkit.MasterServer;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace MasterServerToolkit.GameService
 {
-    public abstract class BaseGameService : IGameService
+    public abstract class BaseGameService : MonoBehaviour, IGameService
     {
+        [DllImport("__Internal")]
+        private static extern bool MstIsMobile();
+
         private readonly List<UnityAction> readyCallbacks = new List<UnityAction>();
         private bool isReady = false;
 
         public GameServiceId Id { get; protected set; } = GameServiceId.Self;
+        public bool IsMobile
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                return MstIsMobile();
+#else
+                return Application.isMobilePlatform;
+#endif
+                //return true;
+            }
+        }
+
+        protected virtual void Awake() { }
+
+        #region AUTHENTICATION
+
         public PlayerInfo Player { get; protected set; } = new PlayerInfo();
+        public abstract void Authenticate(SuccessCallback callback);
+
+        #endregion
+
+        #region PURCHASES
+
+        public bool IsInAppPurchaseSupported { get; protected set; } = false;
         public IEnumerable<ProductInfo> Products { get; protected set; } = Enumerable.Empty<ProductInfo>();
         public MstJson Purchases { get; protected set; } = MstJson.EmptyArray;
+        public abstract void GetProducts(SuccessCallback callback);
+        public abstract void Purchase(string productId, SuccessCallback callback);
+        public abstract void GetProductPurchases(SuccessCallback callback);
+
+        #endregion
+
+        #region ADDVERTISEMENT
+
         public bool IsAdSupported { get; protected set; }
 
-        public abstract IEnumerator Init();
-        public abstract IEnumerator Authenticate(SuccessCallback callback);
-        public abstract IEnumerator GetProducts(SuccessCallback callback);
-        public abstract IEnumerator GetProductPurchases(SuccessCallback callback);
+        #endregion
+
+        public abstract void Init();
 
         protected void NotifyOnReady()
         {
@@ -74,7 +108,7 @@ namespace MasterServerToolkit.GameService
             PlayerPrefs.Save();
         }
 
-        public virtual IEnumerator GetString(string key, UnityAction<bool, string> callback)
+        public virtual void GetString(string key, UnityAction<bool, string> callback)
         {
             if (PlayerPrefs.HasKey(key))
             {
@@ -84,11 +118,9 @@ namespace MasterServerToolkit.GameService
             {
                 callback?.Invoke(false, string.Empty);
             }
-
-            yield return new WaitForEndOfFrame();
         }
 
-        public virtual IEnumerator GetFloat(string key, UnityAction<bool, float> callback)
+        public virtual void GetFloat(string key, UnityAction<bool, float> callback)
         {
             if (PlayerPrefs.HasKey(key))
             {
@@ -98,11 +130,9 @@ namespace MasterServerToolkit.GameService
             {
                 callback?.Invoke(false, 0);
             }
-
-            yield return new WaitForEndOfFrame();
         }
 
-        public virtual IEnumerator GetInt(string key, UnityAction<bool, int> callback)
+        public virtual void GetInt(string key, UnityAction<bool, int> callback)
         {
             if (PlayerPrefs.HasKey(key))
             {
@@ -112,11 +142,9 @@ namespace MasterServerToolkit.GameService
             {
                 callback?.Invoke(false, 0);
             }
-
-            yield return new WaitForEndOfFrame();
         }
 
-        public virtual IEnumerator GetBool(string key, UnityAction<bool, bool> callback)
+        public virtual void GetBool(string key, UnityAction<bool, bool> callback)
         {
             if (PlayerPrefs.HasKey(key))
             {
@@ -126,8 +154,6 @@ namespace MasterServerToolkit.GameService
             {
                 callback?.Invoke(false, false);
             }
-
-            yield return new WaitForEndOfFrame();
         }
 
         #endregion

@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -62,7 +63,9 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
-        private readonly float timeToWaitProfile = 10f * 1000f;
+        protected readonly float timeToWaitProfile = 10f * 1000f;
+        protected ThrottleDispatcher saveDebounceDispatcher;
+        protected ThrottleDispatcher sendDebounceDispatcher;
 
         /// <summary>
         /// Auth module for listening to auth events
@@ -72,12 +75,22 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// DB to work with profile data
         /// </summary>
-        protected IProfilesDatabaseAccessor profileDatabaseAccessor;
+        protected IProfilesDatabaseAccessor databaseAccessor;
 
         /// <summary>
         /// List of the users profiles
         /// </summary>
         protected readonly ConcurrentDictionary<string, ObservableServerProfile> profilesList = new ConcurrentDictionary<string, ObservableServerProfile>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        protected readonly ConcurrentDictionary<string, ObservableServerProfile> profilesListToSave = new ConcurrentDictionary<string, ObservableServerProfile>();
+
+        /// <summary>
+        /// List of all profile updates to be sent to clients
+        /// </summary>
+        protected readonly ConcurrentDictionary<string, ObservableServerProfile> profilesListToSend = new ConcurrentDictionary<string, ObservableServerProfile>();
 
         /// <summary>
         /// Gets list of userprofiles
@@ -100,6 +113,10 @@ namespace MasterServerToolkit.MasterServer
 
             // Add auth module as a dependency of this module
             AddOptionalDependency<AuthModule>();
+
+            // Set debounce dispatchers
+            saveDebounceDispatcher = new ThrottleDispatcher((int)(saveProfileDebounceTime * 1000f));
+            sendDebounceDispatcher = new ThrottleDispatcher((int)(clientUpdateDebounceTime * 1000f));
         }
 
         public override void Initialize(IServer server)
@@ -107,9 +124,9 @@ namespace MasterServerToolkit.MasterServer
             if (databaseAccessorFactory)
                 databaseAccessorFactory.CreateAccessors();
 
-            profileDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IProfilesDatabaseAccessor>();
+            databaseAccessor = Mst.Server.DbAccessors.GetAccessor<IProfilesDatabaseAccessor>();
 
-            if (profileDatabaseAccessor == null)
+            if (databaseAccessor == null)
             {
                 logger.Fatal($"Profiles database implementation was not found in {GetType().Name}");
                 return;
@@ -140,7 +157,7 @@ namespace MasterServerToolkit.MasterServer
         {
             MstProperties info = base.Info();
 
-            info.Add("Database Accessor", profileDatabaseAccessor != null ? "Connected" : "Not Connected");
+            info.Add("Database Accessor", databaseAccessor != null ? "Connected" : "Not Connected");
             info.Add("Profiles", Profiles?.Count());
 
             return info;
@@ -174,16 +191,12 @@ namespace MasterServerToolkit.MasterServer
 
                     // We need to create a new one
                     profile = CreateProfile(user.UserId, user.Peer);
-                    profile.SaveThrottleDispatcher = new DebounceDispatcher((int)(saveProfileDebounceTime * 1000f));
-                    profile.SendDebounceDispatcher = new DebounceDispatcher((int)(clientUpdateDebounceTime * 1000f));
                     profile.UnloadDebounceDispatcher = new DebounceDispatcher((int)(unloadProfileAfter * 1000f));
 
                     profilesList.TryAdd(user.UserId, profile);
 
                     // Restore profile data from database
-                    await profileDatabaseAccessor.RestoreProfileAsync(profile);
-
-                    logger.Info(profile);
+                    await databaseAccessor.RestoreProfileAsync(profile);
 
                     // Listen to profile events
                     profile.OnModifiedInServerEvent += OnProfileChangedEventHandler;
@@ -267,9 +280,14 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected void SaveProfile(ObservableServerProfile profile)
         {
-            profile.SaveThrottleDispatcher.DebounceAsync(async () =>
+            profilesListToSave.TryAdd(profile.UserId, profile);
+
+            saveDebounceDispatcher.ThrottleAsync(async () =>
             {
-                await profileDatabaseAccessor.UpdateProfileAsync(profile);
+                var snapshot = profilesListToSave.Values.ToList();
+                profilesListToSave.Clear();
+
+                await databaseAccessor.UpdateProfilesAsync(snapshot);
             });
         }
 
@@ -287,17 +305,20 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            profile.SendDebounceDispatcher.Debounce(() =>
+            profilesListToSend.TryAdd(profile.UserId, profile);
+
+            sendDebounceDispatcher.Throttle(() =>
             {
-                // Get profile updated data in bytes
-                var updates = profile.GetUpdates();
+                var snapshot = new Dictionary<IPeer, byte[]>();
+                snapshot = profilesListToSend.ToDictionary(k => k.Value.ClientPeer, k => k.Value.GetUpdates());
+                profilesListToSend.Clear();
 
-                // Clear updated data in profile
-                profile.ClearUpdates();
-
-                // Send these data to client
-                if (profile.ClientPeer.IsConnected)
-                    profile.ClientPeer.SendMessage(MessageHelper.Create(MstOpCodes.UpdateClientProfile, updates), DeliveryMethod.ReliableSequenced);
+                foreach (var item in snapshot)
+                {
+                    // Send these data to client
+                    if (item.Key.IsConnected)
+                        item.Key.SendMessage(MessageHelper.Create(MstOpCodes.UpdateClientProfile, item.Value), DeliveryMethod.ReliableSequenced);
+                }
             });
         }
 
@@ -398,29 +419,61 @@ namespace MasterServerToolkit.MasterServer
 
             if (user == null)
             {
+                logger.Error($"User is not logged in");
                 message.Respond(ResponseStatus.Unauthorized);
                 return;
             }
 
-            int totalTime = 0;
             ProfilePeerExtension profileExt = null;
+            using var cts = new CancellationTokenSource((int)timeToWaitProfile);
 
-            // Wait for user profile
-            while (totalTime < timeToWaitProfile && message.Peer.TryGetExtension(out profileExt) == false)
+            try
             {
-                await Task.Delay(100);
-                totalTime += 100;
-            }
+                await Task.Run(async () =>
+                {
+                    while (!cts.Token.IsCancellationRequested)
+                    {
+                        if (message.Peer.TryGetExtension(out profileExt))
+                        {
+                            break;
+                        }
 
-            if (profileExt == null)
+                        if (!authModule.IsUserLoggedInById(user.UserId))
+                        {
+                            throw new UnauthorizedAccessException("User logged out during profile fetch");
+                        }
+
+                        await Task.Delay(100, cts.Token);
+                    }
+                }, cts.Token);
+
+                if (profileExt == null)
+                {
+                    logger.Error($"Profile for user {user.UserId} not found within the timeout period");
+                    message.Respond(ResponseStatus.NotFound);
+                    return;
+                }
+
+                profileExt.Profile.ClientPeer = message.Peer;
+                message.Respond(profileExt.Profile.ToBytes(), ResponseStatus.Success);
+            }
+            catch (UnauthorizedAccessException ex)
             {
-                message.Respond(ResponseStatus.NotFound);
-                return;
+                logger.Error(ex.Message);
+                message.Respond("User logged out during profile fetch", ResponseStatus.Unauthorized);
             }
-
-            profileExt.Profile.ClientPeer = message.Peer;
-            message.Respond(profileExt.Profile.ToBytes(), ResponseStatus.Success);
+            catch (OperationCanceledException)
+            {
+                logger.Error($"Profile fetch timeout for user {user.UserId}");
+                message.Respond("Timeout while waiting for profile", ResponseStatus.NotFound);
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Unexpected error during profile fetch for user {user.UserId}: {ex}");
+                message.Respond(ResponseStatus.Failed);
+            }
         }
+
 
         /// <summary>
         /// Handles a request from game server to get a profile

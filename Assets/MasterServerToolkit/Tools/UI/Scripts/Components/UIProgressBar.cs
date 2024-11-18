@@ -19,18 +19,11 @@ namespace MasterServerToolkit.UI
 
         [Header("Settings"), SerializeField]
         private Color progressBarColor = Color.white;
-        [SerializeField]
-        private Sprite iconSprite;
 
         #endregion
 
         private void OnValidate()
         {
-            if (icon != null)
-            {
-                icon.sprite = iconSprite;
-            }
-
             if (progressBarFill != null)
             {
                 progressBarFill.color = progressBarColor;

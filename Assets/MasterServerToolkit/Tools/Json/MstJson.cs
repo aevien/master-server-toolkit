@@ -1468,6 +1468,11 @@ namespace MasterServerToolkit.Json
             Values.Add(jsonObject);
         }
 
+        public void AddField(string name, DateTime value)
+        {
+            AddField(name, value.ToString());
+        }
+
         public void AddField(string name, bool value)
         {
             AddField(name, Create(value));

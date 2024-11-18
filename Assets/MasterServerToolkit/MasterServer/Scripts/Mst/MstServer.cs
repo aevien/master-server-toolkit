@@ -11,8 +11,9 @@ namespace MasterServerToolkit.MasterServer
         public MstSpawnersServer Spawners { get; private set; }
         public MstDbAccessor DbAccessors { get; private set; }
         public MstNotificationServer Notifications { get; private set; }
-        public MstTrafficStatistics Analytics { get; private set; }
+        public MstTrafficStatistics Traffic { get; private set; }
         public AchievementsModuleServer Achievements { get; private set; }
+        public AnalyticsModuleClient Analytics { get; private set; }
 
         public MstServer(IClientSocket connection) : base(connection)
         {
@@ -24,7 +25,8 @@ namespace MasterServerToolkit.MasterServer
             Profiles = new MstProfilesServer(connection);
             Notifications = new MstNotificationServer(connection);
             Achievements = new AchievementsModuleServer(connection);
-            Analytics = new MstTrafficStatistics();
+            Traffic = new MstTrafficStatistics();
+            Analytics = new AnalyticsModuleClient(connection);
         }
     }
 }

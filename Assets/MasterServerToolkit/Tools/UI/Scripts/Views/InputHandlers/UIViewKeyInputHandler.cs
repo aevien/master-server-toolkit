@@ -28,9 +28,10 @@ namespace MasterServerToolkit.UI
             if (Input.GetKeyDown(key))
             {
                 if (toggleUIView && view)
+                {
                     view.Toggle(toggleInstantly);
-
-                OnInputEvent?.Invoke();
+                    OnInputEvent?.Invoke();
+                }
             }
         }
     }

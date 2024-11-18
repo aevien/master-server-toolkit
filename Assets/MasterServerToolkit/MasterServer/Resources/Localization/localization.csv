@@ -24,6 +24,7 @@ signInProgress;Вход в систему. Пожалуйста, подожди�
 signInSuccessResult;Вы успешно вошли в систему;You have successfully logged in;Başarıyla giriş yaptınız
 signInErrorResult;Во время входа в систему произошла ошибка:;An error occurred during login:;Oturum açma sırasında bir hata oluştu:
 signInSecurityError;Невозможно выполнить вход по соображениям безопасности;Unable to sign in for security reasons;Güvenlik nedeniyle oturum açılamıyor
+signInTitle;Вход;Login;Login
 ;;;
 # Sign up;;;
 signUpInProgress;Регистрация в процессе;Registration in progress;Kayıt devam ediyor

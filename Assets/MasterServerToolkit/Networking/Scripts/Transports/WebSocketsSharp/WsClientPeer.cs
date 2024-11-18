@@ -85,7 +85,7 @@ namespace MasterServerToolkit.Networking
         public void Connect()
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
-            SafeCoroutine.Runner.StartCoroutine(socket.Connect());
+            MstTimer.Instance.StartCoroutine(socket.Connect());
 #else
             socket.Connect();
 #endif

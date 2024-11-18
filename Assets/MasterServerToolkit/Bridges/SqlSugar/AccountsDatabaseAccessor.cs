@@ -1,3 +1,4 @@
+using MasterServerToolkit.GameService;
 using MasterServerToolkit.MasterServer;
 using Microsoft.Identity.Client;
 using SqlSugar;
@@ -17,13 +18,24 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 
             using (SqlSugarClient db = new SqlSugarClient(configuration))
             {
-                db.CodeFirst.InitTables(
+                var tableTypes = new[]
+                {
                     typeof(AccountInfoData),
                     typeof(EmailConfirmationData),
                     typeof(ExtraPropertyData),
                     typeof(PasswordResetData),
                     typeof(ProfilePropertyData)
-                    );
+                };
+
+                foreach (var tableType in tableTypes)
+                {
+                    var tableName = db.EntityMaintenance.GetTableName(tableType);
+
+                    if (!db.DbMaintenance.IsAnyTable(tableName))
+                    {
+                        db.CodeFirst.InitTables(tableType);
+                    }
+                }
             }
         }
 

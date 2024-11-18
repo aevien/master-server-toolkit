@@ -24,16 +24,6 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        public DebounceDispatcher SaveThrottleDispatcher { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public DebounceDispatcher SendDebounceDispatcher { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public DebounceDispatcher UnloadDebounceDispatcher { get; set; }
 
         /// <summary>

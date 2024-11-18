@@ -4,6 +4,7 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MongoDB.Driver;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -89,6 +90,11 @@ namespace MasterServerToolkit.Bridges.MongoDB
             }
 
             return data;
+        }
+
+        public Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profile)
+        {
+            throw new NotImplementedException();
         }
     }
 }

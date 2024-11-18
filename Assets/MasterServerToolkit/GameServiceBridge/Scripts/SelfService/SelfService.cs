@@ -1,33 +1,72 @@
 using MasterServerToolkit.MasterServer;
 using System.Collections;
+using UnityEngine;
 
 namespace MasterServerToolkit.GameService
 {
     public class SelfService : BaseGameService
     {
-        public SelfService()
+        protected override void Awake()
         {
+            base.Awake();
+
             Id = GameServiceId.Self;
+            IsInAppPurchaseSupported = false;
         }
 
-        public override IEnumerator Authenticate(SuccessCallback callback)
+        public override void Authenticate(SuccessCallback callback)
         {
-            throw new System.NotImplementedException();
+            IEnumerator Coroutine(SuccessCallback callback)
+            {
+                yield return new WaitForEndOfFrame();
+                callback?.Invoke(true, string.Empty);
+            };
+
+            StartCoroutine(Coroutine(callback));
         }
 
-        public override IEnumerator GetProductPurchases(SuccessCallback callback)
+        public override void GetProductPurchases(SuccessCallback callback)
         {
-            throw new System.NotImplementedException();
+            IEnumerator Coroutine(SuccessCallback callback)
+            {
+                yield return new WaitForEndOfFrame();
+                callback?.Invoke(true, string.Empty);
+            }
+
+            StartCoroutine(Coroutine(callback));
         }
 
-        public override IEnumerator GetProducts(SuccessCallback callback)
+        public override void GetProducts(SuccessCallback callback)
         {
-            throw new System.NotImplementedException();
+            IEnumerator Coroutine(SuccessCallback callback)
+            {
+                yield return new WaitForEndOfFrame();
+                callback?.Invoke(true, string.Empty);
+            }
+
+            StartCoroutine(Coroutine(callback));
         }
 
-        public override IEnumerator Init()
+        public override void Init()
         {
-            throw new System.NotImplementedException();
+            IEnumerator Coroutine()
+            {
+                yield return new WaitForEndOfFrame();
+                NotifyOnReady();
+            }
+
+            StartCoroutine(Coroutine());
+        }
+
+        public override void Purchase(string productId, SuccessCallback callback)
+        {
+            IEnumerator Coroutine(SuccessCallback callback)
+            {
+                yield return new WaitForEndOfFrame();
+                callback?.Invoke(true, string.Empty);
+            }
+
+            StartCoroutine(Coroutine(callback));
         }
     }
 }

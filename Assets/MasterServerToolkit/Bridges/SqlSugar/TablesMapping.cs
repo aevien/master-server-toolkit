@@ -7,5 +7,6 @@ namespace MasterServerToolkit.Bridges.SqlSugar
         public const string EmailConfirmationCodes = "email_confirmation_codes";
         public const string PasswordResetCodes = "password_reset_codes";
         public const string ExtraProperties = "extra_properties";
+        public const string Analytics = "analytics";
     }
 }

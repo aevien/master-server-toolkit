@@ -8,6 +8,8 @@ namespace MasterServerToolkit.MasterServer
 
         public static ushort Ping = nameof(Ping).ToUint16Hash();
 
+        public static ushort SendAnalyticsData = nameof(SendAnalyticsData).ToUint16Hash();
+
         public static ushort ServerAccessRequest = nameof(ServerAccessRequest).ToUint16Hash();
         public static ushort AesKeyRequest = nameof(AesKeyRequest).ToUint16Hash();
         public static ushort PermissionLevelRequest = nameof(PermissionLevelRequest).ToUint16Hash();

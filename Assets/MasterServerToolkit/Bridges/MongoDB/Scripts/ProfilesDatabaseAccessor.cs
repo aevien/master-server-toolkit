@@ -3,6 +3,7 @@ using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MongoDB.Driver;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -87,6 +88,34 @@ namespace MasterServerToolkit.Bridges.MongoDB
             }
 
             return data;
+        }
+
+        public async Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profiles)
+        {
+            if (profiles == null || !profiles.Any())
+                throw new ArgumentException("Profiles collection is null or empty.");
+
+            var bulkOperations = new List<WriteModel<ProfileInfoDataMongoDB>>();
+
+            foreach (var profile in profiles)
+            {
+                var data = await FindOrCreateData(profile);
+                data.Data = profile.ToBytes();
+
+                var filter = Builders<ProfileInfoDataMongoDB>.Filter.Eq(e => e.UserId, profile.UserId);
+
+                var replaceOne = new ReplaceOneModel<ProfileInfoDataMongoDB>(filter, data)
+                {
+                    IsUpsert = true
+                };
+
+                bulkOperations.Add(replaceOne);
+            }
+
+            if (bulkOperations.Any())
+            {
+                await _profiles.BulkWriteAsync(bulkOperations);
+            }
         }
     }
 }

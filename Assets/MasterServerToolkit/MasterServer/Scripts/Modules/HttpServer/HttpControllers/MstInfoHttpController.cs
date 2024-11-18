@@ -14,12 +14,12 @@ namespace MasterServerToolkit.MasterServer
         private MstProperties systemInfo;
         private string publicIp = "";
 
-        public override void Initialize(HttpServerModule server)
+        public override void Initialize(HttpServerModule httpServer)
         {
-            base.Initialize(server);
+            base.Initialize(httpServer);
 
-            server.RegisterHttpGetRequestHandler("info-json", OnGetMstInfoJsonHttpRequestHandler, UseCredentials);
-            server.RegisterHttpGetRequestHandler("info", OnGetMstInfoHttpRequestHandler, UseCredentials);
+            httpServer.RegisterHttpGetRequestHandler("info-json", OnGetMstInfoJsonHttpRequestHandler, UseCredentials);
+            httpServer.RegisterHttpGetRequestHandler("info", OnGetMstInfoHttpRequestHandler, UseCredentials);
 
             systemInfo = new MstProperties();
             systemInfo.Add("Device Id", SystemInfo.deviceUniqueIdentifier);

@@ -92,7 +92,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        protected IAccountsDatabaseAccessor authDatabaseAccessor;
+        protected IAccountsDatabaseAccessor databaseAccessor;
 
         /// <summary>
         /// Censor module for bad words checking :)
@@ -114,8 +114,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public IAccountsDatabaseAccessor DatabaseAccessor
         {
-            get => authDatabaseAccessor;
-            set => authDatabaseAccessor = value;
+            get => databaseAccessor;
+            set => databaseAccessor = value;
         }
 
         /// <summary>
@@ -174,9 +174,9 @@ namespace MasterServerToolkit.MasterServer
             if (databaseAccessorFactory != null)
                 databaseAccessorFactory.CreateAccessors();
 
-            authDatabaseAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
+            databaseAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
 
-            if (authDatabaseAccessor == null)
+            if (databaseAccessor == null)
             {
                 logger.Fatal($"Account database implementation was not found in {GetType().Name}");
             }
@@ -624,7 +624,7 @@ namespace MasterServerToolkit.MasterServer
 
             var finalToken = $"{encryptedToken}.{signature}";
             account.Token = finalToken;
-            await authDatabaseAccessor.InsertOrUpdateTokenAsync(account, account.Token);
+            await databaseAccessor.InsertOrUpdateTokenAsync(account, account.Token);
             return finalToken;
         }
 
@@ -688,7 +688,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var passwordResetCodeResult = await authDatabaseAccessor.CheckPasswordResetCodeAsync(email, code);
+            var passwordResetCodeResult = await databaseAccessor.CheckPasswordResetCodeAsync(email, code);
 
             if (passwordResetCodeResult == false)
             {
@@ -705,11 +705,11 @@ namespace MasterServerToolkit.MasterServer
             }
             else
             {
-                account = await authDatabaseAccessor.GetAccountByEmailAsync(email);
+                account = await databaseAccessor.GetAccountByEmailAsync(email);
             }
 
             account.Password = Mst.Security.CreateHash(password);
-            await authDatabaseAccessor.UpdateAccountAsync(account);
+            await databaseAccessor.UpdateAccountAsync(account);
             message.Respond(ResponseStatus.Success);
         }
 
@@ -720,7 +720,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual async Task GetPasswordResetCodeMessageHandler(IIncomingMessage message)
         {
             var userEmail = message.AsString();
-            var userAccount = await authDatabaseAccessor.GetAccountByEmailAsync(userEmail);
+            var userAccount = await databaseAccessor.GetAccountByEmailAsync(userEmail);
 
             if (userAccount == null)
             {
@@ -730,7 +730,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             var passwordResetCode = Mst.Helper.CreateRandomAlphanumericString(serviceCodeMinChars);
-            await authDatabaseAccessor.SavePasswordResetCodeAsync(userAccount.Email, passwordResetCode);
+            await databaseAccessor.SavePasswordResetCodeAsync(userAccount.Email, passwordResetCode);
 
             StringBuilder emailBody = new StringBuilder();
             emailBody.Append($"<h3>You have requested reset password</h3>");
@@ -778,7 +778,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            var confirmationResult = await authDatabaseAccessor.CheckEmailConfirmationCodeAsync(userPeerExtension.Account.Email, confirmationCode);
+            var confirmationResult = await databaseAccessor.CheckEmailConfirmationCodeAsync(userPeerExtension.Account.Email, confirmationCode);
 
             if (confirmationResult == false)
             {
@@ -792,7 +792,7 @@ namespace MasterServerToolkit.MasterServer
 
             _ = Task.Run(() =>
             {
-                authDatabaseAccessor.UpdateAccountAsync(userPeerExtension.Account);
+                databaseAccessor.UpdateAccountAsync(userPeerExtension.Account);
             });
 
             // Respond with success
@@ -825,7 +825,7 @@ namespace MasterServerToolkit.MasterServer
 
             var newEmailConfirmationCode = Mst.Helper.CreateRandomAlphanumericString(serviceCodeMinChars);
 
-            await authDatabaseAccessor.SaveEmailConfirmationCodeAsync(userPeerExtension.Account.Email, newEmailConfirmationCode);
+            await databaseAccessor.SaveEmailConfirmationCodeAsync(userPeerExtension.Account.Email, newEmailConfirmationCode);
 
             if (mailer == null)
             {
@@ -980,7 +980,7 @@ namespace MasterServerToolkit.MasterServer
                 }
             }
 
-            await authDatabaseAccessor.UpdateAccountAsync(userPeerExtension.Account);
+            await databaseAccessor.UpdateAccountAsync(userPeerExtension.Account);
         }
 
         /// <summary>
@@ -1055,7 +1055,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Create account instance
-            var userAccount = isLoggedIn ? userPeerExtension.Account : authDatabaseAccessor.CreateAccountInstance();
+            var userAccount = isLoggedIn ? userPeerExtension.Account : databaseAccessor.CreateAccountInstance();
             userAccount.Username = userName;
             userAccount.Email = userEmail;
             userAccount.IsGuest = false;
@@ -1069,12 +1069,12 @@ namespace MasterServerToolkit.MasterServer
             if (isLoggedIn)
             {
                 // Insert new account ot DB
-                await authDatabaseAccessor.UpdateAccountAsync(userAccount);
+                await databaseAccessor.UpdateAccountAsync(userAccount);
             }
             else
             {
                 // Insert new account ot DB
-                await authDatabaseAccessor.InsertAccountAsync(userAccount);
+                await databaseAccessor.InsertAccountAsync(userAccount);
             }
 
             message.Respond(ResponseStatus.Success);
@@ -1205,7 +1205,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Get account by its email
-            IAccountInfoData account = await authDatabaseAccessor.GetAccountByEmailAsync(userEmail);
+            IAccountInfoData account = await databaseAccessor.GetAccountByEmailAsync(userEmail);
 
             // Create new password
             string newPassword = Mst.Helper.CreateRandomAlphanumericString(userPasswordMinChars);
@@ -1215,7 +1215,7 @@ namespace MasterServerToolkit.MasterServer
             // if no account found let's create it
             if (account == null)
             {
-                account = authDatabaseAccessor.CreateAccountInstance();
+                account = databaseAccessor.CreateAccountInstance();
                 account.Username = userEmail;
                 account.Email = userEmail;
                 account.IsGuest = false;
@@ -1224,13 +1224,13 @@ namespace MasterServerToolkit.MasterServer
                 account.DeviceId = userDeviceId;
                 account.DeviceName = userDeviceName;
 
-                await authDatabaseAccessor.InsertAccountAsync(account);
+                await databaseAccessor.InsertAccountAsync(account);
             }
             // if account found
             else
             {
                 account.Password = Mst.Security.CreateHash(newPassword);
-                await authDatabaseAccessor.UpdateAccountAsync(account);
+                await databaseAccessor.UpdateAccountAsync(account);
             }
 
             if (userRememberMe)
@@ -1298,7 +1298,7 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Get account by its username
-            IAccountInfoData account = await authDatabaseAccessor.GetAccountByUsernameAsync(userName);
+            IAccountInfoData account = await databaseAccessor.GetAccountByUsernameAsync(userName);
 
             if (account == null)
             {
@@ -1352,7 +1352,7 @@ namespace MasterServerToolkit.MasterServer
             string token = userCredentials.AsString(MstDictKeys.USER_AUTH_TOKEN);
 
             // Get account by token
-            IAccountInfoData account = await authDatabaseAccessor.GetAccountByTokenAsync(token);
+            IAccountInfoData account = await databaseAccessor.GetAccountByTokenAsync(token);
 
             // if no account found 
             if (account == null)
@@ -1406,13 +1406,13 @@ namespace MasterServerToolkit.MasterServer
             var userDeviceId = userCredentials.AsString(MstDictKeys.USER_DEVICE_ID);
 
             // Create new guest account
-            IAccountInfoData account = authDatabaseAccessor.CreateAccountInstance();
+            IAccountInfoData account = databaseAccessor.CreateAccountInstance();
             account.Username = GenerateGuestUsername();
             account.DeviceId = userDeviceId;
             account.DeviceName = userDeviceName;
 
             // Save account and return its id in DB
-            await authDatabaseAccessor.InsertAccountAsync(account);
+            await databaseAccessor.InsertAccountAsync(account);
             await CreateAccountToken(account);
 
             FinalizeSingIn(account, userPeerExtension, message);

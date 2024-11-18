@@ -19,7 +19,7 @@ namespace MasterServerToolkit.GameService
         {
             if (GameBridge.Service.Id == GameServiceId.PlayWeb3)
             {
-                GameBridge.Authenticate((isSuccess, error) =>
+                GameBridge.Service.Authenticate((isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {
@@ -27,7 +27,7 @@ namespace MasterServerToolkit.GameService
                     }
                     else
                     {
-                        output.text = GameBridge.Player.Id;
+                        output.text = GameBridge.Service.Player.Id;
                     }
                 });
             }
@@ -41,7 +41,7 @@ namespace MasterServerToolkit.GameService
         {
             if (GameBridge.Service.Id == GameServiceId.PlayWeb3)
             {
-                GameBridge.GetProducts((isSuccess, error) =>
+                GameBridge.Service.GetProducts((isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {
@@ -64,7 +64,7 @@ namespace MasterServerToolkit.GameService
         {
             if (GameBridge.Service.Id == GameServiceId.PlayWeb3)
             {
-                GameBridge.GetProductPurchases((isSuccess, error) =>
+                GameBridge.Service.GetProductPurchases((isSuccess, error) =>
                 {
                     if (!isSuccess)
                     {

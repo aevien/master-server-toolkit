@@ -20,9 +20,9 @@ namespace MasterServerToolkit.Bridges.SqlSugar
         public string Token { get; set; }
         [SugarColumn(ColumnName = "last_login", ColumnDataType = "datetime", IsNullable = true)]
         public DateTime LastLogin { get; set; }
-        [SugarColumn(ColumnName = "created", ColumnDataType = "datetime", IsNullable = true)]
+        [SugarColumn(ColumnName = "created", ColumnDataType = "datetime", IsNullable = false)]
         public DateTime Created { get; set; }
-        [SugarColumn(ColumnName = "updated", ColumnDataType = "datetime", IsNullable = true)]
+        [SugarColumn(ColumnName = "updated", ColumnDataType = "datetime", IsNullable = false)]
         public DateTime Updated { get; set; }
         [SugarColumn(ColumnName = "is_admin", ColumnDataType = "tinyint(1)")]
         public bool IsAdmin { get; set; }
@@ -32,9 +32,9 @@ namespace MasterServerToolkit.Bridges.SqlSugar
         public bool IsEmailConfirmed { get; set; }
         [SugarColumn(ColumnName = "is_banned", ColumnDataType = "tinyint(1)")]
         public bool IsBanned { get; set; }
-        [SugarColumn(ColumnName = "device_id", ColumnDataType = "varchar(45)")]
+        [SugarColumn(ColumnName = "device_id", ColumnDataType = "varchar(45)", IsNullable = false)]
         public string DeviceId { get; set; }
-        [SugarColumn(ColumnName = "device_name", ColumnDataType = "varchar(45)")]
+        [SugarColumn(ColumnName = "device_name", ColumnDataType = "varchar(45)", IsNullable = false)]
         public string DeviceName { get; set; }
         [SugarColumn(IsIgnore = true)]
         public Dictionary<string, string> ExtraProperties { get; set; }
