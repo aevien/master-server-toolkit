@@ -1,10 +1,13 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
+using static MasterServerToolkit.MasterServer.ObservableProfile;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MstProfilesClient : MstBaseClient
     {
+        private event ObservableProfileDelegate profileLoadEvent;
+
         /// <summary>
         /// Currently loaded user profile
         /// </summary>
@@ -15,7 +18,27 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public bool HasProfile => Current != null;
 
-        public event Action<ObservableProfile> OnProfileLoadedEvent;
+        /// <summary>
+        /// Invoked when profile loaded
+        /// </summary>
+        public event ObservableProfileDelegate OnProfileLoadedEvent
+        {
+            add
+            {
+                if (HasProfile)
+                {
+                    value?.Invoke(Current);
+                }
+                else
+                {
+                    profileLoadEvent += value;
+                }
+            }
+            remove
+            {
+                profileLoadEvent -= value;
+            }
+        }
 
         public MstProfilesClient(IClientSocket connection) : base(connection) { }
 
@@ -64,7 +87,7 @@ namespace MasterServerToolkit.MasterServer
                 Current = profile;
 
                 callback.Invoke(true, null);
-                OnProfileLoadedEvent?.Invoke(profile);
+                profileLoadEvent?.Invoke(profile);
             });
         }
     }

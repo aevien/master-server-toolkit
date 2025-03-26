@@ -9,12 +9,6 @@ namespace MasterServerToolkit.Demos.BasicProfile
     {
         public UnityEvent OnProfileSavedEvent;
 
-        protected override void OnInitialize()
-        {
-            Profile = new ObservableProfile();
-            ProfileProperties.Fill(Profile);
-        }
-
         public void UpdateProfile(MstProperties data)
         {
             Connection.SendMessage(MstOpCodes.UpdateDisplayNameRequest, data.ToBytes(), (status, response) =>

@@ -9,7 +9,7 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [SerializeField]
-        private ObservableBasePopulator[] populators;
+        private ObservablePropertyPopulatorsDatabase populatorsDatabase;
 
         /// <summary>
         /// Invokes when profile is loaded
@@ -60,7 +60,7 @@ namespace MasterServerToolkit.Bridges
         {
             var profile = new ObservableProfile();
 
-            foreach (var populator in populators)
+            foreach (var populator in populatorsDatabase.Populators)
             {
                 profile.Add(populator.Populate());
             }
@@ -79,6 +79,7 @@ namespace MasterServerToolkit.Bridges
                 {
                     if (isSuccessful)
                     {
+                        //Debug.Log(Profile.ToJson());
                         Logger.Info($"Profile is loaded");
                         OnProfileLoaded();
                         OnProfileLoadedEvent?.Invoke();

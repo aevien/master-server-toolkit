@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace MasterServerToolkit.Bridges
 {
@@ -9,17 +10,34 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
-        private TMP_Text lableText;
+        private TextMeshProUGUI messageOutput;
+
+        public UnityEvent<string> OnMessage;
 
         #endregion
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="value"></param>
-        public virtual void SetLable(string value)
+        /// <param name="message"></param>
+        public virtual void OutputMessage(string message)
         {
-            lableText.text = value;
+            messageOutput.text = message;
+
+            if (!string.IsNullOrEmpty(message))
+            {
+                OnMessage?.Invoke(message);
+            }
+        }
+
+        public virtual void Show()
+        {
+            gameObject.SetActive(true);
+        }
+
+        public virtual void Hide()
+        {
+            gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -28,14 +46,14 @@ namespace MasterServerToolkit.Bridges
         /// <param name="time"></param>
         public virtual void WaitAndHide(float time)
         {
-            StopCoroutine(Hide(time));
-            StartCoroutine(Hide(time));
+            StopCoroutine(HideCoroutine(time));
+            StartCoroutine(HideCoroutine(time));
         }
 
-        protected virtual IEnumerator Hide(float time)
+        protected virtual IEnumerator HideCoroutine(float time)
         {
             yield return new WaitForSeconds(time);
-            gameObject.SetActive(false);
+            Hide();
         }
     }
 }

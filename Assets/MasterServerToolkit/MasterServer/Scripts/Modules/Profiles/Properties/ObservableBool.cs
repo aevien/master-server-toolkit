@@ -42,6 +42,7 @@ namespace MasterServerToolkit.MasterServer
         public override void Deserialize(string value)
         {
             _value = bool.Parse(value);
+            MarkAsDirty();
         }
 
         public override byte[] GetUpdates()
@@ -58,20 +59,18 @@ namespace MasterServerToolkit.MasterServer
 
         public override MstJson ToJson()
         {
-            return new MstJson
-            {
-                _value
-            };
+            return MstJson.Create(_value);
         }
 
         public override void FromJson(MstJson json)
         {
             _value = json.BoolValue;
+            MarkAsDirty();
         }
 
         public override void FromJson(string json)
         {
-            _value = Convert.ToBoolean(json);
+            FromJson(MstJson.Create(Convert.ToBoolean(json)));
         }
     }
 }

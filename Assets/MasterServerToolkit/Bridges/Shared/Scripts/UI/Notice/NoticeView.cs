@@ -56,10 +56,9 @@ namespace MasterServerToolkit.Bridges
         {
             for (int i = 0; i < maxNotices; i++)
             {
-                var noticeItemInstance = Instantiate(noticeItemPrefab, messagesContainer, false);
-                noticeItemInstance.SetLable("");
-                noticeItemInstance.gameObject.SetActive(false);
-                noticeItems.Add(noticeItemInstance);
+                var noticeItem = Instantiate(noticeItemPrefab, messagesContainer, false);
+                noticeItem.Hide();
+                noticeItems.Add(noticeItem);
             }
         }
 
@@ -69,10 +68,10 @@ namespace MasterServerToolkit.Bridges
 
             var noticeItem = noticeItems.FirstOrDefault();
 
-            noticeItem.SetLable(message);
             noticeItem.transform.SetAsLastSibling();
-            noticeItem.gameObject.SetActive(true);
+            noticeItem.Show();
 
+            noticeItem.OutputMessage(message);
             noticeItem.WaitAndHide(destroyAfter);
 
             noticeItems.RemoveAt(0);

@@ -6,7 +6,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public abstract class ObservableBaseList<T> : ObservableBase<List<T>>
     {
-        public delegate void ObservableListSetEventDelegate(T oldItem, T item);
+        public delegate void ObservableListSetEventDelegate(T oldItem, T newItem);
         public delegate void ObservableListAddEventDelegate(T newItem);
         public delegate void ObservableListInsertEventDelegate(int index, T insertedItem);
         public delegate void ObservableListRemoveEventDelegate(T removedItem);

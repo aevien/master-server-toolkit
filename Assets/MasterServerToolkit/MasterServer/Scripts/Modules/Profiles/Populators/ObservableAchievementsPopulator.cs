@@ -1,29 +1,32 @@
-using System.Collections.Generic;
+using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Utils;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     [CreateAssetMenu(menuName = MstConstants.CreateMenu + "Profile/ObservableAchievementsPopulator")]
-    public class ObservableAchievementsPopulator : ObservableBasePopulator<List<AchievementData>>
+    public class ObservableAchievementsPopulator : ObservableBasePopulator<ObservableAchievements>
     {
-        public List<AchievementData> Achievements => defaultValue;
+        [SerializeField]
+        private HelpBox hpInfo = new HelpBox()
+        {
+            Text = "achievements key word is reserved for this populator. Use ProfilePropertyOpCodes to get this key for you property in your code.",
+            Type = HelpBoxType.Warning
+        };
+
+        private void Reset()
+        {
+            key = "achievements";
+        }
 
         protected override void OnValidate()
         {
             key = "achievements";
-            base.OnValidate();
         }
 
         public override IObservableProperty Populate()
         {
-            var achievements = new ObservableAchievements(ProfilePropertyOpCodes.achievements);
-
-            foreach (var achievement in defaultValue)
-            {
-                achievements.UpdateProgress(achievement.id, 0, achievement.value);
-            }
-
-            return achievements;
+            return new ObservableAchievements(key.ToUint16Hash());
         }
     }
 }

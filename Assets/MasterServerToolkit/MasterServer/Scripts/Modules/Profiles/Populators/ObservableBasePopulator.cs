@@ -1,24 +1,35 @@
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public abstract class ObservableBasePopulator : ScriptableObject
     {
+        [SerializeField]
+        protected string key = "property";
+
+        public string Key => key;
         public abstract IObservableProperty Populate();
     }
 
     public abstract class ObservableBasePopulator<T> : ObservableBasePopulator
     {
         [SerializeField]
-        protected string key = "property";
-        [SerializeField]
         protected T defaultValue;
 
-        protected virtual void OnValidate() { }
+        protected virtual void OnValidate()
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                key = name;
+            }
+        }
     }
 
-    public abstract class ObservableBaseListPopulator<T> : ObservableBasePopulator<List<T>> { }
-    public abstract class ObservableBaseDictionaryPopulator<TKey, TValue> : ObservableBasePopulator<ConcurrentDictionary<TKey, TValue>> { }
+    [Serializable]
+    public struct DictionaryKeyValue<TKey, TValue>
+    {
+        public TKey key;
+        public TValue value;
+    }
 }

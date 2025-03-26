@@ -9,3 +9,6 @@ path "Assets\MasterServerToolkit\Bridges\MongoDB\Plugins"
 
 SqlSugar https://github.com/DotNetNext/SqlSugar
 path "Assets\MasterServerToolkit\Bridges\SqlSugar\Plugins"
+
+Lorenzo Sans
+path "Assets\MasterServerToolkit\Bridges\Shared\Fonts\Lorenzo Sans"

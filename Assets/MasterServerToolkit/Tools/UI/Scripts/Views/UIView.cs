@@ -65,6 +65,13 @@ namespace MasterServerToolkit.UI
             if (!canvasGroup)
                 canvasGroup = GetComponent<CanvasGroup>();
 
+            uiViewTweener = GetComponent<IUIViewTweener>();
+
+            if (uiViewTweener != null)
+            {
+                uiViewTweener.UIView = this;
+            }
+
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
@@ -109,7 +116,8 @@ namespace MasterServerToolkit.UI
 
         public virtual void Show(bool instantly = false)
         {
-            if (isVisible) return;
+            if (isVisible)
+                return;
 
             if (uiViewTweener != null && !instantly)
             {
@@ -147,7 +155,8 @@ namespace MasterServerToolkit.UI
 
         public virtual void Hide(bool instantly = false)
         {
-            if (!isVisible) return;
+            if (!isVisible)
+                return;
 
             if (uiViewTweener != null && !instantly)
             {

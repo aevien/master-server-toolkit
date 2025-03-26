@@ -47,5 +47,23 @@ mergeInto(LibraryManager.library, {
 		var buffer = _malloc(bufferSize);
 		stringToUTF8(json, buffer, bufferSize);
 		return buffer;
+	},
+	MstGetCurrentHash : function () {
+		var hash = window.location.hash;
+
+		var obj = { currentHash: hash };
+		var json = JSON.stringify(obj);
+
+		var bufferSize = lengthBytesUTF8(json) + 1;
+		var buffer = _malloc(bufferSize);
+		stringToUTF8(json, buffer, bufferSize);
+		return buffer;
+	},
+	MstGetBrowserLang: function () {
+		var language = (navigator.language || navigator.userLanguage).split('-')[0];
+		var bufferSize = lengthBytesUTF8(language.toLowerCase()) + 1;
+		var buffer = _malloc(bufferSize);
+		stringToUTF8(language, buffer, bufferSize);
+		return buffer;
 	}
 });

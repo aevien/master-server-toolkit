@@ -1,4 +1,3 @@
-using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using TMPro;
@@ -30,11 +29,6 @@ namespace MasterServerToolkit.Bridges
         private void OnDestroy()
         {
             Mst.Localization.LanguageChangedEvent -= Localization_OnLanguageChangedEventHandler;
-        }
-
-        private void OnEnable()
-        {
-            UpdateLocalization();
         }
 
         private void Localization_OnLanguageChangedEventHandler(string language)

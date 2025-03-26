@@ -5,11 +5,12 @@ using System.Collections.Generic;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class AnalyticsDataInfoPacket : SerializablePacket, IAnalyticsData
+    public class AnalyticsDataInfoPacket : SerializablePacket, IAnalyticsInfoData
     {
         public string Id { get; set; }
         public string UserId { get; set; }
-        public string EventId { get; set; }
+        public string Key { get; set; }
+        public string Category { get; set; }
         public DateTime Timestamp { get; set; }
         public Dictionary<string, string> Data { get; set; }
         public bool IsSessionEvent { get; set; } = false;
@@ -24,7 +25,8 @@ namespace MasterServerToolkit.MasterServer
         {
             Id = reader.ReadString();
             UserId = reader.ReadString();
-            EventId = reader.ReadString();
+            Key = reader.ReadString();
+            Category = reader.ReadString();
             Timestamp = reader.ReadDateTime();
             Data = reader.ReadDictionary();
         }
@@ -33,7 +35,8 @@ namespace MasterServerToolkit.MasterServer
         {
             writer.Write(Id);
             writer.Write(UserId);
-            writer.Write(EventId);
+            writer.Write(Key);
+            writer.Write(Category);
             writer.Write(Timestamp);
             writer.Write(Data);
         }
@@ -43,7 +46,8 @@ namespace MasterServerToolkit.MasterServer
             base.FromJson(json);
             Id = json["id"].StringValue;
             UserId = json["user_id"].StringValue;
-            EventId = json["eventId"].StringValue;
+            Key = json["key"].StringValue;
+            Category = json["category"].StringValue;
             Timestamp = DateTime.Parse(json["timestamp"].StringValue);
             Data = json["data"].ToDictionary();
         }
@@ -53,7 +57,8 @@ namespace MasterServerToolkit.MasterServer
             var json = base.ToJson();
             json.AddField("id", Id);
             json.AddField("user_id", UserId);
-            json.AddField("eventId", EventId);
+            json.AddField("key", Key);
+            json.AddField("category", Category);
             json.AddField("timestamp", Timestamp.ToString());
             json.AddField("data", MstJson.Create(Data));
             return base.ToJson();

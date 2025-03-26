@@ -1,61 +1,79 @@
 using MasterServerToolkit.Networking;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class AchievementsModuleServer : MstBaseClient
     {
+        private readonly List<UpdateAchievementProgressPacket> achievementsToUpdate = new List<UpdateAchievementProgressPacket>();
+        private Coroutine sendUpdatesCoroutine;
+
+        public float UpdatesInterval { get; set; } = 1f;
+
         public AchievementsModuleServer(IClientSocket connection) : base(connection) { }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="value"></param>
-        /// <param name="maxValue"></param>
+        /// <param name="key"></param>
+        /// <param name="progress"></param>
         /// <param name="userId"></param>
-        public void UpdateProgress(string id, int value, int maxValue, string userId)
+        public void UpdateProgress(string key, int progress, string userId)
         {
-            UpdateProgress(id, value, maxValue, userId, Connection);
+            UpdateProgress(key, progress, userId, Connection);
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="value"></param>
-        /// <param name="maxValue"></param>
+        /// <param name="key"></param>
+        /// <param name="progress"></param>
         /// <param name="userId"></param>
-        /// <param name="connetion"></param>
-        public void UpdateProgress(string id, int value, int maxValue, string userId, IClientSocket connetion)
+        /// <param name="connection"></param>
+        public void UpdateProgress(string key, int progress, string userId, IClientSocket connection)
         {
-            if (Mst.Server.Profiles.TryGetById(userId, out var profile)
-                && profile.TryGet(ProfilePropertyOpCodes.achievements,
-                    out ObservableAchievements achievements))
-            {
-                if (!achievements.IsProgressMet(id))
-                {
-                    achievements.UpdateProgress(id, 1, maxValue);
-                }
-            }
-        }
+            var data = achievementsToUpdate.Find(d => d.key == key && d.userId == userId);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        public bool IsProgressMet(string id, string userId)
-        {
-            if (Mst.Server.Profiles.TryGetById(userId, out var profile)
-                    && profile.TryGet(ProfilePropertyOpCodes.achievements,
-                        out ObservableAchievements achievements))
+            if (data != null)
             {
-                return achievements.IsProgressMet(id);
+                data.progress += progress;
             }
             else
             {
-                return false;
+                data = new UpdateAchievementProgressPacket()
+                {
+                    key = key,
+                    userId = userId,
+                    progress = progress,
+                };
+
+                achievementsToUpdate.Add(data);
+            }
+
+            if (sendUpdatesCoroutine != null)
+            {
+                return;
+            }
+
+            sendUpdatesCoroutine = MstTimer.Instance.StartCoroutine(KeepSendingUpdates(connection));
+        }
+
+        private IEnumerator KeepSendingUpdates(IClientSocket connection)
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(UpdatesInterval);
+
+                if (achievementsToUpdate.Count == 0)
+                {
+                    continue;
+                }
+
+                var data = achievementsToUpdate.ToBytes();
+                connection.SendMessage(MstOpCodes.ServerUpdateAchievementProgress, data);
+                achievementsToUpdate.Clear();
             }
         }
     }

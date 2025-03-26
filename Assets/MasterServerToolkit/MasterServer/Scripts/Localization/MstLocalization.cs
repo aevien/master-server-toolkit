@@ -27,12 +27,21 @@ namespace MasterServerToolkit.Localization
             }
             set
             {
-                string prevLanguage = selectedLang;
-                selectedLang = !string.IsNullOrEmpty(value) ? value.ToLower() : "en";
-
-                if (prevLanguage != selectedLang)
+                if (string.IsNullOrEmpty(value) || !_localization.ContainsKey(value))
                 {
-                    LanguageChangedEvent?.Invoke(selectedLang);
+                    if (selectedLang != "en")
+                    {
+                        selectedLang = "en";
+                        LanguageChangedEvent?.Invoke(selectedLang);
+                    }
+                }
+                else
+                {
+                    if (selectedLang != value.ToLower())
+                    {
+                        selectedLang = value.ToLower();
+                        LanguageChangedEvent?.Invoke(selectedLang);
+                    }
                 }
             }
         }

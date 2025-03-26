@@ -38,7 +38,6 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -123,59 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &190502433
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 190502434}
-  - component: {fileID: 190502435}
-  m_Layer: 0
-  m_Name: BaseSmtp
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &190502434
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 190502433}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 582703838}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &190502435
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 190502433}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 643b72b2583b2ad4f83aae31a07036cf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  smtpHost: smtp.mail.com
-  smtpUsername: username@mail.com
-  smtpPassword: password
-  smtpPort: 587
-  enableSsl: 1
-  timeoutInSeconds: 60
-  mailFrom: yourgame@mail.com
-  senderDisplayName: Awesome Game
-  emailBodyTemplate: {fileID: 4900000, guid: 6397dd8c110436a4ea30b256b0493b84, type: 3}
 --- !u!1 &261571409
 GameObject:
   m_ObjectHideFlags: 0
@@ -187,6 +133,7 @@ GameObject:
   - component: {fileID: 261571410}
   - component: {fileID: 261571411}
   - component: {fileID: 261571412}
+  - component: {fileID: 261571413}
   m_Layer: 0
   m_Name: AuthModule
   m_TagString: Untagged
@@ -230,12 +177,14 @@ MonoBehaviour:
   accessKeysFile: access_codes
   allowGuestLogin: 1
   guestPrefix: user_
-  tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
-  mailer: {fileID: 190502435}
+  mailer: {fileID: 261571413}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
-  tokenSecret: t0k9n-$ecr9t
   serviceCodeMinChars: 6
+  tokenSecret: t0k9n-$ecr9t
+  tokenExpiresInDays: 60
+  tokenIssuer: http://mst.game.com
+  tokenAudience: http://mst.game.com/users
   databaseAccessorFactory: {fileID: 261571412}
 --- !u!114 &261571412
 MonoBehaviour:
@@ -251,38 +200,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   databaseName: accounts
---- !u!1 &582703837
-GameObject:
+--- !u!114 &261571413
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 582703838}
-  m_Layer: 0
-  m_Name: Mailers
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &582703838
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 582703837}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 190502434}
-  m_Father: {fileID: 1005001217}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_GameObject: {fileID: 261571409}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 643b72b2583b2ad4f83aae31a07036cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  smtpHost: smtp.mail.com
+  smtpUsername: username@mail.com
+  smtpPassword: password
+  smtpPort: 587
+  enableSsl: 1
+  timeoutInSeconds: 60
+  mailFrom: yourgame@mail.com
+  senderDisplayName: Awesome Game
+  emailBodyTemplate: {fileID: 4900000, guid: 6397dd8c110436a4ea30b256b0493b84, type: 3}
 --- !u!1 &1005001215
 GameObject:
   m_ObjectHideFlags: 0
@@ -341,7 +279,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 582703838}
   - {fileID: 1977181802}
   - {fileID: 261571410}
   m_Father: {fileID: 0}

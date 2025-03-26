@@ -7,20 +7,15 @@ namespace MasterServerToolkit.Utils
     public class ScreenshotMaker : SingletonBehaviour<ScreenshotMaker>
     {
         #region INSPECTOR
+
         [Header("Settings")]
         public int resolutionMultiplier = 2;
-        public KeyCode screenshoKey = KeyCode.K;
-        public TextureFormat format = TextureFormat.RGB24;
+        public KeyCode screenshoKey = KeyCode.F12;
+        public Camera screenCamera;
+        public int width = 1920;
+        public int height = 1080;
+
         #endregion
-
-        private int resWidth;
-        private int resHeight;
-
-        private void Start()
-        {
-            resWidth = Screen.width * resolutionMultiplier;
-            resHeight = Screen.height * resolutionMultiplier;
-        }
 
         public static string ScreenShotName(int width, int height)
         {
@@ -42,18 +37,37 @@ namespace MasterServerToolkit.Utils
             }
         }
 
+        [ContextMenu("Take screenshot")]
         private void TakeScreenshot()
         {
 #if !UNITY_WEBGL || UNITY_EDITOR
+
+            if (screenCamera == null)
+            {
+                screenCamera = Camera.main;
+            }
+
+            var resWidth = (width > 0 ? width : Screen.width) * resolutionMultiplier;
+            var resHeight = (height > 0 ? height : Screen.height) * resolutionMultiplier;
+
             RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
-            Texture2D screenShot = new Texture2D(resWidth, resHeight, format, false);
-            Camera.main.targetTexture = rt;
-            Camera.main.Render();
+            Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.RGB24, false);
+            screenCamera.targetTexture = rt;
+            screenCamera.Render();
             RenderTexture.active = rt;
             screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
-            Camera.main.targetTexture = null;
+            screenCamera.targetTexture = null;
             RenderTexture.active = null;
-            Destroy(rt);
+
+            if (Application.isEditor)
+            {
+                DestroyImmediate(rt);
+            }
+            else
+            {
+                Destroy(rt);
+            }
+
             byte[] bytes = screenShot.EncodeToPNG();
             string filename = ScreenShotName(resWidth, resHeight);
 

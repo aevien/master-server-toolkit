@@ -20,10 +20,9 @@ namespace MasterServerToolkit.UI
 
         public void SetVisible(bool visible)
         {
-            panel.SetActive(visible);
-
             if (IsVisible != visible)
             {
+                panel.SetActive(visible);
                 OnSetVisible(visible);
             }
         }

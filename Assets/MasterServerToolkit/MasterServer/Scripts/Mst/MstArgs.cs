@@ -252,9 +252,7 @@ namespace MasterServerToolkit.MasterServer
             CertificatePassword = AsString(Names.CertificatePassword);
 
             UseDevMode = AsBool(Names.UseDevMode, false);
-
             TargetFrameRate = AsInt(Names.TargetFrameRate, 60);
-
             DefaultLanguage = AsString(Names.DefaultLanguage);
         }
 

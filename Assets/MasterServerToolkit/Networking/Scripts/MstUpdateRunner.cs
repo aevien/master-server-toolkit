@@ -5,54 +5,68 @@ namespace MasterServerToolkit.Networking
 {
     /// <summary>
     /// This is an object which gets spawned into game once.
-    /// It's main purpose is to call update methods
+    /// Its main purpose is to call update methods
     /// </summary>
     public class MstUpdateRunner : SingletonBehaviour<MstUpdateRunner>
     {
         /// <summary>
-        /// List of <see cref="IUpdatable"/>
+        /// Set of <see cref="IUpdatable"/>
         /// </summary>
-        private readonly List<IUpdatable> _updatebles = new List<IUpdatable>();
+        private readonly List<IUpdatable> updatebles = new List<IUpdatable>();
 
         /// <summary>
-        /// 
+        /// Number of updatables
         /// </summary>
-        public int Count => _updatebles.Count;
+        public int Count => updatebles.Count;
 
         private void Update()
         {
-            for (int i = 0; i < _updatebles.Count; i++)
-            {
-                IUpdatable runnable = _updatebles[i];
+            if (updatebles.Count == 0)
+                return;
 
-                if (runnable != null)
-                    runnable.DoUpdate();
-                else
-                    _updatebles.RemoveAt(i);
+            for (int i = 0; i < updatebles.Count; i++)
+            {
+                var updatable = updatebles[i];
+
+                if (updatable == null)
+                {
+                    updatebles.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                updatable.DoUpdate();
             }
         }
 
+
         /// <summary>
-        /// Adds <see cref="IUpdatable"/> to list of updates that are running in main Unity thread
+        /// Adds <see cref="IUpdatable"/> to the set of updates that are running in main Unity thread
         /// </summary>
         /// <param name="updatable"></param>
         public static void Add(IUpdatable updatable)
         {
+            if (updatable == null)
+            {
+                return;
+            }
+
             if (TryGetOrCreate(out var instance))
             {
-                if (!instance._updatebles.Contains(updatable))
-                    instance._updatebles.Add(updatable);
+                instance.updatebles.Add(updatable);
             }
         }
 
         /// <summary>
-        /// Removes <see cref="IUpdatable"/> from list of updates that are running in main Unity thread
+        /// Removes <see cref="IUpdatable"/> from the set of updates that are running in main Unity thread
         /// </summary>
         /// <param name="updatable"></param>
         public static void Remove(IUpdatable updatable)
         {
             if (TryGetOrCreate(out var instance))
-                instance._updatebles.Remove(updatable);
+            {
+                instance.updatebles.Remove(updatable);
+            }
         }
     }
 }

@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 namespace MasterServerToolkit.DebounceThrottle
 {
     /// <summary>
-    /// The Throttle dispatcher, on the other hand, limits the invocation of an action to a specific time interval. This means that the action will only be executed once within the given time frame, regardless of how many times it is called.
+    /// The Throttle dispatcher limits the invocation of an action to a specific time interval. 
+    /// This means that the action will only be executed once within the given time frame, 
+    /// regardless of how many times it is called.
     /// </summary>
     /// <typeparam name="T">Return Type of the executed tasks</typeparam>
-    public class ThrottleDispatcher<T>
+    public class ThrottleDispatcher<T> : IDisposable
     {
         private readonly int _interval;
         private readonly bool _delayAfterExecution;
@@ -17,6 +19,7 @@ namespace MasterServerToolkit.DebounceThrottle
         private Task<T> _lastTask;
         private DateTime? _invokeTime;
         private bool _busy;
+        private CancellationTokenSource _linkedCts;
 
         /// <summary>
         /// ThrottleDispatcher is a utility class for throttling the execution of asynchronous tasks.
@@ -42,15 +45,22 @@ namespace MasterServerToolkit.DebounceThrottle
         }
 
         /// <summary>
-        /// Throttling of the function invocation
+        /// Throttling of the function invocation with safe cancellation support
         /// </summary>
-        /// <param name="function">The function returns Task to be invoked asynchronously.</param>
-        /// <param name="cancellationToken">An optional CancellationToken</param>
-        /// <returns>Returns a last executed Task</returns>
-        public Task<T> ThrottleAsync(Func<Task<T>> function, CancellationToken cancellationToken = default)
+        /// <param name="function">The function that accepts a cancellation token and returns a Task to be invoked asynchronously.</param>
+        /// <param name="cancellationToken">A CancellationToken to observe while waiting for the task to complete</param>
+        /// <returns>Returns the last executed Task</returns>
+        public Task<T> ThrottleAsync(Func<CancellationToken, Task<T>> function, CancellationToken cancellationToken = default)
         {
             lock (_locker)
             {
+                // Dispose previous linked token source if exists
+                _linkedCts?.Dispose();
+
+                // Create a new linked token source that will be cancelled if either the provided token
+                // or our internal token is cancelled
+                _linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
                 DateTime now = DateTime.UtcNow;
 
                 if (_lastTask != null && (_busy || ShouldWait()))
@@ -61,27 +71,103 @@ namespace MasterServerToolkit.DebounceThrottle
                 _busy = true;
                 _invokeTime = DateTime.UtcNow;
 
-                _lastTask = function.Invoke();
-
-                _lastTask.ContinueWith(task =>
+                try
                 {
-                    if (_delayAfterExecution)
+                    // Check for cancellation before invoking the function
+                    _linkedCts.Token.ThrowIfCancellationRequested();
+
+                    // Pass the cancellation token to the function
+                    _lastTask = function.Invoke(_linkedCts.Token);
+
+                    // Set up continuation to update state after task completes
+                    _lastTask.ContinueWith(task =>
                     {
-                        _invokeTime = DateTime.UtcNow;
+                        lock (_locker)
+                        {
+                            if (_delayAfterExecution)
+                            {
+                                _invokeTime = DateTime.UtcNow;
+                            }
+                            _busy = false;
+                        }
+                    }, _linkedCts.Token, TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
+
+                    // Handle task faulting if requested
+                    if (_resetIntervalOnException)
+                    {
+                        _lastTask.ContinueWith(task =>
+                        {
+                            lock (_locker)
+                            {
+                                _lastTask = null;
+                                _invokeTime = null;
+                            }
+                        }, _linkedCts.Token, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
                     }
-                    _busy = false;
-                }, cancellationToken);
 
-                if (_resetIntervalOnException)
-                {
-                    _lastTask.ContinueWith((task, obj) =>
+                    // Handle task cancellation
+                    _lastTask.ContinueWith(task =>
                     {
-                        _lastTask = null;
-                        _invokeTime = null;
-                    }, cancellationToken, TaskContinuationOptions.OnlyOnFaulted);
-                }
+                        lock (_locker)
+                        {
+                            if (_resetIntervalOnException)
+                            {
+                                _lastTask = null;
+                                _invokeTime = null;
+                            }
+                        }
+                    }, _linkedCts.Token, TaskContinuationOptions.OnlyOnCanceled, TaskScheduler.Default);
 
-                return _lastTask;
+                    return _lastTask;
+                }
+                catch (OperationCanceledException)
+                {
+                    // Reset state on cancellation
+                    _busy = false;
+
+                    // Propagate the cancellation
+                    throw;
+                }
+                catch (Exception)
+                {
+                    // Reset state on other exceptions
+                    _busy = false;
+
+                    // Re-throw other exceptions
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// An overload that accepts a function without cancellation token parameter for backward compatibility
+        /// </summary>
+        public Task<T> ThrottleAsync(Func<Task<T>> function, CancellationToken cancellationToken = default)
+        {
+            // Wrap the function to accept a cancellation token but not use it
+            return ThrottleAsync(ct => function(), cancellationToken);
+        }
+
+        /// <summary>
+        /// Cancels any pending throttled operation
+        /// </summary>
+        public void Cancel()
+        {
+            lock (_locker)
+            {
+                _linkedCts?.Cancel();
+            }
+        }
+
+        /// <summary>
+        /// Releases all resources used by the dispatcher
+        /// </summary>
+        public void Dispose()
+        {
+            lock (_locker)
+            {
+                _linkedCts?.Dispose();
+                _linkedCts = null;
             }
         }
     }

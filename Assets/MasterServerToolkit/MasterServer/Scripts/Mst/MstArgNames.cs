@@ -297,5 +297,10 @@
         /// Use this cmd to define the audience for which the token is intended.
         /// </summary>
         public string TokenAudience => "-mstTokenAudience";
+
+        /// <summary>
+        /// Use this cmd to enable/disable analytics module
+        /// </summary>
+        public string UseAnalyticsModule => "-mstUseAnalyticsModule";
     }
 }

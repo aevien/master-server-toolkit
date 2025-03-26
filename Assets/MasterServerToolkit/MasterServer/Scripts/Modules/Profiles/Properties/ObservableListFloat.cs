@@ -13,25 +13,12 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Deserialize(string value)
         {
-            var splitted = value.Split(";", StringSplitOptions.RemoveEmptyEntries);
-            _value = new List<float>();
-
-            foreach (string i in splitted)
-            {
-                try
-                {
-                    _value.Add(Convert.ToSingle(i));
-                }
-                catch
-                {
-                    continue;
-                }
-            }
+            FromJson(value);
         }
 
         public override string Serialize()
         {
-            return string.Join(";", _value);
+            return ToJson().ToString();
         }
 
         public override MstJson ToJson()
@@ -54,6 +41,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 _value.Add(v.FloatValue);
             }
+
+            MarkAsDirty();
         }
 
         protected override float ReadValue(EndianBinaryReader reader)

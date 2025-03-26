@@ -39,13 +39,17 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 
         public void Dispose() { }
 
-        public async Task<IEnumerable<IAnalyticsData>> GetAll()
+        public async Task<IEnumerable<IAnalyticsInfoData>> Get(int size = 1000, int page = 0)
         {
             try
             {
                 using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    return await db.Queryable<AnalyticsData>().ToListAsync();
+                    return await db.Queryable<AnalyticsData>()
+                        .OrderBy(e => e.Timestamp)
+                        .Skip(size * page)
+                        .Take(size)
+                        .ToListAsync();
                 }
             }
             catch (Exception ex)
@@ -55,13 +59,16 @@ namespace MasterServerToolkit.Bridges.SqlSugar
             }
         }
 
-        public async Task<IAnalyticsData> GetById(string eventId)
+        public async Task<IAnalyticsInfoData> GetById(string eventId)
         {
             try
             {
                 using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    return await db.Queryable<AnalyticsData>().Where(async => async.Id == eventId).FirstAsync();
+                    return await db.Queryable<AnalyticsData>()
+                        .Where(e => e.Id == eventId)
+                        .OrderBy(e => e.Timestamp)
+                        .FirstAsync();
                 }
             }
             catch (Exception ex)
@@ -71,13 +78,18 @@ namespace MasterServerToolkit.Bridges.SqlSugar
             }
         }
 
-        public async Task<IEnumerable<IAnalyticsData>> GetByUserId(string userId)
+        public async Task<IEnumerable<IAnalyticsInfoData>> GetByKey(string eventKey, int size, int page)
         {
             try
             {
                 using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    return await db.Queryable<AnalyticsData>().Where(async => async.UserId == userId).ToListAsync();
+                    return await db.Queryable<AnalyticsData>()
+                        .Where(async => async.Key == eventKey)
+                        .OrderBy(e => e.Timestamp)
+                        .Skip(size * page)
+                        .Take(size)
+                        .ToListAsync();
                 }
             }
             catch (Exception ex)
@@ -87,7 +99,67 @@ namespace MasterServerToolkit.Bridges.SqlSugar
             }
         }
 
-        public async Task<IEnumerable<IAnalyticsData>> GetWithQuery(string query)
+        public async Task<IEnumerable<IAnalyticsInfoData>> GetByTimestamp(DateTime timestamp)
+        {
+            try
+            {
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
+                {
+                    return await db.Queryable<AnalyticsData>()
+                        .Where(async => async.Timestamp == timestamp)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
+        }
+
+        public async Task<IEnumerable<IAnalyticsInfoData>> GetByTimestampRange(DateTime timestampStart, DateTime timestampEnd, int size = 1000, int page = 0)
+        {
+            try
+            {
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
+                {
+                    return await db.Queryable<AnalyticsData>()
+                        .Where(async => async.Timestamp >= timestampStart && async.Timestamp <= timestampEnd)
+                        .OrderBy(e => e.Timestamp)
+                        .Skip(size * page)
+                        .Take(size)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
+        }
+
+        public async Task<IEnumerable<IAnalyticsInfoData>> GetByUserId(string userId, int size = 1000, int page = 0)
+        {
+            try
+            {
+                using (SqlSugarClient db = new SqlSugarClient(configuration))
+                {
+                    return await db.Queryable<AnalyticsData>()
+                        .Where(async => async.UserId == userId)
+                        .OrderBy(e => e.Timestamp)
+                        .Skip(size * page)
+                        .Take(size)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                return null;
+            }
+        }
+
+        public async Task<IEnumerable<IAnalyticsInfoData>> GetWithQuery(string query, int size = 1000, int page = 1)
         {
             try
             {
@@ -98,7 +170,11 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 
                 using (SqlSugarClient db = new SqlSugarClient(configuration))
                 {
-                    return await db.SqlQueryable<AnalyticsData>(query).ToListAsync();
+                    return await db.SqlQueryable<AnalyticsData>(query)
+                        .OrderBy(e => e.Timestamp)
+                        .Skip(size * page)
+                        .Take(size)
+                        .ToListAsync();
                 }
             }
             catch (Exception ex)
@@ -108,7 +184,7 @@ namespace MasterServerToolkit.Bridges.SqlSugar
             }
         }
 
-        public async Task Insert(IEnumerable<AnalyticsDataInfoPacket> eventsData)
+        public async Task Insert(IEnumerable<IAnalyticsInfoData> eventsData)
         {
             try
             {
@@ -123,9 +199,10 @@ namespace MasterServerToolkit.Bridges.SqlSugar
                     {
                         Id = ed.Id,
                         UserId = ed.UserId,
-                        EventId = ed.EventId,
+                        Key = ed.Key,
                         Timestamp = ed.Timestamp,
-                        Data = ed.Data
+                        Data = ed.Data,
+                        Category = ed.Category
                     };
                 }).ToList();
 

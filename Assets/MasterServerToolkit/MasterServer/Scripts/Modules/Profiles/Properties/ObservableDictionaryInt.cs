@@ -58,6 +58,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 _value.TryAdd(Convert.ToInt32(key), json[key].IntValue);
             }
+
+            MarkAsDirty();
         }
 
         public override void FromJson(string json)

@@ -4,27 +4,27 @@ namespace MasterServerToolkit.MasterServer
 {
     public class UpdateAchievementProgressPacket : SerializablePacket
     {
-        public string id;
-        public string username;
-        public int value;
+        public string key;
+        public string userId;
+        public int progress;
 
         public UpdateAchievementProgressPacket()
         {
-            username = string.Empty;
+            userId = string.Empty;
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
-            id = reader.ReadString();
-            username = reader.ReadString();
-            value = reader.ReadInt32();
+            key = reader.ReadString();
+            userId = reader.ReadString();
+            progress = reader.ReadInt32();
         }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write(id);
-            writer.Write(username);
-            writer.Write(value);
+            writer.Write(key);
+            writer.Write(userId);
+            writer.Write(progress);
         }
     }
 }

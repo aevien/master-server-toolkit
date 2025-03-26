@@ -114,6 +114,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
                             UserId = profile.UserId,
                             Data = profile.ToBytes()
                         };
+
                         newProfiles.Add(newProfile);
                     }
                 }

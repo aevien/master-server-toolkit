@@ -39,12 +39,12 @@ namespace MasterServerToolkit.MasterServer
 
         public override string Serialize()
         {
-            return _value;
+            return ToJson().ToString();
         }
 
         public override void Deserialize(string value)
         {
-            _value = value;
+            FromJson(value);
         }
 
         public override byte[] GetUpdates()
@@ -67,6 +67,7 @@ namespace MasterServerToolkit.MasterServer
         public override void FromJson(MstJson json)
         {
             _value = json.StringValue;
+            MarkAsDirty();
         }
 
         public override void FromJson(string json)

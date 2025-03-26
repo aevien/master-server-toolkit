@@ -1,5 +1,4 @@
 using MasterServerToolkit.Networking;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,85 +10,48 @@ namespace MasterServerToolkit.MasterServer
 
         public AnalyticsModuleClient(IClientSocket connection) : base(connection) { }
 
-        public void SendSessionEvent(string eventId, Dictionary<string, string> data)
+        public void SendSessionEvent(string key, string category, Dictionary<string, string> data)
         {
+            CreateAndSendEvent(key, category, data, true, Connection);
+        }
+
+        public void SendSessionEvent(string key, string category, Dictionary<string, string> data, IClientSocket connection)
+        {
+            CreateAndSendEvent(key, category, data, true, connection);
+        }
+
+        public void SendEvent(string key, string category, Dictionary<string, string> data)
+        {
+            CreateAndSendEvent(key, category, data, false, Connection);
+        }
+
+        public void SendEvent(string key, string category, Dictionary<string, string> data, IClientSocket connection)
+        {
+            CreateAndSendEvent(key, category, data, false, connection);
+        }
+
+        private void CreateAndSendEvent(string key, string category, Dictionary<string, string> data, bool isSession, IClientSocket connection)
+        {
+            if (sessionEvents.Contains(key))
+                return;
+
             if (!Mst.Client.Auth.IsSignedIn)
             {
                 Logger.Error("You are not signed in");
                 return;
             }
-
-            CreateAndSendEvent(Mst.Client.Auth.AccountInfo.Id, eventId, data, true, Connection);
-        }
-
-        public void SendSessionEvent(string eventId, Dictionary<string, string> data, IClientSocket connection)
-        {
-            if (!Mst.Client.Auth.IsSignedIn)
-            {
-                Logger.Error("You are not signed in");
-                return;
-            }
-
-            CreateAndSendEvent(Mst.Client.Auth.AccountInfo.Id, eventId, data, true, connection);
-        }
-
-        public void SendSessionEvent(string userId, string eventId, Dictionary<string, string> data)
-        {
-            CreateAndSendEvent(userId, eventId, data, true, Connection);
-        }
-
-        public void SendSessionEvent(string userId, string eventId, Dictionary<string, string> data, IClientSocket connection)
-        {
-            CreateAndSendEvent(userId, eventId, data, true, connection);
-        }
-
-        public void SendEvent(string eventId, Dictionary<string, string> data)
-        {
-            if (!Mst.Client.Auth.IsSignedIn)
-            {
-                Logger.Error("You are not signed in");
-                return;
-            }
-
-            CreateAndSendEvent(Mst.Client.Auth.AccountInfo.Id, eventId, data, false, Connection);
-        }
-
-        public void SendEvent(string eventId, Dictionary<string, string> data, IClientSocket connection)
-        {
-            if (!Mst.Client.Auth.IsSignedIn)
-            {
-                Logger.Error("You are not signed in");
-                return;
-            }
-
-            CreateAndSendEvent(Mst.Client.Auth.AccountInfo.Id, eventId, data, false, connection);
-        }
-
-        public void SendEvent(string userId, string eventId, Dictionary<string, string> data)
-        {
-            CreateAndSendEvent(userId, eventId, data, false, Connection);
-        }
-
-        public void SendEvent(string userId, string eventId, Dictionary<string, string> data, IClientSocket connection)
-        {
-            CreateAndSendEvent(userId, eventId, data, false, connection);
-        }
-
-        private void CreateAndSendEvent(string userId, string eventId, Dictionary<string, string> data, bool isSession, IClientSocket connection)
-        {
-            if (sessionEvents.Contains(eventId))
-                return;
 
             connection.SendMessage(MstOpCodes.SendAnalyticsData, new AnalyticsDataInfoPacket()
             {
-                UserId = userId,
-                EventId = eventId,
+                UserId = Mst.Client.Auth.AccountInfo.Id,
+                Key = key,
                 Data = data,
-                IsSessionEvent = isSession
+                IsSessionEvent = isSession,
+                Category = category
             });
 
             if (isSession)
-                sessionEvents.Add(eventId);
+                sessionEvents.Add(key);
         }
     }
 }

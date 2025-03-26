@@ -1,5 +1,4 @@
 using MasterServerToolkit.Json;
-using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
 
 namespace MasterServerToolkit.GameService
@@ -27,7 +26,12 @@ namespace MasterServerToolkit.GameService
         /// <summary>
         /// Gets or sets the URL of the product's image, stored in an MstJson object.
         /// </summary>
-        public MstJson ImageUrl { get; set; }
+        public string ImageUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the formatted price string (e.g., "10 USD").
+        /// </summary>
+        public string Price { get; set; }
 
         /// <summary>
         /// Gets or sets the price value of the product.
@@ -40,19 +44,19 @@ namespace MasterServerToolkit.GameService
         public string PriceCurrencyCode { get; set; }
 
         /// <summary>
-        /// Gets or sets the platform associated with the product, such as VKPlay, YandexGames, or VK.
+        /// 
         /// </summary>
-        public GameServiceId Platform { get; set; }
-
-        /// <summary>
-        /// Gets or sets the formatted price string (e.g., "10 USD").
-        /// </summary>
-        public string PriceFormat { get; set; }
+        public MstJson PriceCurrencyImage { get; set; } = MstJson.NullObject;
 
         /// <summary>
         /// 
         /// </summary>
-        public MstProperties ExtraProperties { get; set; } = new MstProperties();
+        public MstJson Extra { get; set; } = MstJson.NullObject;
+
+        /// <summary>
+        /// Gets or sets the platform associated with the product, such as VKPlay, YandexGames, or VK.
+        /// </summary>
+        public GameServiceId Platform { get; set; }
 
         /// <summary>
         /// Retrieves the URL of the currency icon, depending on the specified size.
@@ -61,16 +65,9 @@ namespace MasterServerToolkit.GameService
         /// <returns>The URL of the currency icon.</returns>
         public string GetPriceCurrencyImage(string size = "small")
         {
-            if (ImageUrl.IsNull)
+            if (!PriceCurrencyImage.IsNull && PriceCurrencyImage.HasField(size))
             {
-                if (ImageUrl.HasField(size))
-                {
-                    return ImageUrl[size].StringValue;
-                }
-                else
-                {
-                    return ImageUrl.StringValue;
-                }
+                return PriceCurrencyImage[size].StringValue;
             }
             else
             {
@@ -81,15 +78,16 @@ namespace MasterServerToolkit.GameService
         public override MstJson ToJson()
         {
             var json = base.ToJson();
-            json.AddField(nameof(Id), Id);
-            json.AddField(nameof(Title), Title);
-            json.AddField(nameof(Description), Description);
-            json.AddField(nameof(ImageUrl), ImageUrl);
-            json.AddField(nameof(PriceValue), PriceValue);
-            json.AddField(nameof(PriceCurrencyCode), PriceCurrencyCode);
-            json.AddField(nameof(Platform), Platform.ToString());
-            json.AddField(nameof(PriceFormat), PriceFormat.ToString());
-            json.AddField(nameof(ExtraProperties), ExtraProperties.ToJson());
+            json.AddField("id", Id);
+            json.AddField("title", Title);
+            json.AddField("description", Description);
+            json.AddField("imageUrl", ImageUrl);
+            json.AddField("price", Price);
+            json.AddField("priceValue", PriceValue);
+            json.AddField("priceCurrencyCode", PriceCurrencyCode);
+            json.AddField("priceCurrencyImage", PriceCurrencyImage);
+            json.AddField("platform", Platform.ToString());
+            json.AddField("extra", Extra);
 
             return json;
         }
@@ -99,12 +97,12 @@ namespace MasterServerToolkit.GameService
             Id = reader.ReadString();
             Title = reader.ReadString();
             Description = reader.ReadString();
-            ImageUrl = reader.ReadJson();
+            ImageUrl = reader.ReadString();
             PriceValue = reader.ReadInt32();
             PriceCurrencyCode = reader.ReadString();
             Platform = reader.ReadEnum<GameServiceId>();
-            PriceFormat = reader.ReadString();
-            ExtraProperties = new MstProperties(reader.ReadDictionary());
+            Price = reader.ReadString();
+            Extra = reader.ReadJson();
         }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
@@ -116,8 +114,8 @@ namespace MasterServerToolkit.GameService
             writer.Write(PriceValue);
             writer.Write(PriceCurrencyCode);
             writer.Write(Platform);
-            writer.Write(PriceFormat);
-            writer.Write(ExtraProperties.ToDictionary());
+            writer.Write(Price);
+            writer.Write(Extra);
         }
     }
 }

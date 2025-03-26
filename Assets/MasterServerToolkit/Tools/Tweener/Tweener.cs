@@ -112,7 +112,7 @@ namespace MasterServerToolkit.Utils
         public static void AddOnCompleteListener(TweenerActionInfo actionInfo, TweenerActionInfoCallback callback)
         {
             if (actionInfo == null) return;
-            onCompleted.TryAdd(actionInfo.Id, callback);
+            AddOnCompleteListener(actionInfo.Id, callback);
         }
 
         /// <summary>

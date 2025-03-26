@@ -52,7 +52,7 @@ namespace MasterServerToolkit.Demos.BasicProfile
             if (key == ProfilePropertyOpCodes.displayName)
                 displayNameUIProperty.Lable = property.As<ObservableString>().Value;
             else if (key == ProfilePropertyOpCodes.avatarUrl)
-                avatar.Load(property.Serialize());
+                avatar.Load(property.As<ObservableString>().Value);
             else if (key == ProfilePropertyOpCodes.bronze)
                 bronzeUIProperty.SetValue(property.As<ObservableInt>().Value);
             else if (key == ProfilePropertyOpCodes.silver)

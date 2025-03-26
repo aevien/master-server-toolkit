@@ -8,5 +8,7 @@ namespace MasterServerToolkit.Bridges.SqlSugar
         public const string PasswordResetCodes = "password_reset_codes";
         public const string ExtraProperties = "extra_properties";
         public const string Analytics = "analytics";
+        public const string Achievements = "achievements";
+        public const string Quests = "quests";
     }
 }

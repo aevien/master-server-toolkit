@@ -1,13 +1,10 @@
 ﻿using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
-using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -16,6 +13,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
+    // Delegates for handling user-related events
     public delegate void UserLoggedInEventHandlerDelegate(IUserPeerExtension user);
     public delegate void UserLoggedOutEventHandlerDelegate(IUserPeerExtension user);
     public delegate void UserRegisteredEventHandlerDelegate(IPeer peer, IAccountInfoData account);
@@ -66,7 +64,7 @@ namespace MasterServerToolkit.MasterServer
 
         [Header("Generic"), SerializeField, Tooltip("Min number of characters the service code must contain")]
         protected int serviceCodeMinChars = 6;
-        
+
         [Header("Security"), SerializeField, Tooltip("Secret code to create user auth token. Change it for your own project")]
         protected string tokenSecret = "t0k9n-$ecr9t";
         [SerializeField, Tooltip("How many days token will be valid before expire. The token will also be updated each login")]
@@ -90,12 +88,12 @@ namespace MasterServerToolkit.MasterServer
         protected readonly HashSet<string> accessKeys = new HashSet<string>();
 
         /// <summary>
-        /// 
+        /// Database accessor for accounts
         /// </summary>
         protected IAccountsDatabaseAccessor databaseAccessor;
 
         /// <summary>
-        /// Censor module for bad words checking :)
+        /// Censor module for bad words checking
         /// </summary>
         protected CensorModule censorModule;
 
@@ -110,7 +108,7 @@ namespace MasterServerToolkit.MasterServer
         public IEnumerable<IUserPeerExtension> LoggedInUsers => loggedInUsers.Values;
 
         /// <summary>
-        /// 
+        /// Database accessor for accounts
         /// </summary>
         public IAccountsDatabaseAccessor DatabaseAccessor
         {
@@ -119,7 +117,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Database accessor factory
         /// </summary>
         public DatabaseAccessorFactory DatabaseAccessorFactory
         {
@@ -128,7 +126,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Invoked, when user logedin
+        /// Invoked, when user logs in
         /// </summary>
         public event UserLoggedInEventHandlerDelegate OnUserLoggedInEvent;
 
@@ -147,14 +145,20 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public event UserEmailConfirmedEventHandlerDelegate OnUserEmailConfirmedEvent;
 
+        /// <summary>
+        /// Called when the script instance is being loaded
+        /// </summary>
         protected override void Awake()
         {
             base.Awake();
 
-            // Optional dependancy to CensorModule
+            // Optional dependency to CensorModule
             AddOptionalDependency<CensorModule>();
         }
 
+        /// <summary>
+        /// Called when the script is loaded or a value is changed in the inspector
+        /// </summary>
         protected virtual void OnValidate()
         {
             if (usernameMaxChars <= usernameMinChars)
@@ -164,16 +168,23 @@ namespace MasterServerToolkit.MasterServer
                 tokenExpiresInDays = 1;
         }
 
+        /// <summary>
+        /// Initializes the module with the server
+        /// </summary>
+        /// <param name="server"></param>
         public override void Initialize(IServer server)
         {
+            // Set token-related settings from command line arguments or defaults
             tokenSecret = Mst.Args.AsString(Mst.Args.Names.TokenSecret, tokenSecret);
             tokenExpiresInDays = Mst.Args.AsInt(Mst.Args.Names.TokenSecret, tokenExpiresInDays);
             tokenIssuer = Mst.Args.AsString(Mst.Args.Names.TokenIssuer, tokenIssuer);
             tokenAudience = Mst.Args.AsString(Mst.Args.Names.TokenAudience, tokenAudience);
 
+            // Create database accessors if factory is provided
             if (databaseAccessorFactory != null)
                 databaseAccessorFactory.CreateAccessors();
 
+            // Get the database accessor for accounts
             databaseAccessor = Mst.Server.DbAccessors.GetAccessor<IAccountsDatabaseAccessor>();
 
             if (databaseAccessor == null)
@@ -181,14 +192,16 @@ namespace MasterServerToolkit.MasterServer
                 logger.Fatal($"Account database implementation was not found in {GetType().Name}");
             }
 
+            // Read access keys if enabled
             if (useAccessKeys)
             {
                 ReadAccessKeys();
             }
 
+            // Get the censor module
             censorModule = server.GetModule<CensorModule>();
 
-            // Set handlers
+            // Register message handlers for various operations
             server.RegisterMessageHandler(MstOpCodes.SignIn, SignInMessageHandler);
             server.RegisterMessageHandler(MstOpCodes.SignUp, SignUpMessageHandler);
             server.RegisterMessageHandler(MstOpCodes.SignOut, SignOutMessageHandler);
@@ -205,6 +218,10 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.BindExtraProperties, BindExtraPropertiesMessageHandler);
         }
 
+        /// <summary>
+        /// Returns JSON information about the module
+        /// </summary>
+        /// <returns></returns>
         public override MstJson JsonInfo()
         {
             var data = base.JsonInfo();
@@ -226,6 +243,10 @@ namespace MasterServerToolkit.MasterServer
             return data;
         }
 
+        /// <summary>
+        /// Returns properties information about the module
+        /// </summary>
+        /// <returns></returns>
         public override MstProperties Info()
         {
             MstProperties info = base.Info();
@@ -271,7 +292,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Notify when user logged in
+        /// Notify when user logs in
         /// </summary>
         /// <param name="user"></param>
         public virtual void NotifyOnUserLoggedInEvent(IUserPeerExtension user)
@@ -280,7 +301,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Notify when user logged out
+        /// Notify when user logs out
         /// </summary>
         /// <param name="user"></param>
         public virtual void NotifyOnUserLoggedOutEvent(IUserPeerExtension user)
@@ -289,7 +310,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Get logged in user by Username
+        /// Get logged in user by username
         /// </summary>
         /// <param name="username"></param>
         /// <returns></returns>
@@ -299,7 +320,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Try to get logged in user by username
         /// </summary>
         /// <param name="username"></param>
         /// <param name="user"></param>
@@ -311,7 +332,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Get logged in user by Username
+        /// Get logged in user by email
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
@@ -321,7 +342,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Try to get logged in user by email
         /// </summary>
         /// <param name="email"></param>
         /// <param name="user"></param>
@@ -344,7 +365,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Get logged in user by id
+        /// Try to get logged in user by id
         /// </summary>
         /// <param name="id"></param>
         /// <param name="user"></param>
@@ -376,7 +397,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Check if given user is logged in
+        /// Check if given user is logged in by username
         /// </summary>
         /// <param name="username"></param>
         /// <returns></returns>
@@ -387,7 +408,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Check if given user is logged in by extra property
         /// </summary>
         /// <param name="property"></param>
         /// <param name="value"></param>
@@ -406,9 +427,9 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Check if given user is logged in
+        /// Check if given user is logged in by id
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
         public bool IsUserLoggedInById(string id)
         {
@@ -437,7 +458,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Removes user from signed users list
+        /// Removes user from signed users list by username
         /// </summary>
         /// <param name="username"></param>
         public void SignOut(string username)
@@ -458,11 +479,11 @@ namespace MasterServerToolkit.MasterServer
 
             user.Peer.OnConnectionCloseEvent -= OnUserDisconnectedEventListener;
             loggedInUsers.TryRemove(user.UserId, out _);
-            OnUserLoggedOutEvent?.Invoke(user);
+            NotifyOnUserLoggedOutEvent(user);
         }
 
         /// <summary>
-        /// Fired when any user disconected from server
+        /// Fired when any user disconnects from server
         /// </summary>
         /// <param name="peer"></param>
         protected virtual void OnUserDisconnectedEventListener(IPeer peer)
@@ -477,12 +498,11 @@ namespace MasterServerToolkit.MasterServer
             }
 
             loggedInUsers.TryRemove(extension.UserId, out _);
-
-            OnUserLoggedOutEvent?.Invoke(extension);
+            NotifyOnUserLoggedOutEvent(extension);
         }
 
         /// <summary>
-        /// Check if Username is valid. Whether it is not empty or has no white spaces
+        /// Check if username is valid
         /// </summary>
         /// <param name="username"></param>
         /// <returns></returns>
@@ -514,7 +534,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Check if Email is valid
+        /// Check if email is valid
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
@@ -524,7 +544,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Check if password valid
+        /// Check if password is valid
         /// </summary>
         /// <param name="password"></param>
         /// <returns></returns>
@@ -534,9 +554,9 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Validates user token
         /// </summary>
-        /// <param name="token"></param>
+        /// <param name="userCredentials"></param>
         /// <returns></returns>
         protected virtual bool ValidateToken(MstProperties userCredentials)
         {
@@ -549,7 +569,7 @@ namespace MasterServerToolkit.MasterServer
                 // Split the token into its encrypted part and signature
                 var parts = token.Split('.');
 
-                if (parts.Length != 2) 
+                if (parts.Length != 2)
                     return false;
 
                 var encryptedToken = parts[0];
@@ -558,8 +578,8 @@ namespace MasterServerToolkit.MasterServer
                 // Verify the signature using HMACSHA256
                 var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(tokenSecret));
                 var computedSignature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(encryptedToken)));
-                
-                if (computedSignature != signature) 
+
+                if (computedSignature != signature)
                     return false;
 
                 // Decrypt the token using AES
@@ -572,7 +592,7 @@ namespace MasterServerToolkit.MasterServer
                 var expirationTime = tokenData[2].LongValue;
                 var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                if (currentTime > expirationTime) 
+                if (currentTime > expirationTime)
                     return false; // Token has expired
 
                 // Validate the Issuer and Audience parameters
@@ -629,7 +649,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Finalize user login process
+        /// Finalizes user login process
         /// </summary>
         /// <param name="account"></param>
         /// <param name="userPeerExtension"></param>
@@ -803,7 +823,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Handles request to get email conformation code
+        /// Handles request to get email confirmation code
         /// </summary>
         /// <param name="message"></param>
         protected virtual async Task GetEmailConfirmationCodeMessageHandler(IIncomingMessage message)
@@ -854,7 +874,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Handles request to get account info by username
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
@@ -899,7 +919,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Handles a request to retrieve account information
+        /// Handles a request to retrieve account information by peer
         /// </summary>
         /// <param name="message"></param>
         protected virtual Task GetAccountInfoByPeerMessageHandler(IIncomingMessage message)
@@ -952,7 +972,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Handles request to bind extra properties to account
         /// </summary>
         /// <param name="message"></param>
         protected virtual async Task BindExtraPropertiesMessageHandler(IIncomingMessage message)
@@ -1021,7 +1041,7 @@ namespace MasterServerToolkit.MasterServer
             // Let's decrypt it with our AES key
             var decryptedBytesData = Mst.Security.DecryptAES(encryptedData, securityExt.AesKey);
 
-            // Parse our data to user creadentials
+            // Parse our data to user credentials
             var userCredentials = MstProperties.FromBytes(decryptedBytesData);
 
             string userName = userCredentials.AsString(MstDictKeys.USER_NAME);
@@ -1083,7 +1103,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Handles sign out request
         /// </summary>
         /// <param name="message"></param>
         protected virtual Task SignOutMessageHandler(IIncomingMessage message)
@@ -1119,7 +1139,7 @@ namespace MasterServerToolkit.MasterServer
                 return;
             }
 
-            // Get excrypted data
+            // Get encrypted data
             var encryptedData = message.AsBytes();
 
             // Decrypt data
@@ -1130,7 +1150,6 @@ namespace MasterServerToolkit.MasterServer
 
             // Let's run auth factory
             await RunAuthFactory(userCredentials, message);
-
         }
 
         /// <summary>
@@ -1375,7 +1394,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Signs in user as guest using his guest parametars such as device id
+        /// Signs in user as guest using his guest parameters such as device id
         /// </summary>
         /// <param name="peer"></param>
         /// <param name="userCredentials"></param>

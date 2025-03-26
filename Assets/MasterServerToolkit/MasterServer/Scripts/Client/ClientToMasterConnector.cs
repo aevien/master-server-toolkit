@@ -1,4 +1,6 @@
-﻿namespace MasterServerToolkit.MasterServer
+﻿using UnityEngine;
+
+namespace MasterServerToolkit.MasterServer
 {
     /// <summary>
     /// Automatically connects to master server
@@ -13,6 +15,18 @@
             serverIp = Mst.Args.AsString(Mst.Args.Names.MasterIp, serverIp);
             // If master port is provided via cmd arguments
             serverPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, serverPort);
+        }
+
+        [ContextMenu("Connect")]
+        private void Connect()
+        {
+            StartConnection();
+        }
+
+        [ContextMenu("Disconnect")]
+        private void Disconnect()
+        {
+            Connection.Close();
         }
     }
 }

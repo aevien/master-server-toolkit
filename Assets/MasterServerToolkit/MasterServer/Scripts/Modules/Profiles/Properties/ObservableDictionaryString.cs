@@ -11,7 +11,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override string Serialize()
         {
-            return string.Empty;
+            return ToJson().ToString();
         }
 
         public override void Deserialize(string value) { }
@@ -56,6 +56,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 _value.TryAdd(key, json[key].StringValue);
             }
+
+            MarkAsDirty();
         }
 
         public override void FromJson(string json)

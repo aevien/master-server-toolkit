@@ -9,7 +9,7 @@ namespace MasterServerToolkit.Bridges.SqlSugar
         public string AccountId { get; set; } = string.Empty;
         [SugarColumn(ColumnName = "property_key", ColumnDataType = "varchar(38)", IsPrimaryKey = true)]
         public string PropertyKey { get; set; } = string.Empty;
-        [SugarColumn(ColumnName = "property_value", ColumnDataType = "json")]
+        [SugarColumn(ColumnName = "property_value", ColumnDataType = "text")]
         public string PropertyValue { get; set; } = string.Empty;
     }
 }

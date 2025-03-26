@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e844293694e0714aab64b7acd9c0085, type: 3}
+  m_Name: Demo Populators Database
+  m_EditorClassIdentifier: 
+  populators:
+  - {fileID: 11400000, guid: 92adc288d4ff0ff4f9f1f0841266bd91, type: 2}
+  - {fileID: 11400000, guid: 28a52391f8005e94db3b93660ba3c67b, type: 2}
+  - {fileID: 11400000, guid: 95bd080b2cb513b448e1d6a38b514fe8, type: 2}
+  - {fileID: 11400000, guid: bf828004317f2204eb46169c60330f66, type: 2}
+  - {fileID: 11400000, guid: 9acf420b58bbd6f468b47d4fcedf2948, type: 2}
+  - {fileID: 11400000, guid: f2a726bcdb00e214fa1eb2d772d9076e, type: 2}

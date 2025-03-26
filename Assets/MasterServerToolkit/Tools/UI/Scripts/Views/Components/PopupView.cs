@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -13,47 +14,64 @@ namespace MasterServerToolkit.UI
         [Header("Buttons Settings"), SerializeField]
         protected Button[] buttons;
 
+        protected readonly List<UnityAction> callbacks = new List<UnityAction>();
+
+        protected override void Awake()
+        {
+            base.Awake();
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                int index = i;
+
+                if (buttons[index] != null)
+                {
+                    buttons[index].onClick.AddListener(() =>
+                    {
+                        if (index < callbacks.Count)
+                            callbacks[index]?.Invoke();
+                    });
+                }
+            }
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null)
+                {
+                    buttons[i].onClick.RemoveAllListeners();
+                }
+            }
+        }
+
         public virtual void SetLables(params string[] values)
         {
-            if (values.Length == 0)
-            {
-                logger.Warn($"There is no need to use SetLables method of {name} because of you do not pass any values as its parameters");
-                return;
-            }
-
             for (int i = 0; i < values.Length; i++)
             {
-                try
+                if (i < lables.Length && lables[i] != null)
                 {
                     lables[i].text = values[i];
                 }
-                catch
+                else
                 {
-                    logger.Warn($"There is no lable assigned to {name} for value at index {i}");
+                    logger.Warn($"No label assigned to {name} for value at index {i}");
                 }
             }
         }
 
         public virtual void SetButtonsClick(params UnityAction[] actions)
         {
-            if (actions.Length == 0)
+            if (actions.Length > buttons.Length)
             {
-                logger.Warn($"There is no need to use SetButtonsClick method of {name} because of you do not pass any action as its parameters");
-                return;
+                logger.Warn($"More actions than buttons in {name}");
             }
 
-            for (int i = 0; i < actions.Length; i++)
-            {
-                try
-                {
-                    buttons[i].onClick.RemoveAllListeners();
-                    buttons[i].onClick.AddListener(actions[i]);
-                }
-                catch
-                {
-                    logger.Warn($"There is no button assigned to {name} for action at index {i}");
-                }
-            }
+            callbacks.Clear();
+            callbacks.AddRange(actions);
         }
     }
 }

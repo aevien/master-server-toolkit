@@ -11,18 +11,12 @@ namespace MasterServerToolkit.MasterServer
 
         public override string Serialize()
         {
-            return new MstProperties().Append(_value).ToReadableString();
+            return ToJson().ToString(); 
         }
 
         public override void Deserialize(string value)
         {
-            var properties = new MstProperties();
-            properties.FromReadableString(value);
-
-            foreach (var property in properties)
-            {
-                _value[property.Key] = properties.AsInt(property.Key);
-            }
+            FromJson(value);
         }
 
         protected override string ReadKey(EndianBinaryReader reader)
@@ -65,6 +59,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 _value.TryAdd(key, json[key].IntValue);
             }
+
+            MarkAsDirty();
         }
 
         public override void FromJson(string json)

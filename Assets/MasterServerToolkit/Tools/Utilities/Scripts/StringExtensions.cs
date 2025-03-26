@@ -1,5 +1,7 @@
+using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -77,7 +79,7 @@ namespace MasterServerToolkit.Extensions
         /// </summary>
         /// <param name="values"></param>
         /// <returns></returns>
-        public static uint ToUint32Hash(params string[] values)
+        public static uint ToUint32Hash(this IEnumerable<string> values)
         {
             return string.Join("_", values).ToUint32Hash();
         }

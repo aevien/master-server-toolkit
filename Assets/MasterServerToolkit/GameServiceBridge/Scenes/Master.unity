@@ -229,12 +229,14 @@ MonoBehaviour:
   accessKeysFile: access_codes
   allowGuestLogin: 1
   guestPrefix: user_
-  tokenExpiresInDays: 60
   getPeerDataPermissionsLevel: 0
   mailer: {fileID: 190502435}
   emailAddressValidationTemplate: ^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\.)+[a-z]{2,5}$
-  tokenSecret: t0k9n-$ecr9t
   serviceCodeMinChars: 6
+  tokenSecret: t0k9n-$ecr9t
+  tokenExpiresInDays: 60
+  tokenIssuer: http://mst.game.com
+  tokenAudience: http://mst.game.com/users
   databaseAccessorFactory: {fileID: 261571412}
 --- !u!114 &261571412
 MonoBehaviour:
@@ -299,7 +301,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   apiUrl: https://playweb3.io/api/v1
-  apiKey: I8r6QVCEDTDUTvecOF5421YRhGG7ThvrG2G64+Mh1IHhtDFDYxMLVE/z5dpHeHIwXwzM8C6gCbun2fua1hsrAkFTw4jlBOAiJy7kocQMW5dM1vTzG8j0mL3Iki8WlsqE
+  apiKey: 
 --- !u!1 &582703837
 GameObject:
   m_ObjectHideFlags: 0

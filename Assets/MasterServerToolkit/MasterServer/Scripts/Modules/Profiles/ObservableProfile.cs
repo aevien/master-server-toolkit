@@ -17,6 +17,7 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ObservableProfile : IEnumerable<IObservableProperty>, IDisposable
     {
+        public delegate void ObservableProfileDelegate(ObservableProfile profile);
         public delegate void ProfilePropertyUpdateDelegate(ushort propertyCode, IObservableProperty property);
 
         /// <summary>

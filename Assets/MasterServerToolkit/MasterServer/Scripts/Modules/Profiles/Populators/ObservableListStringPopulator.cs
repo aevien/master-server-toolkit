@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MasterServerToolkit.MasterServer
 {
     [CreateAssetMenu(menuName = MstConstants.CreateMenu + "Profile/ObservableListStringPopulator")]
-    public class ObservableListStringPopulator : ObservableBaseListPopulator<string>
+    public class ObservableListStringPopulator : ObservableBasePopulator<List<string>>
     {
         public override IObservableProperty Populate()
         {

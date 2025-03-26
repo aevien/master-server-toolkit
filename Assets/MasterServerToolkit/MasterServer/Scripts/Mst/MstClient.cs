@@ -13,6 +13,7 @@ namespace MasterServerToolkit.MasterServer
         public MstProfilesClient Profiles { get; private set; }
         public MstNotificationClient Notifications { get; private set; }
         public AchievementsModuleClient Achievements { get; private set; }
+        public QuestsModuleClient Quests { get; private set; }
         public AnalyticsModuleClient Analytics { get; private set; }
 
         public MstClient(IClientSocket connection) : base(connection)
@@ -27,6 +28,7 @@ namespace MasterServerToolkit.MasterServer
             Notifications = new MstNotificationClient(connection);
             Achievements = new AchievementsModuleClient(connection);
             Analytics = new AnalyticsModuleClient(connection);
+            Quests = new QuestsModuleClient(connection);
         }
     }
 }

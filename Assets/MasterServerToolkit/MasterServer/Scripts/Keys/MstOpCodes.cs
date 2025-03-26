@@ -112,8 +112,12 @@ namespace MasterServerToolkit.MasterServer
         public static ushort ModulesInfo = nameof(ModulesInfo).ToUint16Hash();
 
         public static ushort ClientUpdateAchievementProgress = nameof(ClientUpdateAchievementProgress).ToUint16Hash();
-        public static ushort ClientCheckAchievementProgress = nameof(ClientCheckAchievementProgress).ToUint16Hash();
-        public static ushort ClientAchievementProgressIsMet = nameof(ClientAchievementProgressIsMet).ToUint16Hash();
+        public static ushort ClientAchievementUnlocked = nameof(ClientAchievementUnlocked).ToUint16Hash();
         public static ushort ServerUpdateAchievementProgress = nameof(ServerUpdateAchievementProgress).ToUint16Hash();
+
+        public static ushort ClientGetQuests = nameof(ClientGetQuests).ToUint16Hash();
+        public static ushort ClientStartQuest = nameof(ClientStartQuest).ToUint16Hash();
+        public static ushort ClientUpdateQuestProgress = nameof(ClientUpdateQuestProgress).ToUint16Hash();
+        public static ushort ClientCancelQuest = nameof(ClientCancelQuest).ToUint16Hash();
     }
 }

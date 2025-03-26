@@ -11,15 +11,6 @@ namespace MasterServerToolkit.Demos.BasicProfile
 {
     public class ProfilesModule : MasterServer.ProfilesModule
     {
-        [Header("Start Values"), SerializeField]
-        private int bronze = 100;
-        [SerializeField]
-        private int silver = 50;
-        [SerializeField]
-        private int gold = 50;
-        [SerializeField]
-        private string avatarUrl = "https://i.imgur.com/JQ9pRoD.png";
-
         [SerializeField]
         public HelpBox _header = new HelpBox()
         {
@@ -37,34 +28,6 @@ namespace MasterServerToolkit.Demos.BasicProfile
             //Update profile resources each 5 sec
             InvokeRepeating(nameof(IncreaseResources), 1f, 1f);
         }
-
-        /// <summary>
-        /// This method is just for creation of profile on server side as default for users that are logged in for the first time
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="clientPeer"></param>
-        /// <returns></returns>
-        protected override ObservableServerProfile CreateProfile(string userId, IPeer clientPeer)
-        {
-            var profile = base.CreateProfile(userId, clientPeer);
-
-            ProfileProperties.Fill(profile);
-
-            profile.Get<ObservableString>(ProfilePropertyOpCodes.displayName).Value = SimpleNameGenerator.Generate(Gender.Male);
-            profile.Get<ObservableString>(ProfilePropertyOpCodes.avatarUrl).Value = avatarUrl;
-
-            if (profile.TryGet(ProfilePropertyOpCodes.gold, out ObservableInt goldProperty))
-                goldProperty.Add(gold);
-
-            if (profile.TryGet(ProfilePropertyOpCodes.silver, out ObservableInt silverProperty))
-                silverProperty.Add(silver);
-
-            if (profile.TryGet(ProfilePropertyOpCodes.bronze, out ObservableInt bronzeProperty))
-                bronzeProperty.Add(bronze);
-
-            return profile;
-        }
-
         private void IncreaseResources()
         {
             foreach (var profile in Profiles)
@@ -73,10 +36,10 @@ namespace MasterServerToolkit.Demos.BasicProfile
                     goldProperty.Add(1);
 
                 if (profile.TryGet(ProfilePropertyOpCodes.silver, out ObservableInt silverProperty))
-                    silverProperty.Add(5);
+                    silverProperty.Add(10);
 
                 if (profile.TryGet(ProfilePropertyOpCodes.bronze, out ObservableInt bronzeProperty))
-                    bronzeProperty.Add(10);
+                    bronzeProperty.Add(100);
             }
         }
 

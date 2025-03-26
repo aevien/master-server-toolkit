@@ -178,17 +178,20 @@ namespace MasterServerToolkit.MasterServer
 
         public void StartConnection(string serverIp, int serverPort, int numberOfAttempts = 5)
         {
-            if (Connection != null)
+            if (Connection == null)
             {
-                startConnectionTime = Time.realtimeSinceStartup;
-                currentAttemptToConnect = 0;
-                maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
-
-                Connection.AddConnectionOpenListener(OnConnectedEventHandler);
-                Connection.AddConnectionCloseListener(OnDisconnectedEventHandler, false);
-
-                StartConnectionProcess(serverIp, serverPort, numberOfAttempts);
+                logger.Error("Your connection is not defined");
+                return;
             }
+
+            startConnectionTime = Time.realtimeSinceStartup;
+            currentAttemptToConnect = 0;
+            maxAttemptsToConnect = numberOfAttempts > 0 ? numberOfAttempts : maxAttemptsToConnect;
+
+            Connection.AddConnectionOpenListener(OnConnectedEventHandler);
+            Connection.AddConnectionCloseListener(OnDisconnectedEventHandler, false);
+
+            StartConnectionProcess(serverIp, serverPort, numberOfAttempts);
         }
 
         protected virtual void StartConnectionProcess(string serverIp, int serverPort, int numberOfAttempts)

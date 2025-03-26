@@ -1,0 +1,4672 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профессиональный редактор локализации</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-hover: #45a049;
+            --secondary-color: #3498db;
+            --secondary-hover: #2980b9;
+            --danger-color: #e74c3c;
+            --danger-hover: #c0392b;
+            --warning-color: #f39c12;
+            --success-color: #2ecc71;
+            --text-color: #333;
+            --light-text: #666;
+            --lighter-text: #999;
+            --border-color: #ddd;
+            --background-color: #f5f5f5;
+            --card-background: white;
+            --category-background: #e9f7ef;
+            --header-background: #f2f2f2;
+            --missing-translation: #ffebee;
+            --complete-translation: #e8f5e9;
+            --sidebar-width: 250px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--card-background);
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .app-title {
+            margin: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+        }
+
+        .app-title i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--card-background);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 50;
+            padding: 20px 0;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px 15px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 5px;
+        }
+
+        .category-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .category-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .category-item:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .category-item.active {
+            background-color: rgba(76, 175, 80, 0.2);
+            border-left-color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .toolbar {
+            background-color: var(--card-background);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .toolbar-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .search-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            min-width: 250px;
+        }
+
+        input[type="text"],
+        input[type="search"],
+        input[type="file"],
+        select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        input[type="text"]:focus,
+        input[type="search"]:focus,
+        input[type="file"]:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+
+        input[type="search"] {
+            padding-left: 30px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 8px center;
+        }
+
+        button {
+            padding: 8px 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+        }
+
+        button.secondary:hover {
+            background-color: var(--secondary-hover);
+        }
+
+        button.danger {
+            background-color: var(--danger-color);
+        }
+
+        button.danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        button.warning {
+            background-color: var(--warning-color);
+        }
+
+        button.warning:hover {
+            background-color: #e67e22;
+        }
+
+        button i {
+            margin-right: 5px;
+        }
+
+        button[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--card-background);
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            z-index: 1;
+            margin-top: 5px;
+            right: 0;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            text-decoration: none;
+            display: block;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--background-color);
+        }
+
+        .filter-dropdown {
+            position: relative;
+        }
+
+        .filter-menu {
+            position: absolute;
+            display: none;
+            top: 100%;
+            left: 0;
+            z-index: 999;
+            background-color: var(--card-background);
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            width: 280px;
+            margin-top: 5px;
+        }
+
+        .filter-dropdown.active .filter-menu {
+            display: block;
+        }
+
+        .filter-group {
+            margin-bottom: 10px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 13px;
+            color: var(--light-text);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            margin-right: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .category {
+            background-color: var(--category-background);
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .category-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #d0e6d2;
+        }
+
+        .category-name {
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-name i {
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .category-name.collapsed i {
+            transform: rotate(-90deg);
+        }
+
+        .category-name input {
+            font-weight: bold;
+            font-size: 16px;
+            padding: 5px 8px;
+            width: 250px;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .category-content {
+            background-color: var(--card-background);
+            padding: 15px;
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+        }
+
+        .category-content.collapsed {
+            max-height: 0;
+            padding: 0 15px;
+        }
+
+        .localization-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .localization-table th,
+        .localization-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .localization-table th {
+            background-color: var(--header-background);
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .localization-table tr:hover {
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+
+        .key-cell {
+            width: 250px;
+            min-width: 200px;
+        }
+
+        .language-cell {
+            min-width: 200px;
+            position: relative;
+        }
+
+        .actions-cell {
+            width: 120px;
+            white-space: nowrap;
+        }
+
+        .language-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .language-header button {
+            padding: 2px 5px;
+            min-height: auto;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+
+        .translation-input {
+            width: 100%;
+            position: relative;
+        }
+
+        .translation-input input {
+            width: 100%;
+            padding-right: 45px;
+        }
+
+        .translation-input.missing input {
+            background-color: var(--missing-translation);
+        }
+
+        .translation-input.complete input {
+            background-color: var(--complete-translation);
+        }
+
+        .char-counter {
+            position: absolute;
+            right: 8px;
+            bottom: 7px;
+            font-size: 11px;
+            color: var(--lighter-text);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 1px 4px;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+
+        .char-counter.warning {
+            color: var(--warning-color);
+        }
+
+        .char-counter.danger {
+            color: var(--danger-color);
+        }
+
+        .add-entry-container {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-buttons button {
+            padding: 5px 8px;
+            font-size: 12px;
+            min-height: auto;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-background);
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 600px;
+            overflow: hidden;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--header-background);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--light-text);
+            padding: 5px;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background-color: var(--header-background);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            background-color: var(--success-color);
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+
+        .notification.warning {
+            background-color: var(--warning-color);
+        }
+
+        .tab-container {
+            margin-bottom: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-item.active {
+            border-bottom-color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            padding: 15px 0;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-card {
+            background-color: var(--card-background);
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-card h3 {
+            margin-top: 0;
+            color: var(--light-text);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .progress-bar-fill.warning {
+            background-color: var(--warning-color);
+        }
+
+        .progress-bar-fill.danger {
+            background-color: var(--danger-color);
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--light-text);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-item-name {
+            color: var(--light-text);
+        }
+
+        .stat-item-value {
+            font-weight: bold;
+        }
+
+        .shortcut-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .shortcut-item:last-child {
+            border-bottom: none;
+        }
+
+        .key-combo {
+            display: flex;
+            gap: 5px;
+        }
+
+        .key {
+            background-color: var(--header-background);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-size: 12px;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-view {
+            display: flex;
+            gap: 20px;
+        }
+
+        .comparison-column {
+            flex: 1;
+        }
+
+        .comparison-header {
+            background-color: var(--header-background);
+            padding: 10px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+        }
+
+        .comparison-item {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 10px;
+            border-radius: 0 0 5px 5px;
+            border-top: none;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .placeholder-tag {
+            background-color: #e1f5fe;
+            color: #0288d1;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .placeholder-menu {
+            position: absolute;
+            background-color: var(--card-background);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            padding: 10px;
+            z-index: 50;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .placeholder-menu.active {
+            display: block;
+        }
+
+        .placeholder-menu-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .placeholder-menu-item:hover {
+            background-color: var(--background-color);
+        }
+
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: var(--light-text);
+        }
+
+        .history-actions {
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .sidebar.expanded {
+                width: var(--sidebar-width);
+                position: absolute;
+                height: 100%;
+            }
+
+            .category-item span {
+                display: none;
+            }
+
+            .sidebar.expanded .category-item span {
+                display: inline;
+            }
+
+            .main-container {
+                flex-direction: column;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-view {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1 class="app-title">
+            Master Server Toolkit - Professional Localization Editor
+        </h1>
+    </header>
+
+    <div id="notification" class="notification"></div>
+
+    <div class="main-container">
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Категории</h3>
+                <button id="sidebarToggle" class="sidebar-toggle">
+                    &#9776;
+                </button>
+            </div>
+            <ul id="categoryList" class="category-list">
+                <!-- Категории будут добавлены динамически -->
+            </ul>
+        </div>
+
+        <div class="content">
+            <div class="toolbar">
+                <div class="toolbar-section">
+                    <button id="addCategoryBtn" title="Добавить новую категорию">
+                        <i>📁</i> Добавить категорию
+                    </button>
+                    <button id="addLanguageBtn" title="Добавить новый язык">
+                        <i>🈸</i> Добавить язык
+                    </button>
+                </div>
+
+                <div class="toolbar-section">
+                    <input type="file" id="fileInput" accept=".csv,.json,.yaml,.yml" style="display: none;">
+                    <button id="importBtn" class="secondary" title="Импортировать локализацию из файла">
+                        <i>📥</i> Импорт
+                    </button>
+                    <div class="dropdown">
+                        <button id="exportBtn" class="secondary" title="Экспортировать локализацию в файл">
+                            <i>📤</i> Экспорт
+                        </button>
+                        <div class="dropdown-content" id="exportOptions">
+                            <div class="dropdown-item" data-format="csv">CSV формат</div>
+                            <div class="dropdown-item" data-format="json">JSON формат</div>
+                            <div class="dropdown-item" data-format="yaml">YAML формат</div>
+                            <div class="dropdown-item" id="exportOptionsBtn">Настроить экспорт...</div>
+                        </div>
+                    </div>
+                    <button id="toggleAllBtn" class="warning" title="Свернуть или развернуть все категории">
+                        <i>🔍</i> <span id="toggleAllText">Свернуть все</span>
+                    </button>
+                </div>
+
+                <div class="search-container">
+                    <input type="search" id="searchInput" placeholder="Поиск по ключам и переводам...">
+                    <div class="filter-dropdown" id="filterDropdown">
+                        <button title="Фильтры поиска">
+                            <i>🔍</i>
+                        </button>
+                        <div class="filter-menu" id="filterMenu">
+                            <div class="filter-group">
+                                <label>Искать в:</label>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="searchInKeys" checked> Ключи
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" id="searchInValues" checked> Переводы
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <label>Показать только:</label>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="showMissingOnly"> Отсутствующие переводы
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <label>Языки:</label>
+                                <div class="checkbox-group" id="languageFilters">
+                                    <!-- Языковые фильтры будут добавлены динамически -->
+                                </div>
+                            </div>
+                            <div class="filter-actions">
+                                <button id="resetFiltersBtn" class="danger">Сбросить</button>
+                                <button id="applyFiltersBtn">Применить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toolbar-section">
+                    <button id="statsBtn" title="Показать статистику проекта">
+                        <i>📊</i> Статистика
+                    </button>
+                    <button id="helpBtn" title="Показать справку и горячие клавиши">
+                        <i>❓</i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="dashboard" class="dashboard" style="display: none;">
+                <div class="dashboard-card">
+                    <h3>Общая статистика</h3>
+                    <div class="stat-list">
+                        <div class="stat-item">
+                            <div class="stat-item-name">Категории</div>
+                            <div class="stat-item-value" id="totalCategories">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-name">Ключи</div>
+                            <div class="stat-item-value" id="totalKeys">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-name">Языки</div>
+                            <div class="stat-item-value" id="totalLanguages">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-name">Всего переводов</div>
+                            <div class="stat-item-value" id="totalTranslations">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Прогресс перевода</h3>
+                    <div class="stat-value" id="translationProgress">0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-label">
+                        <span id="translatedCount">0</span>
+                        <span>из</span>
+                        <span id="totalRequired">0</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Прогресс по языкам</h3>
+                    <div id="languageProgress">
+                        <!-- Прогресс по языкам будет добавлен динамически -->
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Топ категорий</h3>
+                    <div id="topCategories">
+                        <!-- Топ категорий будет добавлен динамически -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="categoryContainer">
+                <!-- Сюда будут добавлены категории -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="addCategoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить новую категорию</h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newCategoryName">Название категории:</label>
+                    <input type="text" id="newCategoryName" placeholder="Введите название категории">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" data-close="modal">Отмена</button>
+                <button id="saveCategoryBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addLanguageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить новый язык</h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newLanguageCode">Код языка:</label>
+                    <input type="text" id="newLanguageCode" placeholder="Введите код языка (например, fr, de, es)">
+                </div>
+                <div class="form-group">
+                    <label for="newLanguageName">Название языка (необязательно):</label>
+                    <input type="text" id="newLanguageName" placeholder="Например: Français, Deutsch, Español">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" data-close="modal">Отмена</button>
+                <button id="saveLanguageBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addEntryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить новый элемент локализации</h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newEntryKey">Ключ:</label>
+                    <input type="text" id="newEntryKey" placeholder="Введите ключ локализации">
+                </div>
+                <div id="newEntryLanguages">
+                    <!-- Поля для языков будут добавлены динамически -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" data-close="modal">Отмена</button>
+                <button id="saveEntryBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Настройки экспорта</h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="exportFormat">Формат файла:</label>
+                    <select id="exportFormat">
+                        <option value="csv">CSV (.csv)</option>
+                        <option value="json">JSON (.json)</option>
+                        <option value="yaml">YAML (.yaml)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Языки для экспорта:</label>
+                    <div id="exportLanguages" class="checkbox-group">
+                        <!-- Языки будут добавлены динамически -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Категории для экспорта:</label>
+                    <div id="exportCategories" class="checkbox-group">
+                        <!-- Категории будут добавлены динамически -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="exportFilename">Имя файла:</label>
+                    <input type="text" id="exportFilename" placeholder="localization">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" data-close="modal">Отмена</button>
+                <button id="doExportBtn">Экспортировать</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="keyDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Детали ключа: <span id="detailsKeyName"></span></h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-container">
+                    <ul class="tabs">
+                        <li class="tab-item active" data-tab="tab-edit">Редактирование</li>
+                        <li class="tab-item" data-tab="tab-compare">Сравнение языков</li>
+                        <li class="tab-item" data-tab="tab-history">История изменений</li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="tab-edit">
+                            <div class="form-group">
+                                <label for="editKeyName">Ключ:</label>
+                                <input type="text" id="editKeyName">
+                            </div>
+                            <div id="editKeyLanguages">
+                                <!-- Поля для языков будут добавлены динамически -->
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab-compare">
+                            <div class="comparison-view" id="comparisonContainer">
+                                <!-- Сравнение будет добавлено динамически -->
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab-history">
+                            <div id="historyContainer">
+                                <!-- История изменений будет добавлена динамически -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" data-close="modal">Закрыть</button>
+                <button id="saveKeyDetailsBtn">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="placeholderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Управление плейсхолдерами</h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newPlaceholderName">Имя плейсхолдера:</label>
+                    <input type="text" id="newPlaceholderName" placeholder="Введите имя без скобок, например userName">
+                </div>
+                <div class="form-group">
+                    <label for="newPlaceholderDesc">Описание (необязательно):</label>
+                    <input type="text" id="newPlaceholderDesc" placeholder="Например: Имя пользователя">
+                </div>
+                <h4>Текущие плейсхолдеры:</h4>
+                <div id="placeholderList">
+                    <!-- Список плейсхолдеров будет добавлен динамически -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" data-close="modal">Закрыть</button>
+                <button id="addPlaceholderBtn">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bulkEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Массовое редактирование</h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bulkEditLanguage">Язык для редактирования:</label>
+                    <select id="bulkEditLanguage">
+                        <!-- Языки будут добавлены динамически -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bulkEditOperation">Операция:</label>
+                    <select id="bulkEditOperation">
+                        <option value="find-replace">Найти и заменить</option>
+                        <option value="prefix">Добавить префикс</option>
+                        <option value="suffix">Добавить суффикс</option>
+                        <option value="uppercase">В верхний регистр</option>
+                        <option value="lowercase">В нижний регистр</option>
+                        <option value="capitalize">Капитализировать первые буквы</option>
+                    </select>
+                </div>
+                <div id="findReplaceOptions">
+                    <div class="form-group">
+                        <label for="bulkEditFind">Найти:</label>
+                        <input type="text" id="bulkEditFind">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkEditReplace">Заменить на:</label>
+                        <input type="text" id="bulkEditReplace">
+                    </div>
+                </div>
+                <div id="prefixSuffixOptions" style="display: none;">
+                    <div class="form-group">
+                        <label for="bulkEditText">Текст:</label>
+                        <input type="text" id="bulkEditText">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Применить к:</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="radio" name="bulkEditScope" value="selected" checked> Выбранным ключам
+                        </label>
+                        <label>
+                            <input type="radio" name="bulkEditScope" value="category"> Всей категории
+                        </label>
+                        <label>
+                            <input type="radio" name="bulkEditScope" value="all"> Всем ключам
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" id="bulkEditCategorySelect" style="display: none;">
+                    <label for="bulkEditCategory">Категория:</label>
+                    <select id="bulkEditCategory">
+                        <!-- Категории будут добавлены динамически -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Предпросмотр изменений:</label>
+                    <div id="bulkEditPreview"
+                        style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-top: 5px; border-radius: 4px;">
+                        <!-- Предпросмотр будет добавлен динамически -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" data-close="modal">Отмена</button>
+                <button id="applyBulkEditBtn">Применить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Справка и горячие клавиши</h3>
+                <button class="modal-close" data-close="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4>Горячие клавиши</h4>
+                <ul class="shortcut-list">
+                    <li class="shortcut-item">
+                        <span>Добавить новую категорию</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">Shift</span>
+                            <span class="key">C</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Добавить новый язык</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">Shift</span>
+                            <span class="key">L</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Добавить новый ключ</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">Shift</span>
+                            <span class="key">K</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Поиск</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">F</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Сохранить изменения (при редактировании)</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">S</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Отменить изменения (при редактировании)</span>
+                        <div class="key-combo">
+                            <span class="key">Esc</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Экспорт</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">E</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Импорт</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">I</span>
+                        </div>
+                    </li>
+                    <li class="shortcut-item">
+                        <span>Свернуть/развернуть все</span>
+                        <div class="key-combo">
+                            <span class="key">Ctrl</span>
+                            <span class="key">Shift</span>
+                            <span class="key">E</span>
+                        </div>
+                    </li>
+                </ul>
+
+                <h4>О программе</h4>
+                <p>
+                    Профессиональный редактор локализации предназначен для управления многоязычными текстами в проектах.
+                    Позволяет создавать, редактировать и экспортировать переводы, организованные по категориям.
+                </p>
+                <p>
+                    Версия: 2.0
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button data-close="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Основные настройки приложения
+        const settings = {
+            maxHistoryItems: 50,
+            characterWarningThreshold: 50,
+            characterDangerThreshold: 80,
+            autosaveInterval: 120000, // 2 минуты
+            allCategoriesExpanded: true,
+            currentEditingCategory: null,
+            selectedKeys: [],
+            defaultLanguage: 'ru',
+            view: 'categories', // 'categories', 'dashboard'
+            filters: {
+                searchQuery: '',
+                inKeys: true,
+                inValues: true,
+                missingOnly: false,
+                languages: []
+            }
+        };
+
+        // DOM элементы для различных компонентов интерфейса
+        const elements = {
+            categoryContainer: document.getElementById('categoryContainer'),
+            sidebar: document.getElementById('sidebar'),
+            categoryList: document.getElementById('categoryList'),
+            sidebarToggle: document.getElementById('sidebarToggle'),
+            notification: document.getElementById('notification'),
+            searchInput: document.getElementById('searchInput'),
+            fileInput: document.getElementById('fileInput'),
+            toggleAllBtn: document.getElementById('toggleAllBtn'),
+            toggleAllText: document.getElementById('toggleAllText'),
+            dashboard: document.getElementById('dashboard'),
+
+            // Модальные окна
+            addCategoryModal: document.getElementById('addCategoryModal'),
+            addLanguageModal: document.getElementById('addLanguageModal'),
+            addEntryModal: document.getElementById('addEntryModal'),
+            exportModal: document.getElementById('exportModal'),
+            keyDetailsModal: document.getElementById('keyDetailsModal'),
+            placeholderModal: document.getElementById('placeholderModal'),
+            bulkEditModal: document.getElementById('bulkEditModal'),
+            helpModal: document.getElementById('helpModal'),
+
+            // Кнопки интерфейса
+            addCategoryBtn: document.getElementById('addCategoryBtn'),
+            addLanguageBtn: document.getElementById('addLanguageBtn'),
+            importBtn: document.getElementById('importBtn'),
+            exportBtn: document.getElementById('exportBtn'),
+            statsBtn: document.getElementById('statsBtn'),
+            helpBtn: document.getElementById('helpBtn'),
+
+            // Фильтры
+            filterDropdown: document.getElementById('filterDropdown'),
+            filterMenu: document.getElementById('filterMenu'),
+            languageFilters: document.getElementById('languageFilters'),
+            resetFiltersBtn: document.getElementById('resetFiltersBtn'),
+            applyFiltersBtn: document.getElementById('applyFiltersBtn'),
+
+            // Кнопки модальных окон
+            saveCategoryBtn: document.getElementById('saveCategoryBtn'),
+            saveLanguageBtn: document.getElementById('saveLanguageBtn'),
+            saveEntryBtn: document.getElementById('saveEntryBtn'),
+            doExportBtn: document.getElementById('doExportBtn'),
+            saveKeyDetailsBtn: document.getElementById('saveKeyDetailsBtn'),
+            addPlaceholderBtn: document.getElementById('addPlaceholderBtn'),
+            applyBulkEditBtn: document.getElementById('applyBulkEditBtn'),
+
+            // Поля форм
+            newCategoryName: document.getElementById('newCategoryName'),
+            newLanguageCode: document.getElementById('newLanguageCode'),
+            newLanguageName: document.getElementById('newLanguageName'),
+            newEntryKey: document.getElementById('newEntryKey'),
+            newEntryLanguages: document.getElementById('newEntryLanguages'),
+
+            // Поля экспорта
+            exportFormat: document.getElementById('exportFormat'),
+            exportLanguages: document.getElementById('exportLanguages'),
+            exportCategories: document.getElementById('exportCategories'),
+            exportFilename: document.getElementById('exportFilename'),
+
+            // Поля детального просмотра ключа
+            detailsKeyName: document.getElementById('detailsKeyName'),
+            editKeyName: document.getElementById('editKeyName'),
+            editKeyLanguages: document.getElementById('editKeyLanguages'),
+            comparisonContainer: document.getElementById('comparisonContainer'),
+            historyContainer: document.getElementById('historyContainer'),
+
+            // Поля плейсхолдеров
+            newPlaceholderName: document.getElementById('newPlaceholderName'),
+            newPlaceholderDesc: document.getElementById('newPlaceholderDesc'),
+            placeholderList: document.getElementById('placeholderList'),
+
+            // Поля массового редактирования
+            bulkEditLanguage: document.getElementById('bulkEditLanguage'),
+            bulkEditOperation: document.getElementById('bulkEditOperation'),
+            bulkEditFind: document.getElementById('bulkEditFind'),
+            bulkEditReplace: document.getElementById('bulkEditReplace'),
+            bulkEditText: document.getElementById('bulkEditText'),
+            bulkEditCategory: document.getElementById('bulkEditCategory'),
+            bulkEditPreview: document.getElementById('bulkEditPreview'),
+            findReplaceOptions: document.getElementById('findReplaceOptions'),
+            prefixSuffixOptions: document.getElementById('prefixSuffixOptions'),
+            bulkEditCategorySelect: document.getElementById('bulkEditCategorySelect'),
+
+            // Элементы дашборда
+            totalCategories: document.getElementById('totalCategories'),
+            totalKeys: document.getElementById('totalKeys'),
+            totalLanguages: document.getElementById('totalLanguages'),
+            totalTranslations: document.getElementById('totalTranslations'),
+            translationProgress: document.getElementById('translationProgress'),
+            progressBar: document.getElementById('progressBar'),
+            translatedCount: document.getElementById('translatedCount'),
+            totalRequired: document.getElementById('totalRequired'),
+            languageProgress: document.getElementById('languageProgress'),
+            topCategories: document.getElementById('topCategories')
+        };
+
+        // Вспомогательные переменные для отслеживания состояния
+        let currentOpenCategory = null;
+        let currentSelectedCategory = null;
+        let currentEditingKey = null;
+        let currentEditingCategory = null;
+        let lastSaveTimestamp = new Date().getTime();
+        let hasUnsavedChanges = false;
+
+        // Основная модель данных
+        let localizationData = {
+            categories: [],
+            languages: [],
+            entries: {},
+            placeholders: [],
+            history: [],
+            metadata: {
+                lastUpdate: new Date().toISOString(),
+                version: '2.0',
+            }
+        };
+
+        // Инициализация тестовыми данными
+        function initializeWithTestData() {
+            localizationData = {
+                categories: ['Common', 'Messages', 'Errors'],
+                languages: ['ru', 'en', 'tr'],
+                entries: {
+                    'Common': [
+                        {
+                            key: 'welcome',
+                            values: {
+                                'ru': 'Добро пожаловать',
+                                'en': 'Welcome',
+                                'tr': 'Hoş geldiniz'
+                            }
+                        },
+                        {
+                            key: 'save',
+                            values: {
+                                'ru': 'Сохранить',
+                                'en': 'Save',
+                                'tr': 'Kaydet'
+                            }
+                        },
+                        {
+                            key: 'cancel',
+                            values: {
+                                'ru': 'Отмена',
+                                'en': 'Cancel',
+                                'tr': 'İptal'
+                            }
+                        }
+                    ],
+                    'Messages': [
+                        {
+                            key: 'hello_user',
+                            values: {
+                                'ru': 'Привет, {username}!',
+                                'en': 'Hello, {username}!',
+                                'tr': 'Merhaba, {username}!'
+                            }
+                        },
+                        {
+                            key: 'confirm_delete',
+                            values: {
+                                'ru': 'Вы уверены, что хотите удалить {itemName}?',
+                                'en': 'Are you sure you want to delete {itemName}?',
+                                'tr': '{itemName} öğesini silmek istediğinizden emin misiniz?'
+                            }
+                        }
+                    ],
+                    'Errors': [
+                        {
+                            key: 'not_found',
+                            values: {
+                                'ru': 'Не найдено',
+                                'en': 'Not found',
+                                'tr': 'Bulunamadı'
+                            }
+                        },
+                        {
+                            key: 'access_denied',
+                            values: {
+                                'ru': 'Доступ запрещен',
+                                'en': 'Access denied',
+                                'tr': 'Erişim reddedildi'
+                            }
+                        }
+                    ]
+                },
+                placeholders: [
+                    { name: 'username', description: 'Имя пользователя' },
+                    { name: 'itemName', description: 'Название удаляемого элемента' }
+                ],
+                history: [],
+                metadata: {
+                    lastUpdate: new Date().toISOString(),
+                    version: '2.0'
+                }
+            };
+
+            settings.allCategoriesExpanded = true;
+            settings.defaultLanguage = 'ru';
+
+            showNotification('Загружены тестовые данные', 'success');
+        }
+
+        // Обработка экспортного меню
+        function setupExportDropdown() {
+            const exportBtn = elements.exportBtn;
+            const exportOptions = document.getElementById('exportOptions');
+
+            // Обработчик клика по кнопке экспорта
+            exportBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                exportOptions.classList.toggle('show');
+            });
+
+            // Обработчики для элементов выпадающего меню
+            document.querySelectorAll('#exportOptions .dropdown-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    exportOptions.classList.remove('show');
+                    handleExportOption(e);
+                });
+            });
+
+            // Закрытие выпадающего меню при клике вне его
+            document.addEventListener('click', function (e) {
+                if (!exportBtn.contains(e.target) && !exportOptions.contains(e.target)) {
+                    exportOptions.classList.remove('show');
+                }
+            });
+        }
+
+        // Загрузка данных из localStorage
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('localizationData');
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    localizationData = parsed;
+
+                    // Проверка на наличие полей, добавленных в новой версии
+                    if (!localizationData.placeholders) localizationData.placeholders = [];
+                    if (!localizationData.history) localizationData.history = [];
+                    if (!localizationData.metadata) {
+                        localizationData.metadata = {
+                            lastUpdate: new Date().toISOString(),
+                            version: '2.0'
+                        };
+                    }
+
+                    showNotification('Данные успешно загружены', 'success');
+                } catch (e) {
+                    console.error('Ошибка загрузки данных из localStorage:', e);
+                    showNotification('Ошибка загрузки сохраненных данных', 'error');
+                    initializeWithTestData();
+                }
+            } else {
+                // Если нет сохраненных данных, используем тестовые
+                initializeWithTestData();
+            }
+        }
+
+        // Сохранение данных в localStorage
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('localizationData', JSON.stringify(localizationData));
+                lastSaveTimestamp = new Date().getTime();
+                hasUnsavedChanges = false;
+
+                // Обновляем метаданные
+                localizationData.metadata.lastUpdate = new Date().toISOString();
+
+                console.log('Данные успешно сохранены в localStorage');
+            } catch (e) {
+                console.error('Ошибка сохранения в localStorage:', e);
+                showNotification('Ошибка автоматического сохранения', 'error');
+            }
+        }
+
+        // Автоматическое сохранение
+        function autoSave() {
+            if (hasUnsavedChanges) {
+                saveToLocalStorage();
+                showNotification('Изменения автоматически сохранены', 'success');
+            }
+        }
+
+        // Добавление записи в историю изменений
+        function addToHistory(action, data) {
+            const historyItem = {
+                action: action,
+                timestamp: new Date().toISOString(),
+                data: data
+            };
+
+            localizationData.history.unshift(historyItem);
+
+            // Ограничиваем размер истории
+            if (localizationData.history.length > settings.maxHistoryItems) {
+                localizationData.history = localizationData.history.slice(0, settings.maxHistoryItems);
+            }
+
+            hasUnsavedChanges = true;
+        }
+
+        // Обновление счетчика символов
+        function updateCharCounter(input, counter = null) {
+            const container = input.parentElement;
+            const charCounter = counter || container.querySelector('.char-counter');
+            const length = input.value.length;
+
+            if (charCounter) {
+                charCounter.textContent = length.toString();
+
+                // Обновляем стиль в зависимости от длины
+                charCounter.classList.remove('warning', 'danger');
+
+                if (length >= settings.characterDangerThreshold) {
+                    charCounter.classList.add('danger');
+                } else if (length >= settings.characterWarningThreshold) {
+                    charCounter.classList.add('warning');
+                }
+            }
+        }
+
+        // Обновление всех счетчиков символов
+        function updateAllCharCounters() {
+            document.querySelectorAll('.translation-input input').forEach(input => {
+                updateCharCounter(input);
+            });
+        }
+
+        // Обновление списка категорий в боковой панели
+        function updateCategoryList() {
+            elements.categoryList.innerHTML = '';
+
+            localizationData.categories.forEach(category => {
+                const item = document.createElement('li');
+                item.className = 'category-item';
+                if (category === currentSelectedCategory) {
+                    item.classList.add('active');
+                }
+
+                item.dataset.category = category;
+                item.innerHTML = `<span>${category}</span>`;
+
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.category-item').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    item.classList.add('active');
+                    currentSelectedCategory = category;
+
+                    // Прокручиваем к категории в основном содержимом
+                    const categoryElement = document.querySelector(`.category[data-category="${category}"]`);
+                    if (categoryElement) {
+                        categoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                        // Подсвечиваем категорию на короткое время
+                        categoryElement.classList.add('highlight');
+                        setTimeout(() => {
+                            categoryElement.classList.remove('highlight');
+                        }, 1500);
+                    }
+                });
+
+                elements.categoryList.appendChild(item);
+            });
+        }
+
+        // Рендеринг всех категорий
+        function renderCategories() {
+            elements.categoryContainer.innerHTML = '';
+
+            if (settings.view === 'dashboard') {
+                elements.dashboard.style.display = 'grid';
+                return;
+            } else {
+                elements.dashboard.style.display = 'none';
+            }
+
+            // Фильтрация категорий и ключей в соответствии с поисковым запросом
+            const filteredData = filterLocalizationData();
+
+            if (filteredData.categories.length === 0) {
+                // Показываем сообщение о результатах поиска
+                const noResults = document.createElement('div');
+                noResults.className = 'no-results';
+
+                if (settings.filters.searchQuery) {
+                    noResults.innerHTML = `
+                <h3>Нет результатов для "${settings.filters.searchQuery}"</h3>
+                <p>Попробуйте изменить параметры поиска или фильтры.</p>
+                <button id="clearSearchBtn" class="secondary">Очистить поиск</button>
+            `;
+                    noResults.querySelector('#clearSearchBtn').addEventListener('click', () => {
+                        elements.searchInput.value = '';
+                        settings.filters.searchQuery = '';
+                        renderCategories();
+                    });
+                } else {
+                    noResults.innerHTML = `
+                <h3>Нет категорий</h3>
+                <p>Нажмите "Добавить категорию", чтобы создать новую категорию.</p>
+                <button id="addCategoryNowBtn">Добавить категорию</button>
+            `;
+                    noResults.querySelector('#addCategoryNowBtn').addEventListener('click', () => {
+                        showModal(elements.addCategoryModal);
+                    });
+                }
+
+                elements.categoryContainer.appendChild(noResults);
+                return;
+            }
+
+            // Рендерим каждую отфильтрованную категорию
+            filteredData.categories.forEach(category => {
+                const categoryElement = document.createElement('div');
+                categoryElement.className = 'category';
+                categoryElement.dataset.category = category;
+
+                // Заголовок категории
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
+
+                const categoryName = document.createElement('div');
+                categoryName.className = 'category-name';
+                categoryName.innerHTML = `<i>▼</i> ${category}`;
+
+                if (!settings.allCategoriesExpanded &&
+                    category !== settings.currentEditingCategory &&
+                    category !== currentEditingCategory) {
+                    categoryName.classList.add('collapsed');
+                }
+
+                categoryName.addEventListener('click', () => {
+                    const content = categoryElement.querySelector('.category-content');
+                    content.classList.toggle('collapsed');
+                    categoryName.classList.toggle('collapsed');
+                });
+
+                const categoryActions = document.createElement('div');
+                categoryActions.className = 'category-actions';
+
+                // Кнопки управления категорией
+                const renameBtn = document.createElement('button');
+                renameBtn.innerHTML = 'Переименовать';
+                renameBtn.classList.add('secondary');
+                renameBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showRenameCategoryForm(category);
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = 'Удалить';
+                deleteBtn.classList.add('danger');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCategory(category);
+                });
+
+                const addEntryBtn = document.createElement('button');
+                addEntryBtn.innerHTML = 'Добавить элемент';
+                addEntryBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showAddEntryForm(category);
+                });
+
+                categoryActions.appendChild(addEntryBtn);
+                categoryActions.appendChild(renameBtn);
+                categoryActions.appendChild(deleteBtn);
+
+                categoryHeader.appendChild(categoryName);
+                categoryHeader.appendChild(categoryActions);
+
+                // Содержимое категории
+                const categoryContent = document.createElement('div');
+                categoryContent.className = 'category-content';
+
+                if (!settings.allCategoriesExpanded &&
+                    category !== settings.currentEditingCategory &&
+                    category !== currentEditingCategory) {
+                    categoryContent.classList.add('collapsed');
+                }
+
+                // Таблица с ключами и переводами
+                const table = document.createElement('table');
+                table.className = 'localization-table';
+
+                // Заголовок таблицы
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+
+                const keyHeader = document.createElement('th');
+                keyHeader.innerHTML = 'Ключ';
+                keyHeader.className = 'key-cell';
+                headerRow.appendChild(keyHeader);
+
+                // Заголовки для каждого языка
+                localizationData.languages.forEach(lang => {
+                    const langHeader = document.createElement('th');
+                    langHeader.className = 'language-cell';
+
+                    const langHeaderContent = document.createElement('div');
+                    langHeaderContent.className = 'language-header';
+
+                    const langCode = document.createElement('span');
+                    langCode.textContent = lang;
+                    langHeaderContent.appendChild(langCode);
+
+                    // Кнопка удаления языка
+                    if (localizationData.languages.length > 1) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.textContent = 'X';
+                        deleteBtn.className = 'danger';
+                        deleteBtn.title = `Удалить язык ${lang}`;
+                        deleteBtn.addEventListener('click', () => deleteLanguage(lang));
+                        langHeaderContent.appendChild(deleteBtn);
+                    }
+
+                    langHeader.appendChild(langHeaderContent);
+                    headerRow.appendChild(langHeader);
+                });
+
+                // Заголовок для действий
+                const actionsHeader = document.createElement('th');
+                actionsHeader.innerHTML = 'Действия';
+                actionsHeader.className = 'actions-cell';
+                headerRow.appendChild(actionsHeader);
+
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Тело таблицы
+                const tbody = document.createElement('tbody');
+
+                // Проверяем наличие элементов в категории
+                if (!filteredData.entries[category] || filteredData.entries[category].length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    const emptyCell = document.createElement('td');
+                    emptyCell.colSpan = 2 + localizationData.languages.length;
+                    emptyCell.textContent = 'Нет элементов в этой категории';
+                    emptyCell.style.textAlign = 'center';
+                    emptyCell.style.padding = '20px';
+                    emptyRow.appendChild(emptyCell);
+                    tbody.appendChild(emptyRow);
+                } else {
+                    // Добавляем строки для каждого элемента в категории
+                    filteredData.entries[category].forEach(entry => {
+                        const row = document.createElement('tr');
+                        row.dataset.key = entry.key;
+
+                        // Ячейка с ключом
+                        const keyCell = document.createElement('td');
+                        keyCell.className = 'key-cell';
+
+                        const keyText = document.createElement('div');
+                        keyText.textContent = entry.key;
+                        keyText.title = 'Нажмите для подробной информации';
+                        keyText.style.cursor = 'pointer';
+                        keyText.addEventListener('click', () => showKeyDetails(category, entry.key));
+
+                        keyCell.appendChild(keyText);
+                        row.appendChild(keyCell);
+
+                        // Ячейки для значений каждого языка
+                        localizationData.languages.forEach(lang => {
+                            const langCell = document.createElement('td');
+                            langCell.className = 'language-cell';
+
+                            const inputContainer = document.createElement('div');
+                            inputContainer.className = 'translation-input';
+
+                            // Определяем класс для ячейки в зависимости от наличия перевода
+                            if (!entry.values[lang] || entry.values[lang].trim() === '') {
+                                inputContainer.classList.add('missing');
+                            } else {
+                                inputContainer.classList.add('complete');
+                            }
+
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = entry.values[lang] || '';
+                            input.dataset.lang = lang;
+                            input.dataset.key = entry.key;
+
+                            // Обработчик изменения значения
+                            input.addEventListener('input', (e) => {
+                                // Обновляем стиль в зависимости от наличия текста
+                                if (e.target.value.trim() === '') {
+                                    inputContainer.classList.add('missing');
+                                    inputContainer.classList.remove('complete');
+                                } else {
+                                    inputContainer.classList.remove('missing');
+                                    inputContainer.classList.add('complete');
+                                }
+
+                                // Обновляем счетчик символов
+                                updateCharCounter(e.target);
+
+                                // Отмечаем, что есть несохраненные изменения
+                                hasUnsavedChanges = true;
+                            });
+
+                            // Обработчик сохранения значения
+                            input.addEventListener('change', (e) => {
+                                const newValue = e.target.value;
+                                const key = e.target.dataset.key;
+                                const lang = e.target.dataset.lang;
+
+                                // Находим запись и обновляем ее
+                                const entry = localizationData.entries[category].find(item => item.key === key);
+                                if (entry) {
+                                    // Создаем запись в истории перед изменением
+                                    addToHistory('update_translation', {
+                                        category: category,
+                                        key: key,
+                                        lang: lang,
+                                        oldValue: entry.values[lang] || '',
+                                        newValue: newValue
+                                    });
+
+                                    // Обновляем значение
+                                    entry.values[lang] = newValue;
+
+                                    // Сохраняем изменения
+                                    saveToLocalStorage();
+                                }
+                            });
+
+                            // Добавляем счетчик символов
+                            const charCounter = document.createElement('div');
+                            charCounter.className = 'char-counter';
+                            charCounter.textContent = input.value.length.toString();
+
+                            // Определяем класс для счетчика в зависимости от длины
+                            updateCharCounter(input, charCounter);
+
+                            inputContainer.appendChild(input);
+                            inputContainer.appendChild(charCounter);
+                            langCell.appendChild(inputContainer);
+                            row.appendChild(langCell);
+                        });
+
+                        // Ячейка с действиями
+                        const actionsCell = document.createElement('td');
+                        actionsCell.className = 'actions-cell';
+
+                        const actionButtons = document.createElement('div');
+                        actionButtons.className = 'action-buttons';
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.innerHTML = 'Удалить';
+                        deleteBtn.className = 'danger';
+                        deleteBtn.addEventListener('click', () => deleteEntry(category, entry.key));
+
+                        const detailsBtn = document.createElement('button');
+                        detailsBtn.innerHTML = 'Детали';
+                        detailsBtn.addEventListener('click', () => showKeyDetails(category, entry.key));
+
+                        actionButtons.appendChild(detailsBtn);
+                        actionButtons.appendChild(deleteBtn);
+                        actionsCell.appendChild(actionButtons);
+                        row.appendChild(actionsCell);
+
+                        tbody.appendChild(row);
+                    });
+                }
+
+                table.appendChild(tbody);
+                categoryContent.appendChild(table);
+
+                // Добавляем кнопку для добавления нового элемента в конце категории
+                const addEntryContainer = document.createElement('div');
+                addEntryContainer.className = 'add-entry-container';
+
+                const addEntryBottomBtn = document.createElement('button');
+                addEntryBottomBtn.innerHTML = 'Добавить элемент в категорию';
+                addEntryBottomBtn.addEventListener('click', () => showAddEntryForm(category));
+
+                addEntryContainer.appendChild(addEntryBottomBtn);
+                categoryContent.appendChild(addEntryContainer);
+
+                categoryElement.appendChild(categoryHeader);
+                categoryElement.appendChild(categoryContent);
+
+                elements.categoryContainer.appendChild(categoryElement);
+            });
+        }
+
+        // Фильтрация данных локализации
+        function filterLocalizationData() {
+            if (!settings.filters.searchQuery && !settings.filters.missingOnly) {
+                return localizationData; // Если нет фильтров, возвращаем все данные
+            }
+
+            const result = {
+                categories: [],
+                entries: {}
+            };
+
+            localizationData.categories.forEach(category => {
+                if (!localizationData.entries[category]) return;
+
+                const filteredEntries = localizationData.entries[category].filter(entry => {
+                    // Применяем фильтр поиска
+                    let matchesSearch = true;
+                    if (settings.filters.searchQuery) {
+                        const query = settings.filters.searchQuery.toLowerCase();
+                        matchesSearch = false;
+
+                        // Поиск в ключах
+                        if (settings.filters.inKeys && entry.key.toLowerCase().includes(query)) {
+                            matchesSearch = true;
+                        }
+
+                        // Поиск в значениях
+                        if (!matchesSearch && settings.filters.inValues) {
+                            for (const lang in entry.values) {
+                                // Если указаны языки для фильтрации, проверяем только их
+                                if (settings.filters.languages.length > 0 && !settings.filters.languages.includes(lang)) {
+                                    continue;
+                                }
+
+                                const value = entry.values[lang];
+                                if (value && value.toLowerCase().includes(query)) {
+                                    matchesSearch = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // Применяем фильтр отсутствующих переводов
+                    let matchesMissing = true;
+                    if (settings.filters.missingOnly) {
+                        matchesMissing = false;
+
+                        for (const lang of localizationData.languages) {
+                            // Если указаны языки для фильтрации, проверяем только их
+                            if (settings.filters.languages.length > 0 && !settings.filters.languages.includes(lang)) {
+                                continue;
+                            }
+
+                            if (!entry.values[lang] || entry.values[lang].trim() === '') {
+                                matchesMissing = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    return matchesSearch && matchesMissing;
+                });
+
+                if (filteredEntries.length > 0) {
+                    result.categories.push(category);
+                    result.entries[category] = filteredEntries;
+                }
+            });
+
+            return result;
+        }
+
+        // Обновление статистики на дашборде
+        function updateDashboard() {
+            if (!elements.dashboard) return;
+
+            // Общая статистика
+            elements.totalCategories.textContent = localizationData.categories.length;
+
+            let totalKeys = 0;
+            localizationData.categories.forEach(category => {
+                if (localizationData.entries[category]) {
+                    totalKeys += localizationData.entries[category].length;
+                }
+            });
+            elements.totalKeys.textContent = totalKeys;
+
+            elements.totalLanguages.textContent = localizationData.languages.length;
+
+            // Статистика переводов
+            let translatedCount = 0;
+            let totalRequired = totalKeys * localizationData.languages.length;
+
+            // Статистика по языкам
+            const languageStats = {};
+            localizationData.languages.forEach(lang => {
+                languageStats[lang] = { total: 0, translated: 0 };
+            });
+
+            // Собираем статистику
+            localizationData.categories.forEach(category => {
+                if (localizationData.entries[category]) {
+                    localizationData.entries[category].forEach(entry => {
+                        localizationData.languages.forEach(lang => {
+                            languageStats[lang].total++;
+
+                            if (entry.values[lang] && entry.values[lang].trim() !== '') {
+                                languageStats[lang].translated++;
+                                translatedCount++;
+                            }
+                        });
+                    });
+                }
+            });
+
+            // Обновляем счетчики
+            elements.totalTranslations.textContent = translatedCount;
+            elements.translatedCount.textContent = translatedCount;
+            elements.totalRequired.textContent = totalRequired;
+
+            // Вычисляем процент выполнения
+            const progressPercent = totalRequired > 0 ? Math.round((translatedCount / totalRequired) * 100) : 100;
+            elements.translationProgress.textContent = progressPercent + '%';
+            elements.progressBar.style.width = progressPercent + '%';
+
+            // Устанавливаем цвет прогресс-бара в зависимости от процента
+            elements.progressBar.className = 'progress-bar-fill';
+            if (progressPercent < 33) {
+                elements.progressBar.classList.add('danger');
+            } else if (progressPercent < 66) {
+                elements.progressBar.classList.add('warning');
+            }
+
+            // Обновляем прогресс по языкам
+            elements.languageProgress.innerHTML = '';
+            Object.keys(languageStats).forEach(lang => {
+                const stats = languageStats[lang];
+                const percent = stats.total > 0 ? Math.round((stats.translated / stats.total) * 100) : 100;
+
+                const progressContainer = document.createElement('div');
+                progressContainer.style.marginBottom = '10px';
+
+                const progressLabel = document.createElement('div');
+                progressLabel.className = 'progress-label';
+                progressLabel.innerHTML = `
+            <span>${lang}</span>
+            <span>${percent}% (${stats.translated}/${stats.total})</span>
+        `;
+
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+
+                const progressFill = document.createElement('div');
+                progressFill.className = 'progress-bar-fill';
+                progressFill.style.width = percent + '%';
+
+                // Устанавливаем цвет в зависимости от процента
+                if (percent < 33) {
+                    progressFill.classList.add('danger');
+                } else if (percent < 66) {
+                    progressFill.classList.add('warning');
+                }
+
+                progressBar.appendChild(progressFill);
+                progressContainer.appendChild(progressLabel);
+                progressContainer.appendChild(progressBar);
+
+                elements.languageProgress.appendChild(progressContainer);
+            });
+
+            // Топ категорий по количеству ключей
+            elements.topCategories.innerHTML = '';
+            const categoryCounts = [];
+            localizationData.categories.forEach(category => {
+                if (localizationData.entries[category]) {
+                    categoryCounts.push({
+                        name: category,
+                        count: localizationData.entries[category].length
+                    });
+                }
+            });
+
+            // Сортируем категории по убыванию количества ключей
+            categoryCounts.sort((a, b) => b.count - a.count);
+
+            // Показываем топ-5 категорий
+            const topCategories = categoryCounts.slice(0, 5);
+            const statList = document.createElement('div');
+            statList.className = 'stat-list';
+
+            topCategories.forEach(cat => {
+                const statItem = document.createElement('div');
+                statItem.className = 'stat-item';
+                statItem.innerHTML = `
+            <div class="stat-item-name">${cat.name}</div>
+            <div class="stat-item-value">${cat.count} ключей</div>
+        `;
+                statList.appendChild(statItem);
+            });
+
+            elements.topCategories.appendChild(statList);
+        }
+
+        // Обработка поиска
+        function handleSearch() {
+            const query = elements.searchInput.value.trim();
+            settings.filters.searchQuery = query;
+
+            // Обновляем интерфейс
+            renderCategories();
+        }
+
+        // Переключение боковой панели
+        function toggleSidebar() {
+            elements.sidebar.classList.toggle('expanded');
+        }
+
+        // Переключение меню фильтров
+        function toggleFilterMenu() {
+            elements.filterMenu.classList.toggle('active');
+        }
+
+        // Обновление списка языков в фильтрах
+        function updateFilterLanguages() {
+            elements.languageFilters.innerHTML = '';
+
+            localizationData.languages.forEach(lang => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+            <input type="checkbox" name="filterLang" value="${lang}" 
+                ${settings.filters.languages.includes(lang) ? 'checked' : ''}> ${lang}
+        `;
+                elements.languageFilters.appendChild(label);
+            });
+        }
+
+        // Сброс фильтров
+        function resetFilters() {
+            elements.searchInput.value = '';
+            document.getElementById('searchInKeys').checked = true;
+            document.getElementById('searchInValues').checked = true;
+            document.getElementById('showMissingOnly').checked = false;
+
+            // Сбрасываем все фильтры языков
+            document.querySelectorAll('input[name="filterLang"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // Обновляем настройки фильтров
+            settings.filters = {
+                searchQuery: '',
+                inKeys: true,
+                inValues: true,
+                missingOnly: false,
+                languages: []
+            };
+
+            // Закрываем меню фильтров
+            elements.filterMenu.classList.remove('active');
+
+            // Обновляем интерфейс
+            renderCategories();
+        }
+
+        // Применение фильтров
+        function applyFilters() {
+            // Получаем значения из формы
+            settings.filters.inKeys = document.getElementById('searchInKeys').checked;
+            settings.filters.inValues = document.getElementById('searchInValues').checked;
+            settings.filters.missingOnly = document.getElementById('showMissingOnly').checked;
+
+            // Получаем выбранные языки
+            settings.filters.languages = [];
+            document.querySelectorAll('input[name="filterLang"]:checked').forEach(checkbox => {
+                settings.filters.languages.push(checkbox.value);
+            });
+
+            // Закрываем меню фильтров
+            elements.filterMenu.classList.remove('active');
+
+            // Обновляем интерфейс
+            renderCategories();
+        }
+
+        // Показать уведомление
+        function showNotification(message, type = 'success') {
+            elements.notification.textContent = message;
+            elements.notification.className = 'notification';
+            elements.notification.classList.add(type);
+            elements.notification.classList.add('show');
+
+            // Скрываем уведомление через 3 секунды
+            setTimeout(() => {
+                elements.notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Переключение между видом категорий и дашбордом
+        function toggleDashboard() {
+            if (settings.view === 'categories') {
+                settings.view = 'dashboard';
+                elements.dashboard.style.display = 'grid';
+                elements.categoryContainer.style.display = 'none';
+                elements.statsBtn.textContent = 'Показать категории';
+                updateDashboard();
+            } else {
+                settings.view = 'categories';
+                elements.dashboard.style.display = 'none';
+                elements.categoryContainer.style.display = 'block';
+                elements.statsBtn.textContent = 'Статистика';
+            }
+        }
+
+        // Переключение всех категорий
+        function toggleAllCategories() {
+            settings.allCategoriesExpanded = !settings.allCategoriesExpanded;
+
+            // Обновляем интерфейс
+            renderCategories();
+
+            // Обновляем текст кнопки
+            updateToggleAllButtonText();
+        }
+
+        // Обновление текста кнопки свертывания/развертывания
+        function updateToggleAllButtonText() {
+            elements.toggleAllText.textContent = settings.allCategoriesExpanded ? 'Свернуть все' : 'Развернуть все';
+        }
+
+        // Показать модальное окно
+        function showModal(modal) {
+            // Закрываем все открытые модальные окна
+            closeAllModals();
+
+            // Показываем указанное модальное окно
+            modal.classList.add('active');
+
+            // Фокусируемся на первом поле ввода
+            setTimeout(() => {
+                const firstInput = modal.querySelector('input, select, textarea');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }, 100);
+        }
+
+        // Закрыть все модальные окна
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+
+        // Обработка клика по вкладке
+        function handleTabClick(e) {
+            const tabId = e.target.dataset.tab;
+
+            // Деактивируем все вкладки
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Деактивируем все панели
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+
+            // Активируем выбранную вкладку
+            e.target.classList.add('active');
+
+            // Активируем соответствующую панель
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // ===== ОПЕРАЦИИ С КАТЕГОРИЯМИ =====
+
+        // Показать форму добавления новой категории
+        function showAddCategoryForm() {
+            elements.newCategoryName.value = '';
+            showModal(elements.addCategoryModal);
+        }
+
+        // Сохранить новую категорию
+        function saveNewCategory() {
+            const name = elements.newCategoryName.value.trim();
+
+            if (!name) {
+                showNotification('Введите название категории', 'error');
+                return;
+            }
+
+            if (localizationData.categories.includes(name)) {
+                showNotification(`Категория "${name}" уже существует`, 'error');
+                return;
+            }
+
+            // Добавляем категорию
+            localizationData.categories.push(name);
+            localizationData.entries[name] = [];
+
+            // Добавляем запись в историю
+            addToHistory('add_category', { name });
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем интерфейс
+            updateCategoryList();
+            renderCategories();
+
+            // Закрываем модальное окно
+            closeAllModals();
+
+            // Показываем уведомление
+            showNotification(`Добавлена новая категория "${name}"`, 'success');
+
+            // Прокручиваем к новой категории
+            setTimeout(() => {
+                const categoryElement = document.querySelector(`.category[data-category="${name}"]`);
+                if (categoryElement) {
+                    categoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 200);
+        }
+
+        // Показать форму переименования категории
+        function showRenameCategoryForm(category) {
+            showModal(elements.addCategoryModal);
+            elements.addCategoryModal.querySelector('h3').textContent = 'Переименовать категорию';
+            elements.newCategoryName.value = category;
+
+            // Меняем обработчик кнопки сохранения
+            const saveBtn = elements.saveCategoryBtn;
+            const originalClickHandler = saveBtn.onclick;
+
+            saveBtn.onclick = () => {
+                const newName = elements.newCategoryName.value.trim();
+
+                if (!newName) {
+                    showNotification('Введите название категории', 'error');
+                    return;
+                }
+
+                if (newName !== category && localizationData.categories.includes(newName)) {
+                    showNotification(`Категория "${newName}" уже существует`, 'error');
+                    return;
+                }
+
+                // Переименовываем категорию
+                renameCategory(category, newName);
+
+                // Восстанавливаем оригинальный обработчик
+                saveBtn.onclick = originalClickHandler;
+
+                // Восстанавливаем заголовок модального окна
+                elements.addCategoryModal.querySelector('h3').textContent = 'Добавить новую категорию';
+
+                // Закрываем модальное окно
+                closeAllModals();
+            };
+        }
+
+        // Переименование категории
+        function renameCategory(oldName, newName) {
+            if (oldName === newName) return;
+
+            const index = localizationData.categories.indexOf(oldName);
+            if (index !== -1) {
+                // Обновляем имя в списке категорий
+                localizationData.categories[index] = newName;
+
+                // Обновляем записи
+                localizationData.entries[newName] = localizationData.entries[oldName];
+                delete localizationData.entries[oldName];
+
+                // Добавляем запись в историю
+                addToHistory('rename_category', { oldName, newName });
+
+                // Сохраняем данные
+                saveToLocalStorage();
+
+                // Обновляем интерфейс
+                updateCategoryList();
+                renderCategories();
+
+                // Показываем уведомление
+                showNotification(`Категория "${oldName}" переименована в "${newName}"`, 'success');
+            }
+        }
+
+        // Удаление категории
+        function deleteCategory(category) {
+            if (!confirm(`Вы уверены, что хотите удалить категорию "${category}" со всеми ее ключами?`)) {
+                return;
+            }
+
+            const index = localizationData.categories.indexOf(category);
+            if (index !== -1) {
+                // Сохраняем данные для истории
+                const entriesCount = localizationData.entries[category] ? localizationData.entries[category].length : 0;
+
+                // Удаляем категорию
+                localizationData.categories.splice(index, 1);
+                delete localizationData.entries[category];
+
+                // Добавляем запись в историю
+                addToHistory('delete_category', {
+                    name: category,
+                    entriesCount: entriesCount
+                });
+
+                // Обновляем текущую выбранную категорию
+                if (currentSelectedCategory === category) {
+                    currentSelectedCategory = null;
+                }
+
+                // Сохраняем данные
+                saveToLocalStorage();
+
+                // Обновляем интерфейс
+                updateCategoryList();
+                renderCategories();
+
+                // Показываем уведомление
+                showNotification(`Категория "${category}" удалена`, 'success');
+            }
+        }
+
+        // ===== ОПЕРАЦИИ С ЯЗЫКАМИ =====
+
+        // Сохранение нового языка
+        function saveNewLanguage() {
+            const code = elements.newLanguageCode.value.trim();
+            const name = elements.newLanguageName.value.trim();
+
+            if (!code) {
+                showNotification('Введите код языка', 'error');
+                return;
+            }
+
+            if (localizationData.languages.includes(code)) {
+                showNotification(`Язык "${code}" уже существует`, 'error');
+                return;
+            }
+
+            // Добавляем язык
+            localizationData.languages.push(code);
+
+            // Добавляем пустые значения для всех существующих ключей
+            Object.keys(localizationData.entries).forEach(category => {
+                if (localizationData.entries[category]) {
+                    localizationData.entries[category].forEach(entry => {
+                        entry.values[code] = '';
+                    });
+                }
+            });
+
+            // Добавляем запись в историю
+            addToHistory('add_language', { code, name });
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем интерфейс
+            renderCategories();
+            updateFilterLanguages();
+
+            // Закрываем модальное окно
+            closeAllModals();
+
+            // Показываем уведомление
+            showNotification(`Добавлен новый язык "${code}"`, 'success');
+        }
+
+        // Удаление языка
+        function deleteLanguage(lang) {
+            if (localizationData.languages.length <= 1) {
+                showNotification('Должен оставаться хотя бы один язык', 'error');
+                return;
+            }
+
+            if (!confirm(`Вы уверены, что хотите удалить язык "${lang}" и все его переводы?`)) {
+                return;
+            }
+
+            const index = localizationData.languages.indexOf(lang);
+            if (index !== -1) {
+                // Удаляем язык из списка
+                localizationData.languages.splice(index, 1);
+
+                // Удаляем все переводы для этого языка
+                Object.keys(localizationData.entries).forEach(category => {
+                    if (localizationData.entries[category]) {
+                        localizationData.entries[category].forEach(entry => {
+                            if (entry.values[lang]) {
+                                delete entry.values[lang];
+                            }
+                        });
+                    }
+                });
+
+                // Добавляем запись в историю
+                addToHistory('delete_language', { code: lang });
+
+                // Сохраняем данные
+                saveToLocalStorage();
+
+                // Обновляем интерфейс
+                renderCategories();
+                updateFilterLanguages();
+
+                // Показываем уведомление
+                showNotification(`Язык "${lang}" удален`, 'success');
+            }
+        }
+
+        // ===== ОПЕРАЦИИ С КЛЮЧАМИ =====
+
+        // Показать форму добавления нового элемента
+        function showAddEntryForm(category) {
+            elements.newEntryKey.value = '';
+
+            // Обновляем категорию редактирования
+            settings.currentEditingCategory = category;
+            currentEditingCategory = category;
+
+            // Создаем поля для всех языков
+            elements.newEntryLanguages.innerHTML = '';
+            localizationData.languages.forEach(lang => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.textContent = `${lang}:`;
+                label.htmlFor = `newEntry_${lang}`;
+
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'translation-input';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `newEntry_${lang}`;
+                input.placeholder = `Перевод для ${lang}`;
+                input.dataset.lang = lang;
+
+                // Добавляем счетчик символов
+                const charCounter = document.createElement('div');
+                charCounter.className = 'char-counter';
+                charCounter.textContent = '0';
+
+                // Обновляем счетчик при вводе
+                input.addEventListener('input', () => {
+                    updateCharCounter(input, charCounter);
+                });
+
+                inputContainer.appendChild(input);
+                inputContainer.appendChild(charCounter);
+
+                formGroup.appendChild(label);
+                formGroup.appendChild(inputContainer);
+
+                elements.newEntryLanguages.appendChild(formGroup);
+            });
+
+            // Добавляем кнопку для управления плейсхолдерами
+            const placeholdersGroup = document.createElement('div');
+            placeholdersGroup.className = 'form-group';
+            placeholdersGroup.innerHTML = `
+        <label>Плейсхолдеры:</label>
+        <button id="managePlaceholdersBtn" type="button" class="secondary">Управление плейсхолдерами</button>
+    `;
+            elements.newEntryLanguages.appendChild(placeholdersGroup);
+
+            // Добавляем обработчик для кнопки плейсхолдеров
+            placeholdersGroup.querySelector('#managePlaceholdersBtn').addEventListener('click', showPlaceholderManager);
+
+            // Показываем модальное окно
+            showModal(elements.addEntryModal);
+
+            // Устанавливаем фокус на поле ключа
+            setTimeout(() => {
+                elements.newEntryKey.focus();
+            }, 100);
+        }
+
+        // Сохранение нового элемента
+        function saveNewEntry() {
+            const key = elements.newEntryKey.value.trim();
+            const category = settings.currentEditingCategory;
+
+            if (!key) {
+                showNotification('Введите ключ элемента', 'error');
+                return;
+            }
+
+            if (!category) {
+                showNotification('Категория не выбрана', 'error');
+                return;
+            }
+
+            // Проверяем, существует ли такой ключ
+            const exists = localizationData.entries[category].some(entry => entry.key === key);
+            if (exists) {
+                showNotification(`Ключ "${key}" уже существует в категории "${category}"`, 'error');
+                return;
+            }
+
+            // Создаем новый элемент
+            const newEntry = {
+                key: key,
+                values: {}
+            };
+
+            // Собираем значения для всех языков
+            let hasValues = false;
+            localizationData.languages.forEach(lang => {
+                const input = document.getElementById(`newEntry_${lang}`);
+                if (input) {
+                    newEntry.values[lang] = input.value;
+                    if (input.value.trim() !== '') {
+                        hasValues = true;
+                    }
+                } else {
+                    newEntry.values[lang] = '';
+                }
+            });
+
+            // Предупреждаем, если нет ни одного перевода
+            if (!hasValues) {
+                if (!confirm('Вы не добавили ни одного перевода. Продолжить?')) {
+                    return;
+                }
+            }
+
+            // Добавляем элемент в категорию
+            localizationData.entries[category].push(newEntry);
+
+            // Добавляем запись в историю
+            addToHistory('add_entry', {
+                category,
+                key,
+                values: newEntry.values
+            });
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем интерфейс
+            renderCategories();
+
+            // Закрываем модальное окно
+            closeAllModals();
+
+            // Показываем уведомление
+            showNotification(`Добавлен новый элемент "${key}" в категорию "${category}"`, 'success');
+        }
+
+        // Показать детали ключа
+        function showKeyDetails(category, key) {
+            currentEditingCategory = category;
+            currentEditingKey = key;
+
+            // Находим запись
+            const entry = localizationData.entries[category].find(item => item.key === key);
+            if (!entry) return;
+
+            // Заполняем заголовок
+            elements.detailsKeyName.textContent = key;
+
+            // Заполняем форму редактирования
+            elements.editKeyName.value = key;
+
+            // Очищаем и создаем поля для всех языков
+            elements.editKeyLanguages.innerHTML = '';
+
+            localizationData.languages.forEach(lang => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.textContent = `${lang}:`;
+                label.htmlFor = `editKey_${lang}`;
+
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'translation-input';
+
+                // Определяем класс для ячейки в зависимости от наличия перевода
+                if (!entry.values[lang] || entry.values[lang].trim() === '') {
+                    inputContainer.classList.add('missing');
+                } else {
+                    inputContainer.classList.add('complete');
+                }
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `editKey_${lang}`;
+                input.value = entry.values[lang] || '';
+                input.dataset.lang = lang;
+
+                // Обновляем стиль при изменении
+                input.addEventListener('input', (e) => {
+                    // Обновляем стиль в зависимости от наличия текста
+                    if (e.target.value.trim() === '') {
+                        inputContainer.classList.add('missing');
+                        inputContainer.classList.remove('complete');
+                    } else {
+                        inputContainer.classList.remove('missing');
+                        inputContainer.classList.add('complete');
+                    }
+
+                    // Обновляем счетчик символов
+                    updateCharCounter(e.target);
+                });
+
+                // Добавляем счетчик символов
+                const charCounter = document.createElement('div');
+                charCounter.className = 'char-counter';
+                charCounter.textContent = input.value.length.toString();
+
+                // Определяем класс для счетчика в зависимости от длины
+                updateCharCounter(input, charCounter);
+
+                // Добавляем кнопку для вставки плейсхолдеров
+                const placeholderBtn = document.createElement('button');
+                placeholderBtn.type = 'button';
+                placeholderBtn.className = 'placeholder-btn';
+                placeholderBtn.textContent = '{}';
+                placeholderBtn.title = 'Вставить плейсхолдер';
+                placeholderBtn.style.position = 'absolute';
+                placeholderBtn.style.right = '30px';
+                placeholderBtn.style.top = '6px';
+                placeholderBtn.style.padding = '2px 5px';
+                placeholderBtn.style.minHeight = 'auto';
+                placeholderBtn.style.fontSize = '12px';
+                placeholderBtn.style.background = '#e1f5fe';
+                placeholderBtn.style.color = '#0288d1';
+
+                placeholderBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPlaceholderMenu(input);
+                });
+
+                inputContainer.appendChild(input);
+                inputContainer.appendChild(charCounter);
+                inputContainer.appendChild(placeholderBtn);
+
+                formGroup.appendChild(label);
+                formGroup.appendChild(inputContainer);
+
+                elements.editKeyLanguages.appendChild(formGroup);
+            });
+
+            // Создаем сравнение языков
+            createComparisonView(entry);
+
+            // Загружаем историю изменений
+            loadKeyHistory(category, key);
+
+            // Активируем первую вкладку
+            document.querySelector('.tab-item[data-tab="tab-edit"]').click();
+
+            // Показываем модальное окно
+            showModal(elements.keyDetailsModal);
+        }
+
+        // Создание сравнения переводов
+        function createComparisonView(entry) {
+            elements.comparisonContainer.innerHTML = '';
+
+            // Определяем основной язык (первый в списке)
+            const primaryLang = localizationData.languages[0];
+            const primaryValue = entry.values[primaryLang] || '';
+
+            // Создаем левую колонку с основным языком
+            const primaryColumn = document.createElement('div');
+            primaryColumn.className = 'comparison-column';
+
+            const primaryHeader = document.createElement('div');
+            primaryHeader.className = 'comparison-header';
+            primaryHeader.textContent = primaryLang;
+
+            const primaryContent = document.createElement('div');
+            primaryContent.className = 'comparison-item';
+            primaryContent.textContent = primaryValue || '(пусто)';
+
+            primaryColumn.appendChild(primaryHeader);
+            primaryColumn.appendChild(primaryContent);
+
+            elements.comparisonContainer.appendChild(primaryColumn);
+
+            // Создаем правую колонку для сравнения с другими языками
+            const rightColumn = document.createElement('div');
+            rightColumn.className = 'comparison-column';
+
+            // Добавляем селектор языков
+            const languageSelector = document.createElement('select');
+            languageSelector.id = 'comparisonLanguage';
+            languageSelector.className = 'comparison-header';
+
+            // Добавляем все языки, кроме основного
+            localizationData.languages.forEach(lang => {
+                if (lang !== primaryLang) {
+                    const option = document.createElement('option');
+                    option.value = lang;
+                    option.textContent = lang;
+                    languageSelector.appendChild(option);
+                }
+            });
+
+            // Показываем перевод выбранного языка
+            const comparisonContent = document.createElement('div');
+            comparisonContent.className = 'comparison-item';
+            comparisonContent.id = 'comparisonContent';
+
+            // Функция обновления содержимого сравнения
+            const updateComparison = () => {
+                const selectedLang = languageSelector.value;
+                const selectedValue = entry.values[selectedLang] || '';
+                comparisonContent.textContent = selectedValue || '(пусто)';
+
+                // Подсвечиваем различия, если есть и первичный и вторичный переводы
+                if (primaryValue && selectedValue) {
+                    // Здесь можно реализовать алгоритм подсветки различий
+                    // Но для простоты просто сравниваем длину
+                    if (primaryValue.length !== selectedValue.length) {
+                        comparisonContent.style.color = '#e74c3c';
+                    } else {
+                        comparisonContent.style.color = '';
+                    }
+                } else {
+                    comparisonContent.style.color = '';
+                }
+            };
+
+            // Обновляем при изменении выбранного языка
+            languageSelector.addEventListener('change', updateComparison);
+
+            rightColumn.appendChild(languageSelector);
+            rightColumn.appendChild(comparisonContent);
+
+            elements.comparisonContainer.appendChild(rightColumn);
+
+            // Инициализируем сравнение
+            updateComparison();
+        }
+
+        // Загрузка истории изменений ключа
+        function loadKeyHistory(category, key) {
+            elements.historyContainer.innerHTML = '';
+
+            // Фильтруем историю по категории и ключу
+            const keyHistory = localizationData.history.filter(item => {
+                return (item.action === 'update_translation' &&
+                    item.data.category === category &&
+                    item.data.key === key) ||
+                    (item.action === 'add_entry' &&
+                        item.data.category === category &&
+                        item.data.key === key);
+            });
+
+            if (keyHistory.length === 0) {
+                elements.historyContainer.innerHTML = '<p>История изменений отсутствует</p>';
+                return;
+            }
+
+            // Создаем элементы истории
+            keyHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+
+                const date = new Date(item.timestamp);
+                const formattedDate = date.toLocaleString();
+
+                const historyMeta = document.createElement('div');
+                historyMeta.className = 'history-meta';
+
+                if (item.action === 'add_entry') {
+                    historyMeta.innerHTML = `
+                <span>Создание ключа</span>
+                <span>${formattedDate}</span>
+            `;
+
+                    // Для создания ключа показываем начальные значения
+                    const values = item.data.values;
+                    const valuesList = document.createElement('div');
+
+                    Object.keys(values).forEach(lang => {
+                        if (values[lang]) {
+                            const langValue = document.createElement('div');
+                            langValue.innerHTML = `<strong>${lang}:</strong> ${values[lang]}`;
+                            valuesList.appendChild(langValue);
+                        }
+                    });
+
+                    historyItem.appendChild(historyMeta);
+                    historyItem.appendChild(valuesList);
+                } else if (item.action === 'update_translation') {
+                    const lang = item.data.lang;
+
+                    historyMeta.innerHTML = `
+                <span>Изменение перевода (${lang})</span>
+                <span>${formattedDate}</span>
+            `;
+
+                    const changes = document.createElement('div');
+                    changes.innerHTML = `
+                <div>Старое значение: ${item.data.oldValue || '(пусто)'}</div>
+                <div>Новое значение: ${item.data.newValue || '(пусто)'}</div>
+            `;
+
+                    // Добавляем кнопку для восстановления значения
+                    const historyActions = document.createElement('div');
+                    historyActions.className = 'history-actions';
+
+                    const restoreBtn = document.createElement('button');
+                    restoreBtn.className = 'secondary';
+                    restoreBtn.textContent = 'Восстановить это значение';
+                    restoreBtn.addEventListener('click', () => {
+                        // Находим поле ввода для этого языка
+                        const input = document.getElementById(`editKey_${lang}`);
+                        if (input) {
+                            input.value = item.data.oldValue || '';
+                            input.dispatchEvent(new Event('input'));
+                        }
+                    });
+
+                    historyActions.appendChild(restoreBtn);
+
+                    historyItem.appendChild(historyMeta);
+                    historyItem.appendChild(changes);
+                    historyItem.appendChild(historyActions);
+                }
+
+                elements.historyContainer.appendChild(historyItem);
+            });
+        }
+
+        // Сохранение изменений ключа
+        function saveKeyDetails() {
+            const newKey = elements.editKeyName.value.trim();
+            const category = currentEditingCategory;
+            const oldKey = currentEditingKey;
+
+            if (!newKey) {
+                showNotification('Ключ не может быть пустым', 'error');
+                return;
+            }
+
+            // Находим запись
+            const entryIndex = localizationData.entries[category].findIndex(item => item.key === oldKey);
+            if (entryIndex === -1) return;
+
+            const entry = localizationData.entries[category][entryIndex];
+
+            // Проверяем, нужно ли изменять ключ
+            if (newKey !== oldKey) {
+                // Проверяем, существует ли уже такой ключ
+                const exists = localizationData.entries[category].some(item => item.key === newKey && item !== entry);
+                if (exists) {
+                    showNotification(`Ключ "${newKey}" уже существует в категории "${category}"`, 'error');
+                    return;
+                }
+
+                // Изменяем ключ
+                entry.key = newKey;
+
+                // Добавляем запись в историю
+                addToHistory('rename_key', {
+                    category,
+                    oldKey,
+                    newKey
+                });
+
+                // Обновляем текущий редактируемый ключ
+                currentEditingKey = newKey;
+            }
+
+            // Обновляем переводы
+            localizationData.languages.forEach(lang => {
+                const input = document.getElementById(`editKey_${lang}`);
+                if (input) {
+                    const newValue = input.value;
+                    const oldValue = entry.values[lang] || '';
+
+                    if (newValue !== oldValue) {
+                        // Добавляем запись в историю перед изменением
+                        addToHistory('update_translation', {
+                            category,
+                            key: newKey,
+                            lang,
+                            oldValue,
+                            newValue
+                        });
+
+                        // Обновляем значение
+                        entry.values[lang] = newValue;
+                    }
+                }
+            });
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем интерфейс
+            renderCategories();
+
+            // Закрываем модальное окно
+            closeAllModals();
+
+            // Показываем уведомление
+            showNotification(`Ключ "${newKey}" обновлен`, 'success');
+        }
+
+        // Удаление ключа
+        function deleteEntry(category, key) {
+            if (!confirm(`Вы уверены, что хотите удалить ключ "${key}"?`)) {
+                return;
+            }
+
+            // Находим индекс записи
+            const entryIndex = localizationData.entries[category].findIndex(item => item.key === key);
+            if (entryIndex === -1) return;
+
+            // Сохраняем запись для истории
+            const entry = localizationData.entries[category][entryIndex];
+
+            // Удаляем запись
+            localizationData.entries[category].splice(entryIndex, 1);
+
+            // Добавляем запись в историю
+            addToHistory('delete_entry', {
+                category,
+                key,
+                values: entry.values
+            });
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем интерфейс
+            renderCategories();
+
+            // Показываем уведомление
+            showNotification(`Ключ "${key}" удален из категории "${category}"`, 'success');
+        }
+
+        // ===== УПРАВЛЕНИЕ ПЛЕЙСХОЛДЕРАМИ =====
+
+        // Показать менеджер плейсхолдеров
+        function showPlaceholderManager() {
+            // Заполняем список существующих плейсхолдеров
+            updatePlaceholderList();
+
+            // Очищаем форму
+            elements.newPlaceholderName.value = '';
+            elements.newPlaceholderDesc.value = '';
+
+            // Показываем модальное окно
+            showModal(elements.placeholderModal);
+        }
+
+        // Обновление списка плейсхолдеров
+        function updatePlaceholderList() {
+            elements.placeholderList.innerHTML = '';
+
+            if (localizationData.placeholders.length === 0) {
+                elements.placeholderList.innerHTML = '<p>Нет добавленных плейсхолдеров</p>';
+                return;
+            }
+
+            const list = document.createElement('div');
+            list.className = 'stat-list';
+
+            localizationData.placeholders.forEach((placeholder, index) => {
+                const item = document.createElement('div');
+                item.className = 'stat-item';
+
+                const placeholderName = document.createElement('div');
+                placeholderName.className = 'stat-item-name';
+                placeholderName.innerHTML = `
+            <span class="placeholder-tag">{${placeholder.name}}</span>
+            ${placeholder.description ? ` - ${placeholder.description}` : ''}
+        `;
+
+                const actions = document.createElement('div');
+                actions.className = 'action-buttons';
+
+                const insertBtn = document.createElement('button');
+                insertBtn.textContent = 'Вставить';
+                insertBtn.addEventListener('click', () => {
+                    // Вставляем в активное поле ввода
+                    const activeElement = document.activeElement;
+                    if (activeElement && activeElement.tagName === 'INPUT') {
+                        const cursorPos = activeElement.selectionStart;
+                        const textBefore = activeElement.value.substring(0, cursorPos);
+                        const textAfter = activeElement.value.substring(cursorPos);
+
+                        activeElement.value = textBefore + `{${placeholder.name}}` + textAfter;
+
+                        // Устанавливаем курсор после вставленного плейсхолдера
+                        const newPos = cursorPos + placeholder.name.length + 2;
+                        activeElement.setSelectionRange(newPos, newPos);
+
+                        // Генерируем событие изменения
+                        activeElement.dispatchEvent(new Event('input'));
+
+                        // Фокусируемся обратно на поле
+                        activeElement.focus();
+
+                        // Закрываем модальное окно
+                        closeAllModals();
+                    }
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Удалить';
+                deleteBtn.className = 'danger';
+                deleteBtn.addEventListener('click', () => deletePlaceholder(index));
+
+                actions.appendChild(insertBtn);
+                actions.appendChild(deleteBtn);
+
+                item.appendChild(placeholderName);
+                item.appendChild(actions);
+
+                list.appendChild(item);
+            });
+
+            elements.placeholderList.appendChild(list);
+        }
+
+        // Добавление нового плейсхолдера
+        function addPlaceholder() {
+            const name = elements.newPlaceholderName.value.trim();
+            const description = elements.newPlaceholderDesc.value.trim();
+
+            if (!name) {
+                showNotification('Введите имя плейсхолдера', 'error');
+                return;
+            }
+
+            // Проверяем, существует ли уже такой плейсхолдер
+            const exists = localizationData.placeholders.some(p => p.name === name);
+            if (exists) {
+                showNotification(`Плейсхолдер "${name}" уже существует`, 'error');
+                return;
+            }
+
+            // Добавляем плейсхолдер
+            localizationData.placeholders.push({
+                name: name,
+                description: description
+            });
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем список
+            updatePlaceholderList();
+
+            // Очищаем форму
+            elements.newPlaceholderName.value = '';
+            elements.newPlaceholderDesc.value = '';
+
+            // Показываем уведомление
+            showNotification(`Плейсхолдер "${name}" добавлен`, 'success');
+        }
+
+        // Удаление плейсхолдера
+        function deletePlaceholder(index) {
+            const placeholder = localizationData.placeholders[index];
+            if (!placeholder) return;
+
+            if (!confirm(`Вы уверены, что хотите удалить плейсхолдер "${placeholder.name}"?`)) {
+                return;
+            }
+
+            // Удаляем плейсхолдер
+            localizationData.placeholders.splice(index, 1);
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем список
+            updatePlaceholderList();
+
+            // Показываем уведомление
+            showNotification(`Плейсхолдер "${placeholder.name}" удален`, 'success');
+        }
+
+        // Показать меню плейсхолдеров рядом с полем ввода
+        function showPlaceholderMenu(inputElement) {
+            // Проверяем, есть ли уже меню
+            let menu = document.querySelector('.placeholder-menu');
+            if (!menu) {
+                menu = document.createElement('div');
+                menu.className = 'placeholder-menu';
+                document.body.appendChild(menu);
+            } else {
+                menu.innerHTML = '';
+            }
+
+            // Позиционируем меню рядом с полем ввода
+            const rect = inputElement.getBoundingClientRect();
+            menu.style.left = rect.left + 'px';
+            menu.style.top = (rect.bottom + 5) + 'px';
+            menu.style.width = rect.width + 'px';
+
+            // Заполняем меню плейсхолдерами
+            if (localizationData.placeholders.length === 0) {
+                const item = document.createElement('div');
+                item.className = 'placeholder-menu-item';
+                item.textContent = 'Нет доступных плейсхолдеров';
+                menu.appendChild(item);
+            } else {
+                localizationData.placeholders.forEach(placeholder => {
+                    const item = document.createElement('div');
+                    item.className = 'placeholder-menu-item';
+                    item.innerHTML = `
+                <span class="placeholder-tag">{${placeholder.name}}</span>
+                ${placeholder.description ? ` - ${placeholder.description}` : ''}
+            `;
+
+                    item.addEventListener('click', () => {
+                        const cursorPos = inputElement.selectionStart;
+                        const textBefore = inputElement.value.substring(0, cursorPos);
+                        const textAfter = inputElement.value.substring(cursorPos);
+
+                        inputElement.value = textBefore + `{${placeholder.name}}` + textAfter;
+
+                        // Устанавливаем курсор после вставленного плейсхолдера
+                        const newPos = cursorPos + placeholder.name.length + 2;
+                        inputElement.setSelectionRange(newPos, newPos);
+
+                        // Генерируем событие изменения
+                        inputElement.dispatchEvent(new Event('input'));
+
+                        // Скрываем меню
+                        menu.classList.remove('active');
+
+                        // Фокусируемся обратно на поле
+                        inputElement.focus();
+                    });
+
+                    menu.appendChild(item);
+                });
+            }
+
+            // Показываем меню
+            menu.classList.add('active');
+
+            // Добавляем обработчик для закрытия меню при клике вне него
+            const closeMenu = (e) => {
+                if (!menu.contains(e.target) && e.target !== inputElement) {
+                    menu.classList.remove('active');
+                    document.removeEventListener('click', closeMenu);
+                }
+            };
+
+            // Добавляем обработчик с задержкой, чтобы не сработал текущий клик
+            setTimeout(() => {
+                document.addEventListener('click', closeMenu);
+            }, 0);
+        }
+
+        // ===== МАССОВОЕ РЕДАКТИРОВАНИЕ =====
+
+        // Обновление формы массового редактирования
+        function updateBulkEditForm() {
+            const operation = elements.bulkEditOperation.value;
+
+            // Показываем соответствующие поля в зависимости от операции
+            if (operation === 'find-replace') {
+                elements.findReplaceOptions.style.display = 'block';
+                elements.prefixSuffixOptions.style.display = 'none';
+            } else if (operation === 'prefix' || operation === 'suffix') {
+                elements.findReplaceOptions.style.display = 'none';
+                elements.prefixSuffixOptions.style.display = 'block';
+            } else {
+                elements.findReplaceOptions.style.display = 'none';
+                elements.prefixSuffixOptions.style.display = 'none';
+            }
+
+            // Обновляем предпросмотр
+            updateBulkEditPreview();
+        }
+
+        // Обновление выбора категории для массового редактирования
+        function updateBulkEditCategorySelect() {
+            const scope = document.querySelector('input[name="bulkEditScope"]:checked').value;
+
+            // Показываем селектор категории только если выбрана опция "категория"
+            elements.bulkEditCategorySelect.style.display = scope === 'category' ? 'block' : 'none';
+
+            // Обновляем предпросмотр
+            updateBulkEditPreview();
+        }
+
+        // Обновление предпросмотра массового редактирования
+        function updateBulkEditPreview() {
+            const operation = elements.bulkEditOperation.value;
+            const lang = elements.bulkEditLanguage.value;
+            const scope = document.querySelector('input[name="bulkEditScope"]:checked').value;
+            let category = null;
+
+            if (scope === 'category') {
+                category = elements.bulkEditCategory.value;
+            } else if (scope === 'selected') {
+                category = currentEditingCategory;
+            }
+
+            // Очищаем предпросмотр
+            elements.bulkEditPreview.innerHTML = '';
+
+            // Получаем ключи, к которым будет применено редактирование
+            let entries = [];
+
+            if (scope === 'all') {
+                // Все ключи во всех категориях
+                localizationData.categories.forEach(cat => {
+                    if (localizationData.entries[cat]) {
+                        localizationData.entries[cat].forEach(entry => {
+                            entries.push({ category: cat, entry });
+                        });
+                    }
+                });
+            } else if (scope === 'category' && category) {
+                // Все ключи в выбранной категории
+                if (localizationData.entries[category]) {
+                    localizationData.entries[category].forEach(entry => {
+                        entries.push({ category, entry });
+                    });
+                }
+            } else if (scope === 'selected' && settings.selectedKeys.length > 0) {
+                // Только выбранные ключи
+                settings.selectedKeys.forEach(keyInfo => {
+                    const cat = keyInfo.category;
+                    const key = keyInfo.key;
+
+                    const entry = localizationData.entries[cat].find(e => e.key === key);
+                    if (entry) {
+                        entries.push({ category: cat, entry });
+                    }
+                });
+            } else {
+                elements.bulkEditPreview.innerHTML = '<p>Нет ключей для предпросмотра</p>';
+                return;
+            }
+
+            // Ограничиваем количество ключей в предпросмотре
+            if (entries.length > 10) {
+                entries = entries.slice(0, 10);
+            }
+
+            if (entries.length === 0) {
+                elements.bulkEditPreview.innerHTML = '<p>Нет ключей для предпросмотра</p>';
+                return;
+            }
+
+            // Применяем операцию к каждому ключу для предпросмотра
+            const previewList = document.createElement('div');
+            previewList.className = 'preview-list';
+
+            entries.forEach(({ category, entry }) => {
+                const originalValue = entry.values[lang] || '';
+                let newValue = originalValue;
+
+                // Применяем операцию
+                if (operation === 'find-replace') {
+                    const findText = elements.bulkEditFind.value;
+                    const replaceText = elements.bulkEditReplace.value;
+
+                    if (findText) {
+                        newValue = originalValue.replace(new RegExp(escapeRegExp(findText), 'g'), replaceText);
+                    }
+                } else if (operation === 'prefix') {
+                    const prefixText = elements.bulkEditText.value;
+                    newValue = prefixText + originalValue;
+                } else if (operation === 'suffix') {
+                    const suffixText = elements.bulkEditText.value;
+                    newValue = originalValue + suffixText;
+                } else if (operation === 'uppercase') {
+                    newValue = originalValue.toUpperCase();
+                } else if (operation === 'lowercase') {
+                    newValue = originalValue.toLowerCase();
+                } else if (operation === 'capitalize') {
+                    newValue = capitalizeWords(originalValue);
+                }
+
+                // Создаем элемент предпросмотра
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.style.marginBottom = '10px';
+                previewItem.style.padding = '5px';
+                previewItem.style.borderBottom = '1px solid #ddd';
+
+                previewItem.innerHTML = `
+                    <div><strong>${category} / ${entry.key}</strong></div>
+                    <div>Было: ${originalValue || '(пусто)'}</div>
+                    <div>Будет: ${newValue || '(пусто)'}</div>
+                `;
+
+                // Подсвечиваем изменения, если они есть
+                if (originalValue !== newValue) {
+                    previewItem.style.backgroundColor = '#e8f5e9';
+                }
+
+                previewList.appendChild(previewItem);
+            });
+
+            elements.bulkEditPreview.appendChild(previewList);
+
+            if (entries.length >= 10) {
+                const moreText = document.createElement('p');
+                moreText.textContent = 'И еще другие ключи...';
+                moreText.style.fontStyle = 'italic';
+                moreText.style.marginTop = '10px';
+                elements.bulkEditPreview.appendChild(moreText);
+            }
+        }
+
+        // Экранирование специальных символов в регулярных выражениях
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Капитализация слов в строке
+        function capitalizeWords(string) {
+            return string.replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        // Применение массового редактирования
+        function applyBulkEdit() {
+            const operation = elements.bulkEditOperation.value;
+            const lang = elements.bulkEditLanguage.value;
+            const scope = document.querySelector('input[name="bulkEditScope"]:checked').value;
+            let category = null;
+
+            if (scope === 'category') {
+                category = elements.bulkEditCategory.value;
+            } else if (scope === 'selected') {
+                category = currentEditingCategory;
+            }
+
+            // Получаем ключи, к которым будет применено редактирование
+            let entries = [];
+
+            if (scope === 'all') {
+                // Все ключи во всех категориях
+                localizationData.categories.forEach(cat => {
+                    if (localizationData.entries[cat]) {
+                        localizationData.entries[cat].forEach(entry => {
+                            entries.push({ category: cat, entry });
+                        });
+                    }
+                });
+            } else if (scope === 'category' && category) {
+                // Все ключи в выбранной категории
+                if (localizationData.entries[category]) {
+                    localizationData.entries[category].forEach(entry => {
+                        entries.push({ category, entry });
+                    });
+                }
+            } else if (scope === 'selected' && settings.selectedKeys.length > 0) {
+                // Только выбранные ключи
+                settings.selectedKeys.forEach(keyInfo => {
+                    const cat = keyInfo.category;
+                    const key = keyInfo.key;
+
+                    const entry = localizationData.entries[cat].find(e => e.key === key);
+                    if (entry) {
+                        entries.push({ category: cat, entry });
+                    }
+                });
+            }
+
+            if (entries.length === 0) {
+                showNotification('Нет ключей для редактирования', 'error');
+                return;
+            }
+
+            // Подтверждение операции
+            if (!confirm(`Вы собираетесь изменить ${entries.length} ключей. Продолжить?`)) {
+                return;
+            }
+
+            // Применяем операцию к каждому ключу
+            let changedCount = 0;
+
+            entries.forEach(({ category, entry }) => {
+                const originalValue = entry.values[lang] || '';
+                let newValue = originalValue;
+
+                // Применяем операцию
+                if (operation === 'find-replace') {
+                    const findText = elements.bulkEditFind.value;
+                    const replaceText = elements.bulkEditReplace.value;
+
+                    if (findText) {
+                        newValue = originalValue.replace(new RegExp(escapeRegExp(findText), 'g'), replaceText);
+                    }
+                } else if (operation === 'prefix') {
+                    const prefixText = elements.bulkEditText.value;
+                    newValue = prefixText + originalValue;
+                } else if (operation === 'suffix') {
+                    const suffixText = elements.bulkEditText.value;
+                    newValue = originalValue + suffixText;
+                } else if (operation === 'uppercase') {
+                    newValue = originalValue.toUpperCase();
+                } else if (operation === 'lowercase') {
+                    newValue = originalValue.toLowerCase();
+                } else if (operation === 'capitalize') {
+                    newValue = capitalizeWords(originalValue);
+                }
+
+                // Если значение изменилось, применяем изменения
+                if (originalValue !== newValue) {
+                    // Добавляем запись в историю
+                    addToHistory('update_translation', {
+                        category,
+                        key: entry.key,
+                        lang,
+                        oldValue: originalValue,
+                        newValue
+                    });
+
+                    // Обновляем значение
+                    entry.values[lang] = newValue;
+                    changedCount++;
+                }
+            });
+
+            // Сохраняем данные
+            saveToLocalStorage();
+
+            // Обновляем интерфейс
+            renderCategories();
+
+            // Закрываем модальное окно
+            closeAllModals();
+
+            // Показываем уведомление
+            showNotification(`Изменено ${changedCount} ключей`, 'success');
+        }
+
+        // Обработка импорта файла
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const content = e.target.result;
+                const extension = file.name.split('.').pop().toLowerCase();
+
+                try {
+                    let importedData;
+
+                    // Парсим файл в зависимости от формата
+                    if (extension === 'csv') {
+                        importedData = parseCSV(content);
+                    } else if (extension === 'json') {
+                        importedData = parseJSON(content);
+                    } else if (extension === 'yaml' || extension === 'yml') {
+                        importedData = parseYAML(content);
+                    } else {
+                        showNotification('Неподдерживаемый формат файла', 'error');
+                        return;
+                    }
+
+                    // Проверяем результат импорта
+                    if (!importedData || !importedData.categories || !importedData.languages || !importedData.entries) {
+                        showNotification('Некорректный формат файла локализации', 'error');
+                        return;
+                    }
+
+                    // Опционально: показываем диалог подтверждения с информацией о данных
+                    const confirmMessage = `
+                Импортировано:
+                - ${importedData.categories.length} категорий
+                - ${importedData.languages.length} языков
+                - ${countEntries(importedData.entries)} ключей
+                
+                Заменить текущие данные?
+            `;
+
+                    if (confirm(confirmMessage)) {
+                        // Обновляем данные
+                        localizationData.categories = importedData.categories;
+                        localizationData.languages = importedData.languages;
+                        localizationData.entries = importedData.entries;
+
+                        // Обновляем плейсхолдеры, если они есть
+                        if (importedData.placeholders) {
+                            localizationData.placeholders = importedData.placeholders;
+                        }
+
+                        // Сохраняем историю, если она есть
+                        if (importedData.history) {
+                            localizationData.history = importedData.history;
+                        }
+
+                        // Обновляем метаданные
+                        localizationData.metadata = {
+                            lastUpdate: new Date().toISOString(),
+                            version: '2.0',
+                            importedFrom: file.name
+                        };
+
+                        // Сохраняем данные
+                        saveToLocalStorage();
+
+                        // Обновляем интерфейс
+                        updateCategoryList();
+                        renderCategories();
+                        updateFilterLanguages();
+
+                        // После загрузки файла устанавливаем все категории как свернутые
+                        settings.allCategoriesExpanded = false;
+                        updateToggleAllButtonText();
+
+                        // Показываем уведомление
+                        showNotification('Данные успешно импортированы', 'success');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при импорте файла:', error);
+                    showNotification('Ошибка при импорте файла: ' + error.message, 'error');
+                }
+
+                // Сбрасываем значение input, чтобы можно было загрузить тот же файл снова
+                event.target.value = '';
+            };
+
+            reader.onerror = function () {
+                showNotification('Ошибка чтения файла', 'error');
+                event.target.value = '';
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Парсинг CSV
+        function parseCSV(csvContent) {
+            // Разбиваем CSV на строки
+            const lines = csvContent.split(/\r?\n/);
+            if (lines.length < 2) {
+                throw new Error('CSV файл должен содержать как минимум заголовок и одну строку');
+            }
+
+            // Извлекаем коды языков из первой строки
+            const headers = lines[0].split(';');
+            if (headers.length < 2) {
+                throw new Error('CSV файл должен содержать как минимум столбец ключей и один язык');
+            }
+
+            // Первый столбец - ключи, остальные - языки
+            const languages = headers.slice(1);
+
+            // Инициализируем структуру данных
+            const data = {
+                categories: [],
+                languages: languages,
+                entries: {}
+            };
+
+            let currentCategory = null;
+
+            // Начинаем со второй строки (пропускаем заголовок)
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Пропускаем пустые строки
+
+                // Парсим строку с учетом возможных кавычек
+                let values;
+                if (line.includes('"')) {
+                    values = parseCSVLine(line);
+                } else {
+                    values = line.split(';');
+                }
+
+                const key = values[0];
+
+                // Проверяем, является ли строка категорией
+                if (key.startsWith('#')) {
+                    currentCategory = key.substring(1).trim();
+                    if (!data.categories.includes(currentCategory)) {
+                        data.categories.push(currentCategory);
+                        data.entries[currentCategory] = [];
+                    }
+                } else if (currentCategory && key) {
+                    // Это обычная запись локализации
+                    const entry = {
+                        key: key,
+                        values: {}
+                    };
+
+                    // Заполняем значения для каждого языка
+                    for (let j = 0; j < languages.length; j++) {
+                        const lang = languages[j];
+                        entry.values[lang] = values[j + 1] || '';
+                    }
+
+                    data.entries[currentCategory].push(entry);
+                }
+            }
+
+            return data;
+        }
+
+        // Парсинг строки CSV с учетом кавычек
+        function parseCSVLine(line) {
+            const result = [];
+            let inQuotes = false;
+            let current = '';
+            let i = 0;
+
+            while (i < line.length) {
+                const char = line[i];
+
+                if (char === '"') {
+                    // Если следующий символ также кавычка, это экранированная кавычка
+                    if (i + 1 < line.length && line[i + 1] === '"') {
+                        current += '"';
+                        i += 2;
+                    } else {
+                        // Иначе это начало или конец цитирования
+                        inQuotes = !inQuotes;
+                        i++;
+                    }
+                } else if (char === ';' && !inQuotes) {
+                    // Разделитель вне кавычек
+                    result.push(current);
+                    current = '';
+                    i++;
+                } else {
+                    // Обычный символ
+                    current += char;
+                    i++;
+                }
+            }
+
+            // Добавляем последнее значение
+            result.push(current);
+
+            return result;
+        }
+
+        // Парсинг JSON
+        function parseJSON(jsonContent) {
+            try {
+                const data = JSON.parse(jsonContent);
+
+                // Минимальная проверка структуры
+                if (!data.categories || !data.languages || !data.entries) {
+                    throw new Error('Некорректная структура JSON');
+                }
+
+                return data;
+            } catch (error) {
+                console.error('Ошибка при парсинге JSON:', error);
+                throw new Error('Ошибка при парсинге JSON: ' + error.message);
+            }
+        }
+
+        // Парсинг YAML
+        function parseYAML(yamlContent) {
+            try {
+                // Простая реализация парсера YAML
+                // Для полноценного парсинга YAML желательно использовать специализированную библиотеку
+
+                // Разбиваем YAML на строки
+                const lines = yamlContent.split(/\r?\n/);
+
+                // Инициализируем структуру данных
+                const data = {
+                    categories: [],
+                    languages: [],
+                    entries: {}
+                };
+
+                let currentCategory = null;
+                let currentEntry = null;
+                let currentIndentation = 0;
+
+                // Проходим по строкам YAML
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line || line.startsWith('#')) continue; // Пропускаем пустые строки и комментарии
+
+                    // Получаем ключ и значение
+                    const match = line.match(/^(.+?):\s*(.*)$/);
+                    if (!match) continue;
+
+                    const key = match[1].trim();
+                    const value = match[2].trim();
+
+                    // Определяем уровень вложенности
+                    const indentation = lines[i].search(/\S/);
+
+                    if (key === 'categories') {
+                        // Парсим список категорий
+                        if (value.startsWith('[') && value.endsWith(']')) {
+                            data.categories = value.slice(1, -1).split(',').map(s => s.trim().replace(/"/g, ''));
+                        }
+                    } else if (key === 'languages') {
+                        // Парсим список языков
+                        if (value.startsWith('[') && value.endsWith(']')) {
+                            data.languages = value.slice(1, -1).split(',').map(s => s.trim().replace(/"/g, ''));
+                        }
+                    } else if (key === 'entries') {
+                        // Entries section starts
+                        currentIndentation = indentation;
+                    } else if (indentation > currentIndentation && data.categories.includes(key)) {
+                        // Это категория
+                        currentCategory = key;
+                        data.entries[currentCategory] = [];
+                    } else if (currentCategory && indentation > currentIndentation + 2) {
+                        // Это ключ или значение внутри категории
+                        if (key === 'key') {
+                            // Начало нового элемента
+                            currentEntry = {
+                                key: value.replace(/"/g, ''),
+                                values: {}
+                            };
+                            data.entries[currentCategory].push(currentEntry);
+                        } else if (key === 'values' && currentEntry) {
+                            // Значения для языков указаны в следующих строках
+                        } else if (currentEntry && data.languages.includes(key)) {
+                            // Значение для конкретного языка
+                            currentEntry.values[key] = value.replace(/"/g, '');
+                        }
+                    }
+                }
+
+                return data;
+            } catch (error) {
+                console.error('Ошибка при парсинге YAML:', error);
+                throw new Error('Ошибка при парсинге YAML: ' + error.message);
+            }
+        }
+
+        // Подсчет общего количества ключей
+        function countEntries(entries) {
+            let count = 0;
+            for (const category in entries) {
+                count += entries[category].length;
+            }
+            return count;
+        }
+
+        // Обработка опций экспорта
+        function handleExportOption(e) {
+            const format = e.target.dataset.format;
+
+            if (format) {
+                if (format === 'csv' || format === 'json' || format === 'yaml') {
+                    // Быстрый экспорт без настроек
+                    performQuickExport(format);
+                } else {
+                    // Показываем модальное окно настроек экспорта
+                    showModal(elements.exportModal);
+                    prepareExportModal();
+
+                    // Устанавливаем выбранный формат
+                    elements.exportFormat.value = format;
+                }
+            } else if (e.target.id === 'exportOptionsBtn') {
+                // Показываем модальное окно настроек экспорта
+                showModal(elements.exportModal);
+                prepareExportModal();
+            }
+        }
+
+        // Подготовка модального окна настроек экспорта
+        function prepareExportModal() {
+            // Обновляем список языков
+            elements.exportLanguages.innerHTML = '';
+            localizationData.languages.forEach(lang => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+            <input type="checkbox" name="exportLang" value="${lang}" checked> ${lang}
+        `;
+                elements.exportLanguages.appendChild(label);
+            });
+
+            // Обновляем список категорий
+            elements.exportCategories.innerHTML = '';
+            localizationData.categories.forEach(category => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+            <input type="checkbox" name="exportCategory" value="${category}" checked> ${category}
+        `;
+                elements.exportCategories.appendChild(label);
+            });
+
+            // Генерируем имя файла
+            const date = new Date();
+            const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, '');
+            elements.exportFilename.value = `localization_${formattedDate}`;
+        }
+
+        // Быстрый экспорт без настроек
+        function performQuickExport(format) {
+            let content = '';
+            let mimeType = '';
+            let extension = '';
+
+            try {
+                if (format === 'csv') {
+                    content = generateCSV();
+                    mimeType = 'text/csv;charset=utf-8';
+                    extension = 'csv';
+                } else if (format === 'json') {
+                    content = generateJSON();
+                    mimeType = 'application/json;charset=utf-8';
+                    extension = 'json';
+                } else if (format === 'yaml') {
+                    content = generateYAML();
+                    mimeType = 'text/yaml;charset=utf-8';
+                    extension = 'yaml';
+                }
+
+                // Генерируем имя файла
+                const date = new Date();
+                const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, '');
+                const filename = `localization_${formattedDate}.${extension}`;
+
+                // Скачиваем файл
+                downloadFile(content, filename, mimeType);
+
+                // Показываем уведомление
+                showNotification(`Файл ${filename} успешно экспортирован`, 'success');
+            } catch (error) {
+                console.error('Ошибка при экспорте:', error);
+                showNotification('Ошибка при экспорте: ' + error.message, 'error');
+            }
+        }
+
+        // Выполнение экспорта с настройками
+        function performExport() {
+            const format = elements.exportFormat.value;
+
+            // Получаем выбранные языки
+            const selectedLanguages = [];
+            document.querySelectorAll('input[name="exportLang"]:checked').forEach(checkbox => {
+                selectedLanguages.push(checkbox.value);
+            });
+
+            // Получаем выбранные категории
+            const selectedCategories = [];
+            document.querySelectorAll('input[name="exportCategory"]:checked').forEach(checkbox => {
+                selectedCategories.push(checkbox.value);
+            });
+
+            // Проверяем, что выбраны хотя бы один язык и одна категория
+            if (selectedLanguages.length === 0) {
+                showNotification('Выберите хотя бы один язык', 'error');
+                return;
+            }
+
+            if (selectedCategories.length === 0) {
+                showNotification('Выберите хотя бы одну категорию', 'error');
+                return;
+            }
+
+            // Подготавливаем данные для экспорта с учетом выбранных языков и категорий
+            const exportData = {
+                categories: selectedCategories,
+                languages: selectedLanguages,
+                entries: {}
+            };
+
+            // Копируем только выбранные категории и языки
+            selectedCategories.forEach(category => {
+                if (localizationData.entries[category]) {
+                    exportData.entries[category] = localizationData.entries[category].map(entry => {
+                        const newEntry = {
+                            key: entry.key,
+                            values: {}
+                        };
+
+                        // Копируем только выбранные языки
+                        selectedLanguages.forEach(lang => {
+                            newEntry.values[lang] = entry.values[lang] || '';
+                        });
+
+                        return newEntry;
+                    });
+                }
+            });
+
+            // Добавляем плейсхолдеры, если они есть
+            if (localizationData.placeholders && localizationData.placeholders.length > 0) {
+                exportData.placeholders = localizationData.placeholders;
+            }
+
+            let content = '';
+            let mimeType = '';
+            let extension = '';
+
+            try {
+                if (format === 'csv') {
+                    content = generateCSVFromData(exportData);
+                    mimeType = 'text/csv;charset=utf-8';
+                    extension = 'csv';
+                } else if (format === 'json') {
+                    content = JSON.stringify(exportData, null, 2);
+                    mimeType = 'application/json;charset=utf-8';
+                    extension = 'json';
+                } else if (format === 'yaml') {
+                    content = generateYAMLFromData(exportData);
+                    mimeType = 'text/yaml;charset=utf-8';
+                    extension = 'yaml';
+                }
+
+                // Получаем имя файла
+                const filename = `${elements.exportFilename.value}.${extension}`;
+
+                // Скачиваем файл
+                downloadFile(content, filename, mimeType);
+
+                // Закрываем модальное окно
+                closeAllModals();
+
+                // Показываем уведомление
+                showNotification(`Файл ${filename} успешно экспортирован`, 'success');
+            } catch (error) {
+                console.error('Ошибка при экспорте:', error);
+                showNotification('Ошибка при экспорте: ' + error.message, 'error');
+            }
+        }
+
+        // Генерация CSV из всех данных
+        function generateCSV() {
+            return generateCSVFromData(localizationData);
+        }
+
+        // Генерация CSV из указанных данных
+        function generateCSVFromData(data) {
+            // Формируем заголовок
+            let csvContent = 'keys;' + data.languages.join(';') + '\r\n';
+
+            // Добавляем данные по категориям
+            data.categories.forEach(category => {
+                // Добавляем строку категории
+                csvContent += '#' + category + ';' + ';'.repeat(data.languages.length) + '\r\n';
+
+                // Добавляем элементы категории
+                if (data.entries[category]) {
+                    data.entries[category].forEach(entry => {
+                        // Добавляем ключ с обработкой специальных символов
+                        const safeKey = escapeCSVField(entry.key);
+                        csvContent += safeKey;
+
+                        // Добавляем значения для каждого языка с обработкой специальных символов
+                        data.languages.forEach(lang => {
+                            const value = entry.values[lang] || '';
+                            const safeValue = escapeCSVField(value);
+                            csvContent += ';' + safeValue;
+                        });
+
+                        csvContent += '\r\n';
+                    });
+                }
+
+                // Добавляем пустую строку после категории
+                csvContent += '\r\n';
+            });
+
+            // Добавляем BOM для корректного отображения кириллицы в Excel
+            const BOM = '\uFEFF';
+            return BOM + csvContent;
+        }
+
+        // Экранирование специальных символов в CSV
+        function escapeCSVField(field) {
+            if (!field) return '';
+
+            // Если поле содержит ; " или перенос строки, оборачиваем его в кавычки
+            if (field.includes(';') || field.includes('"') || field.includes('\n') || field.includes('\r')) {
+                // Заменяем " на ""
+                return '"' + field.replace(/"/g, '""') + '"';
+            }
+
+            return field;
+        }
+
+        // Генерация JSON из всех данных
+        function generateJSON() {
+            // Создаем копию данных без истории
+            const exportData = {
+                categories: localizationData.categories,
+                languages: localizationData.languages,
+                entries: localizationData.entries,
+                placeholders: localizationData.placeholders,
+                metadata: {
+                    exportDate: new Date().toISOString(),
+                    version: localizationData.metadata ? localizationData.metadata.version : '2.0'
+                }
+            };
+
+            return JSON.stringify(exportData, null, 2);
+        }
+
+        // Генерация YAML из всех данных
+        function generateYAML() {
+            let yaml = '';
+
+            // Добавляем категории
+            yaml += 'categories:\n';
+            localizationData.categories.forEach(category => {
+                yaml += `  - "${category}"\n`;
+            });
+
+            // Добавляем языки
+            yaml += 'languages:\n';
+            localizationData.languages.forEach(language => {
+                yaml += `  - "${language}"\n`;
+            });
+
+            // Добавляем записи
+            yaml += 'entries:\n';
+            localizationData.categories.forEach(category => {
+                yaml += `  ${category}:\n`;
+
+                if (localizationData.entries[category]) {
+                    localizationData.entries[category].forEach(entry => {
+                        yaml += `    - key: "${entry.key}"\n`;
+                        yaml += '      values:\n';
+
+                        for (const lang in entry.values) {
+                            if (entry.values[lang]) {
+                                yaml += `        ${lang}: "${entry.values[lang].replace(/"/g, '\\"')}"\n`;
+                            } else {
+                                yaml += `        ${lang}: ""\n`;
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Добавляем плейсхолдеры, если они есть
+            if (localizationData.placeholders && localizationData.placeholders.length > 0) {
+                yaml += 'placeholders:\n';
+                localizationData.placeholders.forEach(placeholder => {
+                    yaml += `  - name: "${placeholder.name}"\n`;
+                    if (placeholder.description) {
+                        yaml += `    description: "${placeholder.description}"\n`;
+                    }
+                });
+            }
+
+            // Добавляем метаданные
+            yaml += 'metadata:\n';
+            yaml += `  exportDate: "${new Date().toISOString()}"\n`;
+            yaml += `  version: "${localizationData.metadata ? localizationData.metadata.version : '2.0'}"\n`;
+
+            return yaml;
+        }
+
+        // Генерация YAML из указанных данных
+        function generateYAMLFromData(data) {
+            let yaml = '';
+
+            // Добавляем категории
+            yaml += 'categories:\n';
+            data.categories.forEach(category => {
+                yaml += `  - "${category}"\n`;
+            });
+
+            // Добавляем языки
+            yaml += 'languages:\n';
+            data.languages.forEach(language => {
+                yaml += `  - "${language}"\n`;
+            });
+
+            // Добавляем записи
+            yaml += 'entries:\n';
+            data.categories.forEach(category => {
+                yaml += `  ${category}:\n`;
+
+                if (data.entries[category]) {
+                    data.entries[category].forEach(entry => {
+                        yaml += `    - key: "${entry.key}"\n`;
+                        yaml += '      values:\n';
+
+                        for (const lang in entry.values) {
+                            if (data.languages.includes(lang)) {
+                                if (entry.values[lang]) {
+                                    yaml += `        ${lang}: "${entry.values[lang].replace(/"/g, '\\"')}"\n`;
+                                } else {
+                                    yaml += `        ${lang}: ""\n`;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Добавляем плейсхолдеры, если они есть
+            if (data.placeholders && data.placeholders.length > 0) {
+                yaml += 'placeholders:\n';
+                data.placeholders.forEach(placeholder => {
+                    yaml += `  - name: "${placeholder.name}"\n`;
+                    if (placeholder.description) {
+                        yaml += `    description: "${placeholder.description}"\n`;
+                    }
+                });
+            }
+
+            // Добавляем метаданные
+            yaml += 'metadata:\n';
+            yaml += `  exportDate: "${new Date().toISOString()}"\n`;
+            yaml += `  version: "${data.metadata ? data.metadata.version : '2.0'}"\n`;
+
+            return yaml;
+        }
+
+        // Скачивание файла
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+
+            // Добавляем ссылку в DOM
+            document.body.appendChild(link);
+
+            // Инициируем скачивание
+            link.click();
+
+            // Удаляем ссылку из DOM
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Боковая панель
+            elements.sidebarToggle.addEventListener('click', toggleSidebar);
+
+            // Кнопки основного интерфейса
+            elements.addCategoryBtn.addEventListener('click', () => showModal(elements.addCategoryModal));
+            elements.addLanguageBtn.addEventListener('click', () => showModal(elements.addLanguageModal));
+            elements.importBtn.addEventListener('click', () => elements.fileInput.click());
+            elements.fileInput.addEventListener('change', handleFileImport);
+            elements.toggleAllBtn.addEventListener('click', toggleAllCategories);
+            elements.statsBtn.addEventListener('click', toggleDashboard);
+            elements.helpBtn.addEventListener('click', () => showModal(elements.helpModal));
+
+            // Поиск и фильтры
+            elements.searchInput.addEventListener('input', handleSearch);
+            elements.filterDropdown.addEventListener('click', toggleFilterMenu);
+            elements.resetFiltersBtn.addEventListener('click', resetFilters);
+            elements.applyFiltersBtn.addEventListener('click', applyFilters);
+
+            // Настройка модальных окон
+            document.querySelectorAll('.modal-close, [data-close="modal"]').forEach(button => {
+                button.addEventListener('click', closeAllModals);
+            });
+
+            // Кнопки модальных окон
+            elements.saveCategoryBtn.addEventListener('click', saveNewCategory);
+            elements.saveLanguageBtn.addEventListener('click', saveNewLanguage);
+            elements.saveEntryBtn.addEventListener('click', saveNewEntry);
+
+            setupExportDropdown();
+
+            elements.doExportBtn.addEventListener('click', performExport);
+
+            // Детали ключа
+            elements.saveKeyDetailsBtn.addEventListener('click', saveKeyDetails);
+
+            // Вкладки в модальном окне
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.addEventListener('click', handleTabClick);
+            });
+
+            // Плейсхолдеры
+            elements.addPlaceholderBtn.addEventListener('click', addPlaceholder);
+
+            // Массовое редактирование
+            elements.bulkEditOperation.addEventListener('change', updateBulkEditForm);
+            elements.applyBulkEditBtn.addEventListener('click', applyBulkEdit);
+            document.querySelectorAll('input[name="bulkEditScope"]').forEach(radio => {
+                radio.addEventListener('change', updateBulkEditCategorySelect);
+            });
+
+            // Обработка событий изменения для предварительного просмотра
+            ['bulkEditLanguage', 'bulkEditFind', 'bulkEditReplace', 'bulkEditText', 'bulkEditCategory'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateBulkEditPreview);
+            });
+
+            // Обработка событий окна браузера
+            window.addEventListener('beforeunload', (e) => {
+                if (hasUnsavedChanges) {
+                    // Стандартное сообщение перед закрытием страницы
+                    e.preventDefault();
+                    e.returnValue = 'У вас есть несохраненные изменения. Вы уверены, что хотите покинуть страницу?';
+                    return e.returnValue;
+                }
+            });
+        }
+
+        // Настройка горячих клавиш
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', function (e) {
+                // Ctrl+Shift+C - Добавить категорию
+                if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                    e.preventDefault();
+                    showModal(elements.addCategoryModal);
+                }
+
+                // Ctrl+Shift+L - Добавить язык
+                if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+                    e.preventDefault();
+                    showModal(elements.addLanguageModal);
+                }
+
+                // Ctrl+Shift+K - Добавить ключ
+                if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+                    e.preventDefault();
+                    if (currentSelectedCategory) {
+                        showAddEntryForm(currentSelectedCategory);
+                    } else {
+                        showNotification('Сначала выберите категорию', 'warning');
+                    }
+                }
+
+                // Ctrl+F - Поиск
+                if (e.ctrlKey && e.key === 'f') {
+                    e.preventDefault();
+                    elements.searchInput.focus();
+                }
+
+                // Ctrl+E - Экспорт
+                if (e.ctrlKey && e.key === 'e') {
+                    e.preventDefault();
+                    showModal(elements.exportModal);
+                    prepareExportModal();
+                }
+
+                // Ctrl+I - Импорт
+                if (e.ctrlKey && e.key === 'i') {
+                    e.preventDefault();
+                    elements.fileInput.click();
+                }
+
+                // Ctrl+Shift+E - Свернуть/развернуть все
+                if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+                    e.preventDefault();
+                    toggleAllCategories();
+                }
+
+                // Ctrl+S - Сохранить при редактировании
+                if (e.ctrlKey && e.key === 's') {
+                    if (document.querySelector('.modal.active')) {
+                        e.preventDefault();
+                        // Определяем, какое модальное окно активно и сохраняем данные
+                        if (elements.keyDetailsModal.classList.contains('active')) {
+                            saveKeyDetails();
+                        } else if (elements.addCategoryModal.classList.contains('active')) {
+                            saveNewCategory();
+                        } else if (elements.addLanguageModal.classList.contains('active')) {
+                            saveNewLanguage();
+                        } else if (elements.addEntryModal.classList.contains('active')) {
+                            saveNewEntry();
+                        }
+                    } else {
+                        // Если нет активных модальных окон, сохраняем все изменения
+                        e.preventDefault();
+                        saveToLocalStorage();
+                        showNotification('Изменения сохранены', 'success');
+                    }
+                }
+
+                // Esc - Закрыть модальное окно
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+        }
+
+        // Инициализация приложения
+        function initApp() {
+            // Проверяем наличие необходимых элементов DOM
+            if (!checkRequiredElements()) {
+                console.error('Не удалось найти необходимые элементы DOM');
+                alert('Ошибка инициализации приложения. Пожалуйста, обновите страницу.');
+                return;
+            }
+
+            // Загрузка сохраненных данных из localStorage
+            loadFromLocalStorage();
+
+            // Инициализация интерфейса
+            setupEventListeners();
+            updateCategoryList();
+            renderCategories();
+            updateDashboard();
+            updateFilterLanguages();
+
+            // Настройка автосохранения
+            setInterval(autoSave, settings.autosaveInterval);
+
+            // Настройка горячих клавиш
+            setupKeyboardShortcuts();
+
+            // Отображение текущего состояния
+            updateToggleAllButtonText();
+
+            console.log('Приложение успешно инициализировано');
+        }
+
+        // Проверка наличия необходимых элементов DOM
+        function checkRequiredElements() {
+            // Проверяем наличие основных контейнеров
+            if (!elements.categoryContainer || !elements.sidebar || !elements.categoryList) {
+                return false;
+            }
+
+            // Проверяем наличие модальных окон
+            if (!elements.addCategoryModal || !elements.addLanguageModal || !elements.addEntryModal) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // Запускаем приложение при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>

@@ -29,6 +29,7 @@ namespace MasterServerToolkit.MasterServer
         public override void Deserialize(string value)
         {
             DateTime.TryParse(value, out _value);
+            MarkAsDirty();
         }
 
         public override void FromBytes(byte[] data)
@@ -53,11 +54,12 @@ namespace MasterServerToolkit.MasterServer
         public override void FromJson(MstJson json)
         {
             DateTime.TryParse(json.StringValue, out _value);
+            MarkAsDirty();
         }
 
         public override void FromJson(string json)
         {
-            FromJson(MstJson.Create(json));
+            FromJson(new MstJson(json));
         }
     }
 }

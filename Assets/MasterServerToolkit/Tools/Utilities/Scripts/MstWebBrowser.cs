@@ -1,19 +1,23 @@
 using MasterServerToolkit.Json;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_STANDALONE
 using System;
 using System.Runtime.InteropServices;
+#endif
 
 namespace MasterServerToolkit.Utils
 {
     public class MstWebBrowser
     {
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_STANDALONE
         [DllImport("__Internal")]
         private static extern IntPtr MstGetQueryString();
         [DllImport("__Internal")]
         private static extern IntPtr MstGetCurrentUrl();
+#endif
 
         public static MstJson GetQueryStringData()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_STANDALONE
             IntPtr jsonPtr = MstGetQueryString();
             string jsonString = Marshal.PtrToStringUTF8(jsonPtr);
             return new MstJson(jsonString);
