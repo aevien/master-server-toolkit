@@ -57,7 +57,7 @@ namespace MasterServerToolkit.MasterServer
 
         [Header("Timeout Settings")]
         [SerializeField, Tooltip("Maximum time in seconds to wait for a profile to be loaded")]
-        protected float profileLoadTimeoutSeconds = 10f;
+        protected int profileLoadTimeoutSeconds = 10;
 
         /// <summary>
         /// Database accessor factory that helps to create integration with profile db
@@ -482,11 +482,12 @@ namespace MasterServerToolkit.MasterServer
             }
 
             ProfilePeerExtension profileExt = null;
-            using var cts = new CancellationTokenSource((int)profileLoadTimeoutSeconds * 1000);
+            int cancellationDelay = profileLoadTimeoutSeconds * 1000;
+            using var cts = new CancellationTokenSource(cancellationDelay);
 
             try
             {
-                var delayTask = Task.Delay((int)profileLoadTimeoutSeconds, cts.Token);
+                var delayTask = Task.Delay(cancellationDelay, cts.Token);
                 var checkTask = Task.Run(async () =>
                 {
                     while (!cts.Token.IsCancellationRequested)
@@ -550,10 +551,10 @@ namespace MasterServerToolkit.MasterServer
 
             var userId = message.AsString();
             ObservableServerProfile profile = null;
+            int cancellationDelay = profileLoadTimeoutSeconds * 1000;
+            using var cts = new CancellationTokenSource(cancellationDelay);
 
-            using var cts = new CancellationTokenSource((int)profileLoadTimeoutSeconds);
-
-            var delayTask = Task.Delay((int)profileLoadTimeoutSeconds, cts.Token);
+            var delayTask = Task.Delay(cancellationDelay, cts.Token);
             var checkTask = Task.Run(async () =>
             {
                 while (!cts.Token.IsCancellationRequested)

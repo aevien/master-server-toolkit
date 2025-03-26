@@ -667,7 +667,7 @@ namespace MasterServerToolkit.MasterServer
             loggedInUsers.TryAdd(userPeerExtension.UserId, userPeerExtension);
 
             // Trigger the login event
-            OnUserLoggedInEvent?.Invoke(userPeerExtension);
+            NotifyOnUserLoggedInEvent(userPeerExtension);
 
             // Send response to logged in user
             message.Respond(userPeerExtension.CreateAccountInfoPacket(), ResponseStatus.Success);
