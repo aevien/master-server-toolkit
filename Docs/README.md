@@ -3,14 +3,31 @@
 ## Описание
 Master Server Toolkit - это фреймворк для создания многопользовательских игр с архитектурой клиент-сервер. Он предоставляет готовые модули для аутентификации, профилей, комнат, лобби, чата и многих других аспектов многопользовательской игры.
 
-## Основные модули
+## Структура системы
 
-### Ядро системы
+### [Ядро системы](Core/README.md)
+Базовые компоненты и инфраструктура фреймворка:
+- [MasterServer](Core/MasterServer.md) - Центральный компонент системы
+- [Client](Core/Client.md) - Клиентская часть системы
+- [Server](Core/Server.md) - Серверная часть системы
+- [Database](Core/Database.md) - Абстракция базы данных
+- [Events](Core/Events.md) - Система событий
+- [Keys](Core/Keys.md) - Система констант и ключей
+- [Localization](Core/Localization.md) - Система локализации
+- [Logger](Core/Logger.md) - Система логирования
+- [Mail](Core/Mail.md) - Система отправки email
+
+### [Networking](Networking.md)
+Документация по сетевому взаимодействию в системе.
+
+### Модули
+
+#### Основные модули
 - [Authentication](Modules/Authentication.md) - Аутентификация и управление пользователями
 - [Profiles](Modules/Profiles.md) - Профили пользователей и управление данными
 - [Rooms](Modules/Rooms.md) - Система комнат и игровых сессий
 
-### Игровые модули
+#### Игровые модули
 - [Achievements](Modules/Achievements.md) - Система достижений
 - [Censor](Modules/Censor.md) - Фильтрация нежелательного контента
 - [Chat](Modules/Chat.md) - Система чата и обмена сообщениями
@@ -21,22 +38,27 @@ Master Server Toolkit - это фреймворк для создания мно
 - [QuestsModule](Modules/QuestsModule.md) - Система квестов и заданий
 - [WorldRooms](Modules/WorldRooms.md) - Система постоянных игровых зон
 
-### Инфраструктура
+#### Инфраструктурные модули
 - [Spawner](Modules/Spawner.md) - Запуск игровых серверов 
 - [WebServer](Modules/WebServer.md) - Встроенный веб-сервер для API и админ-панели
 
-### Аналитика и Мониторинг
+#### Аналитика и мониторинг
 - [AnalyticsModule](Modules/AnalyticsModule.md) - Сбор и анализ игровых событий
 
-### Инструменты
-- [Tools](Tools/README.md) - Набор вспомогательных инструментов для разработки
-  - [UI Framework](Tools/UI/README.md) - Система пользовательского интерфейса
-  - [Attributes](Tools/Attributes.md) - Расширения для инспектора Unity
-  - [Terminal](Tools/Terminal.md) - Отладочный терминал
-  - [Tweener](Tools/Tweener.md) - Инструменты анимации
-  - [Utilities](Tools/Utilities.md) - Вспомогательные утилиты
+### [Инструменты](Tools/README.md)
+Набор вспомогательных инструментов для разработки:
+- [UI Framework](Tools/UI/README.md) - Система пользовательского интерфейса
+  - [Views System](Tools/UI/Views.md) - Управление UI экранами
+  - [UI Components](Tools/UI/Components.md) - Готовые компоненты UI
+  - [Validation System](Tools/UI/Validation.md) - Валидация форм ввода
+- [Attributes](Tools/Attributes.md) - Расширения для инспектора Unity
+- [Terminal](Tools/Terminal.md) - Отладочный терминал
+- [Tweener](Tools/Tweener.md) - Инструменты анимации
+- [Utilities](Tools/Utilities.md) - Вспомогательные утилиты
+- [DebounceThrottle](Tools/DebounceThrottle.md) - Ограничение частоты вызовов
+- [WebGL](Tools/WebGL.md) - Инструменты для WebGL платформы
 
-## Структура модулей
+## Структура модуля
 
 Каждый модуль обычно состоит из следующих компонентов:
 1. **Серверный модуль** (`*Module.cs`) - серверная логика модуля
