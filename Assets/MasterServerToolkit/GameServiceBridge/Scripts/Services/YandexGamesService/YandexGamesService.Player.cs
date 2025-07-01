@@ -1,8 +1,11 @@
 using MasterServerToolkit.Json;
 using MasterServerToolkit.MasterServer;
 using System.Collections;
-using System.Runtime.InteropServices;
 using UnityEngine;
+
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_STANDALONE
+using System.Runtime.InteropServices;
+#endif
 
 namespace MasterServerToolkit.GameService
 {
@@ -17,6 +20,8 @@ namespace MasterServerToolkit.GameService
         private static extern int Gb_Yg_GetPlayerData();
         [DllImport("__Internal")]
         private static extern void Gb_Yg_SetPlayerData(string data, bool useStats);
+        [DllImport("__Internal")]
+        private static extern void Gb_Yg_ReviewGame();
 #endif
 
         private Coroutine saveDataCoroutine;
@@ -64,6 +69,15 @@ namespace MasterServerToolkit.GameService
                 yield return new WaitForSecondsRealtime(options.GetField(GameServiceOptionKeys.YG_SAVE_DATA_INTERVAL).FloatValue);
                 saveDataCoroutine = null;
             }
+        }
+
+        public override void ReviewGame()
+        {
+            base.ReviewGame();
+
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_STANDALONE
+            Gb_Yg_ReviewGame();
+#endif
         }
     }
 }

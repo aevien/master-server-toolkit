@@ -19,9 +19,13 @@ namespace MasterServerToolkit.GameService
         protected PurchaseHandler purchaseHandler;
         protected PurchaseHandler getPurchasesHandler;
 
-        private event Action readyEvent;
-        private event PlayerInfoHandler playerInfoEvent;
-        private event PlayerDataHandler playerDataEvent;
+        protected event Action readyEvent;
+        protected event PlayerInfoHandler playerInfoEvent;
+        protected event PlayerDataHandler playerDataEvent;
+
+        protected LeaderboardInfoHandler leaderboardInfoCallback;
+        protected LeaderboardEntriesHandler leaderboardEntriesCallback;
+        protected LeaderboardPlayerInfoHandler leaderboardPlayerInfoCallback;
 
         public event Action OnReadyEvent
         {
@@ -82,6 +86,7 @@ namespace MasterServerToolkit.GameService
         {
             isReady = true;
             readyEvent?.Invoke();
+            Logger.Info($"Service {Id} started and ready to be used");
         }
 
         protected void NotifyOnPlayerInfo()
@@ -149,6 +154,24 @@ namespace MasterServerToolkit.GameService
         {
             getPurchasesHandler?.Invoke(purchases);
             getPurchasesHandler = null;
+        }
+
+        protected void NotifyOnGetLeaderboardInfo(LeaderboardInfo leaderboardInfo)
+        {
+            leaderboardInfoCallback?.Invoke(leaderboardInfo);
+            leaderboardInfoCallback = null;
+        }
+
+        protected void NotifyOnGetLeaderboardEntries(LeaderboardEntries leaderboardEntries)
+        {
+            leaderboardEntriesCallback?.Invoke(leaderboardEntries);
+            leaderboardEntriesCallback = null;
+        }
+
+        protected void NotifyOnGetLeaderboardPlayerInfo(LeaderboardPlayerInfo leaderboardPlayerInfo)
+        {
+            leaderboardPlayerInfoCallback?.Invoke(leaderboardPlayerInfo);
+            leaderboardPlayerInfoCallback = null;
         }
     }
 }

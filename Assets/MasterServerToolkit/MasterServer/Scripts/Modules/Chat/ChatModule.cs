@@ -307,13 +307,15 @@ namespace MasterServerToolkit.MasterServer
                 chatMessage.Sender = sender.Username;
 
                 // Check if message contains a forbidden word
-                if (useCensorModule && censorModule != null && censorModule.HasCensoredWord(chatMessage.Message))
-                {
-                    chatMessage.Receiver = chatMessage.Sender;
-                    chatMessage.Sender = "Admin";
-                    chatMessage.MessageType = ChatMessageType.PrivateMessage;
-                    chatMessage.Message = "Your text message contains forbidden word. Please be kind to all chat users";
-                }
+                //if (useCensorModule && censorModule != null && censorModule.HasCensoredWord(chatMessage.Message))
+                //{
+                //    chatMessage.Receiver = chatMessage.Sender;
+                //    chatMessage.Sender = "Admin";
+                //    chatMessage.MessageType = ChatMessageType.PrivateMessage;
+                //    chatMessage.Message = "Your text message contains forbidden word. Please be kind to all chat users";
+                //}
+
+                CensorMessage(chatMessage);
 
                 switch (chatMessage.MessageType)
                 {
@@ -366,6 +368,12 @@ namespace MasterServerToolkit.MasterServer
                 message.Respond(e.Message, ResponseStatus.Error);
                 return false;
             }
+        }
+
+        private void CensorMessage(ChatMessagePacket chatMessage)
+        {
+            var result = censorModule.CensorText(chatMessage.Message);
+            chatMessage.Message = result.filteredText;
         }
 
         #region Event Handlers

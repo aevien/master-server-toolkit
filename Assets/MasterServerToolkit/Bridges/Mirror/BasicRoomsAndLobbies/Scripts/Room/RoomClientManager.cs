@@ -37,6 +37,8 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
         protected override void Start()
         {
+            logger.Debug("Start client");
+
             base.Start();
 
             if (NetworkManager)

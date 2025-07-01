@@ -124,6 +124,10 @@ namespace MasterServerToolkit.MasterServer
             return extension.PermissionLevel >= registerRoomPermissionLevel;
         }
 
+        protected virtual void OnRoomRegistered(RegisteredRoom room) { }
+
+        protected virtual void OnRoomDestroyed(RegisteredRoom room) { }
+
         /// <summary>
         /// Fired when registered room peer disconnected from master
         /// </summary>
@@ -179,6 +183,7 @@ namespace MasterServerToolkit.MasterServer
 
             // Invoke the event
             OnRoomRegisteredEvent?.Invoke(room);
+            OnRoomRegistered(room);
 
             return room;
         }
@@ -213,6 +218,7 @@ namespace MasterServerToolkit.MasterServer
 
             // Invoke the event
             OnRoomDestroyedEvent?.Invoke(room);
+            OnRoomDestroyed(room);
         }
 
         /// <summary>
@@ -278,7 +284,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="roomId"></param>
         /// <returns></returns>
-        public RegisteredRoom GetRoom(int roomId)
+        public RegisteredRoom GetRoomById(int roomId)
         {
             roomsList.TryGetValue(roomId, out RegisteredRoom r);
             return r;
@@ -290,10 +296,20 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomId"></param>
         /// <param name="room"></param>
         /// <returns></returns>
-        public bool TryGetRoom(int roomId, out RegisteredRoom room)
+        public bool TryGetRoomById(int roomId, out RegisteredRoom room)
         {
-            room = GetRoom(roomId);
+            room = GetRoomById(roomId);
             return room != null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="regionName"></param>
+        /// <returns></returns>
+        public IEnumerable<RegisteredRoom> GetRoomsByRegion(string regionName)
+        {
+            return GetAllRooms().Where(r => r.Options.Region == regionName);
         }
 
         /// <summary>
@@ -311,7 +327,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="roomId"></param>
         public IEnumerable<IPeer> GetPlayersOfRoom(int roomId)
         {
-            var r = GetRoom(roomId);
+            var r = GetRoomById(roomId);
             return r?.Players.Values;
         }
 
@@ -353,7 +369,7 @@ namespace MasterServerToolkit.MasterServer
 
                 logger.Debug($"Client {message.Peer.Id} requested to destroy room server with id {roomId}");
 
-                if (!TryGetRoom(roomId, out RegisteredRoom room))
+                if (!TryGetRoomById(roomId, out RegisteredRoom room))
                 {
                     logger.Debug($"But this room does not exist");
                     message.Respond("Room does not exist", ResponseStatus.Failed);
@@ -385,7 +401,7 @@ namespace MasterServerToolkit.MasterServer
                 var data = message.AsPacket<RoomAccessValidatePacket>();
 
                 // Trying to find room in list of registered
-                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
                     message.Respond("Room does not exist", ResponseStatus.Failed);
                     return Task.CompletedTask;
@@ -434,7 +450,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 var data = message.AsPacket<SaveRoomOptionsPacket>();
 
-                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
                     message.Respond("Room does not exist", ResponseStatus.Failed);
                     return Task.CompletedTask;
@@ -464,7 +480,7 @@ namespace MasterServerToolkit.MasterServer
                 var data = message.AsPacket<RoomAccessRequestPacket>();
 
                 // Let's find a room by Id which the player wants to join
-                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
                     message.Respond("Room does not exist", ResponseStatus.Failed);
                     return Task.CompletedTask;
@@ -502,7 +518,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 var data = message.AsPacket<PlayerLeftRoomPacket>();
 
-                if (!TryGetRoom(data.RoomId, out RegisteredRoom room))
+                if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
                     message.Respond("Room does not exist", ResponseStatus.Failed);
                     return Task.CompletedTask;

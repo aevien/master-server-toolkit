@@ -418,7 +418,7 @@ namespace MasterServerToolkit.MasterServer
             try
             {
                 var value = AsString(argName, defaultValue.ToString());
-                return Convert.ToSingle(value);
+                return Convert.ToSingle(value.Replace('.', ','));
             }
             catch
             {

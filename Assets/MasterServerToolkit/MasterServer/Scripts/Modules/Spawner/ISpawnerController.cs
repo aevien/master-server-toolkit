@@ -12,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
         Logger Logger { get; }
         IClientSocket Connection { get; }
         int SpawnerId { get; }
-        void SpawnRequestHandler(SpawnRequestPacket packet, IIncomingMessage message);
+        void SpawnRequestHandler(SpawnRequestPacket data, SuccessCallback callback);
         void KillRequestHandler(int spawnId);
         void KillProcesses();
         int ProcessesCount();

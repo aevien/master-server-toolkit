@@ -62,9 +62,9 @@ namespace MasterServerToolkit.MasterServer
         {
             if (profile.TryGet(ProfilePropertyOpCodes.achievements, out ObservableAchievements propery))
             {
-                foreach (var achievement in achievementsDatabase.Achievements)
+                foreach (var achievement in achievementsDatabase)
                 {
-                    if (!propery.Has(achievement.Key))
+                    if (!propery.Has(achievement.key))
                     {
                         propery.Add(new AchievementProgressInfo(achievement));
                     }
@@ -78,11 +78,11 @@ namespace MasterServerToolkit.MasterServer
 
         private void InvokeAchievementResultCommand(IUserPeerExtension user, string key)
         {
-            var achievementData = achievementsDatabase.Achievements.ToList().Find(a => a.Key == key);
+            var achievementData = achievementsDatabase.ToList().Find(a => a.key == key);
 
             if (achievementData != null)
             {
-                OnAchievementResultCommand(user, key, achievementData.ResultCommands);
+                OnAchievementResultCommand(user, key, achievementData.resultCommands);
             }
         }
 

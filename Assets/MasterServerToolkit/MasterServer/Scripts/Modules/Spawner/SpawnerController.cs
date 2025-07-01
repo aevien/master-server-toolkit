@@ -55,7 +55,6 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="spawnerId"></param>
         /// <param name="connection"></param>
-        /// <param name="options"></param>
         public SpawnerController(int spawnerId, IClientSocket connection, SpawnerOptions spawnerOptions)
         {
             Logger = Mst.Create.Logger(typeof(SpawnerController).Name, LogLevel.All);
@@ -98,7 +97,24 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 controller.Logger.Debug($"Spawn process requested for spawn controller [{controller.SpawnerId}]");
-                controller.SpawnRequestHandler(data, message);
+                controller.SpawnRequestHandler(data, (isSuccessful, error) =>
+                {
+                    if (isSuccessful)
+                    {
+                        message.Respond(ResponseStatus.Success);
+                    }
+                    else
+                    {
+                        if (error == "Failed")
+                        {
+                            message.Respond(ResponseStatus.Failed);
+                        }
+                        else
+                        {
+                            message.Respond(error, ResponseStatus.Error);
+                        }
+                    }
+                });
             }
             catch (Exception e)
             {
@@ -166,15 +182,13 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="data"></param>
         /// <param name="message"></param>
-        public virtual void SpawnRequestHandler(SpawnRequestPacket data, IIncomingMessage message)
+        public virtual void SpawnRequestHandler(SpawnRequestPacket data, SuccessCallback callback)
         {
             Logger.Info($"Spawn handler started handling a request to spawn process for spawn controller [{SpawnerId}]");
 
-            /************************************************************************/
             // Create process args string
             var processArguments = data.Options.EscapeValues();
 
-            /************************************************************************/
             // Check if we're overriding an IP to master server
             var masterIpArgument = string.IsNullOrEmpty(SpawnSettings.MasterIp) ?
                 Connection.Address : SpawnSettings.MasterIp;
@@ -182,46 +196,37 @@ namespace MasterServerToolkit.MasterServer
             // Create master IP arg
             processArguments.Set(Mst.Args.Names.MasterIp, masterIpArgument);
 
-            /************************************************************************/
             /// Check if we're overriding a port to master server
             var masterPortArgument = SpawnSettings.MasterPort < 0 ? Connection.Port : SpawnSettings.MasterPort;
 
             // Create master port arg
             processArguments.Set(Mst.Args.Names.MasterPort, masterPortArgument);
 
-            /************************************************************************/
             // Machine Ip
             processArguments.Set(Mst.Args.Names.RoomIp, SpawnSettings.MachineIp);
 
-            /************************************************************************/
             // Create port for room arg
             int machinePortArgument = Mst.Server.Spawners.GetAvailablePort();
             processArguments.Set(Mst.Args.Names.RoomPort, machinePortArgument);
 
-            /************************************************************************/
             // Create spawn id arg
             processArguments.Set(Mst.Args.Names.SpawnTaskId, data.SpawnTaskId);
 
-            /************************************************************************/
             // Create spawn code arg
             processArguments.Set(Mst.Args.Names.SpawnTaskUniqueCode, data.SpawnTaskUniqueCode);
 
-            /************************************************************************/
-            // Path to executable
-            var executablePath = data.UseOverrideExePath ? data.OverrideExePath : SpawnSettings.ExecutablePath;
+            if (!File.Exists(SpawnSettings.ExecutablePath))
+                throw new FileNotFoundException($"Room executable not found at {SpawnSettings.ExecutablePath}");
 
-            if (!File.Exists(executablePath))
-                throw new FileNotFoundException($"Room executable not found at {executablePath}");
+            Logger.Info($"Starting process with args: {processArguments}");
 
-            /// Create info about starting process
-            var startProcessInfo = new ProcessStartInfo(executablePath)
+            // Create info about starting process
+            var startProcessInfo = new ProcessStartInfo(SpawnSettings.ExecutablePath)
             {
                 CreateNoWindow = false,
                 UseShellExecute = true,
                 Arguments = processArguments.ToReadableString(" ", " ")
             };
-
-            Logger.Info($"Starting process with args: {processArguments}");
 
             var processStarted = false;
 
@@ -247,7 +252,7 @@ namespace MasterServerToolkit.MasterServer
                             var processId = process.Id;
 
                             // Notify server that we've successfully handled the request
-                            message.Respond(ResponseStatus.Success);
+                            callback?.Invoke(true, string.Empty);
                             NotifyProcessStarted(data.SpawnTaskId, processId, startProcessInfo.Arguments);
 
                             process.WaitForExit();
@@ -257,7 +262,7 @@ namespace MasterServerToolkit.MasterServer
                     {
                         if (!processStarted)
                         {
-                            message.Respond(ResponseStatus.Failed);
+                            callback?.Invoke(false, "Failed");
                         }
 
                         Logger.Error("An exception was thrown while starting a process. Make sure that you have set a correct build path. " +
@@ -280,7 +285,7 @@ namespace MasterServerToolkit.MasterServer
             }
             catch (Exception e)
             {
-                message.Respond(e.Message, ResponseStatus.Error);
+                callback?.Invoke(false, e.Message);
                 Logger.Error(e);
             }
         }

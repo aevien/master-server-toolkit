@@ -142,9 +142,9 @@ namespace MasterServerToolkit.Json
             }
         }
 
-        public T EnumValue<T>() where T : Enum
+        public T EnumValue<T>() where T : struct, Enum
         {
-            return (T)Enum.Parse(typeof(T), StringValue);
+            return (T)Enum.ToObject(typeof(T), IntValue);
         }
 
         public void Absorb(MstJson other)
@@ -205,6 +205,16 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        public static MstJson Create(bool[] values)
+        {
+            var jsonObject = EmptyArray;
+            foreach (var v in values)
+            {
+                jsonObject.Add(v);
+            }
+            return jsonObject;
+        }
+
         public static MstJson Create(float value)
         {
             var jsonObject = Create();
@@ -218,6 +228,16 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        public static MstJson Create(float[] values)
+        {
+            var jsonObject = EmptyArray;
+            foreach (var v in values)
+            {
+                jsonObject.Add(v);
+            }
+            return jsonObject;
+        }
+
         public static MstJson Create(double value)
         {
             var jsonObject = Create();
@@ -228,6 +248,16 @@ namespace MasterServerToolkit.Json
             jsonObject.DoubleValue = value;
 #endif
 
+            return jsonObject;
+        }
+
+        public static MstJson Create(double[] values)
+        {
+            var jsonObject = EmptyArray;
+            foreach (var v in values)
+            {
+                jsonObject.Add(v);
+            }
             return jsonObject;
         }
 
@@ -246,6 +276,16 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        public static MstJson Create(int[] values)
+        {
+            var jsonObject = EmptyArray;
+            foreach (var v in values)
+            {
+                jsonObject.Add(v);
+            }
+            return jsonObject;
+        }
+
         public static MstJson Create(long value)
         {
             var jsonObject = Create();
@@ -258,6 +298,16 @@ namespace MasterServerToolkit.Json
             jsonObject.DoubleValue = value;
 #endif
 
+            return jsonObject;
+        }
+
+        public static MstJson Create(long[] values)
+        {
+            var jsonObject = EmptyArray;
+            foreach (var v in values)
+            {
+                jsonObject.Add(v);
+            }
             return jsonObject;
         }
 
@@ -287,6 +337,22 @@ namespace MasterServerToolkit.Json
             jsonObject.Type = ValueType.String;
             jsonObject.StringValue = value;
             return jsonObject;
+        }
+
+        public static MstJson Create(string[] values)
+        {
+            var jsonObject = EmptyArray;
+            foreach (var v in values)
+            {
+                jsonObject.Add(v);
+            }
+            return jsonObject;
+        }
+
+        public static MstJson Create(Enum value)
+        {
+            int result = Convert.ToInt32(value);
+            return Create(result);
         }
 
         public static MstJson CreateBakedObject(string value)
@@ -1441,6 +1507,11 @@ namespace MasterServerToolkit.Json
         }
 
         public void Add(int value)
+        {
+            Add(Create(value));
+        }
+
+        public void Add(Enum value)
         {
             Add(Create(value));
         }

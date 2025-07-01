@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MasterServerToolkit.GameService
 {
-    public class SelfService : BaseGameService
+    public partial class SelfService : BaseGameService
     {
         protected override void Awake()
         {
@@ -15,6 +15,13 @@ namespace MasterServerToolkit.GameService
 
             Id = GameServiceId.Self;
             Player = new PlayerInfo();
+
+            if (useFakeData)
+            {
+                IsInAppPurchaseSupported = true;
+                IsAdSupported = true;
+                IsLeaderboardSupported = true;
+            }
         }
 
         public override void Authenticate(SuccessCallback callback)

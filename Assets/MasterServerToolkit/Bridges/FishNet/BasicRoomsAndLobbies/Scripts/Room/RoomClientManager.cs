@@ -7,7 +7,6 @@ using FishNet.Managing.Scened;
 using FishNet.Transporting;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
-using System;
 using UnityEngine;
 using UnitySceneManager = UnityEngine.SceneManagement.SceneManager;
 
@@ -85,6 +84,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
                 logger.Info("You have just been disconnected from the server");
 
                 ClientManager.UnregisterBroadcast<ValidateRoomAccessResultMessage>(ValidateRoomAccessResultHandler);
+                OnDisconnected();
             }
             else if (state.ConnectionState == LocalConnectionState.Started)
             {
@@ -100,6 +100,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
                 });
 
                 logger.Info($"You have joined the room at {Mst.Client.Rooms.ReceivedAccess.RoomIp}:{Mst.Client.Rooms.ReceivedAccess.RoomPort}");
+                OnConnected();
             }
         }
 
@@ -130,10 +131,17 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
                 Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Start joining a room at {access.RoomIp}:{access.RoomPort}");
 
-                MstTimer.WaitWhile(() => connectionState != LocalConnectionState.Stopped, (isSuccess) =>
+                if (connectionState == LocalConnectionState.Stopping)
+                {
+                    MstTimer.WaitWhile(() => connectionState != LocalConnectionState.Stopped, (isSuccess) =>
+                    {
+                        ClientManager.StartConnection(access.RoomIp, access.RoomPort);
+                    }, 10f);
+                }
+                else
                 {
                     ClientManager.StartConnection(access.RoomIp, access.RoomPort);
-                }, 10f);
+                }
             }
         }
 

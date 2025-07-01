@@ -6,31 +6,16 @@ namespace MasterServerToolkit.MasterServer
     [CreateAssetMenu(menuName = MstConstants.CreateMenu + "Achievements/AchievementData")]
     public class AchievementData : ScriptableObject
     {
-        [SerializeField]
-        protected string key;
-        [SerializeField]
-        protected string title;
-        [SerializeField, TextArea(3, 10)]
-        protected string description;
-        [SerializeField, TextArea(3, 10)]
-        protected string result = "Wow! You've got an achievement!";
-        [SerializeField]
-        protected int requiredProgress;
-        [SerializeField]
-        protected Sprite icon;
-        [SerializeField]
-        protected AchievementExtraData[] extraParameters;
-        [SerializeField]
-        protected AchievementExtraData[] resultCommands;
-
-        public string Title => title;
-        public string Description => description;
-        public string Result => result;
-        public string Key => key;
-        public int RequiredProgress => requiredProgress;
-        public Sprite Icon => icon;
-        public AchievementExtraData[] ResultCommands => resultCommands;
-        public AchievementExtraData[] ExtraParameters => extraParameters;
+        public string key;
+        public string title;
+        [TextArea(3, 10)]
+        public string description;
+        [TextArea(3, 10)]
+        public string result = "Wow! You've got an achievement!";
+        public int requiredProgress;
+        public Sprite icon;
+        public AchievementExtraData[] extraParameters;
+        public AchievementExtraData[] resultCommands;
 
         protected virtual void OnValidate()
         {
@@ -57,7 +42,7 @@ namespace MasterServerToolkit.MasterServer
 
         public AchievementExtraData GetExtraParametersByKey(string key)
         {
-            foreach(var data in ExtraParameters)
+            foreach(var data in extraParameters)
             {
                 if(data.key == key)
                 {
@@ -76,7 +61,7 @@ namespace MasterServerToolkit.MasterServer
 
         public AchievementExtraData GetResultCommandsByKey(string key)
         {
-            foreach (var data in ResultCommands)
+            foreach (var data in resultCommands)
             {
                 if (data.key == key)
                 {

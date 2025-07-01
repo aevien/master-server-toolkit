@@ -17,10 +17,12 @@ namespace MasterServerToolkit.GameService
         [DllImport("__Internal")]
         private static extern string MstGetBrowserLang();
 #endif
-
         private bool isReady = false;
+        protected bool useFakeData = false;
 
         protected MstJson options = MstJson.EmptyObject;
+
+        public Logging.Logger Logger { get; set; }
 
         /// <summary>
         /// Current service the game runs on
@@ -98,6 +100,11 @@ namespace MasterServerToolkit.GameService
 
         public virtual void Init(MstJson options)
         {
+            if (options.HasField(GameServiceOptionKeys.EDITOR_USE_FAKE_DATA))
+            {
+                useFakeData = options[GameServiceOptionKeys.EDITOR_USE_FAKE_DATA].BoolValue;
+            }
+
             this.options = options;
         }
 

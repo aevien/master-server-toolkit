@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class SpawnerBehaviour : MonoBehaviour
+    public class SpawnerBehaviour : SingletonBehaviour<SpawnerBehaviour>
     {
         #region INSPECTOR
 
@@ -24,9 +24,6 @@ namespace MasterServerToolkit.MasterServer
             Text = $"It will start ONLY if '-msfStartSpawner' argument is found, or if StartSpawner() is called manually from your scripts",
             Type = HelpBoxType.Warning
         };
-
-        [Header("General"), SerializeField, Tooltip("Log level of this script's logger")]
-        protected LogLevel logLevel = LogLevel.Info;
 
         [SerializeField, Tooltip("Log level of internal SpawnerController logger")]
         protected LogLevel spawnerLogLevel = LogLevel.Warn;
@@ -74,11 +71,6 @@ namespace MasterServerToolkit.MasterServer
         protected ISpawnerController spawnerController;
 
         /// <summary>
-        /// Just logger :)
-        /// </summary>
-        protected Logging.Logger logger;
-
-        /// <summary>
         /// Check if spawner is ready to create rooms/servers
         /// </summary>
         public bool IsSpawnerStarted { get; protected set; } = false;
@@ -98,10 +90,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public UnityEvent OnSpawnerStoppedEvent;
 
-        protected virtual void Awake()
+        protected override void Awake()
         {
-            logger = Mst.Create.Logger(GetType().Name);
-            logger.LogLevel = logLevel;
+            base.Awake();
 
             Mst.Server.Spawners.DefaultPort = Mst.Args.RoomDefaultPort;
 
@@ -109,8 +100,6 @@ namespace MasterServerToolkit.MasterServer
             Mst.Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
             // Subscribe to disconnection event
             Mst.Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
-
-            DontDestroyOnLoad(gameObject);
         }
 
         private void OnValidate()
@@ -118,15 +107,14 @@ namespace MasterServerToolkit.MasterServer
             region = !string.IsNullOrEmpty(region) ? region : "International";
         }
 
-        protected virtual void OnApplicationQuit()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
             // Kill all the processes of spawner controller
             if (killProcessesWhenStop)
                 spawnerController?.KillProcesses();
-        }
 
-        protected virtual void OnDestroy()
-        {
             // Remove connection listener
             Mst.Connection.RemoveConnectionOpenListener(OnConnectedToMasterEventHandler);
             // Remove disconnection listener

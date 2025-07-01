@@ -1,4 +1,5 @@
 using MasterServerToolkit.Json;
+using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,10 @@ namespace MasterServerToolkit.GameService
     public delegate void ProductsHandler(IEnumerable<ProductInfo> products);
     public delegate void PurchaseHandler(PurchasesInfo purchase);
 
+    public delegate void LeaderboardInfoHandler(LeaderboardInfo leaderboardInfo);
+    public delegate void LeaderboardEntriesHandler(LeaderboardEntries leaderboardEntries);
+    public delegate void LeaderboardPlayerInfoHandler(LeaderboardPlayerInfo leaderboardPlayerInfo);
+
     public interface IGameService
     {
         GameServiceId Id { get; }
@@ -39,7 +44,8 @@ namespace MasterServerToolkit.GameService
         string DeviceType { get; }
         MstJson Payload { get; }
         bool IsMobile { get; }
-        bool IsReady {  get; }
+        bool IsReady { get; }
+        Logger Logger { get; set; }
 
         event Action OnReadyEvent;
         event PlayerInfoHandler OnPlayerInfoEvent;
@@ -75,9 +81,20 @@ namespace MasterServerToolkit.GameService
 
         bool IsAdVisible { get; }
         bool IsAdSupported { get; }
+        bool IsAdFullScreenVideoReady { get; }
         void ShowFullScreenVideo(FullScreenVideoHandler callback);
         void ShowRewardedVideo(RewardedVideoHandler callback);
 
+        LeaderboardInfo LeaderboardDescription { get; }
+        LeaderboardEntries LeaderboardEntries { get; }
+        LeaderboardPlayerInfo LeaderboardPlayerEntry { get; }
+        bool IsLeaderboardSupported { get; }
+        void SetLeaderboardScore(string name, int score, MstJson extra);
+        void GetLeaderboardInfo(string name, LeaderboardInfoHandler callback);
+        void GetLeaderboardEntries(string name, MstJson options, LeaderboardEntriesHandler callback);
+        void GetLeaderboardPlayerInfo(string name, LeaderboardPlayerInfoHandler callback);
+
+        void ReviewGame();
         void SetString(string key, string value);
         void SetFloat(string key, float value);
         void SetInt(string key, int value);

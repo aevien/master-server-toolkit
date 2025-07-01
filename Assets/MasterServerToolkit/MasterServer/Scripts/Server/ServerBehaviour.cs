@@ -129,6 +129,11 @@ namespace MasterServerToolkit.MasterServer
         private readonly ConcurrentDictionary<int, IPeer> unauthenticatedPeers = new ConcurrentDictionary<int, IPeer>();
 
         /// <summary>
+        /// All conected to server peers
+        /// </summary>
+        public IEnumerable<IPeer> Peers => connectedPeers.Values;
+
+        /// <summary>
         /// Current server behaviour <see cref="Logger"/>
         /// </summary>
         protected Logging.Logger logger;

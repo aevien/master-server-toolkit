@@ -1,5 +1,4 @@
 ﻿using MasterServerToolkit.Networking;
-using System;
 using static MasterServerToolkit.MasterServer.ObservableProfile;
 
 namespace MasterServerToolkit.MasterServer

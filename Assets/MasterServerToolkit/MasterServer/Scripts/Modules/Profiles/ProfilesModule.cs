@@ -288,8 +288,11 @@ namespace MasterServerToolkit.MasterServer
 
         protected void NotifyProfileLoaded(ObservableServerProfile profile)
         {
+            ProfileLoaded(profile);
             OnProfileLoaded?.Invoke(profile);
         }
+
+        protected virtual void ProfileLoaded(ObservableServerProfile profile) { }
 
         /// <summary>
         /// 

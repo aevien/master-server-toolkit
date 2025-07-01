@@ -82,6 +82,7 @@ namespace MasterServerToolkit.GameService
             Player = new PlayerInfo();
             IsInAppPurchaseSupported = true;
             IsAdSupported = true;
+            IsLeaderboardSupported = true;
         }
 
         #region SERVICE
@@ -94,6 +95,8 @@ namespace MasterServerToolkit.GameService
                 base.Init(options);
                 StartCoroutine(InitCoroutine());
             }
+#else
+            StartCoroutine(InitCoroutine());
 #endif
         }
 
@@ -133,10 +136,13 @@ namespace MasterServerToolkit.GameService
             }
 
             Gb_Yg_GetPlayer();
-#else
-            yield return new WaitForEndOfFrame();
 #endif
             Mst.Localization.Lang = Lang;
+
+            yield return new WaitForSecondsRealtime(0.1f);
+
+            GameStart();
+            GameStop();
         }
 
         private void ParseEnvironment()
@@ -148,7 +154,6 @@ namespace MasterServerToolkit.GameService
 #endif
             }
         }
-
         #endregion
     }
 }

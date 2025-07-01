@@ -61,14 +61,14 @@ const libraryYandexGamesPlatform = {
 				console.log('Environment info: ', window.ysdk.environment)
 
 				// Init leaderboard
-				ysdk.getLeaderboards().then(_lb => {
-					window.yandexLeaderboard = _lb
+				window.ysdk.getLeaderboards().then(_lb => {
+					window.yandexLeaderboards = _lb
 				}).catch(error => {
 					console.log('An error occurred while getting leaderboards', error);
 				});
 
-				ysdk.getPayments({ signed: true }).then(_payments => {
-					window.yandexPayments = _payments;
+				window.ysdk.getPayments({ signed: true }).then(payments => {
+					window.yandexPayments = payments;
 				}).catch(error => {
 					console.log('An error occurred while getting Yandex payments', error);
 					// Покупки недоступны. Включите монетизацию в консоли разработчика.
@@ -84,13 +84,10 @@ const libraryYandexGamesPlatform = {
 				window.ysdk.on('game_api_resume', () => {
 					unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGameApiPause', 0);
 				});
-
-				// Init callback
 			});
 		}
 		
 		// Удаленный https://sdk.games.s3.yandex.net/sdk.js
-		const params = gamePlatform.getUrlParams();
 		const sdk = '/sdk.js';
 		const s = document.createElement('script');
 		s.src = sdk;
@@ -100,10 +97,19 @@ const libraryYandexGamesPlatform = {
 	},
 
 	Gb_Yg_Environment: function () {
-		const environment = JSON.stringify(window.ysdk.environment);
-		var bufferSize = lengthBytesUTF8(environment) + 1;
+		const environment = {
+			app: {
+				id: window.ysdk.environment.app.id
+			},
+			i18n: {
+				lang: window.ysdk.environment.i18n.lang,
+				tld: window.ysdk.environment.i18n.tld
+			},
+			payload: window.ysdk.environment.payload
+		}
+		var bufferSize = lengthBytesUTF8(JSON.stringify(environment)) + 1;
 		var buffer = _malloc(bufferSize);
-		stringToUTF8(environment, buffer, bufferSize);
+		stringToUTF8(JSON.stringify(environment), buffer, bufferSize);
 		return buffer;
 	},
 
@@ -217,29 +223,114 @@ const libraryYandexGamesPlatform = {
 		})
 	},
 
-	Gb_Yg_SetLeaderboardScore(data) {
+	Gb_Yg_SetLeaderboardScore: function(data) {
 		const json = JSON.parse(UTF8ToString(data));
 		window.ysdk.isAvailableMethod('leaderboards.setLeaderboardScore').then(isAvailable => {
 			if (isAvailable === true) {
-				window.yandexLeaderboard.setLeaderboardScore(json.name, json.score, json.extraData);
+				window.yandexLeaderboards.setLeaderboardScore(json.leaderboardName, json.score, json.extraData);
 			}
 		});
 	},
 
 	Gb_Yg_GetLeaderboardDescription: function(name) {
-		window.yandexLeaderboard.getLeaderboardDescription(UTF8ToString(name)).then(data => {
-			unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGetLeaderboardDescription', JSON.stringify(data));
+		window.yandexLeaderboards.getLeaderboardDescription(UTF8ToString(name)).then(data => {
+			const leaderboard = {
+				appID: data.appID,
+				default: data.default,
+				description: {
+					invert_sort_order: data.description.invert_sort_order,
+					score_format: {
+						options: {
+							decimal_offset: data.description.score_format.options.decimal_offset
+						},
+						type: data.description.score_format.type
+					}
+				},
+				name: data.name,
+				title: data.title
+			}
+
+			unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGetLeaderboardDescription', JSON.stringify(leaderboard));
 		}).catch(error => {
-			console.error('An error occurred while getting description of ' + name, error);
+			console.error('An error occurred while getting description of ' + UTF8ToString(name), error);
 		});
 	},
 
 	Gb_Yg_GetLeaderboardEntries: function(name, options) {
-		window.yandexLeaderboard.getLeaderboardEntries(UTF8ToString(data), JSON.parse(UTF8ToString(options))).then(data => {
-			unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGetLeaderboardEntries', JSON.stringify(data));
+
+		window.yandexLeaderboards.getLeaderboardEntries(UTF8ToString(name), JSON.parse(UTF8ToString(options))).then(data => {
+			const leaderboardEntries = {
+				leaderboard: {
+					appID: data.leaderboard.appID,
+					default: data.leaderboard.default,
+					description: data.leaderboard.description,
+					name: data.leaderboard.name,
+					title: data.leaderboard.title
+				},
+				ranges: data.ranges,
+				userRank: data.userRank,
+				entries: []
+			}
+
+			data.entries.forEach(e => {
+				const leaderboardPlayerEntry = {
+					score: e.score,
+					extraData: e.extraData,
+					rank: e.rank,
+					player: {
+						avatar: e.player.getAvatarSrc('medium'),
+						lang: e.player.lang,
+						publicName: e.player.publicName,
+						scopePermissions: e.player.scopePermissions,
+						uniqueID: e.player.uniqueID,
+					},
+					formattedScore: e.formattedScore
+				}
+
+				leaderboardEntries.entries.push(leaderboardPlayerEntry);
+			})
+
+			unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGetLeaderboardEntries', JSON.stringify(leaderboardEntries));
 		}).catch(error => {
-			console.error('An error occurred while getting entries of ' + UTF8ToString(data), error);
+			console.error('An error occurred while getting entries of leaderboard', error);
+			unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGetLeaderboardEntries', JSON.stringify({error: error}));
 		});
+	},
+
+	Gb_Yg_GetLeaderboardPlayerEntry: function(name) {
+		window.yandexLeaderboards.getLeaderboardPlayerEntry(UTF8ToString(name)).then(data => {
+			const leaderboardPlayerEntry = {
+				score: data.score,
+				extraData: data.extraData,
+				rank: data.rank,
+				player: {
+					avatar: data.player.getAvatarSrc('medium'),
+					lang: data.player.lang,
+					publicName: data.publicName,
+					scopePermissions: data.player.scopePermissions,
+					uniqueID: data.player.uniqueID,
+				},
+				formattedScore: data.formattedScore
+			}
+			
+			unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGetLeaderboardPlayerEntry', JSON.stringify(leaderboardPlayerEntry));
+		}).catch(error => {
+			unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnGetLeaderboardPlayerEntry', JSON.stringify({error: error}));
+			console.error('An error occurred while getting leaderboard player entry. ', error);
+		});
+	},
+
+	Gb_Yg_ReviewGame: function(){
+		window.ysdk.feedback.canReview().then(({ value, reason }) => {
+            if (value) {
+                ysdk.feedback.requestReview()
+                    .then(({ feedbackSent }) => {
+                        console.log(feedbackSent);
+                    })
+            } else {
+                console.log(reason)
+            }
+        })
 	},
 
 	Gb_Yg_Purchase: function(productId, payload) {
@@ -251,6 +342,7 @@ const libraryYandexGamesPlatform = {
 					developerPayload: purchase.developerPayload,
 					signature: purchase.signature
 				}
+
 				unityInstance.SendMessage('MST_GAME_BRIDGE', 'Yg_OnPurchaseResult', JSON.stringify(data));
 			}).catch(error => {
 				console.error('An error occurred while trying to make purchase.', error);

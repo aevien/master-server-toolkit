@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1182598396324832459}
   - component: {fileID: 6429945057897662660}
   - component: {fileID: 4418077282172698758}
+  - component: {fileID: 3143094654666640405}
   m_Layer: 0
   m_Name: --ROOM_SERVER
   m_TagString: Untagged
@@ -28,13 +29,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1182598396324832461}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1182598396324832457
 MonoBehaviour:
@@ -144,6 +145,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _authenticator: {fileID: 0}
+  _remoteClientTimeout: 2
+  _remoteClientTimeoutDuration: 60
+  _allowPredictedSpawning: 0
+  _reservedObjectIds: 15
   _syncTypeRate: 0.1
   SpawnPacking:
     Position: 0
@@ -153,7 +158,6 @@ MonoBehaviour:
   _frameRate: 500
   _shareIds: 1
   _startOnHeadless: 0
-  _limitClientMTU: 1
 --- !u!114 &4418077282172698758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,8 +170,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57ce8bbb58966cb45a7140f32da5327a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _useGlobalScenes: 1
+  _enableGlobalScenes: 1
   _startInOffline: 0
-  _offlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Client/Client.unity
-  _onlineScene: Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room/Room.unity
+  _offlineScene: 
+  _onlineScene: 
   _replaceScenes: 0
+--- !u!114 &3143094654666640405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182598396324832461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 362dfd7e6009fb44c90beec3df0ad853, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _useWss: 0
+  _sslConfiguration:
+    Enabled: 0
+    CertificatePath: 
+    CertificatePassword: 
+    SslProtocol: 0
+  _mtu: 1023
+  _port: 27777
+  _maximumClients: 2000
+  _clientAddress: localhost

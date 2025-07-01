@@ -13,17 +13,19 @@ namespace MasterServerToolkit.GameService
     {
         #region INSPECTOR
 
-        [Header("Settings"), SerializeField]
-        private GameServiceId serviceId;
-        [SerializeField]
-        private bool useSelectedServiceId;
-
-        [Header("YG Settings"), SerializeField, Range(5f, 60f)]
-        private float ygSaveInterval = 5f;
+        [Header("YG Settings"), SerializeField, Range(6f, 60f)]
+        private float ygSaveInterval = 6f;
         [SerializeField, Range(180f, 600f)]
         private float ygInterstitialAdInterval = 180f;
         [SerializeField]
         private bool ygAutoSendApiReady = true;
+        [SerializeField, Range(6f, 60f)]
+        private float ygLeaderboardPlayerEntryInterval = 6f;
+        [SerializeField, Range(16f, 60f)]
+        private float ygLeaderboardEntriesInterval = 16f;
+
+        [Header("Editor Only Settings"), SerializeField]
+        private bool useFakeData = true;
 
         #endregion
 
@@ -32,6 +34,7 @@ namespace MasterServerToolkit.GameService
         private static extern string MstGetPlatformId();
 #endif
 
+        private GameServiceId serviceId;
         private IGameService _service;
         public static IGameService Service => Instance._service;
 
@@ -39,12 +42,14 @@ namespace MasterServerToolkit.GameService
         {
             base.Awake();
 
-            if (!useSelectedServiceId)
-            {
-                AutodetectPlatformId();
-            }
+            AutodetectPlatformId();
+
+            logger.Info($"Starting {serviceId} game service");
 
             var options = MstJson.EmptyObject;
+#if UNITY_EDITOR
+            options.SetField(GameServiceOptionKeys.EDITOR_USE_FAKE_DATA, useFakeData);
+#endif
 
             switch (serviceId)
             {
@@ -56,12 +61,15 @@ namespace MasterServerToolkit.GameService
                     options.SetField(GameServiceOptionKeys.YG_SAVE_DATA_INTERVAL, ygSaveInterval);
                     options.SetField(GameServiceOptionKeys.YG_INTERSTITIAL_AD_INTERVAL, ygInterstitialAdInterval);
                     options.SetField(GameServiceOptionKeys.YG_AUTOSEND_API_READY, ygAutoSendApiReady);
+                    options.SetField(GameServiceOptionKeys.YG_LEADERBOARD_PLAYER_ENTRY_INTERVAL, ygLeaderboardPlayerEntryInterval);
+                    options.SetField(GameServiceOptionKeys.YG_LEADERBOARD_ENTRIES_INTERVAL, ygLeaderboardEntriesInterval);
                     break;
                 default:
                     _service = gameObject.AddComponent<SelfService>();
                     break;
             }
 
+            _service.Logger = logger;
             _service.Init(options);
         }
 

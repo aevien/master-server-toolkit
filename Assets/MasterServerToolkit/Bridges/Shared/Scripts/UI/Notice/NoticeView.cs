@@ -27,7 +27,7 @@ namespace MasterServerToolkit.Bridges
         /// <summary>
         /// 
         /// </summary>
-        private List<NoticeItem> noticeItems = new List<NoticeItem>();
+        protected readonly List<NoticeItem> noticeItems = new List<NoticeItem>();
 
         protected override void Awake()
         {
@@ -37,7 +37,7 @@ namespace MasterServerToolkit.Bridges
             messagesContainer.RemoveChildren();
         }
 
-        protected void Start()
+        protected virtual void Start()
         {
             // Initialize all items for notice items
             InitAllNotices();
@@ -76,6 +76,11 @@ namespace MasterServerToolkit.Bridges
 
             noticeItems.RemoveAt(0);
             noticeItems.Add(noticeItem);
+        }
+
+        public void Message(string message)
+        {
+            Notifications_OnNotificationReceivedEvent(message);
         }
     }
 }

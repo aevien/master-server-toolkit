@@ -768,7 +768,7 @@ namespace MasterServerToolkit.MasterServer
 
             // Get room id from finalization data
             var roomId = data.AsInt(MstDictKeys.ROOM_ID);
-            var room = Module.RoomsModule.GetRoom(roomId);
+            var room = Module.RoomsModule.GetRoomById(roomId);
 
             if (room == null)
             {

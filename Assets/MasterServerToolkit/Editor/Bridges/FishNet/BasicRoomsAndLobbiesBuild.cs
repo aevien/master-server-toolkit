@@ -28,7 +28,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
                 scenes = new[] {
-                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room/Room.unity"
+                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room.unity"
                 },
                 locationPathName = Path.Combine(buildFolder, "Room.exe"),
                 target = BuildTarget.StandaloneWindows64,
@@ -73,7 +73,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
-                scenes = new[] { "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Master/Master.unity" },
+                scenes = new[] { "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Master.unity" },
                 locationPathName = Path.Combine(buildFolder, "MasterAndSpawner.exe"),
                 target = BuildTarget.StandaloneWindows64,
 #if UNITY_2021_1_OR_NEWER
@@ -119,7 +119,7 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
                 scenes = new[] {
-                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Spawner/Spawner.unity"
+                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Spawner.unity"
                 },
                 locationPathName = Path.Combine(buildFolder, "Spawner.exe"),
                 target = BuildTarget.StandaloneWindows64,
@@ -166,8 +166,8 @@ namespace MasterServerToolkit.MasterServer.Examples.FishNetworking
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
                 scenes = new[] {
-                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Client/Client.unity",
-                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room/Room.unity"
+                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Client.unity",
+                    "Assets/MasterServerToolkit/Bridges/FishNet/BasicRoomsAndLobbies/Scenes/Room.unity"
                 },
                 locationPathName = Path.Combine(buildFolder, "Client.exe"),
                 target = BuildTarget.StandaloneWindows64,

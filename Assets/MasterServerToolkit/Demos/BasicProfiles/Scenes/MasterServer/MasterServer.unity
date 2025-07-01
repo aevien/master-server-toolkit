@@ -425,13 +425,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  useAuthModule: 1
   unloadProfileAfter: 15
   saveProfileDebounceTime: 1
   clientUpdateDebounceTime: 0
   editProfilePermissionLevel: 0
   maxUpdateSize: 1048576
-  profileLoadTimeoutSeconds: 10000
+  profileLoadTimeoutSeconds: 10
   databaseAccessorFactory: {fileID: 1189862050}
   populatorsDatabase: {fileID: 11400000, guid: 397819eb862b7e942b1e4ef77bee5643, type: 2}
 --- !u!114 &1189862050

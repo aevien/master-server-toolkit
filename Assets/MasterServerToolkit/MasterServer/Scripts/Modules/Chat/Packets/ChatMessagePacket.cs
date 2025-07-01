@@ -27,7 +27,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write((byte)MessageType);
+            writer.Write(MessageType);
             writer.Write(Receiver);
             writer.Write(Sender);
             writer.Write(Message);
@@ -35,7 +35,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
-            MessageType = (ChatMessageType)reader.ReadByte();
+            MessageType = reader.ReadEnum<ChatMessageType>();
             Receiver = reader.ReadString();
             Sender = reader.ReadString();
             Message = reader.ReadString();

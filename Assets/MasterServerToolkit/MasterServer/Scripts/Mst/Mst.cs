@@ -12,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "4.20.0";
+        public static string Version => "4.21.0";
 
         /// <summary>
         /// Just name of the framework
@@ -38,11 +38,6 @@ namespace MasterServerToolkit.MasterServer
         /// Collection of methods, that can be used from your servers
         /// </summary>
         public static MstServer Server { get; private set; }
-
-        /// <summary>
-        /// Contains methods to help work with threads
-        /// </summary>
-        public static MstConcurrency Concurrency { get; private set; }
 
         /// <summary>
         /// Contains methods for creating some of the common types
@@ -112,7 +107,6 @@ namespace MasterServerToolkit.MasterServer
             Security = new MstSecurity(Connection);
 
             Create = new MstCreate();
-            Concurrency = new MstConcurrency();
             Events = new MstEventsChannel();
             TrafficStatistics = new MstTrafficStatistics();
             Options = new MstProperties();

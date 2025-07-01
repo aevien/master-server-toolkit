@@ -272,7 +272,7 @@ namespace MasterServerToolkit.Bridges.MirrorNetworking
 
         #region ROOM SERVER
 
-        private void ValidateRoomAccessRequestHandler(NetworkConnection conn, ValidateRoomAccessRequestMessage mess)
+        private void ValidateRoomAccessRequestHandler(NetworkConnectionToClient conn, ValidateRoomAccessRequestMessage mess)
         {
             if (roomServerManager)
             {

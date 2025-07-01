@@ -42,6 +42,8 @@ namespace MasterServerToolkit.GameService
             setPlayerDataCallback = callback;
         }
 
+        public virtual void ReviewGame() { }
+
         #endregion
     }
 }

@@ -1,8 +1,6 @@
-﻿using MasterServerToolkit.Logging;
-using MasterServerToolkit.Utils;
+﻿using MasterServerToolkit.Utils;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace MasterServerToolkit.Networking
@@ -17,10 +15,8 @@ namespace MasterServerToolkit.Networking
 
     public class MstTimer : SingletonBehaviour<MstTimer>
     {
-        /// <summary>
-        /// List of main thread actions
-        /// </summary>
-        private Queue<Action> _mainThreadActions;
+        private readonly WaitForSecondsRealtime waitForTick = new WaitForSecondsRealtime(1f);
+        private readonly WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
 
         /// <summary>
         /// Current tick of scaled time
@@ -32,53 +28,25 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public static event TickActionHandler OnTickEvent;
 
-        /// <summary>
-        /// Invokes when application shuts down
-        /// </summary>
-        public static event Action OnApplicationQuitEvent;
-
         protected override void Awake()
         {
             base.Awake();
 
-            if (isNowDestroying) return;
-
             // Framework requires applications to run in background
             Application.runInBackground = true;
-
-            // Create list of main thread actions
-            _mainThreadActions = new Queue<Action>();
         }
 
         protected virtual void Start()
         {
             // Start timer
-            StartCoroutine(StartTicker());
-        }
-
-        private void Update()
-        {
-            lock (_mainThreadActions)
-            {
-                while (_mainThreadActions.Count > 0)
-                    _mainThreadActions.Dequeue()?.Invoke();
-            }
+            StartCoroutine(StartTickTimer());
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
-
-            _mainThreadActions.Clear();
             CurrentTick = 0;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void OnApplicationQuit()
-        {
-            OnApplicationQuitEvent?.Invoke();
+            OnTickEvent = null;
         }
 
         /// <summary>
@@ -99,21 +67,14 @@ namespace MasterServerToolkit.Networking
         }
 
 #if !UNITY_WEBGL
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="callback"></param>
-        /// <returns></returns>
         private IEnumerator WaitPingCoroutine(string address, WaitPingCallback callback, float timeout)
         {
-            DateTime startTime = DateTime.Now;
-            DateTime endTime = startTime.AddSeconds(timeout);
+            float startTime = Time.realtimeSinceStartup;
             var ping = new Ping(address);
 
             while (!ping.isDone)
             {
-                if (endTime <= DateTime.Now)
+                if (Time.realtimeSinceStartup - startTime > timeout)
                 {
                     break;
                 }
@@ -121,12 +82,10 @@ namespace MasterServerToolkit.Networking
                 yield return null;
             }
 
-            bool success = ping.isDone;
-
-            if (success)
+            if (ping.isDone)
                 callback?.Invoke(ping.time);
             else
-                callback?.Invoke((int)(DateTime.Now - startTime).TotalMilliseconds);
+                callback?.Invoke((int)((Time.realtimeSinceStartup - startTime) * 1000));
         }
 #endif
 
@@ -238,52 +197,21 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         private IEnumerator StartWaitingForEndOfFrame(Action callback)
         {
-            yield return new WaitForEndOfFrame();
+            yield return waitForEndOfFrame;
             callback.Invoke();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="action"></param>
-        public static void RunInMainThread(Action action)
-        {
-            if (TryGetOrCreate(out var instance))
-                instance.AddToMainThread(action);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="action"></param>
-        private void AddToMainThread(Action action)
-        {
-            lock (_mainThreadActions)
-                _mainThreadActions.Enqueue(action);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <returns></returns>
-        private IEnumerator StartTicker()
+        private IEnumerator StartTickTimer()
         {
-            CurrentTick = 0;
-
             while (true)
             {
-                yield return new WaitForSecondsRealtime(1);
-
+                yield return waitForTick;
                 CurrentTick++;
-
-                try
-                {
-                    OnTickEvent?.Invoke(CurrentTick);
-                }
-                catch (Exception e)
-                {
-                    Logs.Error(e);
-                }
+                OnTickEvent?.Invoke(CurrentTick);
             }
         }
     }

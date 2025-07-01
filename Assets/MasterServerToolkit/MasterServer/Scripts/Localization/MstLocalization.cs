@@ -10,11 +10,24 @@ namespace MasterServerToolkit.Localization
 {
     public class MstLocalization
     {
-        private string comments = "#";
-        private string rowsSeparator = "\n";
-        private string colsSeparator = ";";
-        private string selectedLang = "en";
+        #region Constants and Fields
+
+        private const string Comments = "#";
+        private const string RowsSeparator = "\n";
+        private const string ColsSeparator = ";";
+        private const string DefaultUndefinedValue = "undefined";
+        private const string PreferredDefaultLanguage = "en";
+
+        // Pre-compiled regex patterns for better performance
+        private static readonly Regex NewlinePattern = new Regex(@"\n+", RegexOptions.Compiled);
+        private static readonly Regex WhitespacePattern = new Regex(@"\s+", RegexOptions.Compiled);
+
+        private string selectedLang = PreferredDefaultLanguage;
         private readonly Dictionary<string, Dictionary<string, string>> _localization = new Dictionary<string, Dictionary<string, string>>();
+
+        #endregion
+
+        #region Properties
 
         /// <summary>
         /// Current selected language
@@ -27,134 +40,300 @@ namespace MasterServerToolkit.Localization
             }
             set
             {
-                if (string.IsNullOrEmpty(value) || !_localization.ContainsKey(value))
+                var newLanguage = DetermineValidLanguage(value);
+
+                if (selectedLang != newLanguage)
                 {
-                    if (selectedLang != "en")
-                    {
-                        selectedLang = "en";
-                        LanguageChangedEvent?.Invoke(selectedLang);
-                    }
-                }
-                else
-                {
-                    if (selectedLang != value.ToLower())
-                    {
-                        selectedLang = value.ToLower();
-                        LanguageChangedEvent?.Invoke(selectedLang);
-                    }
+                    selectedLang = newLanguage;
+                    LanguageChangedEvent?.Invoke(selectedLang);
                 }
             }
         }
 
         /// <summary>
-        /// Returns translated string by key
+        /// Returns translated string by key with fallback mechanism
         /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <param name="key">Translation key</param>
+        /// <returns>Translated string or fallback value</returns>
         public string this[string key]
         {
             get
             {
-                if (_localization.TryGetValue(selectedLang, out var dictionary) && dictionary != null)
+                if (string.IsNullOrEmpty(key))
+                    return DefaultUndefinedValue;
+
+                // Try to find translation in current language
+                if (TryGetTranslation(selectedLang, key, out string translation))
+                    return translation;
+
+                // Fallback to preferred default language if current language is different
+                if (selectedLang != PreferredDefaultLanguage &&
+                    TryGetTranslation(PreferredDefaultLanguage, key, out translation))
+                    return translation;
+
+                // Fallback to any available language with the key
+                foreach (var langDict in _localization.Values)
                 {
-                    if (dictionary.ContainsKey(key) && !string.IsNullOrEmpty(dictionary[key]))
-                    {
-                        return dictionary[key];
-                    }
-                    else
-                    {
-                        return key;
-                    }
+                    if (langDict.TryGetValue(key, out translation) && !string.IsNullOrEmpty(translation))
+                        return translation;
                 }
-                else
-                {
-                    return key;
-                }
+
+                // Final fallback: return the key itself
+                return key;
             }
         }
+
+        #endregion
+
+        #region Events
 
         /// <summary>
         /// Invoked when the language changes
         /// </summary>
         public event Action<string> LanguageChangedEvent;
 
+        #endregion
+
+        #region Constructor
+
         public MstLocalization()
         {
-            selectedLang = Mst.Args.AsString(Mst.Args.Names.DefaultLanguage, selectedLang);
-            _localization[selectedLang] = new Dictionary<string, string>();
+            // Get initial language from command line args
+            var initialLanguage = Mst.Args.AsString(Mst.Args.Names.DefaultLanguage, PreferredDefaultLanguage);
+
+            // Load localization data first
             LoadLocalization();
+
+            // Set the language after loading (this will trigger validation and fallback if needed)
+            Lang = initialLanguage;
         }
 
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        /// Registers localization key-value by given language
+        /// </summary>
+        /// <param name="lang">Language code</param>
+        /// <param name="key">Translation key</param>
+        /// <param name="value">Translation value</param>
+        public void RegisterKey(string lang, string key, string value)
+        {
+            if (string.IsNullOrEmpty(lang) || string.IsNullOrEmpty(key))
+                return;
+
+            string langValue = lang.ToLower().Trim();
+
+            if (!_localization.ContainsKey(langValue))
+                _localization[langValue] = new Dictionary<string, string>();
+
+            _localization[langValue][key] = value ?? string.Empty;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Determines a valid language based on available localizations
+        /// </summary>
+        /// <param name="requestedLanguage">Requested language code</param>
+        /// <returns>Valid language code</returns>
+        private string DetermineValidLanguage(string requestedLanguage)
+        {
+            // Check if requested language is available and has content
+            if (!string.IsNullOrEmpty(requestedLanguage))
+            {
+                var cleanLanguage = requestedLanguage.ToLower().Trim();
+                if (_localization.ContainsKey(cleanLanguage) && _localization[cleanLanguage].Count > 0)
+                    return cleanLanguage;
+            }
+
+            // Fallback to preferred default language if available and has content
+            if (_localization.ContainsKey(PreferredDefaultLanguage) &&
+                _localization[PreferredDefaultLanguage].Count > 0)
+                return PreferredDefaultLanguage;
+
+            // Fallback to first available language with content
+            var firstAvailableLanguage = _localization
+                .FirstOrDefault(kvp => kvp.Value.Count > 0).Key;
+
+            return firstAvailableLanguage ?? PreferredDefaultLanguage;
+        }
+
+        /// <summary>
+        /// Attempts to get translation for specific language and key
+        /// </summary>
+        /// <param name="language">Language code</param>
+        /// <param name="key">Translation key</param>
+        /// <param name="translation">Output translation if found</param>
+        /// <returns>True if translation was found</returns>
+        private bool TryGetTranslation(string language, string key, out string translation)
+        {
+            translation = null;
+            return _localization.TryGetValue(language, out var dictionary) &&
+                   dictionary?.TryGetValue(key, out translation) == true &&
+                   !string.IsNullOrEmpty(translation);
+        }
+
+        /// <summary>
+        /// Loads localization from resource files
+        /// </summary>
         private void LoadLocalization()
         {
             var localizationFile = Resources.Load<TextAsset>("Localization/localization");
             var customLocalizationFile = Resources.Load<TextAsset>("Localization/custom_localization");
 
-            ParseLocalization(localizationFile);
-            ParseLocalization(customLocalizationFile);
+            ParseLocalization(localizationFile, "main localization");
+            ParseLocalization(customLocalizationFile, "custom localization");
         }
 
-        private void ParseLocalization(TextAsset localizationFile)
+        /// <summary>
+        /// Parses localization data from TextAsset with improved error handling
+        /// </summary>
+        /// <param name="localizationFile">TextAsset containing localization data</param>
+        /// <param name="fileName">File name for logging purposes</param>
+        private void ParseLocalization(TextAsset localizationFile, string fileName)
         {
+            if (localizationFile == null || string.IsNullOrEmpty(localizationFile.text))
+            {
+                Logs.Warn($"Localization file '{fileName}' is empty or missing");
+                return;
+            }
+
             try
             {
-                if (localizationFile != null && !string.IsNullOrEmpty(localizationFile.text))
+                var cleanRows = PrepareRows(localizationFile.text);
+
+                if (cleanRows.Count == 0)
                 {
-                    string nPattern = @"\n+";
-                    string sPattern = @"\s+";
-
-                    List<string> rows = localizationFile.text.Split(rowsSeparator, StringSplitOptions.RemoveEmptyEntries)
-                        .Where(r => !r.StartsWith(comments) && !r.StartsWith(colsSeparator))
-                        .Select(r =>
-                        {
-                            var cleanRow = Regex.Replace(r, nPattern, "");
-                            cleanRow = Regex.Replace(cleanRow, sPattern, " ");
-                            return cleanRow;
-                        }).ToList();
-
-                    string[] langCols = rows[0].Split(colsSeparator);
-
-                    for (int i = 1; i < rows.Count; i++)
-                    {
-                        string[] valueCols = rows[i].Split(colsSeparator);
-
-                        if (valueCols.Length > langCols.Length)
-                        {
-                            throw new Exception($"The row with the key {valueCols[0]} has more " +
-                                $"columns than the table has. Make sure that the string does " +
-                                $"not have an extra separator {colsSeparator}");
-                        }
-
-                        for (int j = 1; j < valueCols.Length; j++)
-                        {
-                            RegisterKey(langCols[j].Trim(), valueCols[0].Trim(), valueCols[j].Trim());
-                        }
-                    }
+                    Logs.Warn($"No valid rows found in {fileName} file");
+                    return;
                 }
+
+                var languageHeaders = ParseLanguageHeaders(cleanRows[0]);
+                if (languageHeaders.Length < 2) // Need at least key column + one language column
+                {
+                    Logs.Error($"Invalid header structure in {fileName} file. Expected at least 2 columns.");
+                    return;
+                }
+
+                ParseDataRows(cleanRows.Skip(1), languageHeaders, fileName);
+
+                Logs.Info($"Successfully loaded {fileName} with {languageHeaders.Length - 1} languages");
+            }
+            catch (FormatException e)
+            {
+                Logs.Error($"Invalid {fileName} file format: {e.Message}");
+            }
+            catch (IndexOutOfRangeException e)
+            {
+                Logs.Error($"Structure mismatch in {fileName} file: {e.Message}");
             }
             catch (Exception e)
             {
-                Logs.Error("An error occurred during localization parsing");
+                Logs.Error($"Unexpected error during {fileName} parsing: {e.Message}");
                 Logs.Error(e);
             }
         }
 
         /// <summary>
-        /// Registers localization key-value by given language
+        /// Prepares and cleans rows from raw localization text
         /// </summary>
-        /// <param name="lang"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        public void RegisterKey(string lang, string key, string value)
+        /// <param name="rawText">Raw text from localization file</param>
+        /// <returns>List of cleaned rows</returns>
+        private List<string> PrepareRows(string rawText)
         {
-            if (string.IsNullOrEmpty(lang) || string.IsNullOrEmpty(key)) return;
-
-            string langValue = lang.ToLower();
-
-            if (!_localization.ContainsKey(langValue))
-                _localization[langValue] = new Dictionary<string, string>();
-
-            _localization[langValue][key] = value;
+            return rawText.Split(RowsSeparator, StringSplitOptions.RemoveEmptyEntries)
+                .Where(r => !r.StartsWith(Comments) && !r.StartsWith(ColsSeparator))
+                .Select(CleanRow)
+                .Where(r => !string.IsNullOrWhiteSpace(r))
+                .ToList();
         }
+
+        /// <summary>
+        /// Cleans individual row from extra whitespace and newlines
+        /// </summary>
+        /// <param name="row">Raw row string</param>
+        /// <returns>Cleaned row string</returns>
+        private string CleanRow(string row)
+        {
+            var cleanRow = NewlinePattern.Replace(row, "");
+            cleanRow = WhitespacePattern.Replace(cleanRow, " ");
+            return cleanRow.Trim();
+        }
+
+        /// <summary>
+        /// Parses language headers from the first row
+        /// </summary>
+        /// <param name="headerRow">First row containing language codes</param>
+        /// <returns>Array of language headers</returns>
+        private string[] ParseLanguageHeaders(string headerRow)
+        {
+            return headerRow.Split(ColsSeparator)
+                .Select(header => header.Trim())
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Parses data rows and registers translations
+        /// </summary>
+        /// <param name="dataRows">Enumerable of data rows</param>
+        /// <param name="languageHeaders">Array of language headers</param>
+        /// <param name="fileName">File name for logging</param>
+        private void ParseDataRows(IEnumerable<string> dataRows, string[] languageHeaders, string fileName)
+        {
+            int rowIndex = 1; // Start from 1 since 0 is header row
+
+            foreach (var row in dataRows)
+            {
+                rowIndex++;
+
+                try
+                {
+                    var valueCols = row.Split(ColsSeparator);
+
+                    // Validate row structure
+                    if (valueCols.Length > languageHeaders.Length)
+                    {
+                        Logs.Warn($"Row {rowIndex} in {fileName} has more columns than expected. " +
+                                    $"Extra separator '{ColsSeparator}' might be present in the text.");
+                        continue;
+                    }
+
+                    if (valueCols.Length < 2) // Need at least key + one translation
+                    {
+                        Logs.Warn($"Row {rowIndex} in {fileName} has insufficient columns. Skipping.");
+                        continue;
+                    }
+
+                    var key = valueCols[0].Trim();
+                    if (string.IsNullOrEmpty(key))
+                    {
+                        Logs.Warn($"Row {rowIndex} in {fileName} has empty key. Skipping.");
+                        continue;
+                    }
+
+                    // Register translations for each available language column
+                    for (int j = 1; j < Math.Min(valueCols.Length, languageHeaders.Length); j++)
+                    {
+                        var language = languageHeaders[j].Trim();
+                        var translation = valueCols[j].Trim();
+
+                        if (!string.IsNullOrEmpty(language))
+                        {
+                            RegisterKey(language, key, translation);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logs.Warn($"Error processing row {rowIndex} in {fileName}: {e.Message}");
+                }
+            }
+        }
+
+        #endregion
     }
 }

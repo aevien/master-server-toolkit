@@ -16,7 +16,9 @@ namespace MasterServerToolkit.GameService
         private static extern void Gb_Yg_ShowRewardedVideo();
 #endif
 
-        private Coroutine interstitialAdCoroutine;
+        protected Coroutine interstitialAdCoroutine;
+
+        public override bool IsAdFullScreenVideoReady => interstitialAdCoroutine == null;
 
         #region ADVERTISEMENT
 
@@ -39,7 +41,6 @@ namespace MasterServerToolkit.GameService
 #endif
 
                 yield return new WaitForSecondsRealtime(options.GetField(GameServiceOptionKeys.YG_INTERSTITIAL_AD_INTERVAL).FloatValue);
-
                 interstitialAdCoroutine = null;
             }
         }

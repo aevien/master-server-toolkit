@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Транслитератор</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            background: #f0f2f5;
+            padding: 20px;
+            color: #2c3e50;
+        }
+
+        .app {
+            max: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1abc9c 0%, #3498db 100%);
+            color: white;
+            padding: 35px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .content {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .text-area {
+            background: #f8f9fa;
+            border: 2px solid #3498db;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 150px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: 'Inter', monospace;
+            font-size: 1rem;
+        }
+
+        .text-area:focus {
+            border-color: #1abc9c;
+            box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2);
+            outline: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            background: #1abc9c;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #16a085;
+            transform: translateY(-2px);
+        }
+
+        .btn-copy {
+            background: #3498db;
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+        }
+
+        .result {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 150px;
+            position: relative;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        .result::before {
+            content: 'Результат';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: white;
+            padding: 0 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 480px) {
+            .text-area {
+                min-height: 120px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 15px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>Транслитератор</h1>
+            <p>Преобразование русского текста в латиницу и обратно</p>
+        </div>
+        
+        <div class="content">
+            <textarea class="text-area" id="input" placeholder="Введите текст здесь..."></textarea>
+            
+            <div class="controls">
+                <button class="btn btn-toggle" onclick="toggleDirection()">
+                    <span id="btnText">Кириллица → Латиница</span>
+                </button>
+                <button class="btn btn-copy" onclick="copyResult()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="white" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                    </svg>
+                    <span>Копировать</span>
+                </button>
+                <button class="btn btn-clear" onclick="clearFields()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="white" d="M15 4h-3V2c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2H1c-.55 0-1 .45-1 1s.45 1 1 1h1v13c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V7h1c.55 0 1-.45 1-1s-.45-1-1-1zm-5-2h3v2H9V2zM9 7V5h6v2H9z"/>
+                    </svg>
+                    <span>Очистить</span>
+                </button>
+            </div>
+            
+            <div class="result" id="output"></div>
+        </div>
+    </div>
+
+    <script>
+        const cyrillicToLatinMap = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
+            'е': 'ye', 'ё': 'yo', 'ж': 'zh', 'з': 'z', 'и': 'i',
+            'й': 'j', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+            'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't',
+            'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch',
+            'ш': 'sh', 'щ': 'shch', 'ъ': "'", 'ы': 'y', 'ь': '`',
+            'э': 'e', 'ю': 'yu', 'я': 'ya',
+            'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D',
+            'Е': 'Ye', 'Ё': 'Yo', 'Ж': 'Zh', 'З': 'Z', 'И': 'I',
+            'Й': 'J', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
+            'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T',
+            'У': 'U', 'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch',
+            'Ш': 'Sh', 'Щ': 'Shch', 'Ъ': "'", 'Ы': 'Y', 'Ь': '`',
+            'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+        };
+
+        const latinToCyrillicMap = {
+            'zh': 'ж', 'kh': 'х', 'ts': 'ц', 'ch': 'ч', 'sh': 'ш',
+            'shch': 'щ', 'yu': 'ю', 'ya': 'я', 'yo': 'ё', 'j': 'й',
+            '`': 'ь', "'": 'ъ', 'y': 'ы', 'a': 'а', 'b': 'б', 'v': 'в',
+            'g': 'г', 'd': 'д', 'z': 'з', 'i': 'и', 'k': 'к',
+            'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р',
+            's': 'с', 't': 'т', 'u': 'у', 'f': 'ф',
+            'ye': 'е', 'Ye': 'Е', 'YE': 'Е', 'e': 'э', 'E': 'Э',
+            'Zh': 'Ж', 'Kh': 'Х', 'Ts': 'Ц', 'Ch': 'Ч', 'Sh': 'Ш',
+            'Shch': 'Щ', 'Yu': 'Ю', 'Ya': 'Я', 'Yo': 'Ё', 'J': 'Й',
+            'Y': 'Ы', 'A': 'А', 'B': 'Б', 'V': 'В', 'G': 'Г', 'D': 'Д',
+            'Z': 'З', 'I': 'И', 'K': 'К', 'L': 'Л', 'M': 'М',
+            'N': 'Н', 'O': 'О', 'P': 'П', 'R': 'Р', 'S': 'С', 'T': 'Т',
+            'U': 'У', 'F': 'Ф'
+        };
+
+        let currentDirection = 'cyrToLat';
+
+        function toggleDirection() {
+            currentDirection = currentDirection === 'cyrToLat' ? 'latToCyr' : 'cyrToLat';
+            document.getElementById('btnText').textContent = 
+                currentDirection === 'cyrToLat' ? 'Кириллица → Латиница' : 'Латиница → Кириллица';
+            transliterate();
+        }
+
+        function transliterate() {
+            const input = document.getElementById('input').value;
+            let result = '';
+            
+            if (currentDirection === 'cyrToLat') {
+                result = Array.from(input).map(c => cyrillicToLatinMap[c] || c).join('');
+            } else {
+                let pos = 0;
+                while (pos < input.length) {
+                    let found = false;
+                    const keys = Object.keys(latinToCyrillicMap)
+                        .filter(k => k.length > 1)
+                        .sort((a, b) => b.length - a.length);
+                    
+                    for (const key of keys) {
+                        if (input.substr(pos, key.length) === key) {
+                            result += latinToCyrillicMap[key];
+                            pos += key.length;
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!found) {
+                        result += input[pos] in latinToCyrillicMap 
+                            ? latinToCyrillicMap[input[pos]] 
+                            : input[pos];
+                        pos++;
+                    }
+                }
+            }
+            
+            document.getElementById('output').textContent = result;
+        }
+		
+		function copyResult() {
+            const output = document.getElementById('output');
+            const text = output.textContent;
+            
+            if (!text) return;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.btn-copy span');
+                btn.textContent = 'Скопировано!';
+                setTimeout(() => {
+                    btn.textContent = 'Копировать';
+                }, 2000);
+            });
+        }
+
+        function clearFields() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').textContent = '';
+        }
+
+        document.getElementById('input').addEventListener('input', transliterate);
+    </script>
+</body>
+</html>

@@ -16,9 +16,9 @@ namespace MasterServerToolkit.MasterServer
         public AchievementProgressInfo() { }
         public AchievementProgressInfo(AchievementData data)
         {
-            key = data.Key;
+            key = data.key;
             progress = 0;
-            required = data.RequiredProgress;
+            required = data.requiredProgress;
             unlockDate = DateTime.MaxValue;
         }
 

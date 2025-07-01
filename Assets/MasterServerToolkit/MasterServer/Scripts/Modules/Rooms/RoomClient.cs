@@ -102,6 +102,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void AutostartInEditor()
         {
+            logger.Debug("AutostartInEditor");
+
             Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room in editor...");
 
             MstTimer.WaitForSeconds(1f, () =>
@@ -143,6 +145,8 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void SignInAsGuest()
         {
+            logger.Debug("SignInAsGuest");
+
             Mst.Client.Auth.SignInAsGuest((account, signInError) =>
             {
                 if (account == null)
@@ -179,8 +183,6 @@ namespace MasterServerToolkit.MasterServer
 
                 Mst.Client.Rooms.GetAccess(games.First().Id, (access, getAccessError) =>
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
-
                     if (!string.IsNullOrEmpty(getAccessError))
                     {
                         logger.Error(getAccessError);
@@ -210,6 +212,13 @@ namespace MasterServerToolkit.MasterServer
         /// Closes coneection to server
         /// </summary>
         protected abstract void StartDisconnection();
+
+        protected virtual void OnDisconnected() { }
+
+        protected virtual void OnConnected()
+        {
+            Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+        }
 
         /// <summary>
         /// Starts connection process

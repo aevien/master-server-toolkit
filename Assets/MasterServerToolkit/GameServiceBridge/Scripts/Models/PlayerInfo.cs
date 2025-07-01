@@ -1,5 +1,6 @@
 using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
+using System;
 
 namespace MasterServerToolkit.GameService
 {
@@ -10,6 +11,11 @@ namespace MasterServerToolkit.GameService
         public string Avatar { get; set; } = "https://i.pravatar.cc/300";
         public bool IsGuest { get; set; } = true;
         public MstJson Extra { get; set; } = MstJson.EmptyObject;
+
+        public PlayerInfo()
+        {
+            Id = Guid.NewGuid().ToString();
+        }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {

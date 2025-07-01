@@ -34,6 +34,9 @@ namespace MasterServerToolkit.MasterServer
         protected readonly ConcurrentDictionary<int, RegisteredSpawner> spawnersList = new ConcurrentDictionary<int, RegisteredSpawner>();
         protected readonly ConcurrentDictionary<int, SpawnTask> spawnTasksList = new ConcurrentDictionary<int, SpawnTask>();
 
+        public IEnumerable<RegisteredSpawner> Spawners => spawnersList.Values;
+        public IEnumerable<SpawnTask> Tasks => spawnTasksList.Values;
+
         public event Action<RegisteredSpawner> OnSpawnerRegisteredEvent;
         public event Action<RegisteredSpawner> OnSpawnerDestroyedEvent;
         public event SpawnedProcessRegistrationHandler OnSpawnedProcessRegisteredEvent;

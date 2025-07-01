@@ -83,13 +83,111 @@ namespace MasterServerToolkit.GameService
 
         protected void Yg_OnGetLeaderboardDescription(string json)
         {
-            var leaderboardJson = new MstJson(json);
+            var data = new MstJson(json);
+            Logs.Debug(data);
+
+            if (!data.HasField("error"))
+            {
+                var info = new LeaderboardInfo
+                {
+                    Id = data["name"].StringValue,
+                    IsDefault = data["dåfault"].BoolValue,
+                    Invert = data["description"]["invert_sort_order"].BoolValue,
+                    DecimalOffset = data["description"]["score_format"]["options"]["decimal_offset"].IntValue
+                };
+
+                if (Enum.TryParse(data["description"]["score_format"]["type"].StringValue, out LeaderboardType type))
+                {
+                    info.Type = type;
+                }
+
+                LeaderboardDescription = info;
+                NotifyOnGetLeaderboardInfo(LeaderboardDescription);
+            }
+            else
+            {
+                NotifyOnGetLeaderboardInfo(null);
+            }
         }
 
         protected void Yg_OnGetLeaderboardEntries(string json)
         {
             var data = new MstJson(json);
+
+            if (!data.HasField("error"))
+            {
+                var info = new LeaderboardEntries()
+                {
+                    Id = data["leaderboard"]["name"].StringValue,
+                    IsDefault = data["leaderboard"]["dåfault"].BoolValue,
+                    Invert = data["leaderboard"]["description"]["invert_sort_order"].BoolValue,
+                    DecimalOffset = data["leaderboard"]["description"]["score_format"]["options"]["decimal_offset"].IntValue,
+                    UserRank = data["userRank"].IntValue,
+                    Start = data["ranges"]["start"].IntValue,
+                    Size = data["ranges"]["size"].IntValue
+                };
+
+                if (Enum.TryParse(data["leaderboard"]["description"]["score_format"]["type"].StringValue, out LeaderboardType type))
+                {
+                    info.Type = type;
+                }
+
+                foreach (var entry in data["entries"])
+                {
+                    var newEntry = new LeaderboardPlayerInfo
+                    {
+                        Score = entry["score"].IntValue,
+                        Extra = entry["extraData"],
+                        Rank = entry["rank"].IntValue,
+                        FormatedScore = entry["formattedScore"].StringValue,
+                        PlayerAvatar = entry["player"]["avatar"].StringValue,
+                        PlayerLang = entry["player"]["lang"].StringValue,
+                        PlayerName = entry["player"]["publicName"].StringValue,
+                        PlayerId = entry["player"]["uniqueID"].StringValue,
+                        IsPlayerAvatarAllowed = entry["player"]["scopePermissions"].HasField("avatar") && entry["player"]["scopePermissions"]["avatar"].StringValue == "allow",
+                        IsPlayerNameAllowed = entry["player"]["scopePermissions"].HasField("public_name") && entry["player"]["scopePermissions"]["public_name"].StringValue == "allow"
+                    };
+
+                    info.Entries.Add(newEntry);
+                }
+
+                LeaderboardEntries = info;
+                NotifyOnGetLeaderboardEntries(LeaderboardEntries);
+            }
+            else
+            {
+                NotifyOnGetLeaderboardEntries(LeaderboardEntries);
+            }
+        }
+
+        protected void Yg_OnGetLeaderboardPlayerEntry(string json)
+        {
+            var data = new MstJson(json);
             Logs.Debug(data);
+
+            if (!data.HasField("error"))
+            {
+                var info = new LeaderboardPlayerInfo
+                {
+                    Score = data["score"].IntValue,
+                    Extra = data["extraData"],
+                    Rank = data["rank"].IntValue,
+                    FormatedScore = data["formattedScore"].StringValue,
+                    PlayerAvatar = data["player"]["avatar"].StringValue,
+                    PlayerLang = data["player"]["lang"].StringValue,
+                    PlayerName = data["player"]["publicName"].StringValue,
+                    PlayerId = data["player"]["uniqueID"].StringValue,
+                    IsPlayerAvatarAllowed = data["player"]["scopePermissions"].HasField("avatar") && data["player"]["scopePermissions"]["avatar"].StringValue == "allow",
+                    IsPlayerNameAllowed = data["player"]["scopePermissions"].HasField("public_name") && data["player"]["scopePermissions"]["public_name"].StringValue == "allow"
+                };
+
+                LeaderboardPlayerEntry = info;
+                NotifyOnGetLeaderboardPlayerInfo(LeaderboardPlayerEntry);
+            }
+            else
+            {
+                NotifyOnGetLeaderboardPlayerInfo(null);
+            }
         }
 
         protected void Yg_OnPurchaseResult(string json)

@@ -479,17 +479,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  useAuthModule: 1
   unloadProfileAfter: 20
   saveProfileDebounceTime: 1
   clientUpdateDebounceTime: 0
   editProfilePermissionLevel: 0
+  maxUpdateSize: 1048576
+  profileLoadTimeoutSeconds: 10
   databaseAccessorFactory: {fileID: 1189862050}
-  populators: []
-  bronze: 100
-  silver: 20
-  gold: 50
-  avatarUrl: https://i.imgur.com/JQ9pRoD.png
+  populatorsDatabase: {fileID: 0}
 --- !u!114 &1189862050
 MonoBehaviour:
   m_ObjectHideFlags: 0

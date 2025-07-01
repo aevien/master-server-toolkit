@@ -8,6 +8,7 @@ namespace MasterServerToolkit.GameService
 
         public bool IsAdVisible { get; protected set; }
         public bool IsAdSupported { get; protected set; }
+        public virtual bool IsAdFullScreenVideoReady { get; protected set; }
 
         public virtual void ShowFullScreenVideo(FullScreenVideoHandler callback)
         {
