@@ -26,6 +26,7 @@ namespace MasterServerToolkit.Bridges.MongoDB
         public bool IsBanned { get; set; }
         public string DeviceId { get; set; }
         public string DeviceName { get; set; }
+        [BsonIgnore]
         public Dictionary<string, string> ExtraProperties { get; set; }
 
         public event Action<IAccountInfoData> OnChangedEvent;
