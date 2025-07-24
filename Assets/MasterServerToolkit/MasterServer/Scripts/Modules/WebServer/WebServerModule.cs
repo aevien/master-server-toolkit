@@ -46,15 +46,24 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField]
         protected int maxAge = 86400; // Preflight cache time in seconds (24 hours)
 
-        [Header("Assets"), SerializeField]
-        protected TextAsset startPage;
+        [Header("Intro"), SerializeField]
+        private TextAsset templateAsset;
+        [SerializeField]
+        protected TextAsset introAsset;
+        [SerializeField]
+        private string panelTitle = "Dashboard";
+        [SerializeField]
+        private string aboutTitle = "About";
+        [SerializeField, TextArea(10, 20)]
+        private string aboutText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
         #endregion
 
         // Server lifecycle management
         private CancellationTokenSource cancellationTokenSource;
         private HttpListener httpServer;
-        private string startPageHtml;
+        private string template = "#INNER_HTML#";
+        private string intro = string.Empty;
         private Task requestHandlingTask; // Tracks request processing task
         private bool isServerRunning = false; // Server state flag
 
@@ -90,10 +99,21 @@ namespace MasterServerToolkit.MasterServer
             httpPort = Mst.Args.AsInt(Mst.Args.Names.WebPort, httpPort);
             httpAddress = Mst.Args.AsString(Mst.Args.Names.WebAddress, httpAddress);
 
-            // Load start page content if provided
-            if (startPage != null)
+            if (templateAsset != null)
             {
-                startPageHtml = startPage.text;
+                template = templateAsset.text;
+                template = template.Replace("#PANEL-TITLE#", panelTitle);
+                template = template.Replace("#ABOUT_TITLE#", aboutTitle);
+                template = template.Replace("#ABOUT#", aboutText);
+            }
+
+            // Load start page content if provided
+            if (introAsset != null)
+            {
+                intro = introAsset.text;
+
+                if (string.IsNullOrEmpty(intro))
+                    intro = "Welcome to the home page";
             }
 
             // CRITICAL: Register Unity lifecycle event handlers for proper server shutdown
@@ -659,15 +679,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual Task<IHttpResult> Index(HttpListenerRequest Request)
         {
-            var handler = new StringResult("Home page");
-
-            if (!string.IsNullOrEmpty(startPageHtml))
-            {
-                handler.ContentType = "text/html";
-                handler.Value = startPageHtml.Replace("#MST-TITLE#", $"{Mst.Name} v.{Mst.Version}");
-                handler.Value = handler.Value.Replace("#MST-GREETINGS#", $"{Mst.Name} v.{Mst.Version}");
-            }
-
+            var handler = new HtmlResult(template);
+            handler.Value = handler.Value.Replace("#INNER_HTML#", intro);
+            handler.Value = handler.Value.Replace("#MST-TITLE#", $"{Mst.Name} v.{Mst.Version}");
             return Task.FromResult<IHttpResult>(handler);
         }
 

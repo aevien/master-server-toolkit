@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MasterServerToolkit.MasterServer
+namespace MasterServerToolkit.Extensions
 {
     public class Transliterator
     {

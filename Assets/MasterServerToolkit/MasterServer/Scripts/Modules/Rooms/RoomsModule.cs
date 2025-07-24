@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -100,6 +101,40 @@ namespace MasterServerToolkit.MasterServer
             info.Set("Rooms Info", html.ToString());
 
             return info;
+        }
+
+        public override MstJson JsonInfo()
+        {
+            int totalPlayers = 0;
+
+            var json = base.JsonInfo();
+            json.AddField("description", "This module manages the registered rooms.");
+            json.AddField("rooms", MstJson.EmptyArray);
+
+            foreach (var room in roomsList.Values)
+            {
+                totalPlayers += room.OnlineCount;
+
+                var roomJson = MstJson.EmptyObject;
+                var options = room.Options;
+
+                roomJson.AddField("id", room.RoomId);
+                roomJson.AddField("name", options.Name);
+                roomJson.AddField("ip", options.RoomIp);
+                roomJson.AddField("port", options.RoomPort);
+                roomJson.AddField("is_public", options.IsPublic);
+                roomJson.AddField("players_count", room.OnlineCount);
+                roomJson.AddField("players_max", options.MaxConnections);
+                roomJson.AddField("password", options.Password);
+                roomJson.AddField("region", options.Region);
+                roomJson.AddField("custom_options", options.CustomOptions.ToJson());
+
+                json["rooms"].Add(roomJson);
+            }
+
+            json.AddField("total_players", totalPlayers);
+
+            return json;
         }
 
         /// <summary>

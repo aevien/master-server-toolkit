@@ -3,12 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MstArgs
     {
-        private string[] _args;
+        private string[] _args = Array.Empty<string>();
 
         /// <summary>
         /// If true, master server should be started
@@ -207,8 +208,9 @@ namespace MasterServerToolkit.MasterServer
 
         public MstArgs()
         {
+#if !UNITY_WEBGL || UNITY_EDITOR
             ParseArguments();
-
+#endif
             Names = new MstArgNames();
 
             StartMaster = AsBool(Names.StartMaster, false);
@@ -258,6 +260,15 @@ namespace MasterServerToolkit.MasterServer
 
         private void ParseArguments()
         {
+#if !UNITY_EDITOR
+            if (UnityEngine.Application.isMobilePlatform)
+            {
+                return;
+            }
+#endif
+            if (_args.Length > 0)
+                return;
+
             _args = Environment.GetCommandLineArgs();
 
             // Android fix
@@ -265,13 +276,6 @@ namespace MasterServerToolkit.MasterServer
             {
                 _args = Array.Empty<string>();
             }
-
-#if !UNITY_EDITOR
-            if (UnityEngine.Application.isMobilePlatform)
-            {
-                return;
-            }
-#endif
 
             string path = AppConfigFile();
 
@@ -304,6 +308,8 @@ namespace MasterServerToolkit.MasterServer
             }
 
             _args = newArgs.ToArray();
+
+            Debug.Log(this);
         }
 
         private KeyValuePair<string, string> Parse(string input, string splitter)
@@ -343,10 +349,11 @@ namespace MasterServerToolkit.MasterServer
         public string AppConfigFile(string rootPath = "")
         {
             string path;
+            string gameDirectory = Path.GetDirectoryName(Application.dataPath);
 
             if (string.IsNullOrEmpty(rootPath))
             {
-                path = Path.Combine(Directory.GetCurrentDirectory(), "application.cfg");
+                path = Path.Combine(gameDirectory, "application.cfg");
             }
             else
             {

@@ -3,20 +3,30 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class AnalyticsWebController : WebController
     {
+        [SerializeField]
+        private TextAsset analyticsDashboardPage;
+
+        private string analyticsDashboardPageHtml;
+
         public override void Initialize(WebServerModule webServer)
         {
             base.Initialize(webServer);
 
-            webServer.RegisterGetHandler("analytics/user.json", OnGetAnalyticsJsonByUserIdHttpRequestHandler, UseCredentials);
-            webServer.RegisterGetHandler("analytics/id.json", OnGetAnalyticsJsonByIdHttpRequestHandler, UseCredentials);
-            webServer.RegisterGetHandler("analytics/key.json", OnGetAnalyticsJsonByKeyHttpRequestHandler, UseCredentials);
-            webServer.RegisterGetHandler("analytics/timestamp.json", OnGetAnalyticsJsonByTimestampHttpRequestHandler, UseCredentials);
-            webServer.RegisterGetHandler("analytics/timestamp-range.json", OnGetAnalyticsJsonByTimestampRangeHttpRequestHandler, UseCredentials);
+            analyticsDashboardPageHtml = analyticsDashboardPage.text;
+
+            webServer.RegisterGetHandler("analytics", OnGetAnalyticsHttpRequestHandler, UseCredentials);
+            webServer.RegisterGetHandler("analytics/panel", OnGetAnalyticsPanelHttpRequestHandler, UseCredentials);
+            webServer.RegisterGetHandler("analytics/user", OnGetAnalyticsJsonByUserIdHttpRequestHandler, UseCredentials);
+            webServer.RegisterGetHandler("analytics/id", OnGetAnalyticsJsonByIdHttpRequestHandler, UseCredentials);
+            webServer.RegisterGetHandler("analytics/key", OnGetAnalyticsJsonByKeyHttpRequestHandler, UseCredentials);
+            webServer.RegisterGetHandler("analytics/timestamp", OnGetAnalyticsJsonByTimestampHttpRequestHandler, UseCredentials);
+            webServer.RegisterGetHandler("analytics/timestamp-range", OnGetAnalyticsJsonByTimestampRangeHttpRequestHandler, UseCredentials);
         }
 
         private MstJson ToJson(IEnumerable<IAnalyticsInfoData> analyticsData)
@@ -32,6 +42,35 @@ namespace MasterServerToolkit.MasterServer
         }
 
         #region HANDLERS
+
+        private async Task<IHttpResult> OnGetAnalyticsHttpRequestHandler(HttpListenerRequest request)
+        {
+            int size = 1000;
+            int page = 0;
+
+            if (int.TryParse(request.QueryString["s"], out int sizeResult))
+                size = sizeResult;
+
+            if (int.TryParse(request.QueryString["p"], out int pageResult))
+                page = pageResult;
+
+            var analyticsModule = MasterServer.GetModule<AnalyticsModule>();
+
+            if (analyticsModule == null)
+            {
+                return new NotFound("Analytics module not found");
+            }
+            else
+            {
+                var analyticsData = await analyticsModule.GetAll(size, page);
+                return new JsonResult(ToJson(analyticsData));
+            }
+        }
+
+        private Task<IHttpResult> OnGetAnalyticsPanelHttpRequestHandler(HttpListenerRequest request)
+        {
+            return Task.FromResult<IHttpResult>(new HtmlResult(analyticsDashboardPageHtml));
+        }
 
         private async Task<IHttpResult> OnGetAnalyticsJsonByUserIdHttpRequestHandler(HttpListenerRequest request)
         {

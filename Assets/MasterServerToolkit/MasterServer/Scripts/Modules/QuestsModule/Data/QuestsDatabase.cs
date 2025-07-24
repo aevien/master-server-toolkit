@@ -1,13 +1,20 @@
-using System.Collections.Generic;
+using MasterServerToolkit.Utils;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     [CreateAssetMenu(menuName = MstConstants.CreateMenu + "Quests/QuestsDatabase")]
-    public class QuestsDatabase : ScriptableObject
+    public class QuestsDatabase : ObjectsDatabase<QuestData>
     {
-        [SerializeField]
-        private QuestData[] quests;
-        public IEnumerable<QuestData> Quests => quests;
+        [ContextMenu("Populate")]
+        private void Populate()
+        {
+            FindObjects();
+        }
+
+        protected override string SearchType()
+        {
+            return "t:QuestData";
+        }
     }
 }

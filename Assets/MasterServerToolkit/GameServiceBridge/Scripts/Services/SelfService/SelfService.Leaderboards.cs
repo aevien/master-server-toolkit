@@ -35,7 +35,7 @@ namespace MasterServerToolkit.GameService
                         var entry = new LeaderboardPlayerInfo
                         {
                             Score = currentScore,
-                            FormatedScore = $"{currentScore}",
+                            FormatedScore = currentScore.ToString(),
                             Rank = i + 1,
                             PlayerId = i < 9 ? Mst.Helper.CreateGuidString() : Player.Id,
                             PlayerAvatar = i < 9 ? $"https://avatar.iran.liara.run/public/{i + 1}" : Player.Avatar,

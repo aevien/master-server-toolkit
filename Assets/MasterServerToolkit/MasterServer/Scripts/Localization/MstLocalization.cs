@@ -15,7 +15,6 @@ namespace MasterServerToolkit.Localization
         private const string Comments = "#";
         private const string RowsSeparator = "\n";
         private const string ColsSeparator = ";";
-        private const string DefaultUndefinedValue = "undefined";
         private const string PreferredDefaultLanguage = "en";
 
         // Pre-compiled regex patterns for better performance
@@ -60,7 +59,7 @@ namespace MasterServerToolkit.Localization
             get
             {
                 if (string.IsNullOrEmpty(key))
-                    return DefaultUndefinedValue;
+                    return key;
 
                 // Try to find translation in current language
                 if (TryGetTranslation(selectedLang, key, out string translation))

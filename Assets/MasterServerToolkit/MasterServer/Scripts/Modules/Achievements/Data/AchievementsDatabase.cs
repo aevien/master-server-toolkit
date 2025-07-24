@@ -1,26 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
+using MasterServerToolkit.Utils;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     [CreateAssetMenu(menuName = MstConstants.CreateMenu + "Achievements/AchievementsDatabase")]
-    public class AchievementsDatabase : ScriptableObject, IEnumerable<AchievementData>
+    public class AchievementsDatabase : ObjectsDatabase<AchievementData>
     {
-        [SerializeField]
-        protected AchievementData[] achievements;
-
-        public IEnumerator<AchievementData> GetEnumerator()
+        [ContextMenu("Populate")]
+        private void Populate()
         {
-            foreach (var achievement in achievements)
-            {
-                yield return achievement;
-            }
+            FindObjects();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        protected override string SearchType()
         {
-            return GetEnumerator();
+            return "t:AchievementData";
         }
     }
 }

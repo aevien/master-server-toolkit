@@ -33,7 +33,6 @@ namespace MasterServerToolkit.Bridges
         {
             base.Awake();
             Mst.Client.Notifications.OnNotificationReceivedEvent += Notifications_OnNotificationReceivedEvent;
-
             messagesContainer.RemoveChildren();
         }
 

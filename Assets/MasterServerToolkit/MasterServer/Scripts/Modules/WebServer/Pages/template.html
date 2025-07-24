@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#MST-TITLE#</title>
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+    <!-- Google Fonts для современной типографики -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Vue 3 из CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.8/vue.global.min.js"></script>
+
+    <style>
+        /* CSS Custom Properties для легкого изменения темы */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --surface-color: #ffffff;
+            --surface-secondary: #f8fafc;
+            --text-primary: #1a202c;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+        }
+
+        /* Основная типографика и базовые стили */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+            /* Предотвращает горизонтальную прокрутку */
+        }
+
+        /* Современный навбар с glassmorphism эффектом */
+        .modern-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(20px);
+            /* Для Safari 9+ и Safari на iOS 9+ */
+            backdrop-filter: blur(20px);
+            /* Для современных браузеров */
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .brand-logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none !important;
+        }
+
+        /* Современные кнопки навигации */
+        .nav-link.modern {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: var(--border-radius-sm);
+            transition: all 0.2s ease;
+            margin: 0 0.25rem;
+        }
+
+        .nav-link.modern:hover {
+            color: var(--text-primary) !important;
+            background: var(--surface-secondary);
+            transform: translateY(-1px);
+        }
+
+        .nav-link.modern.active {
+            color: white !important;
+            background: var(--primary-gradient);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Основной контейнер с современным дизайном - полноэкранный режим */
+        .main-container {
+            height: calc(100vh - 80px);
+            /* Вычитаем высоту навбара */
+            padding: 1rem;
+            /* Небольшие поля со всех сторон */
+        }
+
+        /* Карточка для основного контента */
+        .content-card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Заголовок карточки */
+        .card-header.modern {
+            background: var(--surface-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Тело карточки - полноэкранный режим без принудительного центрирования */
+        .card-body.modern {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            /* Вертикальное расположение элементов */
+            /* Убираем принудительное центрирование для гибкости размещения контента */
+            flex: 1;
+            /* Занимает всё доступное пространство */
+        }
+
+        /* Стили для демонстрационного контента */
+        .demo-content {
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .demo-content h3 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Декоративные элементы */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .bg-decoration::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -50%;
+            width: 80%;
+            height: 80%;
+            background: var(--secondary-gradient);
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem 0;
+            }
+
+            .card-body.modern {
+                padding: 1.5rem;
+                min-height: 300px;
+            }
+
+            .brand-logo {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Micro-interactions for better UX */
+        * {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:active,
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Стили для модального окна в современном стиле */
+        .modal-content {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: var(--surface-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 2rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .modal-footer {
+            background: var(--surface-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+        }
+
+        .btn-close:focus {
+            box-shadow: none;
+        }
+
+        /* Современная кнопка закрытия */
+        .btn-modern {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Декоративный фон -->
+    <div class="bg-decoration"></div>
+
+    <!-- Современный навбар -->
+    <nav class="navbar navbar-expand-lg modern-navbar sticky-top">
+        <div class="container-fluid px-4">
+            <!-- Бренд с градиентным текстом -->
+            <a class="brand-logo" href="#">#MST-TITLE#</a>
+
+            <!-- Кнопка для мобильного меню -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" title="Menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Меню с современными кнопками -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link modern" href="#" data-bs-toggle="modal"
+                            data-bs-target="#aboutModal">About</a>
+                    </li>
+                </ul>
+            </div>
+    </nav>
+
+    <!-- Основной контент - полноэкранная панель -->
+    <div class="container-fluid main-container">
+        <div class="row h-100">
+            <div class="col-12">
+                <div class="content-card h-100">
+                    <div class="card-header modern">
+                        <h4 class="mb-0">#PANEL-TITLE#</h4>
+                    </div>
+                    <div class="card-body modern">
+                        #INNER_HTML#
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно "О нас" -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aboutModalLabel">#ABOUT_TITLE#</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    #ABOUT#
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-modern" data-bs-dismiss="modal">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,291 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &496716671951641609
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7761598508809695102}
+  - component: {fileID: 3819915913309393589}
+  m_Layer: 0
+  m_Name: DashboardWebController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7761598508809695102
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 496716671951641609}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1088006308547608548}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3819915913309393589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 496716671951641609}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90ca98a23ef80974bacccadc82367d7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  useCredentials: 0
+  templateAsset: {fileID: 4900000, guid: e67b9e8ab44eb2d408b237ede34fca66, type: 3}
+  panelTitle: Modules management panel
+  aboutTitle: About modules management panel
+  aboutText: '<p>Welcome to your system modules management panel! Let''s take a brief
+    tour so you can immediately start working effectively with this powerful tool.</p>
+
+    <p><strong>Getting
+    connected to your system:</strong> Begin with the top control panel, where you''ll
+    find the <strong>"Data Source"</strong> field. Here you specify your server address
+    - typically something like <code>"http://127.0.0.1:5056/info/data"</code>. Simply
+    enter the address and press the <strong>"Load"</strong> button or hit Enter.
+    Think of this as connecting to your system''s mission control center.</p>
+
+    <p>After
+    a successful connection, the panel will instantly populate with information about
+    your modules. You''ll see colorful cards with numbers at the top - this is your
+    <em>main overview</em>. The <strong>blue card</strong> shows the total number
+    of modules, <strong>green</strong> shows how many have dependencies, <strong>light
+    blue</strong> displays modules with optional dependencies, and <strong>yellow</strong>
+    represents completely independent modules.</p>
+
+    <p><strong>Finding what
+    you need:</strong> When dealing with many modules, search becomes your best friend.
+    Use the <strong>search bar</strong> and start typing a module name or keywords
+    from its description. The system will filter results in real-time - very convenient
+    when you need to quickly locate a specific authentication module or web controller.</p>
+
+    <p>Even
+    more interesting are the <em>colored filter buttons</em> below the search panel.
+    Click on <strong>"Web modules"</strong> and the system will show only modules
+    related to web interfaces. The <strong>"Authentication"</strong> button filters
+    security modules. The number in parentheses next to each button shows how many
+    modules fall into that category.</p>
+
+    <p><strong>Understanding module cards:</strong>
+    Now for the most interesting part - examining individual modules. Each card tells
+    its own story. In the header, you see an <strong>icon</strong> that immediately
+    indicates the module type: a globe for web modules, a shield for security systems,
+    a processor for process managers.</p>
+
+    <p>The <em>colored stripe</em> on
+    the left side of each card provides a quick visual cue. <strong>Green</strong>
+    indicates authentication modules, <strong>blue</strong> represents web controllers,
+    <strong>yellow</strong> shows process managers. On the right side of the header,
+    small badges display the number of dependencies - this helps you understand how
+    integrated the module is within the system.</p>
+
+    <p><strong>Reading the
+    vital signs:</strong> Below the card header, you''ll find small information blocks
+    with <strong>key indicators</strong>. For an authentication module, this might
+    be the number of active users; for a web server, the port number; for a gaming
+    module, the ratio of current players to maximum capacity. These metrics update
+    automatically and provide insight into the current state of each module.</p>
+
+    <p><strong>Diving
+    deeper into details:</strong> Each card contains three expandable sections that
+    work like desk drawers - each contains its own category of information. The <strong>"Configuration"</strong>
+    section displays module settings. Here you''ll find technical parameters: which
+    port the module runs on, whether guest connections are allowed, what limits are
+    set. This information is especially useful when diagnosing problems or planning
+    changes.</p>
+
+    <p>The <strong>"Statistics"</strong> section represents the
+    living pulse of the module. User counters, performance metrics, usage statistics.
+    If you need to understand how actively a module is being used, look here. The
+    <strong>"Detailed data"</strong> section contains complex technical information:
+    controller lists, configuration arrays, connections to other modules. The system
+    intelligently formats this data, transforming raw JSON into understandable tables
+    and structured lists.</p>
+
+    <p><strong>Working more efficiently:</strong>
+    The button with <em>double arrows</em> next to the load button allows you to
+    <strong>expand or collapse all sections</strong> across all cards simultaneously.
+    This is convenient when you need a complete system overview or, conversely, a
+    compact view. When filters are active, an <strong>information bar</strong> appears
+    at the top showing how many modules are displayed out of the total count. The
+    <strong>"Clear filters"</strong> button instantly returns the complete list.</p>
+
+    <p><strong>Daily
+    workflow tips:</strong> Start your system check by reviewing the <em>colored
+    summary cards</em> - they immediately show the big picture. Then use quick filters
+    to check specific types of modules. If you notice an issue, use the search function
+    to quickly navigate to a specific module and examine its detailed statistics.</p>
+
+    <p>Remember
+    that the interface <strong>adapts to screen size</strong>, so you can work effectively
+    from both desktop computers and tablets or smartphones. This is especially convenient
+    for emergency problem diagnosis when you''re away from the office.</p>
+
+    <p>Understanding
+    the <em>visual language</em> of the dashboard will help you work more efficiently.
+    Color coding isn''t just decorative - it''s a functional system that helps you
+    quickly categorize and prioritize information. The green authentication modules,
+    blue web controllers, and yellow process managers each have their own behavioral
+    patterns and typical issues, so the visual grouping helps you apply the right
+    troubleshooting approach.</p>
+
+    <p>The real power of this dashboard lies
+    in its ability to <strong>transform complex technical data into actionable insights</strong>.
+    Rather than parsing through log files or configuration dumps, you get a living,
+    breathing view of your system that updates in real-time and presents information
+    in the context you need.</p>
+
+    <p><strong>Now you''re ready to use the monitoring
+    panel to its full potential!</strong></p>'
+  pageAsset: {fileID: 4900000, guid: 26e852ce343ad0f48a1a421960cb7898, type: 3}
+--- !u!1 &1307773307385008001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4958193488612398627}
+  - component: {fileID: 8306777155348940769}
+  m_Layer: 0
+  m_Name: NotificationWebController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4958193488612398627
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1307773307385008001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1088006308547608548}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8306777155348940769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1307773307385008001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5428422bcb090145bebbd15ec33d8f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  useCredentials: 0
+--- !u!1 &8659184898777491130
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1088006308547608548}
+  - component: {fileID: 4216516268461119528}
+  m_Layer: 0
+  m_Name: WebServerModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1088006308547608548
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8659184898777491130}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7761598508809695102}
+  - {fileID: 4958193488612398627}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4216516268461119528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8659184898777491130}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096bccc5e5acf824f9a42629f5828349, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logLevel: 3
+  autostart: 1
+  httpAddress: 127.0.0.1
+  httpPort: 5056
+  defaultIndexPage:
+  - index
+  - home
+  useCredentials: 0
+  username: admin
+  password: admin
+  enableCors: 1
+  allowedOrigins: '*'
+  allowedMethods: GET, POST, PUT, DELETE, OPTIONS
+  allowedHeaders: Content-Type, Authorization
+  allowCredentials: 1
+  maxAge: 86400
+  templateAsset: {fileID: 4900000, guid: e67b9e8ab44eb2d408b237ede34fca66, type: 3}
+  introAsset: {fileID: 4900000, guid: 41f5633a70ac5e045a8b9155bbb78453, type: 3}
+  panelTitle: Intro
+  aboutTitle: About #MST-TITLE#
+  aboutText: "<p><strong>Master Server Toolkit (MST)</strong> is a free framework
+    designed to simplify the development of <em>multiplayer games and applications</em>.
+    Think of it as a comprehensive toolbox that solves the most common technical
+    challenges every online game developer faces, allowing you to focus on what matters
+    most\u2014your game's unique mechanics and experience.</p>\r\n\r\n<p>When building
+    a multiplayer game, developers typically encounter several complex problems:
+    implementing <strong>user registration and authentication</strong>, creating
+    <strong>server browser functionality</strong>, managing <strong>player data securely</strong>,
+    and establishing <strong>real-time communication systems</strong>. MST provides
+    ready-made solutions for all these challenges.</p>\r\n\r\n<p>The framework includes
+    a complete <em>user authentication system</em> that works immediately after installation,
+    while also supporting integration with existing services through their APIs.
+    It automatically generates and maintains <strong>game server lists</strong>,
+    enabling players to discover and connect to available servers seamlessly.</p>\r\n\r\n<p>MST
+    excels at <strong>real-time data management</strong>, instantly synchronizing
+    player profiles, friend lists, in-game currency, and achievements across all
+    connected devices. The framework includes built-in <em>chat systems</em> that
+    support unlimited participants and works across <strong>all major platforms</strong>
+    including desktop systems, mobile devices, and web browsers.</p>\r\n\r\n<p>Its
+    <strong>modular architecture</strong> means you can use only the components you
+    need and extend functionality with custom modules when necessary. The <em>Networking
+    API</em> creates an elegant abstraction layer over complex networking technologies,
+    making server-client communication straightforward and efficient, so developers
+    can concentrate on creating engaging gameplay rather than wrestling with infrastructure
+    complexities.</p>"

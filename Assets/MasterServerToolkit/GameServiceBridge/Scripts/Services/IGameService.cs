@@ -8,7 +8,7 @@ namespace MasterServerToolkit.GameService
 {
     public enum GameServiceId
     {
-        Self, PlayWeb3, YandexGames, Itch
+        Self, PlayWeb3, YandexGames, Itch, VKPlay
     }
 
     public enum RewardedVideoStatus

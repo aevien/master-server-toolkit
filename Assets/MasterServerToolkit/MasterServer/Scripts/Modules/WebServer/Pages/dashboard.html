@@ -1,0 +1,983 @@
+<div id="app">
+  <!-- Smart navigation with contextual information -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <div class="container">
+      <span class="navbar-brand">
+        <i class="bi bi-cpu me-2"></i>
+        System Modules
+      </span>
+
+      <!-- Quick statistics in navbar -->
+      <div class="navbar-nav ms-auto">
+        <span v-if="data" class="navbar-text me-3">
+          <i class="bi bi-collection me-1"></i>
+          {{ getTotalModules() }} modules
+        </span>
+        <span v-if="hasActiveFilters()" class="navbar-text me-3">
+          <i class="bi bi-funnel-fill me-1"></i>
+          Filters active
+        </span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid py-4">
+    <!-- Control panel with smart search and filtering -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <!-- URL input -->
+              <div class="col-lg-4">
+                <label for="url-input" class="form-label">
+                  <i class="bi bi-link-45deg"></i> Data Source
+                </label>
+                <input id="url-input" type="url" v-model="url" class="form-control"
+                  placeholder="http://127.0.0.1:5056/info/data" :disabled="loading" @keyup.enter="fetchData" />
+              </div>
+
+              <!-- Smart search -->
+              <div class="col-lg-3">
+                <label for="search-input" class="form-label">
+                  <i class="bi bi-search"></i> Search modules
+                </label>
+                <input id="search-input" type="text" v-model="searchQuery" class="form-control"
+                  placeholder="Name, description..." :disabled="!data" />
+              </div>
+
+              <!-- Dependency type filter -->
+              <div class="col-lg-3">
+                <label for="filter-deps" class="form-label">
+                  <i class="bi bi-funnel"></i> Dependency Filter
+                </label>
+                <select v-model="dependencyFilter" class="form-select" :disabled="!data" title="Dependency type filter">
+                  <option value="">All modules</option>
+                  <option value="with-deps">With dependencies</option>
+                  <option value="with-optional">With optional</option>
+                  <option value="independent">Independent</option>
+                </select>
+              </div>
+
+              <!-- Control buttons -->
+              <div class="col-lg-2">
+                <div class="btn-group w-100" role="group">
+                  <button @click="fetchData" :disabled="loading" class="btn btn-primary">
+                    <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
+                    <i v-else class="bi bi-download me-1"></i>
+                    {{ loading ? 'Loading' : 'Load' }}
+                  </button>
+                  <button @click="toggleExpandAll" :disabled="!data" class="btn btn-outline-primary" title="controls">
+                    <i :class="allExpanded ? 'bi bi-arrows-collapse' : 'bi bi-arrows-expand'"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick filter chips -->
+            <div v-if="data" class="mt-3">
+              <div class="d-flex flex-wrap gap-2">
+                <button v-for="chip in getQuickFilterChips()" :key="chip.key" @click="applyQuickFilter(chip.key)"
+                  class="btn btn-sm" :class="quickFilter === chip.key ? 'btn-primary' : 'btn-outline-secondary'">
+                  <i :class="chip.icon"></i> {{ chip.label }} ({{ chip.count }})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error alert -->
+    <div v-if="error" class="alert alert-danger alert-dismissible fade show">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong>Loading error!</strong> {{ error }}
+      <button type="button" class="btn-close" @click="error = null" title="close"></button>
+    </div>
+
+    <!-- Loading indicator with progress -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+      <h5>Loading module data...</h5>
+      <p class="text-muted">Analyzing structure and preparing interface</p>
+    </div>
+
+    <!-- Main content: smart module cards -->
+    <div v-if="data && !loading">
+      <!-- Summary analytics -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+              <i class="bi bi-collection display-4"></i>
+              <h4 class="mt-2">{{ getFilteredModules().length }}</h4>
+              <p class="mb-0">{{ searchQuery || dependencyFilter || quickFilter ? 'Filtered' : 'Total modules' }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-success text-white">
+            <div class="card-body text-center">
+              <i class="bi bi-diagram-3 display-4"></i>
+              <h4 class="mt-2">{{ getModulesWithDeps() }}</h4>
+              <p class="mb-0">With dependencies</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-info text-white">
+            <div class="card-body text-center">
+              <i class="bi bi-diagram-2 display-4"></i>
+              <h4 class="mt-2">{{ getModulesWithOptionalDeps() }}</h4>
+              <p class="mb-0">With optional</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+              <i class="bi bi-puzzle display-4"></i>
+              <h4 class="mt-2">{{ getIndependentModules() }}</h4>
+              <p class="mb-0">Independent</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search/filtering results -->
+      <div v-if="hasActiveFilters()" class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Showing {{ getFilteredModules().length }} of {{ getTotalModules() }} modules
+        <button @click="clearAllFilters" class="btn btn-sm btn-outline-info ms-2">
+          <i class="bi bi-x-lg"></i> Clear filters
+        </button>
+      </div>
+
+      <!-- Smart module cards grid -->
+      <div class="row g-4">
+        <div v-for="(module, index) in getFilteredModules()" :key="index" class="col-lg-6 col-xl-4">
+          <!-- Smart module card with important information preview -->
+          <div class="card h-100 shadow-sm border-0" :class="getModuleCardClass(module)">
+            <!-- Header with key information -->
+            <div class="card-header bg-transparent border-0 pb-0">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <h5 class="card-title mb-1 text-truncate" :title="module.name">
+                    <i :class="getModuleIcon(module)" class="me-2"></i>
+                    {{ module.name || `Module ${index + 1}` }}
+                  </h5>
+                  <small class="text-muted">{{ getModuleType(module) }}</small>
+                </div>
+                <!-- Status indicators -->
+                <div class="badge-group">
+                  <span v-if="module.dependencies?.length" class="badge bg-success ms-1"
+                    :title="`${module.dependencies.length} dependencies`">
+                    <i class="bi bi-arrow-down-circle"></i> {{ module.dependencies.length }}
+                  </span>
+                  <span v-if="module.optionalDependencies?.length" class="badge bg-info ms-1"
+                    :title="`${module.optionalDependencies.length} optional`">
+                    <i class="bi bi-arrow-down-circle-dotted"></i> {{ module.optionalDependencies.length }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Brief description and key metrics -->
+            <div class="card-body pt-2">
+              <p v-if="module.description" class="card-text text-muted small mb-3" :title="module.description">
+                {{ truncateText(module.description, 100) }}
+              </p>
+
+              <!-- Quick metrics on surface -->
+              <div class="mb-3">
+                <div class="row g-2 text-center">
+                  <div v-for="metric in getQuickMetrics(module)" :key="metric.key" class="col">
+                    <div class="bg-light rounded p-2">
+                      <div class="fw-bold" :class="metric.valueClass">{{ metric.value }}</div>
+                      <small class="text-muted">{{ metric.label }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Data groups with smart previews -->
+              <div class="accordion accordion-flush" :id="`accordion-${index}`">
+                <!-- Configuration -->
+                <div v-if="getConfigData(module).length > 0" class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                      :data-bs-target="`#config-${index}`" :class="{ '': expandedSections[`${index}-config`] }">
+                      <i class="bi bi-gear me-2"></i>
+                      Configuration
+                      <span class="badge bg-secondary ms-2">{{ getConfigData(module).length }}</span>
+                      <small class="text-muted ms-auto me-3">{{ getConfigPreview(module) }}</small>
+                    </button>
+                  </h2>
+                  <div :id="`config-${index}`" class="accordion-collapse collapse" :class="{ 'show': allExpanded }">
+                    <div class="accordion-body">
+                      <div v-for="[key, value] in getConfigData(module)" :key="key" class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <strong class="text-capitalize">{{ formatKey(key) }}:</strong>
+                          <span v-html="renderSmartValue(value)"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Statistics and metrics -->
+                <div v-if="getStatsData(module).length > 0" class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                      :data-bs-target="`#stats-${index}`">
+                      <i class="bi bi-graph-up me-2"></i>
+                      Statistics
+                      <span class="badge bg-secondary ms-2">{{ getStatsData(module).length }}</span>
+                      <small class="text-muted ms-auto me-3">{{ getStatsPreview(module) }}</small>
+                    </button>
+                  </h2>
+                  <div :id="`stats-${index}`" class="accordion-collapse collapse" :class="{ 'show': allExpanded }">
+                    <div class="accordion-body">
+                      <div v-for="[key, value] in getStatsData(module)" :key="key" class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <strong class="text-capitalize">{{ formatKey(key) }}:</strong>
+                          <span v-html="renderSmartValue(value, true)"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Complex structures -->
+                <div v-if="getComplexData(module).length > 0" class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                      :data-bs-target="`#complex-${index}`">
+                      <i class="bi bi-collection me-2"></i>
+                      Detailed data
+                      <span class="badge bg-secondary ms-2">{{ getComplexData(module).length }}</span>
+                      <small class="text-muted ms-auto me-3">{{ getComplexPreview(module) }}</small>
+                    </button>
+                  </h2>
+                  <div :id="`complex-${index}`" class="accordion-collapse collapse" :class="{ 'show': allExpanded }">
+                    <div class="accordion-body">
+                      <div v-for="[key, value] in getComplexData(module)" :key="key" class="mb-3">
+                        <h6 class="text-capitalize fw-bold">{{ formatKey(key) }}:</h6>
+                        <div class="ms-3" v-html="renderComplexValue(value)"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message when no results -->
+      <div v-if="getFilteredModules().length === 0" class="text-center py-5">
+        <i class="bi bi-search display-1 text-muted"></i>
+        <h4 class="mt-3">No modules found</h4>
+        <p class="text-muted">Try changing search parameters or reset filters</p>
+        <button @click="clearAllFilters" class="btn btn-primary">
+          <i class="bi bi-arrow-clockwise me-2"></i>Reset filters
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const { createApp } = Vue;
+
+  createApp({
+    data() {
+      return {
+        // Main state data
+        url: 'http://127.0.0.1:5056/info/data',
+        data: null,
+        loading: false,
+        error: null,
+
+        // Smart filters and search for improved UX
+        searchQuery: '',
+        dependencyFilter: '',
+        quickFilter: '',
+
+        // Interface state for better user experience
+        allExpanded: false,
+        expandedSections: {}
+      };
+    },
+
+    computed: {
+      // Reactive data for automatic interface updates
+      filteredModules() {
+        return this.getFilteredModules();
+      }
+    },
+
+    methods: {
+      // Data loading from server and error handling
+      async fetchData() {
+        if (!this.url.trim()) {
+          this.error = 'Please enter a valid URL';
+          return;
+        }
+
+        this.loading = true;
+        this.error = null;
+
+        try {
+          const response = await fetch(this.url);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const jsonData = await response.json();
+          this.data = jsonData;
+          this.clearAllFilters(); // Reset filters on new data
+
+        } catch (err) {
+          this.error = err.message;
+          console.error('Loading error:', err);
+        } finally {
+          this.loading = false;
+        }
+      },
+
+      // Smart module filtering system for better UX
+      getFilteredModules() {
+        if (!this.data?.modules) return [];
+
+        let filtered = this.data.modules;
+
+        // Text search - search in name and description
+        if (this.searchQuery) {
+          const query = this.searchQuery.toLowerCase();
+          filtered = filtered.filter(module =>
+            (module.name?.toLowerCase().includes(query)) ||
+            (module.description?.toLowerCase().includes(query))
+          );
+        }
+
+        // Dependency filter for module categorization
+        if (this.dependencyFilter) {
+          filtered = filtered.filter(module => {
+            switch (this.dependencyFilter) {
+              case 'with-deps':
+                return module.dependencies?.length > 0;
+              case 'with-optional':
+                return module.optionalDependencies?.length > 0;
+              case 'independent':
+                return !module.dependencies?.length && !module.optionalDependencies?.length;
+              default:
+                return true;
+            }
+          });
+        }
+
+        // Quick filters for frequently used categories
+        if (this.quickFilter) {
+          filtered = filtered.filter(module => {
+            switch (this.quickFilter) {
+              case 'web-modules':
+                return module.name?.toLowerCase().includes('web') ||
+                  module.controllers?.length > 0 ||
+                  module.port;
+              case 'auth-related':
+                return module.name?.toLowerCase().includes('auth') ||
+                  module.dependencies?.some(dep => dep.toLowerCase().includes('auth')) ||
+                  module.optionalDependencies?.some(dep => dep.toLowerCase().includes('auth'));
+              case 'has-stats':
+                return this.getStatsData(module).length > 0;
+              case 'complex':
+                return this.getComplexData(module).length > 0;
+              default:
+                return true;
+            }
+          });
+        }
+
+        return filtered;
+      },
+
+      // Check for active filters for UI indicators
+      hasActiveFilters() {
+        return !!(this.searchQuery || this.dependencyFilter || this.quickFilter);
+      },
+
+      // Reset all filters for quick return to full list
+      clearAllFilters() {
+        this.searchQuery = '';
+        this.dependencyFilter = '';
+        this.quickFilter = '';
+      },
+
+      // Smart statistical functions for analytics
+      getTotalModules() {
+        return this.data?.modules?.length || 0;
+      },
+
+      getModulesWithDeps() {
+        if (!this.data?.modules) return 0;
+        return this.data.modules.filter(m => m.dependencies?.length > 0).length;
+      },
+
+      getModulesWithOptionalDeps() {
+        if (!this.data?.modules) return 0;
+        return this.data.modules.filter(m => m.optionalDependencies?.length > 0).length;
+      },
+
+      getIndependentModules() {
+        if (!this.data?.modules) return 0;
+        return this.data.modules.filter(m =>
+          !m.dependencies?.length && !m.optionalDependencies?.length
+        ).length;
+      },
+
+      // Smart chip system for quick filtering
+      getQuickFilterChips() {
+        if (!this.data?.modules) return [];
+
+        const modules = this.data.modules;
+        return [
+          {
+            key: 'web-modules',
+            label: 'Web modules',
+            icon: 'bi bi-globe',
+            count: modules.filter(m =>
+              m.name?.toLowerCase().includes('web') ||
+              m.controllers?.length > 0 ||
+              m.port
+            ).length
+          },
+          {
+            key: 'auth-related',
+            label: 'Authentication',
+            icon: 'bi bi-shield-check',
+            count: modules.filter(m =>
+              m.name?.toLowerCase().includes('auth') ||
+              m.dependencies?.some(dep => dep.toLowerCase().includes('auth')) ||
+              m.optionalDependencies?.some(dep => dep.toLowerCase().includes('auth'))
+            ).length
+          },
+          {
+            key: 'has-stats',
+            label: 'With statistics',
+            icon: 'bi bi-graph-up',
+            count: modules.filter(m => this.getStatsData(m).length > 0).length
+          },
+          {
+            key: 'complex',
+            label: 'Complex',
+            icon: 'bi bi-diagram-3',
+            count: modules.filter(m => this.getComplexData(m).length > 0).length
+          }
+        ].filter(chip => chip.count > 0);
+      },
+
+      // Apply quick filters
+      applyQuickFilter(filterKey) {
+        this.quickFilter = this.quickFilter === filterKey ? '' : filterKey;
+      },
+
+      // Toggle expand state for all sections
+      toggleExpandAll() {
+        this.allExpanded = !this.allExpanded;
+      },
+
+      // Smart module type detection for better categorization
+      getModuleType(module) {
+        if (module.controllers?.length) return 'Web controller';
+        if (module.spawners !== undefined) return 'Process manager';
+        if (module.name?.toLowerCase().includes('auth')) return 'Authentication';
+        if (module.name?.toLowerCase().includes('analytics')) return 'Analytics';
+        if (module.dependencies?.length) return 'Dependent module';
+        return 'Base module';
+      },
+
+      // Icon system for visual module type separation
+      getModuleIcon(module) {
+        if (module.controllers?.length) return 'bi bi-globe';
+        if (module.spawners !== undefined) return 'bi bi-cpu';
+        if (module.name?.toLowerCase().includes('auth')) return 'bi bi-shield-check';
+        if (module.name?.toLowerCase().includes('analytics')) return 'bi bi-graph-up';
+        if (module.name?.toLowerCase().includes('notification')) return 'bi bi-bell';
+        if (module.name?.toLowerCase().includes('store') || module.name?.toLowerCase().includes('purchase')) return 'bi bi-shop';
+        return 'bi bi-puzzle';
+      },
+
+      // Color coding for cards for quick visual analysis
+      getModuleCardClass(module) {
+        if (module.name?.toLowerCase().includes('auth')) return 'border-start border-success border-3';
+        if (module.controllers?.length) return 'border-start border-primary border-3';
+        if (module.spawners !== undefined) return 'border-start border-warning border-3';
+        if (module.name?.toLowerCase().includes('analytics')) return 'border-start border-info border-3';
+        return '';
+      },
+
+      // Smart system for extracting key metrics for surface display
+      getQuickMetrics(module) {
+        const metrics = [];
+
+        // User count for AuthModule
+        if (module.loggedInUsers !== undefined) {
+          metrics.push({
+            key: 'users',
+            label: 'Users',
+            value: module.loggedInUsers,
+            valueClass: 'text-success'
+          });
+        }
+
+        // Port information for web modules
+        if (module.port) {
+          metrics.push({
+            key: 'port',
+            label: 'Port',
+            value: module.port,
+            valueClass: 'text-primary'
+          });
+        }
+
+        // Player count for RoomsModule
+        if (module.players_count !== undefined) {
+          metrics.push({
+            key: 'players',
+            label: 'Players',
+            value: `${module.players_count}/${module.players_max || '∞'}`,
+            valueClass: module.players_count > 0 ? 'text-success' : 'text-muted'
+          });
+        }
+
+        // Recipient count for NotificationModule
+        if (module.recipients !== undefined) {
+          metrics.push({
+            key: 'recipients',
+            label: 'Recipients',
+            value: module.recipients,
+            valueClass: 'text-info'
+          });
+        }
+
+        // Controller count
+        if (module.controllers?.length) {
+          metrics.push({
+            key: 'controllers',
+            label: 'Controllers',
+            value: module.controllers.length,
+            valueClass: 'text-warning'
+          });
+        }
+
+        return metrics.slice(0, 3); // Show maximum 3 metrics
+      },
+
+      // Intelligent data grouping by semantic categories
+      getConfigData(module) {
+        const configKeys = [
+          'allowGuests', 'guestNamePrefix', 'emailConfirmRequired',
+          'minUsernameLength', 'minPasswordLength', 'address', 'port',
+          'is_public', 'password', 'region', 'maxConcurrentRequests'
+        ];
+
+        return Object.entries(module).filter(([key, value]) =>
+          configKeys.includes(key) && value !== undefined
+        );
+      },
+
+      getStatsData(module) {
+        const statsKeys = [
+          'loggedInUsers', 'players_count', 'players_max', 'recipients',
+          'totalSpawners', 'totalStartedRooms', 'onlineCount', 'maxOnlineCount'
+        ];
+
+        return Object.entries(module).filter(([key, value]) =>
+          (statsKeys.includes(key) || typeof value === 'number') &&
+          value !== undefined &&
+          !['port', 'minUsernameLength', 'minPasswordLength', 'maxConcurrentRequests'].includes(key)
+        );
+      },
+
+      getComplexData(module) {
+        const simpleKeys = [
+          'name', 'description', 'allowGuests', 'guestNamePrefix',
+          'emailConfirmRequired', 'minUsernameLength', 'minPasswordLength',
+          'loggedInUsers', 'players_count', 'players_max', 'recipients',
+          'address', 'port', 'is_public', 'password', 'region',
+          'totalSpawners', 'totalStartedRooms', 'maxConcurrentRequests'
+        ];
+
+        return Object.entries(module).filter(([key, value]) =>
+          !simpleKeys.includes(key) &&
+          value !== undefined &&
+          (typeof value === 'object' || Array.isArray(value))
+        );
+      },
+
+      // Preview system for quick content understanding without expansion
+      getConfigPreview(module) {
+        const config = this.getConfigData(module);
+        if (config.length === 0) return '';
+
+        const previews = [];
+        if (module.port) previews.push(`port ${module.port}`);
+        if (module.allowGuests !== undefined) previews.push(module.allowGuests ? 'guests allowed' : 'auth only');
+
+        return previews.slice(0, 2).join(', ') || 'settings';
+      },
+
+      getStatsPreview(module) {
+        const stats = this.getStatsData(module);
+        if (stats.length === 0) return '';
+
+        const previews = [];
+        if (module.loggedInUsers !== undefined) previews.push(`${module.loggedInUsers} users`);
+        if (module.players_count !== undefined) previews.push(`${module.players_count} players`);
+        if (module.recipients !== undefined) previews.push(`${module.recipients} recip.`);
+
+        return previews.slice(0, 2).join(', ') || 'metrics';
+      },
+
+      getComplexPreview(module) {
+        const complex = this.getComplexData(module);
+        if (complex.length === 0) return '';
+
+        const types = complex.map(([key, value]) => {
+          // Check arrays first, as Array.isArray() is safe for null
+          if (Array.isArray(value)) return `${key}[${value.length}]`;
+          // Check that value is actually an object and not null
+          if (typeof value === 'object' && value !== null) return `${key}{${Object.keys(value).length}}`;
+          return key;
+        });
+
+        return types.slice(0, 2).join(', ');
+      },
+
+      // Smart value display with contextual formatting
+      renderSmartValue(value, isMetric = false) {
+        if (value === null || value === undefined) {
+          return '<span class="text-muted fst-italic">not set</span>';
+        }
+
+        if (typeof value === 'boolean') {
+          const icon = value ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger';
+          const text = value ? 'enabled' : 'disabled';
+          return `<i class="bi ${icon}"></i> <span class="ms-1">${text}</span>`;
+        }
+
+        if (typeof value === 'number') {
+          if (isMetric && value > 1000) {
+            return `<span class="badge bg-primary">${value.toLocaleString()}</span>`;
+          }
+          return `<span class="fw-bold text-primary">${value}</span>`;
+        }
+
+        if (typeof value === 'string') {
+          if (value.length > 50) {
+            return `<span title="${this.escapeHtml(value)}">${this.escapeHtml(value.substring(0, 50))}...</span>`;
+          }
+          return `<span>${this.escapeHtml(value)}</span>`;
+        }
+
+        return `<span class="text-muted">${this.escapeHtml(String(value))}</span>`;
+      },
+
+      // Specialized display of complex data structures with full hierarchy
+      renderComplexValue(value, depth = 0) {
+        // Maximum recursion depth to prevent infinite loops
+        if (depth > 10) {
+          return '<span class="text-warning">Too deep nesting...</span>';
+        }
+
+        if (Array.isArray(value)) {
+          return this.renderArrayStructure(value, depth);
+        }
+
+        if (typeof value === 'object' && value !== null) {
+          return this.renderObjectStructure(value, depth);
+        }
+
+        return this.renderSmartValue(value);
+      },
+
+      // Beautiful array display with full structure
+      renderArrayStructure(array, depth) {
+        if (array.length === 0) {
+          return '<span class="text-muted fst-italic">empty array</span>';
+        }
+
+        // For simple arrays of strings or numbers use compact display
+        if (array.length <= 10 && array.every(item =>
+          typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')) {
+          return array.map(item => {
+            if (typeof item === 'string') {
+              return `<span class="badge bg-light text-dark me-1 mb-1">${this.escapeHtml(item)}</span>`;
+            }
+            if (typeof item === 'number') {
+              return `<span class="badge bg-primary text-white me-1 mb-1">${item}</span>`;
+            }
+            if (typeof item === 'boolean') {
+              const bgClass = item ? 'bg-success' : 'bg-danger';
+              return `<span class="badge ${bgClass} text-white me-1 mb-1">${item}</span>`;
+            }
+          }).join('');
+        }
+
+        // For complex arrays create structured list
+        const items = array.map((item, index) => {
+          const indexBadge = `<span class="badge bg-secondary me-2">${index}</span>`;
+          const content = this.renderComplexValue(item, depth + 1);
+
+          return `
+                            <div class="border-start border-2 border-info ps-3 mb-2">
+                                ${indexBadge}
+                                <div class="mt-1">${content}</div>
+                            </div>
+                        `;
+        }).join('');
+
+        return `
+                        <div class="mt-2">
+                            <small class="text-info fw-bold">Array [${array.length}]:</small>
+                            <div class="mt-2">${items}</div>
+                        </div>
+                    `;
+      },
+
+      // Beautiful object display with full structure
+      renderObjectStructure(obj, depth) {
+        const entries = Object.entries(obj);
+        if (entries.length === 0) {
+          return '<span class="text-muted fst-italic">empty object</span>';
+        }
+
+        // Group properties by types for better organization
+        const groupedEntries = this.groupObjectProperties(entries);
+
+        let result = '';
+
+        // First show basic information (strings, numbers, booleans)
+        if (groupedEntries.basic.length > 0) {
+          const basicRows = groupedEntries.basic.map(([key, value]) => {
+            const formattedKey = this.formatPropertyKey(key);
+            const formattedValue = this.renderPropertyValue(value);
+
+            return `
+                                <tr>
+                                    <td class="fw-semibold text-secondary" style="width: 35%;">${formattedKey}</td>
+                                    <td>${formattedValue}</td>
+                                </tr>
+                            `;
+          }).join('');
+
+          result += `
+                            <div class="mb-3">
+                                <table class="table table-sm table-hover mb-0">
+                                    <tbody>${basicRows}</tbody>
+                                </table>
+                            </div>
+                        `;
+        }
+
+        // Then show arrays
+        if (groupedEntries.arrays.length > 0) {
+          const arrayItems = groupedEntries.arrays.map(([key, value]) => {
+            const formattedKey = this.formatPropertyKey(key);
+            const content = this.renderComplexValue(value, depth + 1);
+
+            return `
+                                <div class="mb-3">
+                                    <h6 class="text-success mb-2">
+                                        <i class="bi bi-list-ul me-1"></i>${formattedKey}
+                                    </h6>
+                                    <div class="ps-3">${content}</div>
+                                </div>
+                            `;
+          }).join('');
+
+          result += arrayItems;
+        }
+
+        // Finally, show nested objects
+        if (groupedEntries.objects.length > 0) {
+          const objectItems = groupedEntries.objects.map(([key, value]) => {
+            const formattedKey = this.formatPropertyKey(key);
+            const content = this.renderComplexValue(value, depth + 1);
+
+            return `
+                                <div class="mb-3">
+                                    <h6 class="text-primary mb-2">
+                                        <i class="bi bi-box me-1"></i>${formattedKey}
+                                    </h6>
+                                    <div class="border-start border-2 border-primary ps-3">${content}</div>
+                                </div>
+                            `;
+          }).join('');
+
+          result += objectItems;
+        }
+
+        return result;
+      },
+
+      // Group object properties by types for better organization
+      groupObjectProperties(entries) {
+        const groups = {
+          basic: [],    // strings, numbers, booleans
+          arrays: [],   // arrays
+          objects: []   // objects
+        };
+
+        entries.forEach(([key, value]) => {
+          if (value === null || value === undefined ||
+            typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            groups.basic.push([key, value]);
+          } else if (Array.isArray(value)) {
+            groups.arrays.push([key, value]);
+          } else if (typeof value === 'object') {
+            groups.objects.push([key, value]);
+          }
+        });
+
+        return groups;
+      },
+
+      // Beautiful property key formatting
+      formatPropertyKey(key) {
+        // Special cases for common fields
+        const specialKeys = {
+          'api': 'API endpoint',
+          'use_credentials': 'Requires authentication',
+          'players_count': 'Player count',
+          'players_max': 'Maximum players',
+          'is_public': 'Public room',
+          'custom_options': 'Additional parameters',
+          'serverVersion': 'Server version',
+          'maxOnlineCount': 'Maximum online',
+          'onlineCount': 'Currently online',
+          'connectionIsSecure': 'Secure connection'
+        };
+
+        if (specialKeys[key]) {
+          return specialKeys[key];
+        }
+
+        // General camelCase formatting
+        return key.replace(/([A-Z])/g, ' $1')
+          .replace(/^./, str => str.toUpperCase())
+          .trim();
+      },
+
+      // Smart property value display
+      renderPropertyValue(value) {
+        if (value === null || value === undefined) {
+          return '<span class="text-muted fst-italic">not set</span>';
+        }
+
+        if (typeof value === 'boolean') {
+          const icon = value ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger';
+          const text = value ? 'yes' : 'no';
+          return `<i class="bi ${icon} me-1"></i><span>${text}</span>`;
+        }
+
+        if (typeof value === 'number') {
+          // Special formatting for ports, counters etc.
+          if (value >= 1000 && value <= 65535) {
+            return `<span class="badge bg-info">${value}</span> <small class="text-muted">(possibly port)</small>`;
+          }
+          return `<span class="fw-bold text-primary">${value.toLocaleString()}</span>`;
+        }
+
+        if (typeof value === 'string') {
+          // Special formatting for IP addresses, URLs etc.
+          if (value.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+            return `<span class="badge bg-secondary">${this.escapeHtml(value)}</span> <small class="text-muted">(IP address)</small>`;
+          }
+          if (value.match(/^https?:\/\//)) {
+            return `<a href="${this.escapeHtml(value)}" target="_blank" class="text-decoration-none">${this.escapeHtml(value)}</a>`;
+          }
+          if (value === '') {
+            return '<span class="text-muted fst-italic">empty string</span>';
+          }
+
+          // Regular strings
+          if (value.length > 50) {
+            return `<span title="${this.escapeHtml(value)}">${this.escapeHtml(value.substring(0, 50))}...</span>`;
+          }
+          return `<span>${this.escapeHtml(value)}</span>`;
+        }
+
+        return `<span class="text-muted">${this.escapeHtml(String(value))}</span>`;
+      },
+
+      // Smart item description to avoid useless "[object]"
+      getSmartItemDescription(item) {
+        // Check null and undefined first for safety
+        if (item === null) return '<em class="text-muted">null</em>';
+        if (item === undefined) return '<em class="text-muted">undefined</em>';
+
+        // Simple types display as is
+        if (typeof item === 'string') {
+          // Limit string length for readability
+          const truncated = item.length > 25 ? item.substring(0, 25) + '...' : item;
+          return this.escapeHtml(truncated);
+        }
+
+        if (typeof item === 'number') return `<strong>${item}</strong>`;
+        if (typeof item === 'boolean') return `<em>${item}</em>`;
+
+        // For arrays show their content
+        if (Array.isArray(item)) {
+          return `<span class="text-info">array[${item.length}]</span>`;
+        }
+
+        // For objects try to find meaningful description
+        if (typeof item === 'object' && item !== null) {
+          // Look for fields that can serve as object description
+          if (item.name) return `<span class="text-success">${this.escapeHtml(item.name)}</span>`;
+          if (item.title) return `<span class="text-success">${this.escapeHtml(item.title)}</span>`;
+          if (item.description) {
+            const desc = item.description.length > 20 ?
+              item.description.substring(0, 20) + '...' : item.description;
+            return `<span class="text-info">${this.escapeHtml(desc)}</span>`;
+          }
+          if (item.api) return `<span class="text-warning">API: ${this.escapeHtml(item.api)}</span>`;
+          if (item.use_credentials !== undefined) return `<span class="text-primary">request ${item.use_credentials ? 'with auth' : 'without auth'}</span>`;
+
+          // If no meaningful field found, show property count
+          const keyCount = Object.keys(item).length;
+          return `<span class="text-secondary">object with ${keyCount} ${this.getEnglishPlural(keyCount, 'property', 'properties')}</span>`;
+        }
+
+        // For all other cases safely convert to string
+        return this.escapeHtml(String(item));
+      },
+
+      // Helper function for correct English plurals
+      getEnglishPlural(number, singular, plural) {
+        return number === 1 ? singular : plural;
+      },
+
+      formatKey(key) {
+        return key.replace(/([A-Z])/g, ' $1')
+          .replace(/^./, str => str.toUpperCase())
+          .replace(/([a-z])([A-Z])/g, '$1 $2');
+      },
+
+      // Truncate long texts for preview
+      truncateText(text, maxLength) {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+      },
+
+      // Safe HTML escaping
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    }
+  }).mount('#app');
+</script>
