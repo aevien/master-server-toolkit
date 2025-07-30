@@ -167,7 +167,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  configuration: {fileID: 11400000, guid: 3aaae924497982b48a8d69a042d63200, type: 2}
+  languageFiles:
+  - languageName: Russian
+    badWordsFile: {fileID: 4900000, guid: 5294bffad2c986440b679d16737bdee6, type: 3}
+    fileFormat: 1
+    isActive: 1
+    severityLevel: 3
+    description: 
+  - languageName: American
+    badWordsFile: {fileID: 4900000, guid: b13016b96944a744fab9d17ffc4695b3, type: 3}
+    fileFormat: 1
+    isActive: 1
+    severityLevel: 3
+    description: 
+  logLoadingDetails: 1
+  enableSeveritySystem: 1
+  enableAdvancedDetection: 1
+  enableTransliteration: 1
+  enableDigitSubstitution: 1
+  enableSeparatorRemoval: 1
 --- !u!1 &1005001215
 GameObject:
   m_ObjectHideFlags: 0

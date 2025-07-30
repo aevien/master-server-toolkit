@@ -1,5 +1,4 @@
 using MasterServerToolkit.MasterServer;
-using MasterServerToolkit.Utils.Editor;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -23,7 +22,7 @@ namespace MasterServerToolkit.Demos.BasicChat
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
-                scenes = new[] { "Assets/MasterServerToolkit/Demos/BasicChat/Scenes/MasterServer/MasterServer.unity" },
+                scenes = new[] { "Assets/MasterServerToolkit/Demos/BasicChat/MasterServer.unity" },
                 locationPathName = Path.Combine(buildFolder, "MasterServer.exe"),
                 target = BuildTarget.StandaloneWindows64,
 #if UNITY_2021_1_OR_NEWER
@@ -64,7 +63,7 @@ namespace MasterServerToolkit.Demos.BasicChat
 
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
             {
-                scenes = new[] { "Assets/MasterServerToolkit/Demos/BasicChat/Scenes/Client/Client.unity" },
+                scenes = new[] { "Assets/MasterServerToolkit/Demos/BasicChat/Client.unity" },
                 locationPathName = Path.Combine(buildFolder, "Client.exe"),
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.ShowBuiltPlayer | BuildOptions.Development

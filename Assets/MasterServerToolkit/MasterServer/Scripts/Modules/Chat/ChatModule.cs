@@ -222,7 +222,7 @@ namespace MasterServerToolkit.MasterServer
                 }
 
                 // There's no such channel, but we might be able to create one
-                if (!ignoreForbidden && censorModule != null && censorModule.HasCensoredWord(channelName))
+                if (!ignoreForbidden && censorModule != null && censorModule.ContainsBadWords(channelName))
                 {
                     // Channel contains a forbidden word
                     return null;
@@ -372,8 +372,7 @@ namespace MasterServerToolkit.MasterServer
 
         private void CensorMessage(ChatMessagePacket chatMessage)
         {
-            var result = censorModule.CensorText(chatMessage.Message);
-            chatMessage.Message = result.filteredText;
+            chatMessage.Message = censorModule.CensorMessage(chatMessage.Message);
         }
 
         #region Event Handlers

@@ -525,7 +525,7 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
-            if (censorModule != null && censorModule.HasCensoredWord(username))
+            if (censorModule != null && censorModule.ContainsBadWords(username))
             {
                 return false;
             }
