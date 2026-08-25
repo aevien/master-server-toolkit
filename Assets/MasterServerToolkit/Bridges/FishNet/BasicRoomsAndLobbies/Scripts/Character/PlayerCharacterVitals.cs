@@ -12,9 +12,9 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
     {
         #region INSPECTOR
 
-        [Header("Components"), SerializeField]
+        [Header("Components"), SerializeField, Tooltip("Required controller disabled by the server and owning client when the character dies.")]
         private CharacterController characterController;
-        [SerializeField]
+        [SerializeField, Tooltip("Optional client-side effect instantiated for every observing client one second after the server reports this character's death.")]
         private GameObject dieEffectPrefab;
 
         #endregion

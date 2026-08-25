@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 {
     public struct ValidateRoomAccessResultMessage : IBroadcast
     {
-        public string Error;
+        public byte[] Error;
         public ResponseStatus Status;
     }
 

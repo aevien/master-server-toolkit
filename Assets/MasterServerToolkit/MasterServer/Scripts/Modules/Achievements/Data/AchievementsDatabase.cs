@@ -11,10 +11,5 @@ namespace MasterServerToolkit.MasterServer
         {
             FindObjects();
         }
-
-        protected override string SearchType()
-        {
-            return "t:AchievementData";
-        }
     }
 }

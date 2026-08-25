@@ -55,6 +55,7 @@ namespace MasterServerToolkit.Demos.BasicWorlds
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
                 properties.Add(Mst.Args.Names.RoomIp, Mst.Args.RoomIp);
                 properties.Add(Mst.Args.Names.RoomPort, Mst.Args.RoomPort);
+                MstDemoAccessConfig.ConfigureRoom(properties, buildFolder);
 
                 File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 
@@ -93,13 +94,14 @@ namespace MasterServerToolkit.Demos.BasicWorlds
             {
                 MstProperties properties = new MstProperties();
                 properties.Add(Mst.Args.Names.StartMaster, true);
-                properties.Add(Mst.Args.Names.StartSpawner, true);
+                properties.Add(Mst.Args.Names.SpawnerStart, true);
                 properties.Add(Mst.Args.Names.StartClientConnection, true);
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
                 properties.Add(Mst.Args.Names.RoomExecutablePath, roomExePath);
                 properties.Add(Mst.Args.Names.RoomIp, Mst.Args.RoomIp);
                 properties.Add(Mst.Args.Names.RoomRegion, Mst.Args.RoomRegion);
+                MstDemoAccessConfig.ConfigureSpawner(properties, buildFolder, true);
 
                 File.WriteAllText(Path.Combine(buildFolder, "application.cfg"), properties.ToReadableString("\n", "="));
 
@@ -141,13 +143,14 @@ namespace MasterServerToolkit.Demos.BasicWorlds
                 string appConfig = Mst.Args.AppConfigFile(buildFolder);
 
                 MstProperties properties = new MstProperties();
-                properties.Add(Mst.Args.Names.StartSpawner, true);
+                properties.Add(Mst.Args.Names.SpawnerStart, true);
                 properties.Add(Mst.Args.Names.StartClientConnection, true);
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
                 properties.Add(Mst.Args.Names.RoomExecutablePath, roomExePath);
                 properties.Add(Mst.Args.Names.RoomIp, Mst.Args.RoomIp);
                 properties.Add(Mst.Args.Names.RoomRegion, Mst.Args.RoomRegion);
+                MstDemoAccessConfig.ConfigureSpawner(properties, buildFolder, false);
 
                 File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 
@@ -189,6 +192,7 @@ namespace MasterServerToolkit.Demos.BasicWorlds
                 properties.Add(Mst.Args.Names.StartClientConnection, true);
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
+                MstDemoAccessConfig.ConfigureClient(properties);
 
                 File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 

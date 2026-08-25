@@ -11,6 +11,51 @@ namespace MasterServerToolkit.Networking
     /// </summary>
     public static class SerializationExtensions
     {
+        public static void WriteCount32(
+            this EndianBinaryWriter writer,
+            int count,
+            int maxCount,
+            string valueName = "Collection")
+        {
+            if (count < 0 || count > maxCount)
+            {
+                throw new InvalidDataException(
+                    $"{valueName} count {count} exceeds the allowed range 0..{maxCount}");
+            }
+
+            writer.Write(count);
+        }
+
+        private static List<T> MaterializeBounded<T>(
+            IEnumerable<T> values,
+            int maxCount,
+            string valueName)
+        {
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+
+            if (values is ICollection<T> collection && collection.Count > maxCount)
+            {
+                throw new InvalidDataException(
+                    $"{valueName} count {collection.Count} exceeds the allowed range 0..{maxCount}");
+            }
+
+            var result = new List<T>();
+
+            foreach (T value in values)
+            {
+                if (result.Count >= maxCount)
+                {
+                    throw new InvalidDataException(
+                        $"{valueName} count exceeds the allowed range 0..{maxCount}");
+                }
+
+                result.Add(value);
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -18,14 +63,21 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static byte[] ToBytes(this IEnumerable<string> list)
         {
+            List<string> items = MaterializeBounded(
+                list,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "String list");
             byte[] b;
             using (var ms = new MemoryStream())
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(list.Count());
+                    writer.WriteCount32(
+                        items.Count,
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "String list");
 
-                    foreach (var item in list)
+                    foreach (var item in items)
                     {
                         writer.Write(item);
                     }
@@ -48,7 +100,9 @@ namespace MasterServerToolkit.Networking
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "String list");
 
                     for (var i = 0; i < count; i++)
                     {
@@ -67,14 +121,21 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static byte[] ToBytes(this IEnumerable<ISerializablePacket> list)
         {
+            List<ISerializablePacket> items = MaterializeBounded(
+                list,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Packet list");
             byte[] b;
             using (var ms = new MemoryStream())
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(list.Count());
+                    writer.WriteCount32(
+                        items.Count,
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Packet list");
 
-                    foreach (var item in list)
+                    foreach (var item in items)
                     {
                         item.ToBinaryWriter(writer);
                     }
@@ -116,7 +177,10 @@ namespace MasterServerToolkit.Networking
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(dictionary.Count);
+                    writer.WriteCount32(
+                        dictionary.Count,
+                        MstNetworkLimits.MaxDictionaryEntryCount,
+                        "Integer dictionary");
 
                     foreach (var item in dictionary)
                     {
@@ -142,7 +206,9 @@ namespace MasterServerToolkit.Networking
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxDictionaryEntryCount,
+                        "Integer dictionary");
 
                     for (var i = 0; i < count; i++)
                     {
@@ -175,7 +241,10 @@ namespace MasterServerToolkit.Networking
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(dictionary.Count);
+                    writer.WriteCount32(
+                        dictionary.Count,
+                        MstNetworkLimits.MaxDictionaryEntryCount,
+                        "String/integer dictionary");
 
                     foreach (var item in dictionary)
                     {
@@ -201,7 +270,9 @@ namespace MasterServerToolkit.Networking
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxDictionaryEntryCount,
+                        "String/integer dictionary");
 
                     for (var i = 0; i < count; i++)
                     {
@@ -234,7 +305,10 @@ namespace MasterServerToolkit.Networking
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(dictionary.Count);
+                    writer.WriteCount32(
+                        dictionary.Count,
+                        MstNetworkLimits.MaxDictionaryEntryCount,
+                        "String/float dictionary");
 
                     foreach (var item in dictionary)
                     {
@@ -260,7 +334,9 @@ namespace MasterServerToolkit.Networking
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxDictionaryEntryCount,
+                        "String/float dictionary");
 
                     for (var i = 0; i < count; i++)
                     {
@@ -288,6 +364,14 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static byte[] ToBytes(this Dictionary<string, string> dictionary)
         {
+            if (dictionary != null &&
+                dictionary.Count > MstNetworkLimits.MaxDictionaryEntryCount)
+            {
+                throw new InvalidDataException(
+                    $"Dictionary entry count {dictionary.Count} exceeds the allowed limit " +
+                    $"{MstNetworkLimits.MaxDictionaryEntryCount}");
+            }
+
             byte[] b;
             using (var ms = new MemoryStream())
             {
@@ -298,6 +382,14 @@ namespace MasterServerToolkit.Networking
 
                 b = ms.ToArray();
             }
+
+            if (b.Length > MstNetworkLimits.MaxDictionaryPayloadByteCount)
+            {
+                throw new InvalidDataException(
+                    $"Dictionary payload length {b.Length} exceeds the allowed limit " +
+                    $"{MstNetworkLimits.MaxDictionaryPayloadByteCount}");
+            }
+
             return b;
         }
 
@@ -314,7 +406,10 @@ namespace MasterServerToolkit.Networking
                 return;
             }
 
-            writer.Write(dictionary.Count);
+            writer.WriteCount32(
+                dictionary.Count,
+                MstNetworkLimits.MaxDictionaryEntryCount,
+                "String dictionary");
 
             foreach (var item in dictionary)
             {
@@ -331,7 +426,9 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static Dictionary<string, string> FromReader(this Dictionary<string, string> dictionary, EndianBinaryReader reader)
         {
-            var count = reader.ReadInt32();
+            var count = reader.ReadCount32(
+                MstNetworkLimits.MaxDictionaryEntryCount,
+                "String dictionary");
 
             for (var i = 0; i < count; i++)
             {
@@ -358,6 +455,16 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static Dictionary<string, string> FromBytes(this Dictionary<string, string> dictionary, byte[] data)
         {
+            if (data == null)
+                throw new System.ArgumentNullException(nameof(data));
+
+            if (data.Length > MstNetworkLimits.MaxDictionaryPayloadByteCount)
+            {
+                throw new InvalidDataException(
+                    $"Dictionary payload length {data.Length} exceeds the allowed limit " +
+                    $"{MstNetworkLimits.MaxDictionaryPayloadByteCount}");
+            }
+
             using (var ms = new MemoryStream(data))
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
@@ -412,7 +519,9 @@ namespace MasterServerToolkit.Networking
         {
             List<T> packets = new List<T>();
 
-            int count = reader.ReadInt32();
+            int count = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Packet list");
 
             for (int i = 0; i < count; i++)
             {
@@ -454,11 +563,14 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static Dictionary<string, string> ReadDictionary(this EndianBinaryReader reader)
         {
-            var length = reader.ReadInt32();
+            var length = reader.ReadLength32(
+                MstNetworkLimits.MaxDictionaryPayloadByteCount,
+                "Dictionary payload");
 
             if (length > 0)
             {
-                return new Dictionary<string, string>().FromBytes(reader.ReadBytes(length));
+                return new Dictionary<string, string>().FromBytes(
+                    reader.ReadBytesExact(length, MstNetworkLimits.MaxDictionaryPayloadByteCount));
             }
 
             return new Dictionary<string, string>();
@@ -473,7 +585,9 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static List<TValue> ReadList<TValue>(this EndianBinaryReader reader, Func<TValue> value)
         {
-            var length = reader.ReadInt32();
+            var length = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "List");
 
             List<TValue> list = new List<TValue>();
 
@@ -505,22 +619,40 @@ namespace MasterServerToolkit.Networking
         }
 
         /// <summary>
-        /// 
+        /// Parses a readable string in format "key:value;key2:value2"
+        /// into the provided dictionary. The dictionary is cleared before filling.
+        /// Example: "a:1;b:2" -> { ["a"] = "1", ["b"] = "2" }.
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static Dictionary<string, string> FromReadableString(this Dictionary<string, string> dictionary, string value, string itemsSplitter = ";", string kvpSplitter = ":")
+        public static Dictionary<string, string> FromReadableString(
+            this Dictionary<string, string> dictionary,
+            string value,
+            string itemsSplitter = ";",
+            string kvpSplitter = ":")
         {
             dictionary.Clear();
 
-            string[] kvps = value.Split(itemsSplitter, StringSplitOptions.RemoveEmptyEntries);
+            if (string.IsNullOrWhiteSpace(value))
+                return dictionary;
 
-            foreach (string kvp in kvps)
+            // Split into "key:value" segments
+            string[] pairs = value.Split(itemsSplitter, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string rawPair in pairs)
             {
-                int splitterIndex = kvp.IndexOf(kvpSplitter);
-                string dicKey = kvp.Substring(0, kvp.IndexOf(kvpSplitter));
-                string dicValue = kvp.Substring(splitterIndex + 1);
-                dictionary.Add(dicKey.Trim(), dicValue.Trim());
+                string pair = rawPair.Trim();
+
+                // Split only into 2 parts: key and value
+                string[] kvp = pair.Split(new[] { kvpSplitter }, 2, StringSplitOptions.None);
+
+                // Skip malformed pairs
+                if (kvp.Length != 2)
+                    continue;
+
+                string key = kvp[0].Trim();
+                string val = kvp[1].Trim();
+
+                // Overwrite duplicates instead of throwing exceptions
+                dictionary[key] = val;
             }
 
             return dictionary;

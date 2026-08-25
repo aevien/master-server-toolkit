@@ -1,53 +1,74 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
 namespace MasterServerToolkit.CommandTerminal
 {
-    public static class BuiltinCommands
+    internal static class BuiltinCommands
     {
-        [RegisterCommand(Help = "Does nothing")]
-        static void CommandNoop(CommandArg[] args) { }
-
-        [RegisterCommand(Help = "Clears the Command Console", MaxArgCount = 0)]
-        static void CommandClear(CommandArg[] args)
+        public static void Register(CommandShell shell)
         {
-            Terminal.Buffer.Clear();
+            if (shell == null)
+                return;
+
+            shell.AddCommand("noop", CommandNoop, 0, 0, "Does nothing", true);
+            shell.AddCommand("clear", CommandClear, 0, 0, "Clears the terminal log buffer", true);
+            shell.AddCommand("help", CommandHelp, 0, 1, "Lists commands or displays help for one command", true);
+            shell.AddCommand("time", CommandTime, 1, -1, "Times the execution of another command", true);
+            shell.AddCommand("echo", CommandEcho, 0, -1, "Outputs text", true);
+            shell.AddCommand("print", CommandEcho, 0, -1, "Outputs text", true);
+            shell.AddCommand("logs", CommandLogs, 0, 0, "Shows terminal log buffer counters", true);
+
+#if DEBUG
+            shell.AddCommand("trace", CommandTrace, 0, 0, "Outputs the stack trace of the previous log entry", true);
+#endif
+
+            shell.AddCommand("quit", CommandQuit, 0, 0, "Quits the running application", true);
         }
 
-        [RegisterCommand(Help = "Lists all Commands or displays help documentation of a Command", MaxArgCount = 1)]
-        static void CommandHelp(CommandArg[] args)
+        private static void CommandNoop(CommandArg[] args) { }
+
+        private static void CommandClear(CommandArg[] args)
         {
+            Terminal.Buffer?.Clear();
+        }
+
+        private static void CommandHelp(CommandArg[] args)
+        {
+            CommandShell shell = Terminal.Shell;
+
+            if (shell == null)
+                return;
+
             if (args.Length == 0)
             {
-                foreach (var command in Terminal.Shell.Commands)
+                var names = new List<string>(shell.Commands.Keys);
+                names.Sort();
+
+                foreach (string name in names)
                 {
-                    Terminal.Log("{0}: {1}", command.Key.PadRight(16), command.Value.help);
+                    CommandInfo command = shell.Commands[name];
+                    Terminal.Log("{0} - {1}", name, command.Help);
                 }
+
                 return;
             }
 
-            string command_name = args[0].String.ToUpper();
+            string commandName = args[0].String;
 
-            if (!Terminal.Shell.Commands.ContainsKey(command_name))
+            if (!shell.Commands.TryGetValue(commandName, out CommandInfo info))
             {
-                Terminal.Shell.IssueErrorMessage("Command {0} could not be found.", command_name);
+                shell.IssueErrorMessage("Command {0} could not be found.", commandName);
                 return;
             }
 
-            string help = Terminal.Shell.Commands[command_name].help;
-
-            if (help == null)
-            {
-                Terminal.Log("{0} does not provide any help documentation.", command_name);
-            }
+            if (string.IsNullOrWhiteSpace(info.Help))
+                Terminal.Log("{0} does not provide help text.", commandName);
             else
-            {
-                Terminal.Log(help);
-            }
+                Terminal.Log(info.Help);
         }
 
-        [RegisterCommand(Help = "Times the execution of a Command", MinArgCount = 1)]
-        static void CommandTime(CommandArg[] args)
+        private static void CommandTime(CommandArg[] args)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -58,39 +79,50 @@ namespace MasterServerToolkit.CommandTerminal
             Terminal.Log("Time: {0}ms", (double)sw.ElapsedTicks / 10000);
         }
 
-        [RegisterCommand(Help = "Outputs message")]
-        static void CommandPrint(CommandArg[] args)
+        private static void CommandEcho(CommandArg[] args)
         {
             Terminal.Log(JoinArguments(args));
         }
 
-#if DEBUG
-        [RegisterCommand(Help = "Outputs the StackTrace of the previous message", MaxArgCount = 0)]
-        static void CommandTrace(CommandArg[] args)
+        private static void CommandLogs(CommandArg[] args)
         {
-            int log_count = Terminal.Buffer.Logs.Count;
+            Terminal terminal = Terminal.Instance;
 
-            if (log_count - 2 < 0)
+            if (terminal == null || Terminal.Buffer == null)
+                return;
+
+            TerminalSearchResult search = terminal.GetCurrentSearchResult();
+            Terminal.Log(
+                "Stored {0}/{1} lines. Visible limit: {2}. Search matches: {3}. Search page: {4}/{5}.",
+                Terminal.Buffer.Count,
+                Terminal.Buffer.Capacity,
+                terminal.MaxVisibleLines,
+                search.TotalMatches,
+                search.PageCount == 0 ? 0 : search.PageIndex + 1,
+                search.PageCount);
+        }
+
+#if DEBUG
+        private static void CommandTrace(CommandArg[] args)
+        {
+            CommandLog buffer = Terminal.Buffer;
+
+            if (buffer == null || buffer.Logs.Count < 2)
             {
                 Terminal.Log("Nothing to trace.");
                 return;
             }
 
-            var log_item = Terminal.Buffer.Logs[log_count - 2];
+            LogItem logItem = buffer.Logs[buffer.Logs.Count - 2];
 
-            if (log_item.stack_trace == "")
-            {
-                Terminal.Log("{0} (no trace)", log_item.message);
-            }
+            if (string.IsNullOrEmpty(logItem.stack_trace))
+                Terminal.Log("{0} (no trace)", logItem.message);
             else
-            {
-                Terminal.Log(log_item.stack_trace);
-            }
+                Terminal.Log(logItem.stack_trace);
         }
 #endif
 
-        [RegisterCommand(Help = "Quits running Application", MaxArgCount = 0)]
-        static void CommandQuit(CommandArg[] args)
+        private static void CommandQuit(CommandArg[] args)
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
@@ -99,19 +131,17 @@ namespace MasterServerToolkit.CommandTerminal
 #endif
         }
 
-        static string JoinArguments(CommandArg[] args)
+        private static string JoinArguments(CommandArg[] args)
         {
             var sb = new StringBuilder();
-            int arg_length = args.Length;
+            int argLength = args == null ? 0 : args.Length;
 
-            for (int i = 0; i < arg_length; i++)
+            for (int i = 0; i < argLength; i++)
             {
                 sb.Append(args[i].String);
 
-                if (i < arg_length - 1)
-                {
-                    sb.Append(" ");
-                }
+                if (i < argLength - 1)
+                    sb.Append(' ');
             }
 
             return sb.ToString();

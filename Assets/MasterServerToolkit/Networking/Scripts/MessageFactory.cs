@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.Logging;
 using System;
+using System.IO;
 
 namespace MasterServerToolkit.Networking
 {
@@ -30,6 +31,20 @@ namespace MasterServerToolkit.Networking
 
             try
             {
+                if (buffer == null)
+                    throw new ArgumentNullException(nameof(buffer));
+
+                if (start < 0 || start > buffer.Length - 7)
+                    throw new InvalidDataException("Incoming message does not contain a complete header");
+
+                long wireMessageByteCount = buffer.LongLength - start;
+                if (wireMessageByteCount > MstNetworkLimits.MaxWireMessageByteCount)
+                {
+                    throw new InvalidDataException(
+                        $"Incoming wire message length {wireMessageByteCount} exceeds the allowed limit " +
+                        $"{MstNetworkLimits.MaxWireMessageByteCount}");
+                }
+
                 var converter = EndianBitConverter.Big;
                 var flags = buffer[start];
 
@@ -45,8 +60,26 @@ namespace MasterServerToolkit.Networking
 
                 //Debug.Log($"Length is: {dataLength}");
 
-                if (dataLength > buffer.Length)
-                    throw new ArgumentOutOfRangeException(nameof(dataLength));
+                if (dataLength < 0 ||
+                    dataLength > MstNetworkLimits.MaxMessagePayloadByteCount)
+                {
+                    throw new InvalidDataException(
+                        $"Incoming message payload length {dataLength} exceeds the allowed range " +
+                        $"0..{MstNetworkLimits.MaxMessagePayloadByteCount}");
+                }
+
+                int trailingByteCount = 0;
+
+                if ((flags & (byte)MessageFlag.AckRequest) > 0)
+                    trailingByteCount += sizeof(int);
+
+                if ((flags & (byte)MessageFlag.AckResponse) > 0)
+                    trailingByteCount += sizeof(int) + sizeof(byte);
+
+                long requiredByteCount = (long)pointer + dataLength + trailingByteCount;
+
+                if (requiredByteCount > buffer.Length)
+                    throw new EndOfStreamException("Incoming message payload or acknowledgement data is truncated");
 
                 data = new byte[dataLength];
                 Array.Copy(buffer, pointer, data, 0, dataLength);

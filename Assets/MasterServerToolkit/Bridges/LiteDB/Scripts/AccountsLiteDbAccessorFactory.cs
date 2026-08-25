@@ -5,12 +5,13 @@ namespace MasterServerToolkit.Bridges.LiteDB
 {
     public class AccountsLiteDbAccessorFactory : LiteDatabaseAccessorFactory
     {
-        private AccountsDatabaseAccessor accessor;
+        private AccountsDatabaseAccessor accountsAccessor;
 
         private void OnDestroy()
         {
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
-            accessor?.Dispose();
+            accountsAccessor?.Dispose();
+            accountsAccessor = null;
 #endif
         }
 
@@ -19,15 +20,17 @@ namespace MasterServerToolkit.Bridges.LiteDB
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
             try
             {
-                accessor = new AccountsDatabaseAccessor(databaseName);
-                accessor.Logger = logger;
+                accountsAccessor = new AccountsDatabaseAccessor(databaseName);
+                accountsAccessor.Logger = logger;
 
-                Mst.Server.DbAccessors.AddAccessor(accessor);
+                Mst.Server.DbAccessors.AddAccessor(accountsAccessor);
             }
             catch (Exception e)
             {
-                Logging.Logs.Error("Failed to setup LiteDB");
-                Logging.Logs.Error(e);
+                accountsAccessor?.Dispose();
+                accountsAccessor = null;
+                logger.Error($"Failed to setup {nameof(AccountsDatabaseAccessor)}");
+                logger.Error(e);
             }
 #endif
         }

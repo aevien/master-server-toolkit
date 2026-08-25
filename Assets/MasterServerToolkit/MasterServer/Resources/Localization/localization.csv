@@ -1,56 +1,357 @@
 ﻿keys;ru;en;tr
 ;;;
 # Shared;;;
-unknownError;Неизвестная ошибка. Пожалуйста, свяжитесь с администратором;Unknown error. Please contact the administrator;Bilinmeyen hata. Lütfen yöneticiyle iletişime geçin
+ui.notification.error.unknown.message;Неизвестная ошибка. Пожалуйста, свяжитесь с администратором;Unknown error. Please contact the administrator;Bilinmeyen hata. Lütfen yöneticiyle iletişime geçin
+ui.error.response.timeout.message;Время ожидания ответа истекло. Попробуйте ещё раз;The response timed out. Please try again;Yanıt zaman aşımına uğradı. Lütfen tekrar deneyin
+ui.error.response.internal.message;На сервере произошла внутренняя ошибка. Попробуйте позже;An internal server error occurred. Please try again later;Dahili bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin
+ui.error.response.dependency.message;Внешний сервис временно недоступен. Попробуйте позже;An external service is temporarily unavailable. Please try again later;Harici bir hizmet geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin
+ui.error.response.unavailable.message;Сервис временно недоступен. Попробуйте позже;The service is temporarily unavailable. Please try again later;Hizmet geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin
+ui.error.response.forbidden.message;У вас недостаточно прав для выполнения этого действия;You do not have permission to perform this action;Bu işlemi gerçekleştirme izniniz yok
+ui.error.response.banned.message;Учётная запись заблокирована;The account is blocked;Hesap engellendi
+ui.error.response.badRequest.message;Сервер не смог обработать запрос;The server could not process the request;Sunucu isteği işleyemedi
+ui.error.response.invalid.message;Переданные данные недействительны;The submitted data is invalid;Gönderilen veriler geçersiz
+ui.error.response.notFound.message;Запрошенные данные не найдены;The requested data was not found;İstenen veriler bulunamadı
+ui.error.response.alreadyExists.message;Такая запись уже существует;The requested entry already exists;İstenen kayıt zaten mevcut
+ui.error.response.conflict.message;Действие конфликтует с текущим состоянием;The action conflicts with the current state;İşlem mevcut durumla çakışıyor
+ui.error.response.cancelled.message;Операция была отменена;The operation was cancelled;İşlem iptal edildi
 ;;;
 # Scenes Manager;;;
-loadingScene;Загрузка сцены... Пожалуйста, подождите;Loading scene... Please wait;Sahne yükleniyor... Lütfen bekleyin
+ui.loading.scene.message;Загрузка сцены... Пожалуйста, подождите;Loading scene... Please wait;Sahne yükleniyor... Lütfen bekleyin
 ;;;
 # User info;;;
-authStatusUnauthorized;Не авторизован;Not authorized;Yetkili değil
+ui.status.auth.unauthorized;Не авторизован;Not authorized;Yetkili değil
 ;;;
 # Connection;;;
-connectionProgress;Подключение с мастеру… Пожалуйста, подождите.;Connecting to the master... Please wait.;Master'a bağlanılıyor... Lütfen bekleyin.
-connectionLost;Соединение с сервером было потеряно. Пожалуйста, попробуйте повторить его или обратитесь к администратору.;The connection to the server was lost. Please try again or contact your administrator.;Sunucuyla bağlantı kesildi. Lütfen tekrar deneyin veya yöneticinizle iletişime geçin.
-connectionStatusConnected;Подключен к;Connected to;Bağlı
-connectionStatusConnecting;Подключение к;Connecting to;Bağlantı
-connectionStatusDisconnected;Нет подключения;No connection;Bağlantı yok
+ui.loading.connection.message;Подключение с мастеру… Пожалуйста, подождите.;Connecting to the master... Please wait.;Master'a bağlanılıyor... Lütfen bekleyin.
+ui.dialog.connection.lost.message;Соединение с сервером было потеряно. Пожалуйста, попробуйте повторить его или обратитесь к администратору.;The connection to the server was lost. Please try again or contact your administrator.;Sunucuyla bağlantı kesildi. Lütfen tekrar deneyin veya yöneticinizle iletişime geçin.
+ui.status.connection.connected;Подключен к;Connected to;Bağlı
+ui.status.connection.connecting;Подключение к;Connecting to;Bağlantı
+ui.status.connection.disconnected;Нет подключения;No connection;Bağlantı yok
+ui.status.connection.notConnected;Не подключен;Not Connected;Bağlı Değil
 ;;;
 # Sign in;;;
-signInTokenExpired;Срок действия токена входа в систему истек;Login token has expired;Giriş jetonunun süresi doldu
-signedInStatusOk;Вы уже вошли в систему;You are already logged in.;zaten giriş yaptınız
-signedInStatusFail;Вы еще не вошли в систему;You are not logged in yet;Henüz giriş yapmadınız
-signInProgress;Вход в систему. Пожалуйста, подождите;Login. Please wait;Giriş yapmak. Lütfen bekleyin
-signInSuccessResult;Вы успешно вошли в систему;You have successfully logged in;Başarıyla giriş yaptınız
-signInErrorResult;Во время входа в систему произошла ошибка:;An error occurred during login:;Oturum açma sırasında bir hata oluştu:
-signInSecurityError;Невозможно выполнить вход по соображениям безопасности;Unable to sign in for security reasons;Güvenlik nedeniyle oturum açılamıyor
-signInTitle;Вход;Login;Login
+ui.notification.signIn.tokenExpired.message;Срок действия токена входа в систему истек;Login token has expired;Giriş jetonunun süresi doldu
+ui.notification.signIn.alreadySignedIn.message;Вы уже вошли в систему;You are already logged in.;zaten giriş yaptınız
+ui.notification.signIn.notSignedIn.message;Вы еще не вошли в систему;You are not logged in yet;Henüz giriş yapmadınız
+ui.loading.signIn.message;Вход в систему. Пожалуйста, подождите;Login. Please wait;Giriş yapmak. Lütfen bekleyin
+ui.notification.signIn.success.message;Вы успешно вошли в систему;You have successfully logged in;Başarıyla giriş yaptınız
+ui.notification.signIn.error.message;Во время входа в систему произошла ошибка:;An error occurred during login:;Oturum açma sırasında bir hata oluştu:
+ui.notification.signIn.securityError.message;Невозможно выполнить вход по соображениям безопасности;Unable to sign in for security reasons;Güvenlik nedeniyle oturum açılamıyor
+ui.view.signIn.title;Вход;Login;Login
+ui.view.signIn.btn.submit;Войти;Sign in;Giriş yap
+ui.view.signIn.btn.createAccount;Создать аккаунт;Create account;Hesap oluştur
+ui.view.signIn.btn.forgotPassword;Забыли пароль?;Forgot password?;Şifrenizi mi unuttunuz?
 ;;;
 # Sign up;;;
-signUpInProgress;Регистрация в процессе;Registration in progress;Kayıt devam ediyor
-signUpProgress;Создание учетной записи. Пожалуйста, подождите;Create an account. Please wait;Bir hesap oluşturun. Lütfen bekleyin
-signUpSuccessResult;Вы успешно создали учетную запись, теперь можно войти в систему.;You have successfully created an account, you can now log in.;Başarıyla bir hesap oluşturdunuz, artık giriş yapabilirsiniz.
-signUpErrorResult;Во время создания учетной записи произошла ошибка:;An error occurred during account creation:;Hesap oluşturma sırasında bir hata oluştu:
-signUpSecurityError;Невозможно выполнить регистрацию по соображениям безопасности;Unable to register due to security reasons;Güvenlik nedeniyle kayıt yapılamıyor
+ui.notification.signUp.alreadyInProgress.message;Регистрация в процессе;Registration in progress;Kayıt devam ediyor
+ui.loading.signUp.message;Создание учетной записи. Пожалуйста, подождите;Create an account. Please wait;Bir hesap oluşturun. Lütfen bekleyin
+ui.notification.signUp.success.message;Учетная запись успешно создана.;Account created successfully.;Hesap başarıyla oluşturuldu.
+ui.notification.signUp.error.message;Во время создания учетной записи произошла ошибка:;An error occurred during account creation:;Hesap oluşturma sırasında bir hata oluştu:
+ui.notification.signUp.securityError.message;Невозможно выполнить регистрацию по соображениям безопасности;Unable to register due to security reasons;Güvenlik nedeniyle kayıt yapılamıyor
+ui.error.auth.account_blocked.message;Учётная запись заблокирована. Причина: {0};The account is blocked. Reason: {0};Hesap engellendi. Neden: {0}
+ui.error.auth.account_blocked_until.message;Учётная запись заблокирована до {0}. Причина: {1};The account is blocked until {0}. Reason: {1};Hesap {0} tarihine kadar engellendi. Neden: {1}
+ui.error.auth.account_blocked.default_reason;Причина не указана;No reason was provided;Neden belirtilmedi
+ui.error.auth.internal_error.message;Не удалось выполнить авторизацию. Попробуйте позже;Authentication could not be completed. Please try again later;Kimlik doğrulama tamamlanamadı. Lütfen daha sonra tekrar deneyin
+ui.error.auth.operation_in_progress.message;Другая операция авторизации ещё выполняется;Another authentication operation is still in progress;Başka bir kimlik doğrulama işlemi hâlâ devam ediyor
+ui.error.auth.peer_already_authenticated.message;Это подключение уже авторизовано;This connection is already authenticated;Bu bağlantının kimliği zaten doğrulandı
+ui.error.auth.account_already_authenticated.message;Эта учётная запись уже используется;This account is already in use;Bu hesap zaten kullanılıyor
+ui.error.auth.session_conflict.message;Состояние авторизации изменилось. Повторите попытку;The authentication state changed. Please try again;Kimlik doğrulama durumu değişti. Lütfen tekrar deneyin
+ui.error.auth.account_switch_requires_leaving_room.message;Перед сменой учётной записи выйдите из комнаты;Leave the room before switching accounts;Hesap değiştirmeden önce odadan ayrılın
+ui.error.auth.target_account_requires_leaving_room.message;Эта учётная запись сейчас находится в комнате;This account is currently in a room;Bu hesap şu anda bir odada
+ui.error.auth.security_context_missing.message;Защищённое соединение не установлено;A secure connection has not been established;Güvenli bağlantı kurulmadı
+ui.error.auth.payload_invalid.message;Данные авторизации повреждены или имеют неверный формат;Authentication data is damaged or has an invalid format;Kimlik doğrulama verileri bozuk veya geçersiz biçimde
+ui.error.auth.authentication_required.message;Для выполнения этого действия нужно войти в учётную запись;You must sign in to perform this action;Bu işlemi yapmak için oturum açmalısınız
+ui.error.auth.permission_denied.message;Недостаточно прав для выполнения операции с учётной записью;You do not have permission to perform this account operation;Bu hesap işlemini gerçekleştirme izniniz yok
+ui.error.auth.user_not_logged_in.message;Пользователь не вошёл в учётную запись;The user is not signed in;Kullanıcı oturum açmadı
+ui.error.auth.invalid_email.message;Введите корректный адрес электронной почты;Enter a valid email address;Geçerli bir e-posta adresi girin
+ui.error.auth.invalid_username.message;Имя пользователя не соответствует требованиям;The username does not meet the requirements;Kullanıcı adı gereksinimleri karşılamıyor
+ui.error.auth.invalid_password.message;Пароль не соответствует требованиям;The password does not meet the requirements;Şifre gereksinimleri karşılamıyor
+ui.error.auth.invalid_credentials.message;Неверное имя пользователя или пароль;Incorrect username or password;Kullanıcı adı veya şifre yanlış
+ui.error.auth.username_already_exists.message;Это имя пользователя уже занято;This username is already taken;Bu kullanıcı adı zaten alınmış
+ui.error.auth.email_already_exists.message;Этот адрес электронной почты уже используется;This email address is already in use;Bu e-posta adresi zaten kullanılıyor
+ui.error.auth.service_busy.message;Сервис авторизации занят. Попробуйте позже;The authentication service is busy. Please try again later;Kimlik doğrulama hizmeti meşgul. Lütfen daha sonra tekrar deneyin
+ui.error.auth.account_registration_failed.message;Не удалось создать учётную запись;The account could not be created;Hesap oluşturulamadı
+ui.error.auth.unsupported_credentials.message;Этот способ авторизации не поддерживается;This authentication method is not supported;Bu kimlik doğrulama yöntemi desteklenmiyor
+ui.error.auth.phone_sign_in_unsupported.message;Вход по номеру телефона не поддерживается;Phone number sign-in is not supported;Telefon numarasıyla giriş desteklenmiyor
+ui.error.auth.guest_login_disabled.message;Гостевой вход отключён;Guest sign-in is disabled;Misafir girişi devre dışı
+ui.error.auth.token_invalid_or_expired.message;Токен авторизации недействителен или истёк;The authentication token is invalid or expired;Kimlik doğrulama belirteci geçersiz veya süresi dolmuş
+ui.error.auth.password_reset_code_required.message;Введите код сброса пароля;Enter the password reset code;Şifre sıfırlama kodunu girin
+ui.error.auth.password_reset_code_invalid.message;Неверный код сброса пароля;The password reset code is invalid;Şifre sıfırlama kodu geçersiz
+ui.error.auth.password_reset_code_expired.message;Срок действия кода сброса пароля истёк. Запросите новый код;The password reset code has expired. Request a new code;Şifre sıfırlama kodunun süresi doldu. Yeni bir kod isteyin
+ui.error.auth.password_reset_code_attempts_exceeded.message;Попытки ввода кода сброса пароля закончились. Запросите новый код;Password reset code attempts are exhausted. Request a new code;Şifre sıfırlama kodu deneme hakkı tükendi. Yeni bir kod isteyin
+ui.error.auth.email_service_unavailable.message;Почтовый сервис временно недоступен;The email service is temporarily unavailable;E-posta hizmeti geçici olarak kullanılamıyor
+ui.error.auth.guest_email_confirmation_forbidden.message;Гостевая учётная запись не может подтверждать email;A guest account cannot confirm an email address;Misafir hesap e-posta adresini doğrulayamaz
+ui.error.auth.email_confirmation_code_invalid.message;Неверный код подтверждения email;The email confirmation code is invalid;E-posta doğrulama kodu geçersiz
+ui.error.auth.email_confirmation_code_expired.message;Срок действия кода подтверждения email истёк. Запросите новый код;The email confirmation code has expired. Request a new code;E-posta doğrulama kodunun süresi doldu. Yeni bir kod isteyin
+ui.error.auth.email_confirmation_code_attempts_exceeded.message;Попытки ввода кода подтверждения закончились. Запросите новый код;Email confirmation code attempts are exhausted. Request a new code;E-posta doğrulama kodu deneme hakkı tükendi. Yeni bir kod isteyin
+ui.error.auth.email_confirmation_failed.message;Не удалось подтвердить адрес электронной почты;The email address could not be confirmed;E-posta adresi doğrulanamadı
+ui.error.auth.email_delivery_failed.message;Не удалось отправить письмо. Попробуйте позже;The email could not be sent. Please try again later;E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin
+ui.error.auth.email_confirmation_code_save_failed.message;Не удалось сохранить код подтверждения. Попробуйте позже;The confirmation code could not be saved. Please try again later;Doğrulama kodu kaydedilemedi. Lütfen daha sonra tekrar deneyin
+ui.error.auth.email_sign_in_request_invalid.message;Запрос входа по email недействителен;The email sign-in request is invalid;E-posta ile giriş isteği geçersiz
+ui.error.auth.email_sign_in_code_invalid_or_expired.message;Код входа по email недействителен или истёк;The email sign-in code is invalid or expired;E-posta giriş kodu geçersiz veya süresi dolmuş
+ui.error.auth.email_sign_in_state_failed.message;Не удалось подготовить вход по email;Email sign-in could not be prepared;E-posta ile giriş hazırlanamadı
+ui.error.auth.bridge_player_id_required.message;Игровой сервис не передал идентификатор игрока;The game service did not provide a player identifier;Oyun hizmeti oyuncu kimliği sağlamadı
+ui.error.auth.bridge_guest_identity_not_allowed.message;Гостевой профиль игрового сервиса нельзя привязать к учётной записи;A guest game-service profile cannot be linked to an account;Misafir oyun hizmeti profili bir hesaba bağlanamaz
+ui.error.auth.bridge_validation_failed.message;Игровой сервис не подтвердил данные игрока;The game service could not validate the player data;Oyun hizmeti oyuncu verilerini doğrulayamadı
+ui.error.auth.bridge_failed.message;Не удалось войти через игровой сервис;Could not sign in through the game service;Oyun hizmeti üzerinden giriş yapılamadı
+;;;
+# Common MST errors;;;
+ui.error.common.unknown.message;Произошла неизвестная ошибка. Попробуйте ещё раз;An unknown error occurred. Please try again;Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin
+ui.error.common.internal_error.message;На сервере произошла внутренняя ошибка. Попробуйте позже;An internal server error occurred. Please try again later;Sunucuda dahili bir hata oluştu. Lütfen daha sonra tekrar deneyin
+ui.error.common.permission_denied.message;Недостаточно прав для выполнения этого действия;You do not have permission to perform this action;Bu işlemi gerçekleştirmek için yeterli izniniz yok
+ui.error.common.response_invalid.message;Сервер вернул некорректный ответ;The server returned an invalid response;Sunucu geçersiz bir yanıt döndürdü
+ui.error.common.request_handler_not_found.message;Сервер не поддерживает эту операцию;The server does not support this operation;Sunucu bu işlemi desteklemiyor
+ui.error.common.request_handler_failed.message;Сервер не смог выполнить операцию. Попробуйте позже;The server could not complete the operation. Please try again later;Sunucu işlemi tamamlayamadı. Lütfen daha sonra tekrar deneyin
+ui.error.common.resource_insufficient.message;Недостаточно ресурса: {0};Not enough resource: {0};Yetersiz kaynak: {0}
+ui.error.common.resource_unsupported.message;Ресурс не поддерживается: {0};The resource is not supported: {0};Kaynak desteklenmiyor: {0}
+;;;
+# Security errors;;;
+ui.error.security.connection_unauthenticated.message;Подключение не прошло проверку безопасности;The connection has not passed security authentication;Bağlantı güvenlik doğrulamasından geçmedi
+ui.error.security.context_missing.message;Контекст безопасности подключения недоступен;The connection security context is unavailable;Bağlantı güvenlik bağlamı kullanılamıyor
+ui.error.security.permission_request_invalid.message;Запрос прав доступа имеет неверный формат;The permission request has an invalid format;İzin isteğinin biçimi geçersiz
+ui.error.security.permission_key_required.message;Не указан ключ прав доступа;A permission key is required;İzin anahtarı gerekli
+ui.error.security.default_permission_required.message;Базовые права доступа не настроены;Default permissions are not configured;Varsayılan izinler yapılandırılmadı
+ui.error.security.encryption_challenge_request_invalid.message;Запрос защищённого соединения имеет неверный формат;The secure connection request has an invalid format;Güvenli bağlantı isteğinin biçimi geçersiz
+ui.error.security.encryption_challenge_unavailable.message;Не удалось подготовить защищённое соединение;The secure connection could not be prepared;Güvenli bağlantı hazırlanamadı
+ui.error.security.encryption_request_invalid.message;Запрос шифрования имеет неверный формат;The encryption request has an invalid format;Şifreleme isteğinin biçimi geçersiz
+ui.error.security.encryption_challenge_invalid.message;Проверка защищённого соединения не пройдена;Secure connection verification failed;Güvenli bağlantı doğrulaması başarısız oldu
+ui.error.security.permission_challenge_invalid.message;Проверка прав доступа не пройдена;Permission verification failed;İzin doğrulaması başarısız oldu
+ui.error.security.permission_protocol_unsupported.message;Версия протокола прав доступа не поддерживается;The permission protocol version is not supported;İzin protokolü sürümü desteklenmiyor
+ui.error.security.permission_response_invalid.message;Ответ проверки прав доступа имеет неверный формат;The permission verification response has an invalid format;İzin doğrulama yanıtının biçimi geçersiz
+ui.error.security.encryption_failed.message;Не удалось установить защищённое соединение;Could not establish a secure connection;Güvenli bağlantı kurulamadı
+;;;
+# Profile errors;;;
+ui.error.profiles.user_profile_not_found.message;Профиль игрока не найден;The player profile was not found;Oyuncu profili bulunamadı
+ui.error.profiles.update_empty.message;Нет данных профиля для обновления;There is no profile data to update;Güncellenecek profil verisi yok
+ui.error.profiles.update_invalid.message;Данные профиля имеют неверный формат;The profile data has an invalid format;Profil verilerinin biçimi geçersiz
+ui.error.profiles.save_batch_invalid.message;Не удалось обработать пакет сохранения профилей. Количество записей: {0};The profile save batch could not be processed. Entry count: {0};Profil kaydetme paketi işlenemedi. Kayıt sayısı: {0}
+ui.error.profiles.save_unavailable.message;Сохранение профиля временно недоступно;Profile saving is temporarily unavailable;Profil kaydetme geçici olarak kullanılamıyor
+ui.error.profiles.not_found.message;Профиль не найден;The profile was not found;Profil bulunamadı
+ui.error.profiles.fetch_session_ended.message;Сеанс получения профиля завершён;The profile retrieval session has ended;Profil alma oturumu sona erdi
+ui.error.profiles.fetch_timeout.message;Время ожидания профиля истекло;The profile retrieval timed out;Profil alma işlemi zaman aşımına uğradı
+ui.error.profiles.fetch_failed.message;Не удалось получить профиль игрока;The player profile could not be retrieved;Oyuncu profili alınamadı
+;;;
+# Achievement errors;;;
+ui.error.achievements.user_achievements_not_found.message;Данные достижений игрока не найдены;The player's achievement data was not found;Oyuncunun başarı verileri bulunamadı
+ui.error.achievements.update_forbidden.message;Изменение достижений запрещено;Updating achievements is not allowed;Başarıların güncellenmesine izin verilmiyor
+ui.error.achievements.rooms_module_unavailable.message;Сервис игровых комнат временно недоступен;The game rooms service is temporarily unavailable;Oyun odaları hizmeti geçici olarak kullanılamıyor
+ui.error.achievements.joined_room_not_found.message;Активная игровая комната не найдена;The active game room was not found;Etkin oyun odası bulunamadı
+ui.error.achievements.not_found.message;Достижение «{0}» не найдено;Achievement "{0}" was not found;"{0}" başarısı bulunamadı
+ui.error.achievements.key_required.message;Не указан идентификатор достижения;An achievement identifier is required;Başarı kimliği gerekli
+ui.error.achievements.response_missing.message;Сервер не вернул данные достижения;The server did not return achievement data;Sunucu başarı verilerini döndürmedi
+ui.error.achievements.response_invalid.message;Сервер вернул некорректные данные достижения;The server returned invalid achievement data;Sunucu geçersiz başarı verileri döndürdü
+ui.error.achievements.update_failed.message;Не удалось обновить достижение;The achievement could not be updated;Başarı güncellenemedi
+ui.error.achievements.room_response_missing.message;Игровая комната не вернула данные достижения;The game room did not return achievement data;Oyun odası başarı verilerini döndürmedi
+ui.error.achievements.room_response_invalid.message;Игровая комната вернула некорректные данные достижения;The game room returned invalid achievement data;Oyun odası geçersiz başarı verileri döndürdü
+ui.error.achievements.room_forward_failed.message;Не удалось передать обновление достижения в игровую комнату;The achievement update could not be sent to the game room;Başarı güncellemesi oyun odasına gönderilemedi
+ui.error.achievements.updates_not_applied.message;Не удалось применить обновления достижений. Количество: {0};Achievement updates could not be applied. Count: {0};Başarı güncellemeleri uygulanamadı. Sayı: {0}
+;;;
+# Chat errors;;;
+ui.error.chat.default_channel_not_set.message;Канал чата по умолчанию не настроен;The default chat channel is not configured;Varsayılan sohbet kanalı yapılandırılmadı
+ui.error.chat.channel_membership_required.message;Для этого действия нужно состоять в канале;You must be a member of the channel to perform this action;Bu işlemi gerçekleştirmek için kanalın üyesi olmalısınız
+ui.error.chat.channel_permission_required.message;Недостаточно прав в канале;You do not have enough permissions in the channel;Kanalda yeterli izniniz yok
+ui.error.chat.user_not_online.message;Пользователь не в сети;The user is offline;Kullanıcı çevrimdışı
+ui.error.chat.users_message_forbidden.message;Отправка сообщений этим пользователям запрещена;Sending messages to these users is not allowed;Bu kullanıcılara mesaj gönderilmesine izin verilmiyor
+ui.error.chat.message_type_invalid.message;Тип сообщения не поддерживается;The message type is not supported;Mesaj türü desteklenmiyor
+ui.error.chat.user_not_identified.message;Пользователь чата не определён;The chat user has not been identified;Sohbet kullanıcısı tanımlanmadı
+ui.error.chat.channel_required.message;Не указан канал чата;A chat channel is required;Sohbet kanalı gerekli
+ui.error.chat.channel_already_exists.message;Канал с таким названием уже существует;A channel with this name already exists;Bu ada sahip bir kanal zaten var
+ui.error.chat.channel_type_forbidden.message;Этот тип канала нельзя создать;This channel type cannot be created;Bu kanal türü oluşturulamaz
+ui.error.chat.channel_type_invalid.message;Указан неверный тип канала;The channel type is invalid;Kanal türü geçersiz
+ui.error.chat.history_visibility_invalid.message;Настройка видимости истории чата недействительна;The chat history visibility setting is invalid;Sohbet geçmişi görünürlük ayarı geçersiz
+ui.error.chat.history_limit_invalid.message;Ограничение истории чата недействительно;The chat history limit is invalid;Sohbet geçmişi sınırı geçersiz
+ui.error.chat.default_permissions_invalid.message;Базовые права канала недействительны;The default channel permissions are invalid;Varsayılan kanal izinleri geçersiz
+ui.error.chat.invited_permissions_invalid.message;Права приглашённого пользователя недействительны;The invited user's permissions are invalid;Davet edilen kullanıcının izinleri geçersiz
+ui.error.chat.server_api_forbidden.message;Серверный API чата недоступен для этого подключения;The server chat API is not available to this connection;Sunucu sohbet API'si bu bağlantı için kullanılamıyor
+ui.error.chat.channel_user_packet_required.message;Не переданы данные пользователя канала;Channel user data is required;Kanal kullanıcı verileri gerekli
+ui.error.chat.channel_and_username_required.message;Укажите канал и имя пользователя;Specify a channel and username;Kanalı ve kullanıcı adını belirtin
+ui.error.chat.server_message_packet_required.message;Не переданы данные серверного сообщения;Server message data is required;Sunucu mesajı verileri gerekli
+ui.error.chat.sender_required.message;Не указан отправитель сообщения;A message sender is required;Mesaj gönderen gerekli
+ui.error.chat.receiver_required.message;Не указан получатель сообщения;A message recipient is required;Mesaj alıcısı gerekli
+ui.error.chat.recipients_required.message;Не указаны получатели сообщения;Message recipients are required;Mesaj alıcıları gerekli
+ui.error.chat.recipients_offline.message;Все получатели сообщения не в сети;All message recipients are offline;Tüm mesaj alıcıları çevrimdışı
+ui.error.chat.channel_not_found.message;Канал чата не найден;The chat channel was not found;Sohbet kanalı bulunamadı
+ui.error.chat.target_username_required.message;Не указано имя целевого пользователя;A target username is required;Hedef kullanıcı adı gerekli
+ui.error.chat.owner_target_protected.message;Нельзя изменить права владельца канала;The channel owner's permissions cannot be changed;Kanal sahibinin izinleri değiştirilemez
+ui.error.chat.permission_grant_exceeds_own.message;Нельзя выдать больше прав, чем есть у вас;You cannot grant more permissions than you have;Sahip olduğunuzdan daha fazla izin veremezsiniz
+ui.error.chat.owner_permission_required.message;Для этого действия нужны права владельца канала;Channel owner permission is required for this action;Bu işlem için kanal sahibi izni gerekli
+ui.error.chat.cannot_ban_self.message;Нельзя заблокировать самого себя;You cannot ban yourself;Kendinizi engelleyemezsiniz
+ui.error.chat.username_picking_disabled.message;Самостоятельный выбор имени в чате отключён;Choosing a chat username is disabled;Sohbet kullanıcı adı seçimi devre dışı
+ui.error.chat.username_required.message;Не указано имя пользователя чата;A chat username is required;Sohbet kullanıcı adı gerekli
+ui.error.chat.username_whitespace_invalid.message;Имя пользователя чата не может содержать пробелы;The chat username cannot contain spaces;Sohbet kullanıcı adı boşluk içeremez
+ui.error.chat.user_already_identified.message;Пользователь чата уже определён;The chat user has already been identified;Sohbet kullanıcısı zaten tanımlandı
+ui.error.chat.username_already_exists.message;Это имя пользователя чата уже занято;This chat username is already taken;Bu sohbet kullanıcı adı zaten alınmış
+ui.error.chat.channel_ban_failed.message;Не удалось заблокировать пользователя в канале;The user could not be banned from the channel;Kullanıcı kanaldan engellenemedi
+ui.error.chat.channel_create_failed.message;Не удалось создать канал чата;The chat channel could not be created;Sohbet kanalı oluşturulamadı
+ui.error.chat.channel_ensure_failed.message;Не удалось получить или создать канал чата;The chat channel could not be found or created;Sohbet kanalı bulunamadı veya oluşturulamadı
+ui.error.chat.channel_invite_failed.message;Не удалось пригласить пользователя в канал;The user could not be invited to the channel;Kullanıcı kanala davet edilemedi
+ui.error.chat.channel_join_failed.message;Не удалось войти в канал чата;Could not join the chat channel;Sohbet kanalına katılınamadı
+ui.error.chat.channel_user_add_failed.message;Не удалось добавить пользователя в канал;The user could not be added to the channel;Kullanıcı kanala eklenemedi
+ui.error.chat.channel_user_remove_failed.message;Не удалось удалить пользователя из канала;The user could not be removed from the channel;Kullanıcı kanaldan çıkarılamadı
+ui.error.chat.user_add_failed.message;Не удалось добавить пользователя в чат;The user could not be added to chat;Kullanıcı sohbete eklenemedi
+;;;
+# Group errors;;;
+ui.error.groups.bad_packet.message;Данные запроса группы имеют неверный формат;The group request data has an invalid format;Grup isteği verilerinin biçimi geçersiz
+ui.error.groups.name_length_invalid.message;Название группы имеет недопустимую длину;The group name has an invalid length;Grup adının uzunluğu geçersiz
+ui.error.groups.tag_invalid.message;Тег группы имеет неверный формат;The group tag has an invalid format;Grup etiketinin biçimi geçersiz
+ui.error.groups.description_length_invalid.message;Описание группы имеет недопустимую длину;The group description has an invalid length;Grup açıklamasının uzunluğu geçersiz
+ui.error.groups.join_policy_invalid.message;Правила вступления в группу недействительны;The group join policy is invalid;Gruba katılma ilkesi geçersiz
+ui.error.groups.already_joined.message;Вы уже состоите в группе;You are already a member of a group;Zaten bir grubun üyesisiniz
+ui.error.groups.name_already_exists.message;Группа с таким названием уже существует;A group with this name already exists;Bu ada sahip bir grup zaten var
+ui.error.groups.tag_already_exists.message;Группа с таким тегом уже существует;A group with this tag already exists;Bu etikete sahip bir grup zaten var
+ui.error.groups.target_username_required.message;Не указано имя пользователя;A username is required;Kullanıcı adı gerekli
+ui.error.groups.membership_required.message;Для этого действия нужно состоять в группе;You must be a group member to perform this action;Bu işlemi gerçekleştirmek için grup üyesi olmalısınız
+ui.error.groups.permission_required.message;Недостаточно прав в группе;You do not have enough permissions in the group;Grupta yeterli izniniz yok
+ui.error.groups.not_found.message;Группа не найдена;The group was not found;Grup bulunamadı
+ui.error.groups.target_account_not_found.message;Учётная запись пользователя не найдена;The user's account was not found;Kullanıcının hesabı bulunamadı
+ui.error.groups.cannot_invite_self.message;Нельзя пригласить самого себя;You cannot invite yourself;Kendinizi davet edemezsiniz
+ui.error.groups.target_already_joined.message;Пользователь уже состоит в группе;The user is already a member of a group;Kullanıcı zaten bir grubun üyesi
+ui.error.groups.invite_already_exists.message;Приглашение для этого пользователя уже существует;An invitation for this user already exists;Bu kullanıcı için zaten bir davet var
+ui.error.groups.invite_id_required.message;Не указан идентификатор приглашения;An invitation identifier is required;Davet kimliği gerekli
+ui.error.groups.invite_not_found.message;Приглашение в группу не найдено;The group invitation was not found;Grup daveti bulunamadı
+ui.error.groups.invite_recipient_mismatch.message;Это приглашение предназначено другому пользователю;This invitation belongs to another user;Bu davet başka bir kullanıcıya ait
+ui.error.groups.invite_expired.message;Срок действия приглашения истёк;The invitation has expired;Davetin süresi doldu
+ui.error.groups.full.message;В группе нет свободных мест;The group is full;Grup dolu
+ui.error.groups.owner_must_transfer_or_disband.message;Владелец должен передать группу или распустить её;The owner must transfer ownership or disband the group;Sahip, grup sahipliğini devretmeli veya grubu dağıtmalıdır
+ui.error.groups.player_account_id_required.message;Не указан идентификатор учётной записи игрока;A player account identifier is required;Oyuncu hesabı kimliği gerekli
+ui.error.groups.database_unavailable.message;База данных групп временно недоступна;The group database is temporarily unavailable;Grup veritabanı geçici olarak kullanılamıyor
+ui.error.groups.room_peer_forbidden.message;Игровая комната не может выполнить эту операцию с группой;A game room cannot perform this group operation;Oyun odası bu grup işlemini gerçekleştiremez
+;;;
+# Notification errors;;;
+ui.error.notifications.send_forbidden.message;Недостаточно прав для отправки уведомлений;You do not have permission to send notifications;Bildirim göndermek için izniniz yok
+ui.error.notifications.message_required.message;Текст уведомления не указан;A notification message is required;Bildirim mesajı gerekli
+;;;
+# Room errors;;;
+ui.error.rooms.registration_disconnected.message;Регистрация комнаты прервана из-за отключения;Room registration was interrupted by a disconnection;Oda kaydı bağlantı kesildiği için yarıda kaldı
+ui.error.rooms.registration_unavailable.message;Регистрация комнаты временно недоступна;Room registration is temporarily unavailable;Oda kaydı geçici olarak kullanılamıyor
+ui.error.rooms.not_found.message;Игровая комната не найдена;The game room was not found;Oyun odası bulunamadı
+ui.error.rooms.owner_required.message;Операцию может выполнить только владелец комнаты;Only the room owner can perform this operation;Bu işlemi yalnızca oda sahibi gerçekleştirebilir
+ui.error.rooms.registrar_required.message;Операцию может выполнить только зарегистрировавший комнату сервер;Only the server that registered the room can perform this operation;Bu işlemi yalnızca odayı kaydeden sunucu gerçekleştirebilir
+ui.error.rooms.access_token_invalid.message;Токен доступа к комнате недействителен;The room access token is invalid;Oda erişim belirteci geçersiz
+ui.error.rooms.password_invalid.message;Неверный пароль комнаты;The room password is incorrect;Oda şifresi yanlış
+ui.error.rooms.access_denied.message;Доступ в комнату запрещён;Access to the room is denied;Odaya erişim reddedildi
+ui.error.rooms.controller_not_found.message;Сервер управления комнатой недоступен;The room controller server is unavailable;Oda denetleyici sunucusu kullanılamıyor
+ui.error.rooms.access_provider_timeout.message;Сервер комнаты не ответил вовремя;The room server did not respond in time;Oda sunucusu zamanında yanıt vermedi
+ui.error.rooms.access_request_already_active.message;Запрос доступа в комнату уже выполняется;A room access request is already in progress;Oda erişim isteği zaten devam ediyor
+ui.error.rooms.access_request_inactive.message;Запрос доступа в комнату уже завершён;The room access request is no longer active;Oda erişim isteği artık etkin değil
+ui.error.rooms.access_token_in_use.message;Токен доступа к комнате уже используется;The room access token is already in use;Oda erişim belirteci zaten kullanılıyor
+ui.error.rooms.access_unavailable.message;Вход в комнату временно недоступен;Joining the room is temporarily unavailable;Odaya katılma geçici olarak kullanılamıyor
+ui.error.rooms.already_joined.message;Вы уже находитесь в игровой комнате;You are already in a game room;Zaten bir oyun odasındasınız
+ui.error.rooms.destroyed.message;Игровая комната больше недоступна;The game room is no longer available;Oyun odası artık kullanılamıyor
+ui.error.rooms.full.message;В игровой комнате нет свободных мест;The game room is full;Oyun odası dolu
+;;;
+# Lobby errors;;;
+ui.error.lobbies.already_joined.message;Вы уже состоите в лобби;You are already in a lobby;Zaten bir lobidesiniz
+ui.error.lobbies.factory_required.message;Не указан тип создаваемого лобби;A lobby type is required;Lobi türü gerekli
+ui.error.lobbies.factory_not_found.message;Указанный тип лобби не найден;The specified lobby type was not found;Belirtilen lobi türü bulunamadı
+ui.error.lobbies.creation_failed.message;Не удалось создать лобби;The lobby could not be created;Lobi oluşturulamadı
+ui.error.lobbies.not_found.message;Лобби не найдено;The lobby was not found;Lobi bulunamadı
+ui.error.lobbies.join_failed.message;Не удалось войти в лобби;Could not join the lobby;Lobiye katılınamadı
+ui.error.lobbies.username_invalid.message;Имя пользователя в лобби недействительно;The lobby username is invalid;Lobi kullanıcı adı geçersiz
+ui.error.lobbies.member_already_exists.message;Пользователь уже состоит в лобби;The user is already a lobby member;Kullanıcı zaten lobi üyesi
+ui.error.lobbies.destroyed.message;Лобби больше недоступно;The lobby is no longer available;Lobi artık kullanılamıyor
+ui.error.lobbies.join_forbidden.message;Вход в это лобби запрещён;Joining this lobby is not allowed;Bu lobiye katılmaya izin verilmiyor
+ui.error.lobbies.full.message;В лобби нет свободных мест;The lobby is full;Lobi dolu
+ui.error.lobbies.game_in_progress.message;Игра в этом лобби уже началась;The game in this lobby is already in progress;Bu lobideki oyun zaten başladı
+ui.error.lobbies.team_not_found.message;Команда не найдена;The team was not found;Takım bulunamadı
+ui.error.lobbies.team_join_forbidden.message;Вступление в эту команду запрещено;Joining this team is not allowed;Bu takıma katılmaya izin verilmiyor
+ui.error.lobbies.property_rejected.message;Лобби отклонило изменение настройки;The lobby rejected the setting change;Lobi ayar değişikliğini reddetti
+ui.error.lobbies.member_property_rejected.message;Лобби отклонило изменение данных участника;The lobby rejected the member data change;Lobi üye verisi değişikliğini reddetti
+ui.error.lobbies.not_joined.message;Вы не состоите в лобби;You are not a member of a lobby;Bir lobinin üyesi değilsiniz
+ui.error.lobbies.member_not_found.message;Участник лобби не найден;The lobby member was not found;Lobi üyesi bulunamadı
+ui.error.lobbies.game_start_failed.message;Не удалось запустить игру в лобби;The lobby game could not be started;Lobi oyunu başlatılamadı
+ui.error.lobbies.game_not_running.message;Игра в лобби не запущена;The lobby game is not running;Lobi oyunu çalışmıyor
+;;;
+# Spawner errors;;;
+ui.error.spawners.module_stopping.message;Сервис запуска комнат останавливается;The room spawning service is stopping;Oda başlatma hizmeti durduruluyor
+ui.error.spawners.not_registered.message;Сервер запуска комнат не зарегистрирован;The room spawner is not registered;Oda başlatıcısı kayıtlı değil
+ui.error.spawners.capacity_unavailable.message;Нет свободных ресурсов для запуска комнаты;No capacity is available to start a room;Oda başlatmak için kullanılabilir kapasite yok
+ui.error.spawners.spawn_permission_denied.message;Недостаточно прав для запуска комнаты;You do not have permission to start a room;Oda başlatmak için izniniz yok
+ui.error.spawners.requester_disconnected.message;Запрос запуска отменён из-за отключения;The spawn request was cancelled because the requester disconnected;Başlatma isteği, istekte bulunan bağlantıyı kestiği için iptal edildi
+ui.error.spawners.request_already_active.message;Запрос запуска уже выполняется;A spawn request is already in progress;Başlatma isteği zaten devam ediyor
+ui.error.spawners.request_not_found.message;Запрос запуска не найден;The spawn request was not found;Başlatma isteği bulunamadı
+ui.error.spawners.request_already_completed.message;Запрос запуска уже завершён;The spawn request has already completed;Başlatma isteği zaten tamamlandı
+ui.error.spawners.request_owner_required.message;Этот запрос запуска принадлежит другому подключению;This spawn request belongs to another connection;Bu başlatma isteği başka bir bağlantıya ait
+ui.error.spawners.finalization_unavailable.message;Не удалось завершить запуск комнаты;The room spawn could not be finalized;Oda başlatma işlemi tamamlanamadı
+ui.error.spawners.registration_permission_denied.message;Недостаточно прав для регистрации сервера запуска комнат;You do not have permission to register a room spawner;Oda başlatıcısı kaydetmek için izniniz yok
+ui.error.spawners.registration_disconnected.message;Регистрация сервера запуска комнат прервана из-за отключения;Room spawner registration was interrupted by a disconnection;Oda başlatıcısı kaydı bağlantı kesildiği için yarıda kaldı
+ui.error.spawners.registration_rejected.message;Сервер запуска комнат отклонил регистрацию;The room spawner registration was rejected;Oda başlatıcısı kaydı reddedildi
+ui.error.spawners.registration_not_found.message;Регистрация сервера запуска комнат не найдена;The room spawner registration was not found;Oda başlatıcısı kaydı bulunamadı
+ui.error.spawners.registration_owner_required.message;Регистрация сервера запуска принадлежит другому подключению;The room spawner registration belongs to another connection;Oda başlatıcısı kaydı başka bir bağlantıya ait
+ui.error.spawners.process_permission_denied.message;Недостаточно прав для управления запущенной комнатой;You do not have permission to manage the spawned room;Başlatılan odayı yönetmek için izniniz yok
+ui.error.spawners.task_not_found.message;Задача запуска комнаты не найдена;The room spawn task was not found;Oda başlatma görevi bulunamadı
+ui.error.spawners.code_invalid.message;Код запуска комнаты недействителен;The room spawn code is invalid;Oda başlatma kodu geçersiz
+ui.error.spawners.task_already_registered.message;Задача запуска комнаты уже зарегистрирована;The room spawn task is already registered;Oda başlatma görevi zaten kayıtlı
+ui.error.spawners.task_owner_required.message;Задача запуска комнаты принадлежит другому подключению;The room spawn task belongs to another connection;Oda başlatma görevi başka bir bağlantıya ait
+ui.error.spawners.task_already_completed.message;Задача запуска комнаты уже завершена;The room spawn task has already completed;Oda başlatma görevi zaten tamamlandı
+ui.error.spawners.controller_not_found.message;Контроллер сервера запуска не найден;The spawner controller was not found;Başlatıcı denetleyicisi bulunamadı
+ui.error.spawners.process_start_failed.message;Не удалось запустить процесс комнаты;The room process could not be started;Oda işlemi başlatılamadı
+ui.error.spawners.process_not_found.message;Процесс комнаты не найден;The room process was not found;Oda işlemi bulunamadı
+ui.error.spawners.process_kill_failed.message;Не удалось остановить процесс комнаты;The room process could not be stopped;Oda işlemi durdurulamadı
+;;;
+# Matchmaker errors;;;
+ui.error.matchmaker.regions_disabled.message;Подбор игры по регионам отключён;Regional matchmaking is disabled;Bölgesel eşleştirme devre dışı
+ui.error.matchmaker.regions_unavailable.message;Список регионов для подбора игры недоступен;The matchmaking region list is unavailable;Eşleştirme bölgesi listesi kullanılamıyor
+;;;
+# Other module errors;;;
+ui.error.world_rooms.zone_not_found.message;Игровая зона не найдена;The game zone was not found;Oyun bölgesi bulunamadı
+ui.error.quests.update_forbidden.message;Изменение заданий запрещено;Updating quests is not allowed;Görevlerin güncellenmesine izin verilmiyor
+ui.error.analytics.unavailable.message;Сервис аналитики временно недоступен;The analytics service is temporarily unavailable;Analiz hizmeti geçici olarak kullanılamıyor
+ui.error.remote_config.request_failed.message;Не удалось загрузить удалённую конфигурацию;The remote configuration could not be loaded;Uzak yapılandırma yüklenemedi
+ui.error.remote_config.response_invalid.message;Сервер вернул некорректную удалённую конфигурацию;The server returned an invalid remote configuration;Sunucu geçersiz bir uzak yapılandırma döndürdü
+ui.view.signUp.title;Регистрация;Registration;Kayıt
+ui.view.signUp.btn.submit;Создать аккаунт;Create account;Hesap oluştur
+ui.view.signUp.btn.signIn;Уже есть аккаунт? Войти;Already have an account? Sign in;Zaten hesabınız var mı? Giriş yapın
+;;;
+# Authentication form;;;
+ui.view.auth.placeholder.username;Введите логин;Enter username;Kullanıcı adınızı girin
+ui.view.auth.placeholder.email;Введите адрес электронной почты;Enter email address;E-posta adresinizi girin
+ui.view.auth.placeholder.password;Введите пароль;Enter password;Şifrenizi girin
+ui.view.auth.placeholder.confirmPassword;Повторите пароль;Confirm password;Şifrenizi tekrar girin
+ui.validation.auth.required;Заполните это поле;This field is required;Bu alan zorunludur
+ui.validation.auth.invalidEmail;Введите корректный адрес электронной почты;Enter a valid email address;Geçerli bir e-posta adresi girin
+ui.validation.auth.passwordMismatch;Пароли не совпадают;Passwords do not match;Şifreler eşleşmiyor
+ui.validation.auth.usernameLength;Логин должен содержать от {0} до {1} символов;Username must contain between {0} and {1} characters;Kullanıcı adı {0} ile {1} karakter arasında olmalıdır
+ui.validation.auth.passwordMinLength;Пароль должен содержать не менее {0} символов;Password must contain at least {0} characters;Şifre en az {0} karakter içermelidir
 ;;;
 # Account confirmation;;;
-accountConfirmationProgress;Подтверждение учетной записи… Пожалуйста, подождите.;Account confirmation... Please wait.;Hesap onayı... Lütfen bekleyin.
-accountConfirmationErrorResult;Во время подтверждения учетной записи возникла ошибка:;An error occurred while confirming your account:;Hesabınız onaylanırken bir hata oluştu:
-confirmationCodeSendingProcess;Отправляем код подтверждения… Пожалуйста, подождите.;We are sending a verification code... Please wait.;Doğrulama kodu gönderiyoruz... Lütfen bekleyin.
-confirmationCodeSendingSuccessResult;Код подтверждения был отправлен на указанный вами адрес электронной почты;A verification code has been sent to the email address you provided.;Verdiğiniz e-posta adresine bir doğrulama kodu gönderildi.
-confirmationCodeSendingErrorResult;Во время отправки кода подтверждения возникла ошибка:;An error occurred while sending the verification code:;Doğrulama kodu gönderilirken bir hata oluştu:
+ui.loading.accountConfirmation.message;Подтверждение учетной записи… Пожалуйста, подождите.;Account confirmation... Please wait.;Hesap onayı... Lütfen bekleyin.
+ui.notification.accountConfirmation.error.message;Во время подтверждения учетной записи возникла ошибка:;An error occurred while confirming your account:;Hesabınız onaylanırken bir hata oluştu:
+ui.loading.accountConfirmation.sendCode.message;Отправляем код подтверждения… Пожалуйста, подождите.;We are sending a verification code... Please wait.;Doğrulama kodu gönderiyoruz... Lütfen bekleyin.
+ui.notification.accountConfirmation.sendCode.success.message;Код подтверждения был отправлен на указанный вами адрес электронной почты;A verification code has been sent to the email address you provided.;Verdiğiniz e-posta adresine bir doğrulama kodu gönderildi.
+ui.notification.accountConfirmation.sendCode.error.message;Во время отправки кода подтверждения возникла ошибка:;An error occurred while sending the verification code:;Doğrulama kodu gönderilirken bir hata oluştu:
+ui.notification.accountConfirmation.success.message;Адрес электронной почты успешно подтвержден;The e-mail address has been confirmed successfully;E-posta adresi başarıyla doğrulandı
+ui.view.accountConfirmation.title;Подтверждение электронной почты;E-mail confirmation;E-posta doğrulama
+ui.view.accountConfirmation.btn.submit;Подтвердить;Confirm;Doğrula
+ui.view.accountConfirmation.btn.sendCode;Отправить код;Send code;Kod gönder
+ui.view.accountConfirmation.btn.sendCodeCooldown;Повторная отправка через: {0};Resend in: {0};Tekrar gönderme: {0}
 ;;;
 # Account extra properties;;;
-accounSaveExtraSuccessResult;Экстра свойства учетной записи были успешно сохранены;Extra account properties were successfully saved;Ekstra hesap özellikleri başarıyla kaydedildi
-accounSaveExtraErrorResult;Невозможно сохранить свойства учетной записи;Unable to save account properties;Hesap özellikleri kaydedilemiyor
+ui.notification.account.extraPropertiesSave.success.message;Экстра свойства учетной записи были успешно сохранены;Extra account properties were successfully saved;Ekstra hesap özellikleri başarıyla kaydedildi
+ui.notification.account.extraPropertiesSave.error.message;Невозможно сохранить свойства учетной записи;Unable to save account properties;Hesap özellikleri kaydedilemiyor
 ;;;
 # Password reset;;;
-changePasswordProgress;Смена пароля… Пожалуйста, подождите;Changing password... Please wait;Şifre değiştiriliyor... Lütfen bekleyin
-changePasswordSuccessResult;Вы успешно изменили свой пароль. Теперь вы можете войти в свою учетную запись;You have successfully changed your password. You can now log in to your account.;Şifrenizi başarıyla değiştirdiniz. Artık hesabınıza giriş yapabilirsiniz
-changePasswordErrorResult;Во время смены пароля возникла ошибка:;An error occurred while changing the password:;Şifre değiştirilirken bir hata oluştu:
-changePasswordCodeProgress;Отправляем код сброса пароля… Пожалуйста, подождите;We are sending a password reset code... Please wait;Şifre sıfırlama kodu gönderiyoruz... Lütfen bekleyin
-changePasswordCodeSuccessResult;Код сброса пароля был отправлен на указанный вами адрес электронной почты;A password reset code has been sent to the email address you provided.;Belirttiğiniz e-posta adresine şifre sıfırlama kodu gönderildi.
-changePasswordCodeErrorResult;Во время отправки кода сброса пароля возникла ошибка:;An error occurred while sending the password reset code:;Şifre sıfırlama kodu gönderilirken bir hata oluştu:
+ui.loading.passwordChange.message;Смена пароля… Пожалуйста, подождите;Changing password... Please wait;Şifre değiştiriliyor... Lütfen bekleyin
+ui.notification.passwordChange.success.message;Вы успешно изменили свой пароль. Теперь вы можете войти в свою учетную запись;You have successfully changed your password. You can now log in to your account.;Şifrenizi başarıyla değiştirdiniz. Artık hesabınıza giriş yapabilirsiniz
+ui.notification.passwordChange.error.message;Во время смены пароля возникла ошибка:;An error occurred while changing the password:;Şifre değiştirilirken bir hata oluştu:
+ui.loading.passwordReset.sendCode.message;Отправляем код сброса пароля… Пожалуйста, подождите;We are sending a password reset code... Please wait;Şifre sıfırlama kodu gönderiyoruz... Lütfen bekleyin
+ui.notification.passwordReset.sendCode.success.message;Код сброса пароля был отправлен на указанный вами адрес электронной почты;A password reset code has been sent to the email address you provided.;Belirttiğiniz e-posta adresine şifre sıfırlama kodu gönderildi.
+ui.notification.passwordReset.sendCode.error.message;Во время отправки кода сброса пароля возникла ошибка:;An error occurred while sending the password reset code:;Şifre sıfırlama kodu gönderilirken bir hata oluştu:
+ui.notification.passwordReset.emailMissing.message;Сначала запросите код сброса пароля для адреса электронной почты;Request a password reset code for the e-mail address first;Önce e-posta adresi için şifre sıfırlama kodu isteyin
+ui.view.passwordResetRequest.title;Восстановление пароля;Password recovery;Şifre kurtarma
+ui.view.passwordResetRequest.btn.sendCode;Отправить код;Send code;Kod gönder
+ui.view.passwordResetRequest.btn.sendCodeCooldown;Повторная отправка через: {0};Resend in: {0};Tekrar gönderme: {0}
+ui.view.passwordReset.title;Новый пароль;New password;Yeni şifre
+ui.view.passwordReset.btn.submit;Изменить пароль;Change password;Şifreyi değiştir
+ui.view.passwordReset.btn.sendCode;Отправить код;Send code;Kod gönder
+ui.view.passwordReset.btn.sendCodeCooldown;Повторная отправка через: {0};Resend in: {0};Tekrar gönderme: {0}
+ui.view.auth.placeholder.confirmationCode;Введите код подтверждения;Enter confirmation code;Doğrulama kodunu girin
 ;;;
 # Game Bridge;;;
-waitingForGameService;Ожидаем готовность игрового сервиса;Waiting for game service;Oyun hizmetini bekliyorum
+ui.loading.gameService.message;Ожидаем готовность игрового сервиса;Waiting for game service;Oyun hizmetini bekliyorum
+;;;
+# Profile;;;
+ui.loading.profile.message;Загрузка данных игрока... Пожалуйста подождите;Loading player profile... Please wait;Oyuncu profili yükleniyor... Lütfen bekleyin
+;;;
+# Storages;;;
+trashStorage;Мусорные пакеты;Trash bags;Çöp poşetleri

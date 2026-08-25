@@ -10,26 +10,20 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
-        private UILable uiLablePrefab;
+        [Tooltip("Required label prefab instantiated for each player index and player name cell.")]
+        protected UILable uiLablePrefab;
         [SerializeField]
-        private UILable uiColLablePrefab;
+        [Tooltip("Required label prefab instantiated for the player-list column headers.")]
+        protected UILable uiColLablePrefab;
         [SerializeField]
-        private RectTransform listContainer;
+        [Tooltip("Container that receives generated player-list labels. Missing assignment prevents the list from being drawn and produces an MST error log.")]
+        protected RectTransform listContainer;
 
         #endregion
 
         private int roomId = -1;
 
-        protected override void Awake()
-        {
-            base.Awake();
-
-            // Listen to show/hide events
-            Mst.Events.AddListener(MstEventKeys.showPlayersListView, OnShowPlayersListEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hidePlayersListView, OnHidePlayersListEventHandler);
-        }
-
-        protected void Start()
+        protected virtual void Start()
         {
             if (listContainer)
             {
@@ -40,53 +34,19 @@ namespace MasterServerToolkit.Bridges
             }
         }
 
-        private void OnShowPlayersListEventHandler(EventMessage message)
+        protected override void OnStartShow()
         {
-            roomId = message.AsInt();
-            Show();
+            base.OnStartShow();
+            roomId = Payload.AsInt();
         }
 
-        private void OnHidePlayersListEventHandler(EventMessage message)
+        protected override void OnEndShow()
         {
-            roomId = -1;
-            Hide();
-        }
-
-        protected override void OnShow()
-        {
+            base.OnEndShow();
             FindPlayers();
         }
 
-        /// <summary>
-        /// Sends request to master server to find games list
-        /// </summary>
-        public void FindPlayers()
-        {
-            ClearPlayersList();
-            canvasGroup.interactable = false;
-
-            // if we have room access
-            if (roomId < 0 && Mst.Client.Rooms.HasAccess)
-            {
-                roomId = Mst.Client.Rooms.ReceivedAccess.RoomId;
-            }
-
-            var filter = new MstProperties();
-            filter.Set(MstDictKeys.ROOM_ID, roomId);
-
-            Mst.Client.Matchmaker.FindGames(filter, (games) =>
-            {
-                canvasGroup.interactable = true;
-
-                if (games.Count > 0)
-                {
-                    GameInfoPacket game = games.First();
-                    DrawPlayersList(game);
-                }
-            });
-        }
-
-        private void DrawPlayersList(GameInfoPacket game)
+        protected virtual void DrawPlayersList(GameInfoPacket game)
         {
             if (listContainer)
             {
@@ -119,7 +79,7 @@ namespace MasterServerToolkit.Bridges
             }
         }
 
-        private void ClearPlayersList()
+        protected virtual void ClearPlayersList()
         {
             if (listContainer)
             {
@@ -128,6 +88,41 @@ namespace MasterServerToolkit.Bridges
                     Destroy(tr.gameObject);
                 }
             }
+        }
+
+        /// <summary>
+        /// Sends request to master server to find games list
+        /// </summary>
+        public void FindPlayers()
+        {
+            ClearPlayersList();
+            CanvasGroup.interactable = false;
+
+            // if we have room access
+            if (roomId < 0 && Mst.Client.Rooms.HasAccess)
+            {
+                roomId = Mst.Client.Rooms.ReceivedAccess.Id;
+            }
+
+            var filter = new MstProperties();
+            filter.Set(MstParamKeys.ROOM_ID, roomId);
+
+            Mst.Client.Matchmaker.FindGames(filter, (games) =>
+            {
+                CanvasGroup.interactable = true;
+
+                if (games.Count > 0)
+                {
+                    GameInfoPacket game = games.First();
+                    DrawPlayersList(game);
+                }
+            });
+        }
+
+        public void Disconnect()
+        {
+            Hide();
+            Mst.Events.Invoke(MstEventKeys.leaveRoom);
         }
     }
 }

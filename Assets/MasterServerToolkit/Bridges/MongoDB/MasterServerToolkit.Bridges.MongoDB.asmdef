@@ -1,0 +1,25 @@
+{
+    "name": "MasterServerToolkit.Bridges.MongoDB",
+    "rootNamespace": "",
+    "references": [
+        "MasterServerToolkit"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "WebGL"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "DnsClient.dll",
+        "MongoDB.Bson.dll",
+        "MongoDB.Driver.Core.dll",
+        "MongoDB.Driver.dll",
+        "MongoDB.Libmongocrypt.dll",
+        "SharpCompress.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

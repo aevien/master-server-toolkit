@@ -1,99 +1,135 @@
 using MasterServerToolkit.Bridges;
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.UI;
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace MasterServerToolkit.GameService
 {
     public class GameBridgeDemo : MonoBehaviour
     {
         [SerializeField]
+        [Tooltip("Required TextMeshPro label that receives platform, player, storage, and demo-operation output. Existing text is preserved and new lines are appended.")]
         private TextMeshProUGUI output;
         [SerializeField]
+        [Tooltip("Required authentication button root. The demo shows it only while the active platform player is a guest and updates its active state every frame.")]
         private GameObject authButton;
 
         private void Start()
         {
-            output.text = $"{GameBridge.Service.Id} platform has been detected\n";
+            Output($"{GameBridge.Service.Id} platform has been detected");
 
-            GameBridge.Service.OnReadyEvent += Service_OnReadyEvent;
-            GameBridge.Service.OnPlayerInfoEvent += Service_OnPlayerEvent;
+            if (!GameBridge.Service.IsReady)
+            {
+                GameBridge.Service.OnReadyEvent += Service_OnReadyEvent;
+            }
+            else
+            {
+                Service_OnReadyEvent(true);
+            }
         }
 
         private void OnDestroy()
         {
             GameBridge.Service.OnReadyEvent -= Service_OnReadyEvent;
-            GameBridge.Service.OnPlayerInfoEvent -= Service_OnPlayerEvent;
+            GameBridge.Service.Player.OnAuthenticateEvent -= Service_OnPlayerEvent;
         }
 
         private void Update()
         {
-            authButton.GetComponentInChildren<Button>().interactable = GameBridge.Service.Player.IsGuest;
+            authButton
+                .gameObject
+                .SetActive(
+                    GameBridge.Service != null &&
+                    GameBridge.Service.Player.IsGuest &&
+                    GameBridge.Service.Player.IsAuthenticationSupported);
         }
 
-        private void Service_OnReadyEvent()
+        private void Service_OnReadyEvent(bool isReady)
         {
-            output.text += "Ready!\n";
-            output.text += $"App: {GameBridge.Service.AppId}\n";
-            output.text += $"Lang: {GameBridge.Service.Lang}\n";
-            output.text += $"Device: {GameBridge.Service.DeviceType}\n";
-            output.text += $"IsMobile: {GameBridge.Service.IsMobile}\n";
-            output.text += $"Payload: {GameBridge.Service.Payload.Print(true)}\n";
+            if (!isReady)
+            {
+                Output($"Error starting service {GameBridge.Service.Id}");
+            }
+            else
+            {
+                Output("Ready!");
+                Output($"App: {GameBridge.Service.AppId}");
+                Output($"Lang: {GameBridge.Service.Lang}");
+                Output($"Device: {GameBridge.Service.Device}");
+                Output($"IsMobile: {GameBridge.Service.Device == ServiceDeviceType.Mobile}");
+                Output($"Payload: {GameBridge.Service.Payload.Print(true)}");
+                Output($"Referrer: {GameBridge.Service.Referrer.ToJson().Print(true)}");
+
+                GameBridge.Service.Player.OnAuthenticateEvent += Service_OnPlayerEvent;
+            }
         }
 
-        private void Service_OnPlayerEvent(PlayerInfo player)
+        private void Service_OnPlayerEvent(IPlayerModule player)
         {
             ShowPlayerInfo(player);
         }
 
-        private void ShowPlayerInfo(PlayerInfo player)
+        private void ShowPlayerInfo(IPlayerModule player)
         {
-            output.text += $"Player Id: {player.Id}\n";
-            output.text += $"Player Avatar: {player.Avatar}\n";
-            output.text += $"Player Name: {player.Name}\n";
-            output.text += $"Player IsGuest: {player.IsGuest}\n";
-            output.text += $"Player Extra: {player.Extra.Print(true)}\n";
+            Output($"Player Id: {player.Id}");
+            Output($"Player Avatar: {player.Avatar}");
+            Output($"Player Name: {player.Name}");
+            Output($"Player IsGuest: {player.IsGuest}");
+        }
+
+        private void Output(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                output.text += "-" + text;
+            }
+            else
+            {
+                output.text += "-" + text + "\n";
+            }
         }
 
         public void OnClickAuthPlayer()
         {
             Debug.Log("Start player auth process...");
 
-            GameBridge.Service.Authenticate((isSuccess, error) =>
+            ViewsManager.Show<LoadingInfoView>("Player auth in progress... Please wait!");
+
+            GameBridge.Service.Player.Authenticate((isSuccess, error) =>
             {
+                ViewsManager.Hide<LoadingInfoView>();
+
                 if (!isSuccess)
                 {
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error));
+                    ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(error));
                 }
                 else
                 {
                     Debug.Log("Player authenticated");
-                    output.text += "Player authenticated\n";
+                    Output("Player authenticated");
                 }
             });
         }
 
         public void OnClickGetPlayerData()
         {
-            GameBridge.Service.LoadPlayerData((data) =>
+            GameBridge.Service.Storage.LoadData((data) =>
             {
-                output.text += $"Player Data Get: {data.Print(true)}\n";
+                Output($"Player Data Get: {data.Print(true)}");
             });
         }
 
         public void OnClickSetPlayerData()
         {
-            GameBridge.Service.SavePlayerData("currentDateTime", DateTime.UtcNow.ToString(), (isSuccess, error) =>
-            {
-                output.text += $"Player Data Set: {isSuccess}\n";
-            });
+            GameBridge.Service.Storage.SetString("currentDateTime", DateTime.UtcNow.ToString());
+            Output($"Player Data Set: {GameBridge.Service.Storage.Data}");
         }
 
         public void OnClickShowFullScreenVideo()
         {
-            GameBridge.Service.ShowFullScreenVideo((status) =>
+            GameBridge.Service.Ad.ShowFullScreenVideo((status) =>
             {
                 Debug.Log($"Full screen video status: {status}");
             });
@@ -101,7 +137,7 @@ namespace MasterServerToolkit.GameService
 
         public void OnClickShowRewardedVideo()
         {
-            GameBridge.Service.ShowRewardedVideo((status) =>
+            GameBridge.Service.Ad.ShowRewardedVideo((status) =>
             {
                 Debug.Log($"Rewarded video status: {status}");
             });
@@ -109,7 +145,7 @@ namespace MasterServerToolkit.GameService
 
         public void OnClickMakePurchase()
         {
-            GameBridge.Service.Purchase("coins_small", (purchaseInfo) =>
+            GameBridge.Service.IAP.Purchase("coins_small", (purchaseInfo) =>
             {
                 Debug.Log($"Purchase result: {purchaseInfo}");
             });
@@ -117,7 +153,7 @@ namespace MasterServerToolkit.GameService
 
         public void OnClickGetProducts()
         {
-            GameBridge.Service.GetProducts((products) =>
+            GameBridge.Service.IAP.GetProducts((products) =>
             {
                 foreach (var product in products)
                 {
@@ -128,7 +164,7 @@ namespace MasterServerToolkit.GameService
 
         public void OnClickGetPurchases()
         {
-            GameBridge.Service.GetPurchases(null);
+            GameBridge.Service.IAP.GetPurchases(null);
         }
     }
 }

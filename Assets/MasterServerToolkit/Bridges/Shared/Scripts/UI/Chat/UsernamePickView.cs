@@ -10,21 +10,12 @@ namespace MasterServerToolkit.Bridges
     public class UsernamePickView : UIView
     {
         [Header("Components"), SerializeField]
+        [Tooltip("Required input field populated with a generated name when the view opens and submitted as the client's chat username.")]
         private TMP_InputField usernameInputField;
 
-        protected override void Awake()
+        protected override void OnStartShow()
         {
-            base.Awake();
-            Mst.Events.AddListener(MstEventKeys.showPickUsernameView, (message) =>
-            {
-                usernameInputField.text = SimpleNameGenerator.GenerateFirstName(Gender.Male);
-
-                Show();
-            });
-        }
-
-        protected  void Start()
-        {
+            base.OnStartShow();
             usernameInputField.text = SimpleNameGenerator.GenerateFirstName(Gender.Male);
         }
 
@@ -35,15 +26,18 @@ namespace MasterServerToolkit.Bridges
                 if (!isSuccess)
                 {
                     Logs.Error(error);
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error));
+                    ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage(error)
+                    {
+                        MessageType = DialogBoxMessageType.Error
+                    });
                     return;
                 }
 
                 // Save username in global params
-                Mst.Options.Set(MstDictKeys.USER_NAME, usernameInputField.text);
+                Mst.Options.Set(MstParamKeys.USER_NAME, usernameInputField.text);
 
                 Hide();
-                ViewsManager.Show("ChatsView");
+                ViewsManager.Show<ChatsView>();
             });
         }
 

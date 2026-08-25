@@ -24,50 +24,58 @@ namespace MasterServerToolkit.Utils
         /// <summary>
         /// Multiplier for screenshot resolution. Higher values produce larger, more detailed images.
         /// </summary>
+        [Tooltip("Integer scale applied to Width and Height when Apply Resolution Multiplier is enabled. 1 keeps the configured resolution; larger values increase image size and capture cost.")]
         public int resolutionMultiplier = 2;
 
         /// <summary>
         /// Whether to apply the resolution multiplier to the width and height.
         /// If false, the exact width and height specified will be used.
         /// </summary>
+        [Tooltip("Applies Resolution Multiplier to the configured Width and Height. Disable to capture at the exact configured or screen resolution.")]
         public bool applyResolutionMultiplier = true;
 
         /// <summary>
         /// Keyboard key that triggers screenshot capture when pressed.
         /// </summary>
+        [Tooltip("Keyboard key that starts a screenshot while the component is active and no capture is already running.")]
         public KeyCode screenshotKey = KeyCode.F12;
 
         /// <summary>
         /// Width of the screenshot in pixels. If set to 0, the current screen width will be used.
         /// </summary>
+        [Tooltip("Base screenshot width in pixels. 0 uses the current screen width. Resolution Multiplier may scale this value.")]
         public int width = 1920;
 
         /// <summary>
         /// Height of the screenshot in pixels. If set to 0, the current screen height will be used.
         /// </summary>
+        [Tooltip("Base screenshot height in pixels. 0 uses the current screen height. Resolution Multiplier may scale this value.")]
         public int height = 1080;
 
         [Header("Capture Settings")]
         /// <summary>
         /// Specifies what to capture in the screenshot
         /// </summary>
+        [Tooltip("Selects whether the capture contains the game view and UI, only the game view, or only UI elements.")]
         public CaptureMode captureMode = CaptureMode.Everything;
 
         /// <summary>
         /// Main camera used for game view capture
         /// </summary>
+        [Tooltip("Camera used for game-view capture. When empty, the component tries Camera.main and then an available scene camera.")]
         public Camera mainCamera;
 
         /// <summary>
         /// Whether to capture UI with transparent background
         /// </summary>
-        [Tooltip("Enable for transparent background in UI screenshots")]
+        [Tooltip("Uses a transparent background for UI-only screenshots when the selected canvas and output format support alpha.")]
         public bool transparentBackground = true;
 
         [Header("Debug")]
         /// <summary>
         /// Enable to show debug messages
         /// </summary>
+        [Tooltip("Writes detailed capture diagnostics to the Unity Console. Keep disabled during normal gameplay and production builds.")]
         public bool debugMode = false;
 
         /// <summary>
@@ -88,6 +96,15 @@ namespace MasterServerToolkit.Utils
         private Camera currentCamera = null;
 
         #endregion
+
+        protected override void Awake()
+        {
+#if UNITY_SERVER
+            Destroy(gameObject);
+#else
+            base.Awake();
+#endif
+        }
 
         /// <summary>
         /// Called when the component is initialized
@@ -266,6 +283,12 @@ namespace MasterServerToolkit.Utils
         private void TakeEditorScreenshot()
         {
             isTakingScreenshot = true;
+            RenderTexture rt = null;
+            Texture2D screenTexture = null;
+            RenderTexture originalRT = null;
+            RenderTexture originalActiveRT = RenderTexture.active;
+            int originalCullingMask = 0;
+            bool hasCameraState = false;
 
             try
             {
@@ -294,20 +317,21 @@ namespace MasterServerToolkit.Utils
                 EditorApplication.QueuePlayerLoopUpdate();
 
                 // Create a render texture for the camera
-                RenderTexture rt = new RenderTexture(resWidth, resHeight, 24);
+                rt = new RenderTexture(resWidth, resHeight, 24);
                 if (transparentBackground && captureMode == CaptureMode.UIOnly)
                 {
                     rt.format = RenderTextureFormat.ARGB32;
                 }
 
                 // Remember the camera's original target texture
-                RenderTexture originalRT = currentCamera.targetTexture;
+                originalRT = currentCamera.targetTexture;
 
                 // Set the camera to render to our texture
                 currentCamera.targetTexture = rt;
 
                 // Remember the original culling mask
-                int originalCullingMask = currentCamera.cullingMask;
+                originalCullingMask = currentCamera.cullingMask;
+                hasCameraState = true;
 
                 // Exclude UI layer if it exists for GameViewOnly mode
                 if (captureMode == CaptureMode.GameViewOnly)
@@ -350,17 +374,12 @@ namespace MasterServerToolkit.Utils
                 TextureFormat format = (transparentBackground && captureMode == CaptureMode.UIOnly) ?
                     TextureFormat.RGBA32 : TextureFormat.RGB24;
 
-                Texture2D screenTexture = new Texture2D(resWidth, resHeight, format, false);
+                screenTexture = new Texture2D(resWidth, resHeight, format, false);
 
                 // Read the render texture
                 RenderTexture.active = rt;
                 screenTexture.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
                 screenTexture.Apply();
-
-                // Restore camera settings
-                currentCamera.cullingMask = originalCullingMask;
-                currentCamera.targetTexture = originalRT;
-                RenderTexture.active = null;
 
                 // Save the screenshot
                 byte[] bytes = screenTexture.EncodeToPNG();
@@ -371,10 +390,6 @@ namespace MasterServerToolkit.Utils
 
                 // Open the screenshot
                 EditorUtility.RevealInFinder(filename);
-
-                // Clean up
-                UnityEngine.Object.DestroyImmediate(screenTexture);
-                UnityEngine.Object.DestroyImmediate(rt);
             }
             catch (Exception e)
             {
@@ -382,6 +397,20 @@ namespace MasterServerToolkit.Utils
             }
             finally
             {
+                if (hasCameraState && currentCamera != null)
+                {
+                    currentCamera.cullingMask = originalCullingMask;
+                    currentCamera.targetTexture = originalRT;
+                }
+
+                RenderTexture.active = originalActiveRT;
+
+                if (screenTexture != null)
+                    UnityEngine.Object.DestroyImmediate(screenTexture);
+
+                if (rt != null)
+                    UnityEngine.Object.DestroyImmediate(rt);
+
                 // Always reset state
                 currentCamera = null;
                 isTakingScreenshot = false;
@@ -395,72 +424,75 @@ namespace MasterServerToolkit.Utils
         private IEnumerator CaptureScreenshot()
         {
             isTakingScreenshot = true;
-
-            // Calculate resolution based on settings
-            int resWidth, resHeight;
-
-            if (applyResolutionMultiplier)
-            {
-                resWidth = (width > 0 ? width : Screen.width) * resolutionMultiplier;
-                resHeight = (height > 0 ? height : Screen.height) * resolutionMultiplier;
-            }
-            else
-            {
-                // Use exact dimensions specified in the inspector
-                resWidth = width > 0 ? width : Screen.width;
-                resHeight = height > 0 ? height : Screen.height;
-            }
-
-            if (debugMode)
-                Debug.Log($"Taking screenshot with mode: {captureMode}, resolution: {resWidth}x{resHeight}, camera: {(currentCamera != null ? currentCamera.name : "none")}");
-
-            // Wait for the end of the frame to ensure all rendering is complete
-            yield return new WaitForEndOfFrame();
-
-            // Create textures for capturing
             Texture2D screenshot = null;
 
-            switch (captureMode)
+            try
             {
-                case CaptureMode.Everything:
-                    // Capture the entire screen
-                    screenshot = CaptureScreen(resWidth, resHeight);
-                    break;
+                // Calculate resolution based on settings
+                int resWidth, resHeight;
 
-                case CaptureMode.GameViewOnly:
-                    // Capture only the game view (without UI)
-                    screenshot = CaptureGameView(resWidth, resHeight);
-                    break;
+                if (applyResolutionMultiplier)
+                {
+                    resWidth = (width > 0 ? width : Screen.width) * resolutionMultiplier;
+                    resHeight = (height > 0 ? height : Screen.height) * resolutionMultiplier;
+                }
+                else
+                {
+                    // Use exact dimensions specified in the inspector
+                    resWidth = width > 0 ? width : Screen.width;
+                    resHeight = height > 0 ? height : Screen.height;
+                }
 
-                case CaptureMode.UIOnly:
-                    // Capture only UI elements
-                    screenshot = CaptureUI(resWidth, resHeight);
-                    break;
+                if (debugMode)
+                    Debug.Log($"Taking screenshot with mode: {captureMode}, resolution: {resWidth}x{resHeight}, camera: {(currentCamera != null ? currentCamera.name : "none")}");
+
+                // Wait for the end of the frame to ensure all rendering is complete
+                yield return new WaitForEndOfFrame();
+
+                switch (captureMode)
+                {
+                    case CaptureMode.Everything:
+                        // Capture the entire screen
+                        screenshot = CaptureScreen(resWidth, resHeight);
+                        break;
+
+                    case CaptureMode.GameViewOnly:
+                        // Capture only the game view (without UI)
+                        screenshot = CaptureGameView(resWidth, resHeight);
+                        break;
+
+                    case CaptureMode.UIOnly:
+                        // Capture only UI elements
+                        screenshot = CaptureUI(resWidth, resHeight);
+                        break;
+                }
+
+                if (screenshot != null)
+                {
+                    // Save the screenshot
+                    byte[] bytes = screenshot.EncodeToPNG();
+                    string filename = ScreenShotName(resWidth, resHeight, captureMode);
+                    File.WriteAllBytes(filename, bytes);
+
+                    Debug.Log($"Screenshot saved to: {filename}");
+
+                    // Open the screenshot
+                    Application.OpenURL(filename);
+                }
+                else
+                {
+                    Debug.LogError("Failed to capture screenshot!");
+                }
             }
-
-            if (screenshot != null)
+            finally
             {
-                // Save the screenshot
-                byte[] bytes = screenshot.EncodeToPNG();
-                string filename = ScreenShotName(resWidth, resHeight, captureMode);
-                File.WriteAllBytes(filename, bytes);
+                if (screenshot != null)
+                    Destroy(screenshot);
 
-                Debug.Log($"Screenshot saved to: {filename}");
-
-                // Open the screenshot
-                Application.OpenURL(filename);
-
-                // Clean up
-                Destroy(screenshot);
+                // Reset current camera to ensure we don't keep a reference
+                currentCamera = null;
+                isTakingScreenshot = false;
             }
-            else
-            {
-                Debug.LogError("Failed to capture screenshot!");
-            }
-
-            // Reset current camera to ensure we don't keep a reference
-            currentCamera = null;
-            isTakingScreenshot = false;
         }
 
         /// <summary>
@@ -468,40 +500,50 @@ namespace MasterServerToolkit.Utils
         /// </summary>
         private Texture2D CaptureScreen(int width, int height)
         {
-            // Create a new texture
-            Texture2D screenTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
+            Texture2D screenTexture = null;
+            RenderTexture rt = null;
+            RenderTexture currentRT = RenderTexture.active;
 
-            // Resize the screen capture texture if needed
-            if (width != Screen.width || height != Screen.height)
+            try
             {
-                // Create a temporary render texture at the desired resolution
-                RenderTexture rt = new RenderTexture(width, height, 24);
+                // Create a new texture
+                screenTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
 
-                // Remember the current active render texture
-                RenderTexture currentRT = RenderTexture.active;
+                // Resize the screen capture texture if needed
+                if (width != Screen.width || height != Screen.height)
+                {
+                    // Create a temporary render texture at the desired resolution
+                    rt = new RenderTexture(width, height, 24);
 
-                // Capture the screen to the render texture
-                Graphics.Blit(null, rt);
-                RenderTexture.active = rt;
+                    // Capture the screen to the render texture
+                    Graphics.Blit(null, rt);
+                    RenderTexture.active = rt;
 
-                // Read the screen pixels
-                screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                screenTexture.Apply();
+                    // Read the screen pixels
+                    screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                    screenTexture.Apply();
+                }
+                else
+                {
+                    // Direct screen capture at same resolution
+                    screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                    screenTexture.Apply();
+                }
 
-                // Restore the active render texture
+                Texture2D result = screenTexture;
+                screenTexture = null;
+                return result;
+            }
+            finally
+            {
                 RenderTexture.active = currentRT;
 
-                // Clean up
-                Destroy(rt);
-            }
-            else
-            {
-                // Direct screen capture at same resolution
-                screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                screenTexture.Apply();
-            }
+                if (rt != null)
+                    Destroy(rt);
 
-            return screenTexture;
+                if (screenTexture != null)
+                    Destroy(screenTexture);
+            }
         }
 
         /// <summary>
@@ -524,41 +566,55 @@ namespace MasterServerToolkit.Utils
 
             // Remember the camera's original target texture
             RenderTexture originalRT = cameraToUse.targetTexture;
+            RenderTexture originalActiveRT = RenderTexture.active;
 
             // Create a render texture for the camera
-            RenderTexture rt = new RenderTexture(width, height, 24);
-            cameraToUse.targetTexture = rt;
+            RenderTexture rt = null;
+            Texture2D screenTexture = null;
 
             // Remember the original culling mask
             int originalCullingMask = cameraToUse.cullingMask;
 
-            // Exclude UI layer if it exists
-            int uiLayerIndex = LayerMask.NameToLayer("UI");
-            if (uiLayerIndex != -1)
+            try
             {
-                cameraToUse.cullingMask &= ~(1 << uiLayerIndex);
+                rt = new RenderTexture(width, height, 24);
+                cameraToUse.targetTexture = rt;
+
+                // Exclude UI layer if it exists
+                int uiLayerIndex = LayerMask.NameToLayer("UI");
+                if (uiLayerIndex != -1)
+                {
+                    cameraToUse.cullingMask &= ~(1 << uiLayerIndex);
+                }
+
+                // Render the camera
+                cameraToUse.Render();
+
+                // Create a texture to store the result
+                screenTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
+
+                // Read the render texture
+                RenderTexture.active = rt;
+                screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                screenTexture.Apply();
+
+                Texture2D result = screenTexture;
+                screenTexture = null;
+                return result;
             }
+            finally
+            {
+                // Restore camera settings
+                cameraToUse.cullingMask = originalCullingMask;
+                cameraToUse.targetTexture = originalRT;
+                RenderTexture.active = originalActiveRT;
 
-            // Render the camera
-            cameraToUse.Render();
+                if (rt != null)
+                    Destroy(rt);
 
-            // Create a texture to store the result
-            Texture2D screenTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
-
-            // Read the render texture
-            RenderTexture.active = rt;
-            screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-            screenTexture.Apply();
-
-            // Restore camera settings
-            cameraToUse.cullingMask = originalCullingMask;
-            cameraToUse.targetTexture = originalRT;
-            RenderTexture.active = null;
-
-            // Clean up
-            Destroy(rt);
-
-            return screenTexture;
+                if (screenTexture != null)
+                    Destroy(screenTexture);
+            }
         }
 
         /// <summary>
@@ -568,78 +624,96 @@ namespace MasterServerToolkit.Utils
         private Texture2D CaptureUI(int width, int height)
         {
             // Create a special camera for UI capture
-            GameObject tempCameraObject = new GameObject("UI_Screenshot_Camera");
-            Camera uiCamera = tempCameraObject.AddComponent<Camera>();
+            GameObject tempCameraObject = null;
+            RenderTexture rt = null;
+            Texture2D screenTexture = null;
+            RenderTexture originalActiveRT = RenderTexture.active;
 
-            // Configure camera for UI capture
-            uiCamera.clearFlags = transparentBackground ? CameraClearFlags.Depth : CameraClearFlags.SolidColor;
-            uiCamera.backgroundColor = transparentBackground ? Color.clear : Color.black;
-            uiCamera.cullingMask = 0; // Start with nothing
+            try
+            {
+                tempCameraObject = new GameObject("UI_Screenshot_Camera");
+                Camera uiCamera = tempCameraObject.AddComponent<Camera>();
 
-            // Add UI layer to culling mask
-            int uiLayerIndex = LayerMask.NameToLayer("UI");
-            if (uiLayerIndex != -1)
-            {
-                uiCamera.cullingMask |= 1 << uiLayerIndex;
-            }
-            else
-            {
-                // If there's no "UI" layer, try to find all Canvas objects and add their layers
-                Canvas[] canvases = FindObjectsOfType<Canvas>();
-                foreach (Canvas canvas in canvases)
+                // Configure camera for UI capture
+                uiCamera.clearFlags = transparentBackground ? CameraClearFlags.Depth : CameraClearFlags.SolidColor;
+                uiCamera.backgroundColor = transparentBackground ? Color.clear : Color.black;
+                uiCamera.cullingMask = 0; // Start with nothing
+
+                // Add UI layer to culling mask
+                int uiLayerIndex = LayerMask.NameToLayer("UI");
+                if (uiLayerIndex != -1)
                 {
-                    uiCamera.cullingMask |= 1 << canvas.gameObject.layer;
-
-                    if (debugMode)
-                        Debug.Log($"Adding canvas layer to UI camera: {canvas.gameObject.name} on layer {canvas.gameObject.layer}");
-
-                    // Also add all children of the canvas to the culling mask
-                    foreach (Transform child in canvas.GetComponentsInChildren<Transform>(true))
+                    uiCamera.cullingMask |= 1 << uiLayerIndex;
+                }
+                else
+                {
+                    // If there's no "UI" layer, try to find all Canvas objects and add their layers
+                    Canvas[] canvases = FindObjectsOfType<Canvas>();
+                    foreach (Canvas canvas in canvases)
                     {
-                        uiCamera.cullingMask |= 1 << child.gameObject.layer;
+                        uiCamera.cullingMask |= 1 << canvas.gameObject.layer;
+
+                        if (debugMode)
+                            Debug.Log($"Adding canvas layer to UI camera: {canvas.gameObject.name} on layer {canvas.gameObject.layer}");
+
+                        // Also add all children of the canvas to the culling mask
+                        foreach (Transform child in canvas.GetComponentsInChildren<Transform>(true))
+                        {
+                            uiCamera.cullingMask |= 1 << child.gameObject.layer;
+                        }
                     }
                 }
+
+                // Set orthographic size and position to match screen
+                uiCamera.orthographic = true;
+                uiCamera.orthographicSize = Screen.height / 2.0f;
+                uiCamera.transform.position = new Vector3(Screen.width / 2.0f, Screen.height / 2.0f, -1000);
+
+                // Configure canvases for screenshot
+                ConfigureCanvasesForScreenshot(uiCamera);
+
+                // Create render texture
+                rt = new RenderTexture(width, height, 24);
+                rt.antiAliasing = 4;
+
+                if (transparentBackground)
+                {
+                    rt.format = RenderTextureFormat.ARGB32;
+                }
+
+                // Render to texture
+                uiCamera.targetTexture = rt;
+                uiCamera.Render();
+
+                // Create texture for result
+                TextureFormat format = transparentBackground ? TextureFormat.RGBA32 : TextureFormat.RGB24;
+                screenTexture = new Texture2D(width, height, format, false);
+
+                // Read render texture
+                RenderTexture.active = rt;
+                screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                screenTexture.Apply();
+
+                Texture2D result = screenTexture;
+                screenTexture = null;
+                return result;
             }
-
-            // Set orthographic size and position to match screen
-            uiCamera.orthographic = true;
-            uiCamera.orthographicSize = Screen.height / 2.0f;
-            uiCamera.transform.position = new Vector3(Screen.width / 2.0f, Screen.height / 2.0f, -1000);
-
-            // Configure canvases for screenshot
-            ConfigureCanvasesForScreenshot(uiCamera);
-
-            // Create render texture
-            RenderTexture rt = new RenderTexture(width, height, 24);
-            rt.antiAliasing = 4;
-
-            if (transparentBackground)
+            finally
             {
-                rt.format = RenderTextureFormat.ARGB32;
+                RenderTexture.active = originalActiveRT;
+
+                if (rt != null)
+                    Destroy(rt);
+
+                if (tempCameraObject != null)
+                    Destroy(tempCameraObject);
+
+                if (screenTexture != null)
+                    Destroy(screenTexture);
+
+                // Restore any canvas settings we changed
+                RestoreCanvasSettings();
             }
-
-            // Render to texture
-            uiCamera.targetTexture = rt;
-            uiCamera.Render();
-
-            // Create texture for result
-            TextureFormat format = transparentBackground ? TextureFormat.RGBA32 : TextureFormat.RGB24;
-            Texture2D screenTexture = new Texture2D(width, height, format, false);
-
-            // Read render texture
-            RenderTexture.active = rt;
-            screenTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-            screenTexture.Apply();
-
-            // Clean up
-            RenderTexture.active = null;
-            Destroy(rt);
-            Destroy(tempCameraObject);
-
-            // Restore any canvas settings we changed
-            RestoreCanvasSettings();
-
-            return screenTexture;
         }
 
         // Store original canvas settings
@@ -749,5 +823,5 @@ namespace MasterServerToolkit.Utils
             Debug.Log(info);
         }
 #endif
-    }
+        }
 }

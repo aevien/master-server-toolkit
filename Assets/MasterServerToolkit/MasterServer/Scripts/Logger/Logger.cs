@@ -1,9 +1,11 @@
 ﻿namespace MasterServerToolkit.Logging
 {
-    public delegate void LogHandler(Logger logger, LogLevel logLevel, object message);
+    public delegate void LogHandler(Logger logger, LogLevel logLevel, string channel, object message);
 
     public class Logger
     {
+        private int logLevel;
+
         /// <summary>
         /// Invoked when log to console
         /// </summary>
@@ -12,7 +14,11 @@
         /// <summary>
         /// Log level of current logger
         /// </summary>
-        public LogLevel LogLevel { get; set; }
+        public LogLevel LogLevel
+        {
+            get => (LogLevel)System.Threading.Volatile.Read(ref logLevel);
+            set => System.Threading.Volatile.Write(ref logLevel, (int)value);
+        }
 
         /// <summary>
         /// Name of current logger
@@ -36,109 +42,114 @@
         /// <returns></returns>
         public bool IsLogging(LogLevel level)
         {
-            return (LogLevel <= level || (LogLevel == LogLevel.Global && level >= LogManager.GlobalLogLevel));
+            LogLevel currentLogLevel = LogLevel;
+            return currentLogLevel <= level ||
+                (currentLogLevel == LogLevel.Global && level >= LogManager.GlobalLogLevel);
         }
 
-        public void Trace(object message)
+        public void Trace(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Trace, message);
+            Log(LogLevel.Trace, message, channel);
         }
 
-        public void Trace(bool condition, object message)
-        {
-            if (condition)
-            {
-                Log(LogLevel.Trace, message);
-            }
-        }
-
-        public void Debug(object message)
-        {
-            Log(LogLevel.Debug, message);
-        }
-
-        public void Debug(bool condition, object message)
+        public void Trace(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Debug, message);
+                Log(LogLevel.Trace, message, channel);
             }
         }
 
-        public void Info(object message)
+        public void Debug(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Info, message);
+            Log(LogLevel.Debug, message, channel);
         }
 
-        public void Info(bool condition, object message)
+        public void Debug(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Info, message);
+                Log(LogLevel.Debug, message, channel);
             }
         }
 
-        public void Warn(object message)
+        public void Info(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Warn, message);
+            Log(LogLevel.Info, message, channel);
         }
 
-        public void Warn(bool condition, object message)
+        public void Info(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Warn, message);
+                Log(LogLevel.Info, message, channel);
             }
         }
 
-        public void Error(object message)
+        public void Warn(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Error, message);
+            Log(LogLevel.Warn, message, channel);
         }
 
-        public void Error(bool condition, object message)
+        public void Warn(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Error, message);
+                Log(LogLevel.Warn, message, channel);
             }
         }
 
-        public void Fatal(object message)
+        public void Error(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Fatal, message);
+            Log(LogLevel.Error, message, channel);
         }
 
-        public void Fatal(bool condition, object message)
+        public void Error(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Fatal, message);
+                Log(LogLevel.Error, message, channel);
             }
         }
 
-        public void Log(bool condition, LogLevel logLvl, object message)
+        public void Fatal(object message, string channel = LogChannels.System)
+        {
+            Log(LogLevel.Fatal, message, channel);
+        }
+
+        public void Fatal(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(logLvl, message);
+                Log(LogLevel.Fatal, message, channel);
             }
         }
 
-        public void Log(LogLevel logLvl, object message)
+        public void Log(bool condition, LogLevel logLvl, object message, string channel = LogChannels.System)
         {
-            if (OnLogEvent == null) return;
-
-            if (LogManager.LogLevel != LogLevel.Off && logLvl >= LogManager.LogLevel)
+            if (condition)
             {
-                OnLogEvent(this, logLvl, message);
+                Log(logLvl, message, channel);
+            }
+        }
+
+        public void Log(LogLevel logLvl, object message, string channel = LogChannels.System)
+        {
+            channel = LogChannels.Normalize(channel);
+            LogLevel overrideLogLevel = LogManager.LogLevel;
+
+            if (overrideLogLevel != LogLevel.Off && logLvl >= overrideLogLevel)
+            {
+                OnLogEvent?.Invoke(this, logLvl, channel, message);
                 return;
             }
 
             // If logging level is lower than what we're logging (including global)
-            if (LogLevel <= logLvl || (LogLevel == LogLevel.Global && logLvl >= LogManager.GlobalLogLevel))
+            LogLevel currentLogLevel = LogLevel;
+            if (currentLogLevel <= logLvl ||
+                (currentLogLevel == LogLevel.Global && logLvl >= LogManager.GlobalLogLevel))
             {
-                OnLogEvent(this, logLvl, message);
+                OnLogEvent?.Invoke(this, logLvl, channel, message);
             }
         }
     }

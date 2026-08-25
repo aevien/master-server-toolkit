@@ -11,6 +11,12 @@ namespace MasterServerToolkit.Demos.BasicNetworking
             Terminal.Shell.AddCommand("demo.message.response", SendNetMessageWithResponse, 0, 0, "Sends message to custom server");
         }
 
+        private void OnDestroy()
+        {
+            Terminal.Shell.RemoveCommand("demo.message");
+            Terminal.Shell.RemoveCommand("demo.message.response");
+        }
+
         private void SendNetMessage(CommandArg[] args)
         {
             CustomClient.Instance.SendNetMessage();

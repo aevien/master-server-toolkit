@@ -3,11 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public class MatchmakerModule : BaseServerModule
     {
+        [Header("Settings"), SerializeField, Tooltip("Uses SpawnersModule as the source of available regions. Disable when game search is required but no process spawner is installed; region-list requests then return an error.")]
+        private bool useSpawnerModule = true;
+
         /// <summary>
         /// List of game providers
         /// </summary>
@@ -24,7 +28,9 @@ namespace MasterServerToolkit.MasterServer
 
             AddOptionalDependency<LobbiesModule>();
             AddOptionalDependency<RoomsModule>();
-            AddOptionalDependency<SpawnersModule>();
+
+            if (useSpawnerModule)
+                AddOptionalDependency<SpawnersModule>();
         }
 
         public override void Initialize(IServer server)
@@ -33,9 +39,11 @@ namespace MasterServerToolkit.MasterServer
 
             var roomsModule = server.GetModule<RoomsModule>();
             var lobbiesModule = server.GetModule<LobbiesModule>();
-            spawnersModule = server.GetModule<SpawnersModule>();
 
-            if (!spawnersModule)
+            if (useSpawnerModule)
+                spawnersModule = server.GetModule<SpawnersModule>();
+
+            if (useSpawnerModule && !spawnersModule)
                 logger.Error($"{GetType().Name} was set to use {nameof(SpawnersModule)}, but {nameof(SpawnersModule)} was not found." +
                     $"In this case, you will not be able to get regions list");
 
@@ -92,7 +100,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (!spawnersModule)
                 {
-                    message.Respond("Getting a list of regions is not allowed", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.ServiceUnavailable,
+                        MstErrorCodes.MATCHMAKER_REGIONS_DISABLED);
                     logger.Error("No spawner module found");
                     return Task.CompletedTask;
                 }
@@ -101,7 +110,8 @@ namespace MasterServerToolkit.MasterServer
 
                 if (list.Count == 0)
                 {
-                    message.Respond("No regions found. Please start spawner to get regions", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.ServiceUnavailable,
+                        MstErrorCodes.MATCHMAKER_REGIONS_UNAVAILABLE);
                     logger.Error("No spawner started");
                     return Task.CompletedTask;
                 }

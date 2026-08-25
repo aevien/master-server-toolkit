@@ -12,23 +12,32 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required container that receives generated channel entries and whose children are cleared when the view opens.")]
         private RectTransform chatChannelsContainer;
         [SerializeField]
+        [Tooltip("Required container that receives incoming and outgoing message entries and whose children are cleared when the view opens.")]
         private RectTransform chatMesagesContainer;
         [SerializeField]
+        [Tooltip("Required status label shown while channel data is requested and hidden after the request completes.")]
         private TMP_Text statusInfoText;
         [SerializeField]
+        [Tooltip("Required title label updated after joining the configured default channel.")]
         private TMP_Text chatTitleText;
         [SerializeField]
+        [Tooltip("Required message-row prefab instantiated for messages received from other users and user-leave notices.")]
         private ChatMessageItemUI incomingMessageItemPrefab;
         [SerializeField]
+        [Tooltip("Required message-row prefab instantiated for messages sent by the local chat user.")]
         private ChatMessageItemUI outgoingMessageItemPrefab;
         [SerializeField]
+        [Tooltip("Required channel-row prefab instantiated for every channel returned by the chat module.")]
         private ChatChannelItemUI chatChannelItemPrefab;
         [SerializeField]
+        [Tooltip("Required input field used to compose messages. Submitted messages are truncated to 200 characters plus an ellipsis.")]
         private TMP_InputField messageInputField;
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Channel name the view joins when opened and uses as the receiver for sent channel messages. It must match a channel accepted by the server.")]
         private string defaultChannelName = "MST Chat Demo";
 
         #endregion
@@ -40,13 +49,22 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         private string username;
 
-        protected  void Start()
+        protected void Start()
         {
             chanelItemsList = new List<ChatChannelItemUI>();
 
             Mst.Client.Chat.OnMessageReceivedEvent += Chat_OnMessageReceivedEvent;
             Mst.Client.Chat.OnUserJoinedChannelEvent += Chat_OnUserJoinedChannelEvent;
             Mst.Client.Chat.OnUserLeftChannelEvent += Chat_OnUserLeftChannelEvent;
+        }
+
+        protected override void OnDestroy()
+        {
+            Mst.Client.Chat.OnMessageReceivedEvent -= Chat_OnMessageReceivedEvent;
+            Mst.Client.Chat.OnUserJoinedChannelEvent -= Chat_OnUserJoinedChannelEvent;
+            Mst.Client.Chat.OnUserLeftChannelEvent -= Chat_OnUserLeftChannelEvent;
+
+            base.OnDestroy();
         }
 
         private void Update()
@@ -66,9 +84,9 @@ namespace MasterServerToolkit.Bridges
             {
                 if (string.IsNullOrEmpty(username))
                 {
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Username cannot be empty! Set username in UsernamePickView and try again", () =>
+                    ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage("Username cannot be empty! Set username in UsernamePickView and try again", () =>
                     {
-                        Mst.Events.Invoke(MstEventKeys.showPickUsernameView);
+                        ViewsManager.Show<AdBannerView>();
                     }));
 
                     return;
@@ -78,7 +96,7 @@ namespace MasterServerToolkit.Bridges
                 {
                     Receiver = defaultChannelName,
                     Message = messageInputField.text.Length > 200 ? $"{messageInputField.text.Substring(0, 200)}..." : messageInputField.text,
-                    MessageType = ChatMessageType.ChannelMessage
+                    MessageType = ChatMessageType.Channel
                 };
 
                 messageInputField.text = string.Empty;
@@ -87,7 +105,10 @@ namespace MasterServerToolkit.Bridges
                 {
                     if (!isSuccess)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error));
+                        ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage(error)
+                        {
+                            MessageType = DialogBoxMessageType.Error
+                        });
                         return;
                     }
                 });
@@ -145,14 +166,14 @@ namespace MasterServerToolkit.Bridges
             messageItem.Set(user, "I'm off. Bye!");
         }
 
-        protected override void OnShow()
+        protected override void OnStartShow()
         {
-            base.OnShow();
+            base.OnStartShow();
             ClearChannels();
             ClearMessages();
             JoinPredefinedChannels();
 
-            username = Mst.Options.AsString(MstDictKeys.USER_NAME);
+            username = Mst.Options.AsString(MstParamKeys.USER_NAME);
         }
 
         /// <summary>
@@ -182,8 +203,6 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         private void JoinPredefinedChannels()
         {
-            canvasGroup.interactable = false;
-
             if (statusInfoText)
             {
                 statusInfoText.text = "Finding channels... Please wait!";
@@ -195,15 +214,14 @@ namespace MasterServerToolkit.Bridges
                 // Join default chat
                 Mst.Client.Chat.JoinChannel(defaultChannelName, (isSuccess, joinChannelError) =>
                 {
-                    canvasGroup.interactable = true;
                     statusInfoText.gameObject.SetActive(false);
 
                     if (!isSuccess)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(joinChannelError, () =>
+                        ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage(joinChannelError, () =>
                         {
                             Hide();
-                            ViewsManager.Show("UsernamePickView");
+                            ViewsManager.Show<UsernamePickView>();
                         }));
 
                         return;
@@ -226,10 +244,10 @@ namespace MasterServerToolkit.Bridges
 
                 if (!string.IsNullOrEmpty(getChannelsError))
                 {
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(getChannelsError, () =>
+                    ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage(getChannelsError, () =>
                     {
                         Hide();
-                        ViewsManager.Show("UsernamePickView");
+                        ViewsManager.Show<UsernamePickView>();
                     }));
 
                     return;

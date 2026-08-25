@@ -1,18 +1,49 @@
-﻿using System.Collections.Concurrent;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Extensions;
+using System.Collections.Concurrent;
 
 namespace MasterServerToolkit.MasterServer
 {
     public enum TrafficType { Incoming, Outgoing }
     public class MstTrafficStatistics
     {
-        private long _totalBytesSent = 0;
-        private long _totalBytesReceived = 0;
+        private long totalBytesSent = 0;
+        private long totalBytesReceived = 0;
 
-        ConcurrentDictionary<ushort, long> _totalBytesSentByOpCode = new ConcurrentDictionary<ushort, long>();
-        ConcurrentDictionary<ushort, long> _totalBytesReceivedByOpCode = new ConcurrentDictionary<ushort, long>();
+        private readonly ConcurrentDictionary<ushort, long> totalBytesSentByOpCode = new();
+        private readonly ConcurrentDictionary<ushort, long> totalBytesReceivedByOpCode = new();
 
-        public long TotalReceived => _totalBytesReceived;
-        public long TotalSent => _totalBytesSent;
+        public long TotalReceived => totalBytesReceived;
+        public long TotalSent => totalBytesSent;
+
+        public MstJson Info()
+        {
+            var info = MstJson.CreateObject();
+            info.AddField("totalReceived", totalBytesReceived);
+            info.AddField("totalSent", totalBytesSent);
+            info.AddField("totalBytesSentByOpCode", MstJson.CreateArray());
+            info.AddField("totalBytesReceivedByOpCode", MstJson.CreateArray());
+
+            foreach(var kvp  in totalBytesSentByOpCode)
+            {
+                var json = MstJson.CreateObject();
+                json.AddField("hash", kvp.Key);
+                json.AddField("opcode", StringExtensions.FromHash(kvp.Key));
+                json.AddField("value", kvp.Value);
+                info["totalBytesSentByOpCode"].Add(json);
+            }
+
+            foreach(var kvp  in totalBytesReceivedByOpCode)
+            {
+                var json = MstJson.CreateObject();
+                json.AddField("hash", kvp.Key);
+                json.AddField("opcode", StringExtensions.FromHash(kvp.Key));
+                json.AddField("value", kvp.Value);
+                info["totalBytesReceivedByOpCode"].Add(json);
+            }
+
+            return info;
+        }
 
         /// <summary>
         /// 
@@ -23,11 +54,11 @@ namespace MasterServerToolkit.MasterServer
         {
             if (trafficType == TrafficType.Incoming)
             {
-                _totalBytesReceived += dataLength;
+                totalBytesReceived += dataLength;
             }
             else
             {
-                _totalBytesSent += dataLength;
+                totalBytesSent += dataLength;
             }
         }
 
@@ -39,19 +70,21 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="trafficType"></param>
         public void RegisterOpCodeTrafic(ushort opCode, long dataLength, TrafficType trafficType)
         {
-            //Debug.Log($"{trafficType} Traffic, OpCode: {opCode}, Data Length: {dataLength}b");
-
             RegisterGenericTrafic(dataLength, trafficType);
 
             if (trafficType == TrafficType.Incoming)
             {
-                if (!_totalBytesReceivedByOpCode.ContainsKey(opCode)) _totalBytesReceivedByOpCode[opCode] = 0;
-                _totalBytesReceivedByOpCode[opCode] += dataLength;
+                if (!totalBytesReceivedByOpCode.ContainsKey(opCode)) 
+                    totalBytesReceivedByOpCode[opCode] = 0;
+
+                totalBytesReceivedByOpCode[opCode] += dataLength;
             }
             else
             {
-                if (!_totalBytesSentByOpCode.ContainsKey(opCode)) _totalBytesSentByOpCode[opCode] = 0;
-                _totalBytesSentByOpCode[opCode] += dataLength;
+                if (!totalBytesSentByOpCode.ContainsKey(opCode)) 
+                    totalBytesSentByOpCode[opCode] = 0;
+
+                totalBytesSentByOpCode[opCode] += dataLength;
             }
         }
     }

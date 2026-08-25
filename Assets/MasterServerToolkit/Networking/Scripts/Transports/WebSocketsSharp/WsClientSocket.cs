@@ -2,21 +2,51 @@
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
-using WebSocketSharp;
+using UnityEngine;
 
 namespace MasterServerToolkit.Networking
 {
-    public class WsClientSocket : BaseClientSocket, IClientSocket, IUpdatable
+    public class WsClientSocket : BaseClientSocket, IClientSocket, IConnectionPermissionCredentials, IUpdatable
     {
+        private sealed class PendingConnectionWait
+        {
+            public PendingConnectionWait(ConnectionDelegate callback)
+            {
+                Callback = callback;
+            }
+
+            public ConnectionDelegate Callback { get; }
+            public Coroutine TimeoutCoroutine { get; set; }
+            public bool IsCompleted { get; set; }
+        }
+
+        private const ushort NormalClosureCode = 1000;
+        // Browser WebSockets allow application-defined close codes in the 4000-4999 range.
+        private const ushort ClientUpdateFailureCloseCode = 4000;
+        private const string ClientUpdateFailureCloseReason = "Client socket update failed";
+
+        private readonly MasterServerToolkit.Logging.Logger logger;
+        private MasterServerToolkit.Logging.LogLevel logLevel = MasterServerToolkit.Logging.LogLevel.Info;
+
+        private string id = string.Empty;
         private WsClientPeer _peer;
         private WebSocket webSocket;
         private ConnectionStatus connectionStatus;
         private float connectionTimeout = 10f;
+
+        // Lifecycle callbacks may request another connect or close. Defer those commands until every
+        // observer of the current transition has seen the same socket state.
+        private readonly Queue<Action> deferredConnectionLifecycleActions = new Queue<Action>();
         private readonly Dictionary<ushort, IPacketHandler> handlers = new Dictionary<ushort, IPacketHandler>();
-        private bool wasConnected = false;
+        private readonly List<PendingConnectionWait> pendingConnectionWaits = new List<PendingConnectionWait>();
+        private int connectionLifecycleDepth;
+        private int connectionNotificationDepth;
+        private bool isProcessingDeferredConnectionLifecycleActions;
+        private bool wasTransportConnected;
 
         public bool IsConnected { get; private set; } = false;
-        public bool IsConnecting { get { return connectionStatus == ConnectionStatus.Connecting; } }
+        public bool IsConnecting => connectionStatus == ConnectionStatus.Connecting ||
+                                    connectionStatus == ConnectionStatus.Authenticating;
         public string Address { get; private set; }
         public int Port { get; private set; }
         public ConnectionStatus Status
@@ -30,14 +60,31 @@ namespace MasterServerToolkit.Networking
                 if (connectionStatus != value)
                 {
                     connectionStatus = value;
-                    OnStatusChangedEvent?.Invoke(connectionStatus);
+                    InvokeConnectionNotification(() => InvokeStatusChangedEvent(connectionStatus));
                 }
             }
         }
         public bool UseSecure { get; set; }
         public string Service { get; set; } = "mst";
-        public string Password { get; set; }
+        public string PermissionKey { get; set; } = string.Empty;
+        public string PermissionCredential { get; set; } = string.Empty;
         public ushort CloseCode { get; private set; }
+
+        public int Priority => -100;
+
+        public MasterServerToolkit.Logging.LogLevel LogLevel
+        {
+            get
+            {
+                return logLevel;
+            }
+            set
+            {
+                logLevel = value;
+            }
+        }
+
+        public string Id => id;
 
         public event ConnectionDelegate OnConnectionOpenEvent;
         public event ConnectionDelegate OnConnectionCloseEvent;
@@ -45,6 +92,10 @@ namespace MasterServerToolkit.Networking
 
         public WsClientSocket()
         {
+            id = Guid.NewGuid().ToString();
+            logger = Mst.Create.Logger(GetType().Name);
+            logger.LogLevel = logLevel;
+
             connectionStatus = ConnectionStatus.Disconnected;
         }
 
@@ -91,40 +142,221 @@ namespace MasterServerToolkit.Networking
 
         public void WaitForConnection(ConnectionDelegate connectionCallback, float timeoutSeconds)
         {
+            if (connectionCallback == null)
+                throw new ArgumentNullException(nameof(connectionCallback));
+
             if (IsConnected)
             {
-                connectionCallback.Invoke(this);
+                InvokeConnectionNotification(() => InvokeConnectionCallback(connectionCallback, "Connection wait callback"));
                 return;
             }
 
-            var isConnected = false;
-            var timedOut = false;
-
-            // Make local function
-            void onConnected(IClientSocket client)
+            if (!IsConnecting)
             {
-                OnConnectionOpenEvent -= onConnected;
-                isConnected = true;
-
-                if (!timedOut)
-                {
-                    connectionCallback.Invoke(client);
-                }
+                InvokeConnectionNotification(() => InvokeConnectionCallback(connectionCallback, "Connection wait callback"));
+                return;
             }
 
-            // Listen to connection event
-            OnConnectionOpenEvent += onConnected;
+            var pendingWait = new PendingConnectionWait(connectionCallback);
+            pendingConnectionWaits.Add(pendingWait);
 
-            // Wait for some seconds
-            MstTimer.WaitForSeconds(timeoutSeconds, () =>
+            Coroutine timeoutCoroutine;
+
+            try
             {
-                if (!isConnected)
+                timeoutCoroutine = MstTimer.WaitForRealtimeSeconds(timeoutSeconds, () =>
                 {
-                    timedOut = true;
-                    OnConnectionOpenEvent -= onConnected;
-                    connectionCallback.Invoke(this);
-                }
+                    pendingWait.TimeoutCoroutine = null;
+                    CompleteConnectionWait(pendingWait);
+                });
+            }
+            catch (Exception exception)
+            {
+                TryLogError($"Failed to start connection wait timeout: {exception}");
+                CompleteConnectionWait(pendingWait);
+                return;
+            }
+
+            if (pendingWait.IsCompleted)
+            {
+                MstTimer.TryStopCoroutine(timeoutCoroutine);
+                return;
+            }
+
+            pendingWait.TimeoutCoroutine = timeoutCoroutine;
+
+            if (timeoutCoroutine == null)
+                CompleteConnectionWait(pendingWait);
+        }
+
+        private void CompleteConnectionWait(PendingConnectionWait pendingWait)
+        {
+            if (pendingWait == null || pendingWait.IsCompleted)
+                return;
+
+            pendingWait.IsCompleted = true;
+            pendingConnectionWaits.Remove(pendingWait);
+
+            Coroutine timeoutCoroutine = pendingWait.TimeoutCoroutine;
+            pendingWait.TimeoutCoroutine = null;
+            MstTimer.TryStopCoroutine(timeoutCoroutine);
+
+            InvokeConnectionNotification(() => InvokeConnectionWaitCallback(pendingWait));
+        }
+
+        private List<PendingConnectionWait> DrainPendingConnectionWaits()
+        {
+            if (pendingConnectionWaits.Count == 0)
+                return null;
+
+            var completedWaits = new List<PendingConnectionWait>(pendingConnectionWaits);
+            pendingConnectionWaits.Clear();
+
+            foreach (PendingConnectionWait pendingWait in completedWaits)
+            {
+                pendingWait.IsCompleted = true;
+
+                Coroutine timeoutCoroutine = pendingWait.TimeoutCoroutine;
+                pendingWait.TimeoutCoroutine = null;
+                MstTimer.TryStopCoroutine(timeoutCoroutine);
+            }
+
+            return completedWaits;
+        }
+
+        private void InvokeConnectionWaitCallbacks(List<PendingConnectionWait> completedWaits)
+        {
+            if (completedWaits == null)
+                return;
+
+            foreach (PendingConnectionWait completedWait in completedWaits)
+            {
+                InvokeConnectionWaitCallback(completedWait);
+            }
+        }
+
+        private void InvokeConnectionWaitCallback(PendingConnectionWait completedWait)
+        {
+            InvokeConnectionCallback(completedWait.Callback, "Connection wait callback");
+        }
+
+        private void InvokeConnectionCallback(ConnectionDelegate callback, string callbackType)
+        {
+            try
+            {
+                callback.Invoke(this);
+            }
+            catch (Exception exception)
+            {
+                TryLogError($"{callbackType} failed: {exception}");
+            }
+        }
+
+        private void InvokeConnectionTransition(ConnectionDelegate connectionEvent, List<PendingConnectionWait> completedWaits)
+        {
+            InvokeConnectionNotification(() =>
+            {
+                InvokeConnectionEvent(connectionEvent);
+                InvokeConnectionWaitCallbacks(completedWaits);
             });
+        }
+
+        private void InvokeConnectionEvent(ConnectionDelegate connectionEvent)
+        {
+            if (connectionEvent == null)
+                return;
+
+            foreach (ConnectionDelegate callback in connectionEvent.GetInvocationList())
+            {
+                InvokeConnectionCallback(callback, "Connection event callback");
+            }
+        }
+
+        private void InvokeStatusChangedEvent(ConnectionStatus status)
+        {
+            ConnectionStatusDelegate statusChangedEvent = OnStatusChangedEvent;
+
+            if (statusChangedEvent == null)
+                return;
+
+            foreach (ConnectionStatusDelegate callback in statusChangedEvent.GetInvocationList())
+            {
+                try
+                {
+                    callback.Invoke(status);
+                }
+                catch (Exception exception)
+                {
+                    TryLogError($"Connection status callback failed: {exception}");
+                }
+            }
+        }
+
+        private void InvokeConnectionNotification(Action notification)
+        {
+            connectionNotificationDepth++;
+
+            try
+            {
+                notification.Invoke();
+            }
+            finally
+            {
+                connectionNotificationDepth--;
+                ProcessDeferredConnectionLifecycleActions();
+            }
+        }
+
+        private void ExecuteConnectionLifecycleAction(Action lifecycleAction)
+        {
+            if (connectionNotificationDepth > 0 || connectionLifecycleDepth > 0)
+            {
+                deferredConnectionLifecycleActions.Enqueue(lifecycleAction);
+                return;
+            }
+
+            connectionLifecycleDepth++;
+
+            try
+            {
+                lifecycleAction.Invoke();
+            }
+            finally
+            {
+                connectionLifecycleDepth--;
+                ProcessDeferredConnectionLifecycleActions();
+            }
+        }
+
+        private void ProcessDeferredConnectionLifecycleActions()
+        {
+            if (connectionLifecycleDepth > 0 ||
+                connectionNotificationDepth > 0 ||
+                isProcessingDeferredConnectionLifecycleActions)
+                return;
+
+            isProcessingDeferredConnectionLifecycleActions = true;
+
+            try
+            {
+                while (deferredConnectionLifecycleActions.Count > 0)
+                {
+                    Action lifecycleAction = deferredConnectionLifecycleActions.Dequeue();
+
+                    try
+                    {
+                        ExecuteConnectionLifecycleAction(lifecycleAction);
+                    }
+                    catch (Exception exception)
+                    {
+                        TryLogError($"Deferred connection lifecycle action failed: {exception}");
+                    }
+                }
+            }
+            finally
+            {
+                isProcessingDeferredConnectionLifecycleActions = false;
+            }
         }
 
         public void WaitForConnection(ConnectionDelegate connectionCallback)
@@ -142,7 +374,7 @@ namespace MasterServerToolkit.Networking
 
             if (IsConnected && invokeInstantlyIfConnected)
             {
-                OnConnectionOpenEvent.Invoke(this);
+                InvokeConnectionNotification(() => InvokeConnectionEvent(callback));
             }
         }
 
@@ -159,9 +391,9 @@ namespace MasterServerToolkit.Networking
             // Asign callback method again
             OnConnectionCloseEvent += callback;
 
-            if (!IsConnected && invokeInstantlyIfDisconnected)
+            if (Status == ConnectionStatus.Disconnected && invokeInstantlyIfDisconnected)
             {
-                OnConnectionCloseEvent.Invoke(this);
+                InvokeConnectionNotification(() => InvokeConnectionEvent(callback));
             }
         }
 
@@ -191,7 +423,15 @@ namespace MasterServerToolkit.Networking
 
         public void UnregisterMessageHandler(IPacketHandler handler)
         {
-            UnregisterMessageHandler(handler);
+            if (handler == null)
+            {
+                return;
+            }
+
+            if (handlers.TryGetValue(handler.OpCode, out IPacketHandler registeredHandler) && ReferenceEquals(registeredHandler, handler))
+            {
+                handlers.Remove(handler.OpCode);
+            }
         }
 
         public void UnregisterMessageHandler(ushort opCode)
@@ -201,75 +441,198 @@ namespace MasterServerToolkit.Networking
 
         public void Reconnect(bool fireEvent = true)
         {
-            Close(fireEvent);
-            Connect(Address, Port);
+            string address = Address;
+            int port = Port;
+            float timeoutSeconds = connectionTimeout;
+
+            ExecuteConnectionLifecycleAction(() =>
+            {
+                CloseInternal(NormalClosureCode, "Closed by client", fireEvent);
+                StartConnectionInternal(address, port, timeoutSeconds);
+            });
         }
 
         public void DoUpdate()
         {
-            if (webSocket == null)
+            WebSocket updatingSocket = webSocket;
+            WsClientPeer updatingPeer = _peer;
+
+            try
+            {
+                ProcessUpdate(updatingSocket, updatingPeer);
+            }
+            catch (Exception exception)
+            {
+                HandleUpdateFailure(updatingSocket, updatingPeer, exception);
+            }
+        }
+
+        private void ProcessUpdate(WebSocket currentSocket, WsClientPeer currentPeer)
+        {
+            if (currentSocket == null)
             {
                 return;
             }
 
-            // Get all received bytes
-            byte[] data = webSocket.Recv();
+            bool isTransportConnected = currentSocket.IsConnected;
+            bool transportWasClosed = wasTransportConnected && !isTransportConnected;
+            bool connectionAttemptStopped = Status == ConnectionStatus.Connecting &&
+                !currentSocket.IsConnecting && !isTransportConnected;
 
-            while (data != null)
+            if (transportWasClosed || connectionAttemptStopped)
             {
-                _peer.HandleReceivedData(data);
-                data = webSocket.Recv();
+                DrainReceivedMessages(currentSocket, currentPeer);
+
+                if (ReferenceEquals(webSocket, currentSocket) && ReferenceEquals(_peer, currentPeer))
+                    SetStatus(ConnectionStatus.Disconnected);
+
+                return;
             }
 
-            wasConnected = IsConnected;
-            IsConnected = webSocket.IsConnected;
+            currentPeer?.ProcessSendCompletions();
+
+            if (!ReferenceEquals(webSocket, currentSocket) || !ReferenceEquals(_peer, currentPeer))
+                return;
+
+            // Start MST authentication before dispatching data already queued by WebSocket OnMessage.
+            if (!wasTransportConnected && isTransportConnected)
+            {
+                wasTransportConnected = true;
+                SetStatus(ConnectionStatus.Authenticating);
+
+                if (!ReferenceEquals(webSocket, currentSocket))
+                    return;
+            }
+
+            if (!DrainReceivedMessages(currentSocket, _peer))
+                return;
+
+            isTransportConnected = currentSocket.IsConnected;
 
             // Check if status changed
-            if (wasConnected != IsConnected)
+            if (wasTransportConnected != isTransportConnected)
             {
-                SetStatus(IsConnected ? ConnectionStatus.Connected : ConnectionStatus.Disconnected);
+                wasTransportConnected = isTransportConnected;
+                SetStatus(isTransportConnected ? ConnectionStatus.Authenticating : ConnectionStatus.Disconnected);
+            }
+            else if (Status == ConnectionStatus.Connecting && !webSocket.IsConnecting && !isTransportConnected)
+            {
+                SetStatus(ConnectionStatus.Disconnected);
             }
         }
 
+        private void HandleUpdateFailure(WebSocket failedSocket, WsClientPeer failedPeer, Exception exception)
+        {
+            TryLogError($"WebSocket client update failed. Address: {Address}:{Port}, status: {Status}. Error: {exception}");
+
+            if (!ReferenceEquals(webSocket, failedSocket) || !ReferenceEquals(_peer, failedPeer))
+                return;
+
+            try
+            {
+                ExecuteConnectionLifecycleAction(() =>
+                {
+                    if (ReferenceEquals(webSocket, failedSocket) && ReferenceEquals(_peer, failedPeer))
+                        CloseInternal(ClientUpdateFailureCloseCode, ClientUpdateFailureCloseReason, true);
+                });
+            }
+            catch (Exception cleanupException)
+            {
+                try
+                {
+                    MstUpdateRunner.Remove(this);
+                }
+                catch
+                {
+                    // Preserve the original update failure even if runner cleanup is unavailable.
+                }
+
+                TryLogError($"WebSocket client cleanup failed after an update error: {cleanupException}");
+            }
+        }
+
+        private void TryLogError(object message)
+        {
+            try
+            {
+                logger.Error(message);
+            }
+            catch
+            {
+                // Logging must not prevent transport cleanup.
+            }
+        }
+
+        private bool DrainReceivedMessages(WebSocket currentSocket, WsClientPeer currentPeer)
+        {
+            byte[] data = currentSocket.Recv();
+
+            while (data != null)
+            {
+                currentPeer?.HandleReceivedData(data);
+
+                if (!ReferenceEquals(webSocket, currentSocket) || !ReferenceEquals(_peer, currentPeer))
+                    return false;
+
+                data = currentSocket.Recv();
+            }
+
+            return true;
+        }
+
         private void SetStatus(ConnectionStatus status, bool fireEvent = true)
+        {
+            ExecuteConnectionLifecycleAction(() => SetStatusInternal(status, fireEvent));
+        }
+
+        private void SetStatusInternal(ConnectionStatus status, bool fireEvent)
         {
             switch (status)
             {
                 case ConnectionStatus.Connecting:
 
+                    IsConnected = false;
+
                     if (Status != ConnectionStatus.Connecting)
                         Status = ConnectionStatus.Connecting;
 
                     break;
-                case ConnectionStatus.Connected:
+                case ConnectionStatus.Authenticating:
 
-                    if (Status != ConnectionStatus.Connected)
+                    if (Status != ConnectionStatus.Authenticating)
                     {
-                        _peer.SendDelayedMessages();
+                        Status = ConnectionStatus.Authenticating;
+                        WebSocket authenticatingSocket = webSocket;
+                        WsClientPeer authenticatingPeer = _peer;
 
-                        // Client should be validated
                         Mst.Security.AuthenticateConnection(this, (isSuccess, error) =>
                         {
-                            Status = ConnectionStatus.Connected;
+                            ExecuteConnectionLifecycleAction(() =>
+                            {
+                                if (!ReferenceEquals(webSocket, authenticatingSocket) ||
+                                    !ReferenceEquals(_peer, authenticatingPeer) ||
+                                    !authenticatingSocket.IsConnected)
+                                    return;
 
-                            if (isSuccess && fireEvent)
-                                OnConnectionOpenEvent?.Invoke(this);
+                                if (!isSuccess)
+                                {
+                                    CloseInternal(1008, string.IsNullOrEmpty(error) ? "Access denied" : error, fireEvent);
+                                    return;
+                                }
+
+                                IsConnected = true;
+                                Status = ConnectionStatus.Connected;
+
+                                ConnectionDelegate connectionOpenEvent = fireEvent ? OnConnectionOpenEvent : null;
+                                InvokeConnectionTransition(connectionOpenEvent, DrainPendingConnectionWaits());
+                            });
                         });
                     }
 
                     break;
                 case ConnectionStatus.Disconnected:
-
-                    if (Status != ConnectionStatus.Disconnected)
-                    {
-                        Status = ConnectionStatus.Disconnected;
-
-                        CloseCode = (ushort)(webSocket != null ? webSocket.CloseCode : 0);
-
-                        if (fireEvent)
-                            OnConnectionCloseEvent?.Invoke(this);
-                    }
-
+                    ushort closeCode = (ushort)(webSocket != null ? webSocket.CloseCode : CloseCode);
+                    CloseInternal(closeCode, "Transport disconnected", fireEvent, false);
                     break;
             }
         }
@@ -281,59 +644,119 @@ namespace MasterServerToolkit.Networking
 
         public IClientSocket Connect(string ip, int port, float timeoutSeconds)
         {
-            Close(false);
-
-            connectionTimeout = timeoutSeconds;
-
-            Address = ip;
-            Port = port;
-
-            Status = ConnectionStatus.Connecting;
-
-            if (UseSecure)
+            ExecuteConnectionLifecycleAction(() =>
             {
-                webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/{Service}"));
-            }
-            else
-            {
-                webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/{Service}"));
-            }
-
-            _peer = new WsClientPeer(webSocket);
-            _peer.OnMessageReceivedEvent += OnMessageReceivedHandler;
-
-            Peer = _peer;
-
-            MstUpdateRunner.Add(this);
-
-            _peer.Connect();
+                CloseInternal(NormalClosureCode, "Closed by client", false);
+                StartConnectionInternal(ip, port, timeoutSeconds);
+            });
 
             return this;
         }
 
+        private void StartConnectionInternal(string ip, int port, float timeoutSeconds)
+        {
+            try
+            {
+                connectionTimeout = timeoutSeconds;
+
+                Address = ip;
+                Port = port;
+
+                Status = ConnectionStatus.Connecting;
+
+                if (UseSecure)
+                {
+                    webSocket = new WebSocket(new Uri($"wss://{ip}:{port}/{Service}"));
+                }
+                else
+                {
+                    webSocket = new WebSocket(new Uri($"ws://{ip}:{port}/{Service}"));
+                }
+
+                _peer = new WsClientPeer(webSocket);
+                _peer.OnMessageReceivedEvent += OnMessageReceivedHandler;
+
+                Peer = _peer;
+
+                MstUpdateRunner.Add(this);
+
+                _peer.Connect();
+            }
+            catch
+            {
+                CloseInternal(NormalClosureCode, "Connection setup failed", true);
+                throw;
+            }
+        }
+
         public void Close(bool fireEvent = true)
         {
-            Close((ushort)CloseStatusCode.Normal, fireEvent);
+            Close(NormalClosureCode, fireEvent);
         }
 
         public void Close(ushort code, bool fireEvent = true)
         {
-            Close(code, "", fireEvent);
+            Close(code, "Closed by client", fireEvent);
         }
 
         public void Close(ushort code, string reason, bool fireEvent = true)
         {
-                webSocket?.Close(code, reason);
+            ExecuteConnectionLifecycleAction(() => CloseInternal(code, reason, fireEvent));
+        }
 
-            if (_peer != null)
-            {
-                _peer.OnMessageReceivedEvent -= OnMessageReceivedHandler;
-                _peer.Dispose();
-            }
+        private void CloseInternal(ushort code, string reason, bool fireEvent, bool closeTransport = true)
+        {
+            MstUpdateRunner.Remove(this);
+
+            var socketToClose = webSocket;
+            var peerToDispose = _peer;
+            bool shouldNotifyClose = Status != ConnectionStatus.Disconnected;
+            webSocket = null;
+            _peer = null;
 
             IsConnected = false;
+            wasTransportConnected = false;
+            CloseCode = code;
 
-            SetStatus(ConnectionStatus.Disconnected, fireEvent);
+            if (shouldNotifyClose)
+                Status = ConnectionStatus.Disconnected;
+
+            if (closeTransport)
+            {
+                try
+                {
+                    socketToClose?.Close(code, reason);
+                }
+                catch (Exception exception)
+                {
+                    TryLogError($"Failed to close WebSocket transport: {exception}");
+                }
+            }
+
+            try
+            {
+                socketToClose?.Dispose();
+            }
+            catch (Exception exception)
+            {
+                TryLogError($"Failed to release WebSocket transport: {exception}");
+            }
+
+            if (peerToDispose != null)
+            {
+                try
+                {
+                    peerToDispose.OnMessageReceivedEvent -= OnMessageReceivedHandler;
+                    peerToDispose.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    TryLogError($"Failed to dispose WebSocket peer: {exception}");
+                }
+            }
+
+            ConnectionDelegate connectionCloseEvent = shouldNotifyClose && fireEvent ? OnConnectionCloseEvent : null;
+            InvokeConnectionTransition(connectionCloseEvent, DrainPendingConnectionWaits());
         }
     }
 }

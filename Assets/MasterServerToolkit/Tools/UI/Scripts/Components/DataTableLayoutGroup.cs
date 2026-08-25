@@ -11,12 +11,16 @@ namespace MasterServerToolkit.UI
         #region INSPECTOR
 
         [SerializeField]
+        [Tooltip("Column definitions applied to each row in order. A Width greater than 0 fixes that column to the specified pixel width; 0 or a negative value shares the remaining width with other flexible columns.")]
         private DataTableColInfo[] collsInfo;
         [SerializeField]
+        [Tooltip("Horizontal spacing between adjacent cells, in canvas pixels. The inherited left and right padding are applied separately.")]
         private float cellSpacing = 0;
         [SerializeField]
+        [Tooltip("Vertical spacing between adjacent rows, in canvas pixels. The inherited top and bottom padding are applied separately.")]
         private float rowSpacing = 0;
         [SerializeField]
+        [Tooltip("Height assigned to every table row, in canvas pixels. All cells in a row receive this height.")]
         private float minRowHeight = 30;
 
         #endregion
@@ -207,6 +211,7 @@ namespace MasterServerToolkit.UI
     [Serializable]
     public struct DataTableColInfo
     {
+        [Tooltip("Column width in canvas pixels. Values greater than 0 use a fixed width; 0 or a negative value shares the remaining table width with other flexible columns.")]
         public float width;
     }
 }

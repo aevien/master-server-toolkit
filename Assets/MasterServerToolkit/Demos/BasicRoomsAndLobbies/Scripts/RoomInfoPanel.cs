@@ -11,10 +11,13 @@ namespace MasterServerToolkit.Demos.BasicRoomsAndLobbies
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required text component that displays the registered room ID. The demo replaces its text after room access or room registration becomes available.")]
         private TMP_Text roomIdText;
         [SerializeField]
+        [Tooltip("Required text component that displays the room scene name received from room access data or the -mstRoomOnlineScene argument.")]
         private TMP_Text roomSceneNameText;
         [SerializeField]
+        [Tooltip("Required text component that displays the maximum player count configured for the registered room.")]
         private TMP_Text roomMaxPlayersText;
 
         #endregion
@@ -31,16 +34,16 @@ namespace MasterServerToolkit.Demos.BasicRoomsAndLobbies
                     {
                         var access = Mst.Client.Rooms.ReceivedAccess;
 
-                        roomIdText.text = $"ID: {access.RoomId}";
+                        roomIdText.text = $"ID: {access.Id}";
                         roomSceneNameText.text = $"Scene: {access.SceneName}";
-                        roomMaxPlayersText.text = $"Max Players: {access.RoomMaxConnections}";
+                        roomMaxPlayersText.text = $"Max Players: {access.MaxPlayers}";
                     }
                 }, 10f);
 
                 if (!roomManager.IsActive)
                     roomManager.OnRoomRegisteredEvent.AddListener(OnRoomRegisteredEventHandler);
                 else
-                    OnRoomRegisteredEventHandler(roomManager.RoomController);
+                    OnRoomRegisteredEventHandler(roomManager.Controller);
             }
         }
 
@@ -50,7 +53,7 @@ namespace MasterServerToolkit.Demos.BasicRoomsAndLobbies
 
             roomIdText.text = $"ID: {roomController.RoomId}";
             roomSceneNameText.text = $"Scene: {onlineScene}";
-            roomMaxPlayersText.text = $"Max Players: {roomController.Options.MaxConnections}";
+            roomMaxPlayersText.text = $"Max Players: {roomController.Options.MaxPlayers}";
         }
     }
 }

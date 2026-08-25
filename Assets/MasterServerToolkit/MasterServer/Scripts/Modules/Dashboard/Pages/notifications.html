@@ -1,0 +1,77 @@
+<div id="app">
+    <div class="row">
+        <div class="col-lg-8 col-xl-7">
+            <form @submit.prevent="sendNotification">
+                <div class="mb-3">
+                    <label class="form-label" for="notificationMessage">Message</label>
+                    <textarea id="notificationMessage" class="form-control" rows="8" v-model="message"
+                        :disabled="sending" maxlength="2048"></textarea>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <input id="rememberMessage" class="form-check-input" type="checkbox" v-model="remember"
+                        :disabled="sending">
+                    <label class="form-check-label" for="rememberMessage">Send to users who log in later</label>
+                </div>
+
+                <button class="btn btn-primary" type="submit" :disabled="sending || !message.trim()">
+                    <span v-if="sending" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    {{ sending ? "Sending..." : "Send to all" }}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { createApp, ref } from "vue";
+
+    createApp({
+        setup() {
+            const message = ref("");
+            const remember = ref(true);
+            const sending = ref(false);
+
+            const sendNotification = async () => {
+                const normalizedMessage = message.value.trim();
+
+                if (!normalizedMessage || sending.value) {
+                    return;
+                }
+
+                sending.value = true;
+
+                try {
+                    const response = await mst.apiFetch("notification/all", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            message: normalizedMessage,
+                            remember: remember.value
+                        })
+                    }, { toastErrors: false });
+
+                    if (response.ok) {
+                        message.value = "";
+                        mst.showSuccess("Notification sent");
+                    } else {
+                        mst.showError(await mst.getErrorMessage(response, `Failed to send notification: ${response.status}`));
+                    }
+                } catch (error) {
+                    mst.showError(error?.message || "Network error");
+                } finally {
+                    sending.value = false;
+                }
+            };
+
+            return {
+                message,
+                remember,
+                sending,
+                sendNotification
+            };
+        }
+    }).mount("#app");
+</script>

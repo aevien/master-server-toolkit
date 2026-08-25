@@ -70,35 +70,6 @@ namespace MasterServerToolkit.MasterServer
         public HttpResult(object value, string contentType = "text/plain") : this(value.ToString(), contentType) { }
 
         /// <summary>
-        /// Configures Cross-Origin Resource Sharing (CORS) headers for the response.
-        /// This method allows you to control which origins, methods, and headers are 
-        /// permitted for cross-origin requests.
-        /// </summary>
-        /// <param name="allowedOrigins">Origins allowed to access the resource (* for all)</param>
-        /// <param name="allowedMethods">HTTP methods allowed (e.g., "GET, POST, PUT")</param>
-        /// <param name="allowedHeaders">Headers allowed in the request</param>
-        /// <param name="allowCredentials">Whether credentials (cookies, auth) are allowed</param>
-        /// <returns>The current HttpResult instance for method chaining</returns>
-        public HttpResult ConfigureCors(string allowedOrigins = "*",
-                               string allowedMethods = null,
-                               string allowedHeaders = null,
-                               bool allowCredentials = false)
-        {
-            Headers["Access-Control-Allow-Origin"] = allowedOrigins;
-
-            if (!string.IsNullOrEmpty(allowedMethods))
-                Headers["Access-Control-Allow-Methods"] = allowedMethods;
-
-            if (!string.IsNullOrEmpty(allowedHeaders))
-                Headers["Access-Control-Allow-Headers"] = allowedHeaders;
-
-            if (allowCredentials)
-                Headers["Access-Control-Allow-Credentials"] = "true";
-
-            return this;
-        }
-
-        /// <summary>
         /// Enables or disables response compression.
         /// When enabled, the response will be compressed using gzip or deflate
         /// if the client indicates support via the Accept-Encoding header.
@@ -125,12 +96,12 @@ namespace MasterServerToolkit.MasterServer
             {
                 string cacheControl = isPublic ? "public" : "private";
                 cacheControl += $", max-age={maxAgeSeconds}";
-                Headers["Cache-Control"] = cacheControl;
+                Headers.Add(HttpRequestHeader.CacheControl, cacheControl);
             }
             else
             {
-                Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
-                Headers["Pragma"] = "no-cache";
+                Headers.Add(HttpRequestHeader.CacheControl, "no-store, no-cache, must-revalidate, proxy-revalidate");
+                Headers.Add(HttpRequestHeader.Pragma, "no-cache");
             }
 
             return this;
@@ -146,10 +117,11 @@ namespace MasterServerToolkit.MasterServer
         public virtual async Task Execute(HttpListenerContext context)
         {
             var response = context.Response;
+
             try
             {
                 // Convert the string content to UTF-8 byte array
-                byte[] buffer = Encoding.UTF8.GetBytes(Value);
+                byte[] buffer = Encoding.UTF8.GetBytes(Value ?? string.Empty);
 
                 // Apply compression if enabled and supported by the client
                 if (CompressionEnabled)
@@ -160,40 +132,46 @@ namespace MasterServerToolkit.MasterServer
                     // Prefer gzip compression if supported
                     if (acceptEncoding.Contains("gzip", StringComparison.OrdinalIgnoreCase))
                     {
-                        response.Headers["Content-Encoding"] = "gzip";
+                        response.Headers.Add(HttpRequestHeader.ContentEncoding, "gzip");
                         buffer = CompressWithGzip(buffer);
                     }
                     // Fall back to deflate compression if gzip isn't supported
                     else if (acceptEncoding.Contains("deflate", StringComparison.OrdinalIgnoreCase))
                     {
-                        response.Headers["Content-Encoding"] = "deflate";
+                        response.Headers.Add(HttpRequestHeader.ContentEncoding, "deflate");
                         buffer = CompressWithDeflate(buffer);
                     }
-                    // If no compression is supported, send uncompressed data
                 }
 
-                // Set response properties using the (potentially) compressed data
-                response.ContentLength64 = buffer.LongLength;
                 response.ContentType = ContentType;
                 response.StatusCode = StatusCode;
 
-                // Copy all configured headers to the response
                 foreach (string key in Headers.Keys)
                 {
                     response.Headers[key] = Headers[key];
                 }
 
-                // Write the data to the response output stream
-                using (Stream output = response.OutputStream)
+                if (StatusCode == 401 || StatusCode >= 400)
+                    response.KeepAlive = false;
+
+                response.ContentLength64 = buffer.LongLength;
+
+                if (buffer.Length > 0)
                 {
-                    await output.WriteAsync(buffer, 0, buffer.Length);
+                    await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                 }
+
+                response.OutputStream.Close();
             }
             catch (Exception ex)
             {
-                // Log any errors and abort the response if possible
-                Logs.Error(ex);
-                response?.Abort();
+                Logs.Error($"Error executing HTTP response: {ex}");
+                try { response.Abort(); } catch { }
+                return;
+            }
+            finally
+            {
+                try { response.Close(); } catch { }
             }
         }
 

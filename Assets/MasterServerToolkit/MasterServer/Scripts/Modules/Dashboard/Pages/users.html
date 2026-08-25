@@ -1,0 +1,541 @@
+<style>
+    #usersTable,
+    #blockHistoryTable {
+        min-height: 420px;
+    }
+
+    #blockHistoryTable {
+        min-height: 260px;
+    }
+
+    #usersTable .tabulator-row.selectable {
+        cursor: pointer;
+    }
+</style>
+
+<div id="app">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-header">
+                    Statistics
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Online: {{ info.loggedIn }}</li>
+                        <li class="list-group-item">In rooms: {{ info.inRooms }}</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header">
+                    Date Filters
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="searchDateFrom">Date from:</label>
+                        <input v-model="searchDateFrom" class="form-control" type="date" id="searchDateFrom"
+                            min="2025-01-01" title="Search date from" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="searchDateTo">Date to:</label>
+                        <input v-model="searchDateTo" class="form-control" type="date" id="searchDateTo"
+                            min="2025-01-01" title="Search date to" />
+                    </div>
+                    <div v-if="searchDateFrom || searchDateTo" class="mb-3">
+                        <div class="form-check">
+                            <input v-model="searchDateValue" class="form-check-input" type="checkbox"
+                                value="lastLoginAt" id="lastloginCheck" title="Use Last Login in date search">
+                            <label class="form-check-label" for="lastloginCheck">
+                                Last login
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input v-model="searchDateValue" class="form-check-input" type="checkbox" value="createdAt"
+                                id="createdCheck" title="Use Created in date search">
+                            <label class="form-check-label" for="createdCheck">
+                                Created
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input v-model="searchDateValue" class="form-check-input" type="checkbox" value="updatedAt"
+                                id="updatedCheck" title="Use Updated in date search">
+                            <label class="form-check-label" for="updatedCheck">
+                                Updated
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-center mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input v-model="searchValue" class="form-control" type="search"
+                        placeholder="Search by ID, username or email" title="Search by ID, username or email">
+                </div>
+                <button type="button" class="btn btn-outline-secondary flex-shrink-0" title="Reload users"
+                    @click="reloadUsers(false)">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+            <div id="usersTable"></div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <teleport to="body">
+        <div ref="modal" class="modal fade" id="userModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            User [{{ selectedUser ? selectedUser.username : '' }}]
+                            <span v-if="selectedUser && selectedUser.isBlocked" class="badge bg-danger ms-2">Blocked until {{ selectedUser.blockedUntil }}</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <template v-if="selectedUser && !playerDetailsLoading">
+                            <nav>
+                                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                                    <button class="nav-link active" id="nav-user-main-tab" data-bs-toggle="tab"
+                                        data-bs-target="#nav-user-main" type="button" role="tab"
+                                        aria-controls="nav-user-main" aria-selected="true">Base</button>
+                                    <button class="nav-link" id="nav-user-profile-tab" data-bs-toggle="tab"
+                                        data-bs-target="#nav-user-profile" type="button" role="tab"
+                                        aria-controls="nav-user-profile" aria-selected="false">Profile</button>
+                                    <button class="nav-link" id="nav-user-extras-tab" data-bs-toggle="tab"
+                                        data-bs-target="#nav-user-extras" type="button" role="tab"
+                                        aria-controls="nav-user-extras" aria-selected="false">Extras</button>
+                                    <button class="nav-link" id="nav-user-block-tab" data-bs-toggle="tab"
+                                        data-bs-target="#nav-user-block" type="button" role="tab"
+                                        aria-controls="nav-user-block" aria-selected="false">User Block</button>
+                                    <button class="nav-link" id="nav-user-block-history-tab" data-bs-toggle="tab"
+                                        data-bs-target="#nav-user-block-history" type="button" role="tab"
+                                        aria-controls="nav-user-block-history" aria-selected="false">
+                                        Block History
+                                        <span v-if="blockHistoryTotal" class="badge bg-secondary ms-1">{{ blockHistoryTotal }}</span>
+                                    </button>
+                                    <button class="nav-link" id="nav-user-notification-tab" data-bs-toggle="tab"
+                                        data-bs-target="#nav-user-notification" type="button" role="tab"
+                                        aria-controls="nav-user-notification" aria-selected="false">Notification</button>
+                                </div>
+                            </nav>
+                            <div class="tab-content" id="nav-tabContent">
+                                <div class="tab-pane fade show active" id="nav-user-main" role="tabpanel"
+                                    aria-labelledby="nav-user-main-tab" tabindex="0">
+
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <td class="fw-bold bg-light">ID</td>
+                                                <td><code>{{ selectedUser.id }}</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Username</td>
+                                                <td>{{ selectedUser.username }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Email</td>
+                                                <td>{{ selectedUser.email || 'Not specified' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Last Login At</td>
+                                                <td>{{ selectedUser.lastLoginAt }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Created At</td>
+                                                <td>{{ selectedUser.createdAt }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Updated At</td>
+                                                <td>{{ selectedUser.updatedAt }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Is Admin</td>
+                                                <td>
+                                                    <span v-if="selectedUser.isAdmin" class="badge bg-success">Yes</span>
+                                                    <span v-else class="badge bg-secondary">No</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Is Guest</td>
+                                                <td>
+                                                    <span v-if="selectedUser.isGuest" class="badge bg-success">Yes</span>
+                                                    <span v-else class="badge bg-secondary">No</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Is Online</td>
+                                                <td>
+                                                    <span v-if="selectedUser.extras.isOnline" class="badge bg-success">Yes</span>
+                                                    <span v-else class="badge bg-secondary">No</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Is In Room</td>
+                                                <td>
+                                                    <span v-if="selectedUser.extras.isInRoom" class="badge bg-success">Yes</span>
+                                                    <span v-else class="badge bg-secondary">No</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Email Confirmed</td>
+                                                <td>
+                                                    <span v-if="selectedUser.isEmailConfirmed"
+                                                        class="badge bg-success">Yes</span>
+                                                    <span v-else class="badge bg-secondary">No</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Is Blocked</td>
+                                                <td>
+                                                    <span v-if="selectedUser.isBlocked" class="badge bg-danger">Until {{ selectedUser.blockedUntil }}</span>
+                                                    <span v-else class="badge bg-success">No</span>
+                                                </td>
+                                            </tr>
+                                            <tr v-if="selectedUser.isBlocked">
+                                                <td class="fw-bold bg-light">Block Reason</td>
+                                                <td>{{ selectedUser.blockReason || 'Not specified' }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="tab-pane fade" id="nav-user-profile" role="tabpanel"
+                                    aria-labelledby="nav-user-profile-tab" tabindex="0">
+                                    <template v-if="profileDraft">
+                                        <div class="border rounded p-3 mb-3 bg-body">
+                                            <div class="d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-center">
+                                                <div>
+                                                    <div class="fw-semibold">Profile editor</div>
+                                                    <div class="small text-body-secondary">{{ profileTreeRows.length }} profile nodes</div>
+                                                </div>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <span v-if="canEditProfile" class="badge bg-success align-self-center">Offline</span>
+                                                    <span v-else class="badge bg-secondary align-self-center">Read only</span>
+                                                    <button type="button" class="btn btn-primary btn-sm"
+                                                        :disabled="profileSaving || !canEditProfile || !profileDirty"
+                                                        @click="saveProfileChanges">
+                                                        {{ profileSaving ? 'Saving...' : 'Save changes' }}
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                        :disabled="profileSaving || !profileDirty"
+                                                        @click="resetProfileEditor">
+                                                        Reset all
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="!canEditProfile" class="alert alert-warning py-2 mb-3">
+                                            Profile editing is available only while the user is offline.
+                                        </div>
+                                        <div v-if="profileDirty" class="alert alert-warning py-2 mb-3">
+                                            Profile has unsaved changes. Save changes to apply them or reset all to discard them.
+                                        </div>
+                                        <div v-if="profileEditError" class="alert alert-danger py-2 mb-3">
+                                            {{ profileEditError }}
+                                        </div>
+
+                                        <div v-if="profileTreeRows.length > 0" class="row g-3">
+                                            <div class="col-lg-4">
+                                                <div class="card h-100">
+                                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                                        <span>Tree</span>
+                                                        <span class="badge bg-secondary">{{ profileTreeRows.length }}</span>
+                                                    </div>
+                                                    <div class="list-group list-group-flush overflow-auto">
+                                                        <button v-for="row in profileTreeRows" :key="row.pathKey" type="button"
+                                                            class="list-group-item list-group-item-action"
+                                                            :class="[profileTreeIndentClass(row), { active: isSelectedProfileNode(row), 'list-group-item-warning': row.changed && !isSelectedProfileNode(row) }]"
+                                                            :title="row.pathLabel + ': ' + row.preview"
+                                                            @click="selectProfileNode(row)">
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <i :class="row.isContainer ? 'bi bi-folder2' : 'bi bi-dot'"></i>
+                                                                <span class="text-truncate">{{ row.label }}</span>
+                                                                <span v-if="row.changed" class="badge bg-warning text-dark ms-auto">Changed</span>
+                                                            </div>
+                                                            <div class="small text-truncate" :class="isSelectedProfileNode(row) ? 'text-white-50' : 'text-body-secondary'">
+                                                                {{ row.pathLabel }}
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-8">
+                                                <div v-if="selectedProfileNode" class="card h-100">
+                                                    <div class="card-header d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-start">
+                                                        <div>
+                                                            <div class="fw-semibold">{{ selectedProfileNode.label }}</div>
+                                                            <code class="small">{{ selectedProfileNode.pathLabel }}</code>
+                                                        </div>
+                                                        <div class="d-flex flex-wrap gap-1">
+                                                            <span class="badge bg-secondary">{{ profileNodeTypeLabel(selectedProfileNode) }}</span>
+                                                            <span v-if="selectedProfileNode.changed" class="badge bg-warning text-dark">Changed</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body overflow-auto">
+                                                        <div v-if="!selectedProfileEditable" class="alert alert-secondary py-2">
+                                                            {{ selectedProfileReadOnlyText }}
+                                                        </div>
+
+                                                        <div v-if="selectedProfileType === 'boolean'" class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                :checked="selectedProfileValue === true"
+                                                                :disabled="!selectedProfileEditable || profileSaving"
+                                                                title="Value"
+                                                                @change="updateSelectedProfileValue($event.target.checked)">
+                                                            <label class="form-check-label">{{ selectedProfileValue === true ? 'Yes' : 'No' }}</label>
+                                                        </div>
+
+                                                        <div v-else-if="selectedProfileType === 'integer' || selectedProfileType === 'number'" class="mb-3">
+                                                            <label class="form-label">Value</label>
+                                                            <input class="form-control" type="number"
+                                                                :step="selectedProfileType === 'integer' ? '1' : 'any'"
+                                                                :value="selectedProfileValue"
+                                                                :disabled="!selectedProfileEditable || profileSaving"
+                                                                title="Value"
+                                                                @input="updateSelectedProfileNumber($event.target.value)">
+                                                        </div>
+
+                                                        <div v-else-if="selectedProfileType === 'string'" class="mb-3">
+                                                            <label class="form-label">Value</label>
+                                                            <textarea v-if="shouldUseSelectedProfileTextarea" class="form-control" rows="6"
+                                                                :value="selectedProfileStringValue"
+                                                                :disabled="!selectedProfileEditable || profileSaving"
+                                                                title="Value"
+                                                                @input="updateSelectedProfileString"></textarea>
+                                                            <input v-else class="form-control" type="text"
+                                                                :value="selectedProfileStringValue"
+                                                                :disabled="!selectedProfileEditable || profileSaving"
+                                                                title="Value"
+                                                                @input="updateSelectedProfileString">
+                                                        </div>
+
+                                                        <div v-else-if="selectedProfileIsContainer">
+                                                            <div v-if="selectedProfileChildren.length > 0" class="table-responsive">
+                                                                <table class="table table-sm table-hover align-middle">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Key</th>
+                                                                            <th>Type</th>
+                                                                            <th>Preview</th>
+                                                                            <th class="text-end">Actions</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <tr v-for="child in selectedProfileChildren" :key="child.pathKey">
+                                                                            <td>
+                                                                                <button type="button" class="btn btn-link btn-sm p-0 text-start"
+                                                                                    :title="child.pathLabel"
+                                                                                    @click="selectProfileNode(child)">
+                                                                                    {{ child.label }}
+                                                                                </button>
+                                                                                <div class="small text-body-secondary text-truncate" :title="child.pathLabel">{{ child.pathLabel }}</div>
+                                                                            </td>
+                                                                            <td><span class="badge bg-secondary">{{ profileNodeTypeLabel(child) }}</span></td>
+                                                                            <td class="text-truncate" :title="child.preview">{{ child.preview }}</td>
+                                                                            <td class="text-end">
+                                                                                <button v-if="canRemoveSelectedChildren" type="button"
+                                                                                    class="btn btn-outline-danger btn-sm"
+                                                                                    title="Remove"
+                                                                                    :disabled="profileSaving"
+                                                                                    @click="removeProfileChild(child)">
+                                                                                    <i class="bi bi-trash"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            <div v-else class="text-body-secondary mb-3">
+                                                                {{ selectedProfileType === 'array' ? 'Array is empty' : 'Object has no fields' }}
+                                                            </div>
+
+                                                            <form v-if="canAddSelectedObjectField" class="row g-2 align-items-end" @submit.prevent="addSelectedObjectField">
+                                                                <div class="col-md-5">
+                                                                    <label class="form-label">New key</label>
+                                                                    <input v-model="newProfileFieldKey" class="form-control" type="text" title="New key">
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <label class="form-label">Type</label>
+                                                                    <select v-if="!selectedObjectUsesFixedValueSchema" v-model="newProfileFieldType" class="form-select" title="New value type">
+                                                                        <option value="string">string</option>
+                                                                        <option value="integer">integer</option>
+                                                                        <option value="number">number</option>
+                                                                        <option value="boolean">boolean</option>
+                                                                        <option value="object">object</option>
+                                                                        <option value="array">array</option>
+                                                                    </select>
+                                                                    <div v-else class="form-control-plaintext">
+                                                                        <span class="badge bg-secondary">{{ profileNodeTypeLabel({ schema: selectedObjectAddValueSchema }) }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <button type="submit" class="btn btn-outline-primary w-100" :disabled="profileSaving">
+                                                                        Add field
+                                                                    </button>
+                                                                </div>
+                                                            </form>
+
+                                                            <div v-if="canAddSelectedArrayItem" class="row g-2 align-items-end">
+                                                                <div class="col-md-8">
+                                                                    <label class="form-label">New item type</label>
+                                                                    <select v-if="!selectedArrayUsesFixedValueSchema" v-model="newProfileArrayItemType" class="form-select" title="New item type">
+                                                                        <option value="string">string</option>
+                                                                        <option value="integer">integer</option>
+                                                                        <option value="number">number</option>
+                                                                        <option value="boolean">boolean</option>
+                                                                        <option value="object">object</option>
+                                                                        <option value="array">array</option>
+                                                                    </select>
+                                                                    <div v-else class="form-control-plaintext">
+                                                                        <span class="badge bg-secondary">{{ profileNodeTypeLabel({ schema: selectedArrayAddSchema }) }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <button type="button" class="btn btn-outline-primary w-100"
+                                                                        :disabled="profileSaving"
+                                                                        @click="addSelectedArrayItem">
+                                                                        Add item
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <div v-if="profileAddError" class="text-danger small mt-2">{{ profileAddError }}</div>
+                                                        </div>
+
+                                                        <div v-else class="alert alert-secondary py-2 mb-0">
+                                                            Unsupported value type
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div v-else class="card h-100">
+                                                    <div class="card-body text-body-secondary">
+                                                        Select a profile node
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div v-else class="text-body-secondary">
+                                            Profile has no properties
+                                        </div>
+                                    </template>
+                                    <div v-else class="text-body-secondary">
+                                        Profile data is unavailable
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="nav-user-extras" role="tabpanel"
+                                    aria-labelledby="nav-user-extras-tab" tabindex="0">
+                                    <template v-if="selectedUser.extras && Object.keys(selectedUser.extras).length > 0">
+                                        <table class="table table-bordered">
+                                            <tbody>
+                                                <tr v-for="(value, key) in selectedUser.extras" :key="key">
+                                                    <td class="fw-bold bg-light">{{ toTitleCase(key) }}</td>
+                                                    <td v-html="renderJson(value)"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </template>
+                                </div>
+                                <div class="tab-pane fade" id="nav-user-block" role="tabpanel"
+                                    aria-labelledby="nav-user-block-tab" tabindex="0">
+                                    <form class="row g-3" novalidate
+                                        :class="{ 'was-validated': blockValidationVisible }"
+                                        @submit.prevent="blockUser">
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="blockPreset">Block preset</label>
+                                            <select id="blockPreset" class="form-select" v-model="selectedBlockPreset">
+                                                <option v-for="preset in blockPresets" :key="preset.value || 'manual'" :value="preset.value">{{ preset.label }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label" for="blockReason">Block reason</label>
+                                            <textarea id="blockReason" class="form-control" rows="3"
+                                                :class="{ 'is-invalid': blockValidationVisible && !hasBlockReason }"
+                                                v-model="blockReason" placeholder="Reason for block..."
+                                                required></textarea>
+                                            <div class="invalid-feedback">
+                                                Block reason is required.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="blockUntil">Blocked until</label>
+                                            <input id="blockUntil" type="date" class="form-control"
+                                                :class="{ 'is-invalid': blockValidationVisible && !blockForever && !hasBlockUntil }"
+                                                v-model="blockUntil" :disabled="blockForever" :required="!blockForever"
+                                                :max="blockMaxDate">
+                                            <div class="invalid-feedback">
+                                                Block date is required.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 d-flex align-items-end">
+                                            <div class="form-check">
+                                                <input id="blockForever" class="form-check-input" type="checkbox"
+                                                    v-model="blockForever">
+                                                <label class="form-check-label" for="blockForever">
+                                                    Forever
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit"
+                                                :class="selectedUser && selectedUser.isBlocked ? 'btn btn-warning' : 'btn btn-danger'"
+                                                :disabled="!selectedUser">
+                                                {{ selectedUser && selectedUser.isBlocked ? 'Unblock' : 'Block' }}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="tab-pane fade" id="nav-user-block-history" role="tabpanel"
+                                    aria-labelledby="nav-user-block-history-tab" tabindex="0">
+                                    <div v-if="blockHistoryLoading" class="d-flex justify-content-center my-3">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div ref="blockHistoryTableElement" id="blockHistoryTable"></div>
+                                </div>
+                                <div class="tab-pane fade" id="nav-user-notification" role="tabpanel"
+                                    aria-labelledby="nav-user-notification-tab" tabindex="0">
+                                    <form class="row g-3" @submit.prevent="sendNotification">
+                                        <div class="col-12">
+                                            <label class="form-label" for="notificationMessage">Notification message</label>
+                                            <textarea id="notificationMessage" class="form-control" rows="5"
+                                                v-model="notificationMessage" :disabled="selectedUser && selectedUser.isBlocked"
+                                                placeholder="Write a message for this user..."></textarea>
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-primary"
+                                                :disabled="!selectedUser || selectedUser.isBlocked || notificationSending || !(notificationMessage || '').trim()">
+                                                {{ notificationSending ? 'Sending...' : 'Send notification' }}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </template>
+                        <template v-if="playerDetailsLoading">
+                            <div class="d-flex justify-content-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </teleport>
+</div>
+
+#JAVA_SCRIPT#
+
+
+

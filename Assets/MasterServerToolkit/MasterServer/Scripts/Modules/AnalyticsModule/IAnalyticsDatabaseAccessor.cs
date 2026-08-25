@@ -14,5 +14,6 @@ namespace MasterServerToolkit.MasterServer
         Task<IEnumerable<IAnalyticsInfoData>> GetByTimestamp(DateTime timestamp);
         Task<IEnumerable<IAnalyticsInfoData>> GetByTimestampRange(DateTime timestampStart, DateTime timestampEnd, int size, int page);
         Task<IEnumerable<IAnalyticsInfoData>> GetWithQuery(string query, int size, int page);
+        Task<DatabaseEntriesInfo<IAnalyticsInfoData>> Search(Dictionary<string, object> filter);
     }
 }

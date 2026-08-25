@@ -1,5 +1,10 @@
-﻿using MasterServerToolkit.Localization;
+using MasterServerToolkit.Localization;
 using MasterServerToolkit.Networking;
+using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -9,10 +14,13 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public partial class Mst
     {
+        private static IClientSocket connection;
+        private static bool isInitialized;
+
         /// <summary>
         /// Version of the framework
         /// </summary>
-        public static string Version => "4.24.0";
+        public static string Version => "5.0.0";
 
         /// <summary>
         /// Just name of the framework
@@ -22,7 +30,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Main connection to master server
         /// </summary>
-        public static IClientSocket Connection { get; private set; }
+        public static IClientSocket Connection => connection;
 
         /// <summary>
         /// Advanced master server framework settings
@@ -75,7 +83,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        public static MstTrafficStatistics TrafficStatistics { get; private set; }
+        public static MstTrafficStatistics Traffic { get; private set; }
 
         /// <summary>
         /// 
@@ -87,29 +95,116 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public static MstLocalization Localization { get; private set; }
 
+        /// <summary>
+        /// Converts structured MST errors into localized client-facing messages.
+        /// </summary>
+        public static MstErrorParser Errors { get; private set; }
+
+        /// <summary>
+        /// Executes actions on Unity main thread
+        /// </summary>
+        public static MstThread Thread { get; private set; }
+
         static Mst()
         {
+#if UNITY_EDITOR
+            RegisterEditorPlayModeReset();
+#endif
+            Initialize();
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void InitializeUnityRuntime()
+        {
+#if UNITY_EDITOR
+            ResetRuntimeState();
+#endif
             Initialize();
         }
 
         private static void Initialize()
         {
+            if (isInitialized)
+                return;
+
             Helper = new MstHelper();
             Args = new MstArgs();
             Localization = new MstLocalization();
+            Errors = new MstErrorParser();
             Settings = new MstAdvancedSettings();
             Runtime = new MstRuntime();
 
-            Connection = Settings.ClientSocketFactory();
+            Create = new MstCreate();
+            Events = new MstEventsChannel();
+            Traffic = new MstTrafficStatistics();
+            Options = new MstProperties();
+
+            Thread = new MstThread();
+            Thread.Initialize();
+
+            if (connection == null)
+                connection = Settings.ClientSocketFactory();
 
             Client = new MstClient(Connection);
             Server = new MstServer(Connection);
             Security = new MstSecurity(Connection);
 
-            Create = new MstCreate();
-            Events = new MstEventsChannel();
-            TrafficStatistics = new MstTrafficStatistics();
-            Options = new MstProperties();
+            isInitialized = true;
         }
+
+        private static void ResetRuntimeState()
+        {
+            Client = null;
+            Server = null;
+            Security?.Dispose();
+            Security = null;
+
+            if (connection != null)
+            {
+                connection.Close(false);
+                connection = null;
+            }
+
+            MstLogController.DisposeActiveAppenders();
+            MasterServerToolkit.Logging.LogManager.Reset();
+
+            Helper = null;
+            Args = null;
+            Localization = null;
+            Settings = null;
+            Runtime = null;
+            Create = null;
+            Events = null;
+            Traffic = null;
+            Options = null;
+            Thread = null;
+            Errors = null;
+
+            isInitialized = false;
+        }
+
+#if UNITY_EDITOR
+        private static void RegisterEditorPlayModeReset()
+        {
+            EditorApplication.playModeStateChanged -= OnEditorPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnEditorPlayModeStateChanged;
+        }
+
+        private static void OnEditorPlayModeStateChanged(PlayModeStateChange state)
+        {
+            switch (state)
+            {
+                case PlayModeStateChange.ExitingEditMode:
+                    ResetRuntimeState();
+                    break;
+
+                case PlayModeStateChange.EnteredEditMode:
+                    ResetRuntimeState();
+                    Initialize();
+                    break;
+            }
+        }
+#endif
     }
 }
+

@@ -12,33 +12,28 @@ namespace MasterServerToolkit.MasterServer
     {
         [Header("Language Files")]
         [SerializeField]
-        [Tooltip("Array of language-specific profanity word files to load")]
+        [Tooltip("Language-specific moderation dictionaries loaded when the module initializes. All active entries are evaluated for every checked text; duplicate rules are merged by the censorship system.")]
         private LanguageBadWords[] languageFiles = new LanguageBadWords[0];
 
-        [Header("General Settings")]
         [SerializeField]
-        [Tooltip("Enable detailed logging during word list loading process")]
-        private bool logLoadingDetails = true;
-
-        [SerializeField]
-        [Tooltip("Enable severity-based filtering system for different violation levels")]
+        [Tooltip("Enables severity values from dictionary entries. When disabled, matching still occurs but severity thresholds are not used to distinguish rule levels.")]
         private bool enableSeveritySystem = true;
 
         [Header("Advanced Detection Settings")]
         [SerializeField]
-        [Tooltip("Enable intelligent normalization for detecting masked words")]
+        [Tooltip("Normalizes text before matching to detect supported masked spellings. Disable only when exact dictionary matching is required.")]
         private bool enableAdvancedDetection = true;
 
         [SerializeField]
-        [Tooltip("Enable Cyrillic to Latin transliteration for unified search")]
+        [Tooltip("Treats supported Cyrillic and Latin look-alike spellings as equivalent during advanced matching. Used only when Advanced Detection is enabled.")]
         private bool enableTransliteration = true;
 
         [SerializeField]
-        [Tooltip("Enable detection of digit substitutions (4 instead of A, 3 instead of E)")]
+        [Tooltip("Normalizes supported digit substitutions such as 4 for A and 3 for E. Used only when Advanced Detection is enabled.")]
         private bool enableDigitSubstitution = true;
 
         [SerializeField]
-        [Tooltip("Enable removal of separators between letters")]
+        [Tooltip("Ignores supported separators inserted between letters when evaluating masked words. Used only when Advanced Detection is enabled.")]
         private bool enableSeparatorRemoval = true;
 
         // Core censorship system instance that handles all detection logic
@@ -55,7 +50,7 @@ namespace MasterServerToolkit.MasterServer
             censorship = new CensorshipSystem();
 
             // Initialize with language files from Inspector configuration
-            censorship.Initialize(languageFiles);
+            censorship.Initialize(languageFiles, logLevel: logger.LogLevel);
 
             // Apply all configured settings to the censorship system
             censorship.ConfigureSettings(
@@ -64,10 +59,10 @@ namespace MasterServerToolkit.MasterServer
                 transliteration: enableTransliteration,
                 digitSub: enableDigitSubstitution,
                 separatorRemoval: enableSeparatorRemoval,
-                logging: logLoadingDetails
+                logLevel: logger.LogLevel
             );
 
-            Debug.Log("CensorModule: Successfully initialized and configured");
+            logger.Info("Successfully initialized and configured");
         }
 
         /// <summary>
@@ -81,7 +76,7 @@ namespace MasterServerToolkit.MasterServer
             // Ensure system is initialized before processing
             if (censorship == null)
             {
-                Debug.LogWarning("CensorModule: System not initialized, cannot check username");
+                logger.Warn("System not initialized, cannot check username");
                 return false;
             }
 
@@ -99,7 +94,7 @@ namespace MasterServerToolkit.MasterServer
             // Ensure system is initialized before processing
             if (censorship == null)
             {
-                Debug.LogWarning("CensorModule: System not initialized, returning original message");
+                logger.Warn("System not initialized, returning original message");
                 return message;
             }
 
@@ -117,7 +112,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (censorship == null)
             {
-                Debug.LogWarning("CensorModule: System not initialized, cannot check message");
+                logger.Warn("System not initialized, cannot check message");
                 return false;
             }
 
@@ -134,7 +129,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (censorship == null)
             {
-                Debug.LogWarning("CensorModule: System not initialized, returning empty list");
+                logger.Warn("System not initialized, returning empty list");
                 return new List<CensorshipSystem.BadWordInfo>();
             }
 
@@ -149,12 +144,12 @@ namespace MasterServerToolkit.MasterServer
         {
             if (censorship == null)
             {
-                Debug.LogWarning("CensorModule: System not initialized, cannot reload");
+                logger.Warn("System not initialized, cannot reload");
                 return;
             }
 
             censorship.ReloadBadWords(languageFiles);
-            Debug.Log("CensorModule: Word lists reloaded successfully");
+            logger.Info("Word lists reloaded successfully");
         }
 
         /// <summary>
@@ -202,7 +197,7 @@ namespace MasterServerToolkit.MasterServer
         {
             if (censorship == null)
             {
-                Debug.LogWarning("CensorModule: System not initialized, cannot update configuration");
+                logger.Warn("System not initialized, cannot update configuration");
                 return;
             }
 
@@ -215,9 +210,9 @@ namespace MasterServerToolkit.MasterServer
 
             // Apply new configuration to censorship system
             censorship.ConfigureSettings(advanced, severity, transliteration,
-                digitSub, separatorRemoval, logLoadingDetails);
+                digitSub, separatorRemoval, logger.LogLevel);
 
-            Debug.Log("CensorModule: Configuration updated successfully");
+            logger.Info("Configuration updated successfully");
         }
     }
 }

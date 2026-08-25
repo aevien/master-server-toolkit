@@ -14,7 +14,10 @@ namespace MasterServerToolkit.MasterServer
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write(Items.Count);
+            writer.WriteCount32(
+                Items.Count,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Packet item list");
 
             foreach (T item in Items)
                 WriteItem(item, writer);
@@ -22,7 +25,9 @@ namespace MasterServerToolkit.MasterServer
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
-            int count = reader.ReadInt32();
+            int count = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Packet item list");
 
             for (int i = 0; i < count; i++)
                 Items.Add(ReadItem(reader));

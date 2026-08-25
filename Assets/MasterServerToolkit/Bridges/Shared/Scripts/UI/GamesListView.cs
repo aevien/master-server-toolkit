@@ -13,26 +13,23 @@ namespace MasterServerToolkit.Bridges
     public class GamesListView : UIView
     {
         [Header("Components"), SerializeField]
+        [Tooltip("Required label prefab instantiated for each room data cell in the generated list.")]
         private UILable uiLablePrefab;
         [SerializeField]
+        [Tooltip("Required label prefab instantiated for the generated table column headers.")]
         private UILable uiColLablePrefab;
         [SerializeField]
+        [Tooltip("Required button prefab instantiated for player-list and room-join actions in each generated row.")]
         private Button buttonPrefab;
         [SerializeField]
+        [Tooltip("Required RectTransform that receives all generated headers, room cells, and action buttons. Existing children are removed when the list is cleared.")]
         private RectTransform listContainer;
         [SerializeField]
+        [Tooltip("Required status label used while rooms are being requested and when no rooms are found outside the Editor.")]
         private TMP_Text statusInfoText;
 
+        [Tooltip("Optional Inspector event reserved for view integrations. This component does not invoke it internally.")]
         public UnityEvent OnStartGameEvent;
-
-        protected override void Awake()
-        {
-            base.Awake();
-
-            // Listen to show/hide events
-            Mst.Events.AddListener(MstEventKeys.showGamesListView, OnShowGamesListEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hideGamesListView, OnHideGamesListEventHandler);
-        }
 
         protected void Start()
         {
@@ -45,18 +42,9 @@ namespace MasterServerToolkit.Bridges
             }
         }
 
-        private void OnShowGamesListEventHandler(EventMessage message)
+        protected override void OnEndShow()
         {
-            Show();
-        }
-
-        private void OnHideGamesListEventHandler(EventMessage message)
-        {
-            Hide();
-        }
-
-        protected override void OnShow()
-        {
+            base.OnEndShow();
             FindGames();
         }
 
@@ -132,7 +120,7 @@ namespace MasterServerToolkit.Bridges
                 gamePlayersBtn.GetComponentInChildren<TextMeshProUGUI>().text = $"{gameInfo.OnlinePlayers} / {maxPleyers} [Show]";
                 gamePlayersBtn.onClick.AddListener(() =>
                 {
-                    Mst.Events.Invoke(MstEventKeys.showPlayersListView, gameInfo.Id);
+                    ViewsManager.Show<SignUpView>(gameInfo.Id);
                     Hide();
                 });
 
@@ -174,13 +162,13 @@ namespace MasterServerToolkit.Bridges
         {
             ClearGamesList();
 
-            canvasGroup.interactable = false;
+            CanvasGroup.interactable = false;
 
             statusInfoText.text = "Finding rooms... Please wait!";
 
             Mst.Client.Matchmaker.FindGames((games) =>
             {
-                canvasGroup.interactable = true;
+                CanvasGroup.interactable = true;
 #if !UNITY_EDITOR
                     if (games.Count == 0)
                     {

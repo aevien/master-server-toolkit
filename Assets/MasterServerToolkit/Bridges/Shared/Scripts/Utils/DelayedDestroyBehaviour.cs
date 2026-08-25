@@ -7,6 +7,7 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Delay in scaled seconds before this GameObject is destroyed after Start. 0 destroys it at the end of the current frame.")]
         private float delayTime = 0f;
 
         #endregion

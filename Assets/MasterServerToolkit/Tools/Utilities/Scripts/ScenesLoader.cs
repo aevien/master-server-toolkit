@@ -39,7 +39,7 @@ namespace MasterServerToolkit.Utils
         {
             if (loadedScenes.Contains(sceneName))
             {
-                logger.Info($"Scene {sceneName} is already loading".ToRed());
+                logger.Info($"Scene {sceneName} is already loading");
                 yield return null;
             }
 

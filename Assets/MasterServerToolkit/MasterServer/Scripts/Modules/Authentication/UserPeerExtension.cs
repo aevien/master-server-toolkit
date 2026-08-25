@@ -22,14 +22,8 @@ namespace MasterServerToolkit.MasterServer
             JoinedRoomID = roomId;
         }
 
-        public AccountInfoPacket CreateAccountInfoPacket()
-        {
-            return new AccountInfoPacket(Account);
-        }
+        public AccountInfoPacket CreateAccountInfoPacket() => new AccountInfoPacket(Account);
 
-        public bool HasJoinedRoom()
-        {
-            return JoinedRoomID >= 0;
-        }
+        public bool HasJoinedRoom() => JoinedRoomID >= 0;
     }
 }

@@ -1,8 +1,6 @@
 using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -24,7 +22,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override MstJson ToJson()
         {
-            var json = MstJson.EmptyArray;
+            var json = MstJson.CreateArray();
 
             foreach (var v in _value)
             {

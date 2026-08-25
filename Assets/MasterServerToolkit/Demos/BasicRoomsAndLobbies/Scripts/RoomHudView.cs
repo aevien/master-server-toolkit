@@ -1,19 +1,32 @@
+using MasterServerToolkit.Bridges;
+using MasterServerToolkit.Bridges.MirrorNetworking.Character;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
+using UnityEngine;
 
 namespace MasterServerToolkit.Demos.BasicRoomsAndLobbies
 {
     public class RoomHudView : UIView
     {
-        public void Disconnect()
+        private void Update()
         {
-            Mst.Events.Invoke(MstEventKeys.leaveRoom);
+            if (PlayerCharacter.Local != null)
+            {
+                Show();
+
+                if (Input.GetKeyDown(KeyCode.Escape))
+                    ShowPlayersList();
+            }
+            else
+            {
+                Hide();
+            }
         }
 
         public void ShowPlayersList()
         {
             if (Mst.Client.Rooms.HasAccess)
-                Mst.Events.Invoke(MstEventKeys.showPlayersListView, Mst.Client.Rooms.ReceivedAccess.RoomId);
+                ViewsManager.Show<PlayersListView>(Mst.Client.Rooms.ReceivedAccess.Id);
         }
     }
 }

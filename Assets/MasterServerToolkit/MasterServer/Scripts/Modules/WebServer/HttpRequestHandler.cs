@@ -19,12 +19,12 @@ namespace MasterServerToolkit.MasterServer
             Api = api ?? throw new ArgumentNullException(nameof(api));
             UseCredentials = useCredentials;
             Action = action ?? throw new ArgumentNullException(nameof(action));
-            Extra = extra ?? MstJson.EmptyObject;
+            Extra = extra ?? MstJson.CreateObject();
         }
 
         public MstJson ToJson()
         {
-            var json = MstJson.EmptyObject;
+            var json = MstJson.CreateObject();
             json.AddField("api", Api);
             json.AddField("use_credentials", UseCredentials);
             json.AddField("extra", Extra);

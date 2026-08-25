@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using System.Threading;
 
 namespace MasterServerToolkit.Networking
 {
@@ -17,5 +18,12 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="message"></param>
         Task HandleAsync(IIncomingMessage message);
+
+        /// <summary>
+        /// Asynchronously handles the message within the current server run.
+        /// </summary>
+        /// <param name="message">Incoming message.</param>
+        /// <param name="cancellationToken">Token canceled when the owning server run stops.</param>
+        Task HandleAsync(IIncomingMessage message, CancellationToken cancellationToken);
     }
 }

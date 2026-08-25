@@ -14,7 +14,7 @@ namespace MasterServerToolkit.MasterServer
             Text = "This script is a factory, which sets up database accessors for the game"
         };
 
-        [Header("Base Settings"), SerializeField]
+        [Header("Base Settings"), SerializeField, Tooltip("Minimum severity written while this factory creates and registers provider-specific database accessors.")]
         protected LogLevel logLevel = LogLevel.Info;
 
         #endregion

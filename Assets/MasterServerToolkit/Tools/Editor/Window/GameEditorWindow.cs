@@ -61,105 +61,95 @@ namespace MasterServerToolkit.Editor
         /// Style for main window header.
         /// Large, bold, centered text for tool identification.
         /// </summary>
-        protected GUIStyle HeaderStyle
+        protected GUIStyle GetHeaderStyle()
         {
-            get
+            if (_mainHeaderStyle == null)
             {
-                if (_mainHeaderStyle == null)
+                _mainHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
                 {
-                    _mainHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-                    {
-                        fontSize = 16,
-                        fontStyle = FontStyle.Bold,
-                        alignment = TextAnchor.MiddleCenter
-                    };
-                }
-                return _mainHeaderStyle;
+                    fontSize = 16,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter
+                };
             }
+
+            return _mainHeaderStyle;
         }
 
         /// <summary>
         /// Style for section headers and sub-panel titles.
         /// Medium size, left-aligned for content structuring.
         /// </summary>
-        protected GUIStyle SubheaderStyle
+        protected GUIStyle GetSubheaderStyle()
         {
-            get
+            if (_sectionHeaderStyle == null)
             {
-                if (_sectionHeaderStyle == null)
+                _sectionHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
                 {
-                    _sectionHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-                    {
-                        fontSize = 14,
-                        fontStyle = FontStyle.Bold,
-                        alignment = TextAnchor.MiddleLeft
-                    };
-                }
-                return _sectionHeaderStyle;
+                    fontSize = 14,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleLeft
+                };
             }
+
+            return _sectionHeaderStyle;
         }
 
         /// <summary>
         /// Style for main content panels.
         /// Creates visually separated area with own background.
         /// </summary>
-        protected GUIStyle PanelStyle
+        protected GUIStyle GetPanelStyle()
         {
-            get
+            if (_panelStyle == null)
             {
-                if (_panelStyle == null)
+                _panelStyle = new GUIStyle()
                 {
-                    _panelStyle = new GUIStyle()
-                    {
-                        normal = { background = CreateColorTexture(PANEL_BACKGROUND) },
-                        border = new RectOffset(1, 1, 1, 1),
-                        padding = new RectOffset(10, 10, 10, 10)
-                    };
-                }
-                return _panelStyle;
+                    normal = { background = CreateColorTexture(PANEL_BACKGROUND) },
+                    border = new RectOffset(1, 1, 1, 1),
+                    padding = new RectOffset(10, 10, 10, 10)
+                };
             }
+
+            return _panelStyle;
         }
 
         /// <summary>
         /// Style for sub-panels - nested areas within main panels.
         /// Slightly darker than main panels to create visual hierarchy.
         /// </summary>
-        protected GUIStyle SubPanelStyle
+        protected GUIStyle GetSubPanelStyle()
         {
-            get
+            if (_subPanelStyle == null)
             {
-                if (_subPanelStyle == null)
+                _subPanelStyle = new GUIStyle()
                 {
-                    _subPanelStyle = new GUIStyle()
-                    {
-                        normal = { background = CreateColorTexture(SUBPANEL_BACKGROUND) },
-                        border = new RectOffset(1, 1, 1, 1),
-                        padding = new RectOffset(8, 8, 8, 8),    // Smaller padding to save space
-                        margin = new RectOffset(5, 5, 5, 5)     // Margin from parent panel
-                    };
-                }
-                return _subPanelStyle;
+                    normal = { background = CreateColorTexture(SUBPANEL_BACKGROUND) },
+                    border = new RectOffset(1, 1, 1, 1),
+                    padding = new RectOffset(8, 8, 8, 8),
+                    margin = new RectOffset(5, 5, 5, 5)
+                };
             }
+
+            return _subPanelStyle;
         }
 
         /// <summary>
         /// Style for logical grouping of elements without visible borders.
         /// Provides spacing and organization without extra visual elements.
         /// </summary>
-        protected GUIStyle GroupBoxStyle
+        protected GUIStyle GetGroupBoxStyle()
         {
-            get
+            if (_groupBoxStyle == null)
             {
-                if (_groupBoxStyle == null)
+                _groupBoxStyle = new GUIStyle()
                 {
-                    _groupBoxStyle = new GUIStyle()
-                    {
-                        padding = new RectOffset(10, 10, 5, 5),
-                        margin = new RectOffset(0, 0, 5, 5)
-                    };
-                }
-                return _groupBoxStyle;
+                    padding = new RectOffset(10, 10, 5, 5),
+                    margin = new RectOffset(0, 0, 5, 5)
+                };
             }
+
+            return _groupBoxStyle;
         }
 
         #endregion
@@ -182,6 +172,29 @@ namespace MasterServerToolkit.Editor
         protected virtual void OnDisable()
         {
             EditorApplication.projectChanged -= ProjectChanged;
+            ReleaseStyles();
+        }
+
+        private void ReleaseStyles()
+        {
+            ReleaseStyleTexture(_panelStyle);
+            ReleaseStyleTexture(_subPanelStyle);
+
+            _mainHeaderStyle = null;
+            _sectionHeaderStyle = null;
+            _panelStyle = null;
+            _subPanelStyle = null;
+            _groupBoxStyle = null;
+        }
+
+        private static void ReleaseStyleTexture(GUIStyle style)
+        {
+            if (style == null || style.normal.background == null)
+                return;
+
+            Texture2D texture = style.normal.background;
+            style.normal.background = null;
+            UnityEngine.Object.DestroyImmediate(texture);
         }
 
         /// <summary>
@@ -196,7 +209,7 @@ namespace MasterServerToolkit.Editor
             DrawHeader();
 
             // Main content area - child classes place their functionality here
-            EditorGUILayout.BeginVertical(PanelStyle);
+            EditorGUILayout.BeginVertical(GetPanelStyle());
             DrawMainContent();
             EditorGUILayout.EndVertical();
 
@@ -220,11 +233,11 @@ namespace MasterServerToolkit.Editor
             EditorGUILayout.BeginHorizontal();
             if (upperCase)
             {
-                GUILayout.Label(GetWindowTitle().ToUpper(), HeaderStyle);
+                GUILayout.Label(GetWindowTitle().ToUpper(), GetHeaderStyle());
             }
             else
             {
-                GUILayout.Label(GetWindowTitle(), HeaderStyle);
+                GUILayout.Label(GetWindowTitle(), GetHeaderStyle());
             }
             EditorGUILayout.EndHorizontal();
             GUILayout.Space(LARGE_SPACING);
@@ -366,6 +379,97 @@ namespace MasterServerToolkit.Editor
         }
 
         /// <summary>
+        /// Draws a scrollable list while rendering only rows that are visible inside the viewport.
+        /// This method is intended for large editor lists and tables where drawing every row on every IMGUI event is too expensive.
+        /// Rows must provide stable heights, and row drawing is rect-based so the method can skip offscreen content safely.
+        /// Return false from <paramref name="drawVisibleRow"/> when the row action changes the source data and drawing should stop for the current frame.
+        /// </summary>
+        /// <typeparam name="TRow">Type of row data to draw.</typeparam>
+        /// <param name="rows">Ordered row data.</param>
+        /// <param name="getRowHeight">Returns the height of a row in pixels.</param>
+        /// <param name="drawVisibleRow">Draws one visible row inside the provided rect. Return false to stop drawing this frame.</param>
+        /// <param name="visibleHeight">Requested viewport height in pixels.</param>
+        /// <param name="scrollId">Unique identifier used to persist scroll position for this list.</param>
+        /// <param name="bufferRows">Number of extra rows to draw before and after the visible range.</param>
+        /// <param name="minVisibleHeight">Minimum viewport height in pixels.</param>
+        protected void DrawVirtualizedRows<TRow>(
+            IReadOnlyList<TRow> rows,
+            Func<TRow, float> getRowHeight,
+            Func<TRow, Rect, bool> drawVisibleRow,
+            float visibleHeight,
+            string scrollId,
+            int bufferRows = 4,
+            float minVisibleHeight = 100f)
+        {
+            if (rows == null)
+                throw new ArgumentNullException(nameof(rows));
+
+            if (getRowHeight == null)
+                throw new ArgumentNullException(nameof(getRowHeight));
+
+            if (drawVisibleRow == null)
+                throw new ArgumentNullException(nameof(drawVisibleRow));
+
+            visibleHeight = Mathf.Max(minVisibleHeight, visibleHeight);
+
+            float contentHeight = 0f;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                contentHeight += Mathf.Max(0f, getRowHeight(rows[i]));
+            }
+
+            Rect viewRect = EditorGUILayout.GetControlRect(
+                false,
+                visibleHeight,
+                GUILayout.ExpandWidth(true),
+                GUILayout.Height(visibleHeight));
+
+            float contentWidth = Mathf.Max(1f, viewRect.width - 16f);
+            Rect contentRect = new Rect(0f, 0f, contentWidth, Mathf.Max(contentHeight, visibleHeight));
+            Vector2 scrollPosition = GetScrollPosition(scrollId);
+            float maxScrollY = Mathf.Max(0f, contentRect.height - visibleHeight);
+            scrollPosition.y = Mathf.Clamp(scrollPosition.y, 0f, maxScrollY);
+
+            Vector2 newScrollPosition = GUI.BeginScrollView(viewRect, scrollPosition, contentRect, false, true);
+            SetScrollPosition(scrollId, newScrollPosition);
+
+            try
+            {
+                float scrollY = newScrollPosition.y;
+                float currentY = 0f;
+                int safeBufferRows = Mathf.Max(0, bufferRows);
+
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    TRow row = rows[i];
+                    float rowHeight = Mathf.Max(0f, getRowHeight(row));
+                    float rowStart = currentY;
+                    float rowEnd = rowStart + rowHeight;
+                    float rowBuffer = rowHeight * safeBufferRows;
+                    bool isVisible = rowEnd >= scrollY - rowBuffer
+                        && rowStart <= scrollY + visibleHeight + rowBuffer;
+
+                    if (isVisible)
+                    {
+                        Rect rowRect = new Rect(0f, rowStart, contentWidth, rowHeight);
+
+                        if (!drawVisibleRow(row, rowRect))
+                            break;
+                    }
+
+                    currentY = rowEnd;
+                }
+            }
+            finally
+            {
+                GUI.EndScrollView();
+            }
+
+            if (rows.Count == 0)
+                ResetScrollPosition(scrollId);
+        }
+
+        /// <summary>
         /// Creates a scrollable sub-panel - combines the visual styling of sub-panels with scroll capability.
         /// This is perfect for sections that contain dynamic content (like lists) that might grow beyond 
         /// a reasonable height. The panel maintains its visual identity while providing scroll functionality.
@@ -390,12 +494,12 @@ namespace MasterServerToolkit.Editor
             // Draw sub-panel title if provided
             if (!string.IsNullOrEmpty(title))
             {
-                GUILayout.Label(title, SubheaderStyle);
+                GUILayout.Label(title, GetSubheaderStyle());
                 GUILayout.Space(SMALL_SPACING);
             }
 
             // Create the sub-panel with scrollable content
-            EditorGUILayout.BeginVertical(SubPanelStyle);
+            EditorGUILayout.BeginVertical(GetSubPanelStyle());
 
             if (maxHeight > 0f)
             {
@@ -429,12 +533,12 @@ namespace MasterServerToolkit.Editor
             // Draw sub-panel title if provided
             if (!string.IsNullOrEmpty(title))
             {
-                GUILayout.Label(title, SubheaderStyle);
+                GUILayout.Label(title, GetSubheaderStyle());
                 GUILayout.Space(SMALL_SPACING);
             }
 
             // Draw the panel with content
-            EditorGUILayout.BeginVertical(SubPanelStyle);
+            EditorGUILayout.BeginVertical(GetSubPanelStyle());
             content?.Invoke();  // Execute the provided content drawing code
             EditorGUILayout.EndVertical();
         }
@@ -449,11 +553,11 @@ namespace MasterServerToolkit.Editor
         {
             if (width > 0f)
             {
-                EditorGUILayout.BeginVertical(GroupBoxStyle, GUILayout.Width(width));
+                EditorGUILayout.BeginVertical(GetGroupBoxStyle(), GUILayout.Width(width));
             }
             else
             {
-                EditorGUILayout.BeginVertical(GroupBoxStyle, GUILayout.ExpandWidth(true));
+                EditorGUILayout.BeginVertical(GetGroupBoxStyle(), GUILayout.ExpandWidth(true));
             }
             content?.Invoke();  // Execute the provided content drawing code
             EditorGUILayout.EndVertical();
@@ -487,7 +591,7 @@ namespace MasterServerToolkit.Editor
 
             // Create clickable area for header with collapse triangle
             Rect foldoutRect = EditorGUILayout.GetControlRect();
-            isExpanded = EditorGUI.Foldout(foldoutRect, isExpanded, title, true, SubheaderStyle);
+            isExpanded = EditorGUI.Foldout(foldoutRect, isExpanded, title, true, GetSubheaderStyle());
 
             // If section is expanded, display its content
             if (isExpanded)
@@ -513,7 +617,7 @@ namespace MasterServerToolkit.Editor
         protected void DrawSectionHeader(string title)
         {
             GUILayout.Space(STANDARD_SPACING);
-            GUILayout.Label(title, SubheaderStyle);
+            GUILayout.Label(title, GetSubheaderStyle());
             GUILayout.Space(SMALL_SPACING);
             DrawHorizontalLine();
             GUILayout.Space(SMALL_SPACING);
@@ -670,52 +774,53 @@ namespace MasterServerToolkit.Editor
         protected Texture2D CreateColorTexture(Color color)
         {
             Texture2D texture = new Texture2D(1, 1);
+            texture.hideFlags = HideFlags.HideAndDontSave;
             texture.SetPixel(0, 0, color);
             texture.Apply();
             return texture;
         }
 
         /// <summary>
-        /// 
+        /// Draws a sprite preview using the default preview size and preserving the sprite shape.
         /// </summary>
-        /// <param name="sprite"></param>
+        /// <param name="sprite">Sprite to preview.</param>
         protected void DrawSpritePreview(Sprite sprite)
         {
             DrawSpritePreview(128, 128, sprite, true);
         }
 
         /// <summary>
-        /// 
+        /// Draws a sprite preview using the default preview size.
         /// </summary>
-        /// <param name="sprite"></param>
-        /// <param name="useSpriteShape"></param>
+        /// <param name="sprite">Sprite to preview.</param>
+        /// <param name="useSpriteShape">True to preserve the sprite aspect ratio; false to fill the full preview rect.</param>
         protected void DrawSpritePreview(Sprite sprite, bool useSpriteShape)
         {
             DrawSpritePreview(128, 128, sprite, useSpriteShape);
         }
 
         /// <summary>
-        /// 
+        /// Draws a sprite preview using the requested size.
         /// </summary>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <param name="sprite"></param>
-        /// <param name="useSpriteShape"></param>
+        /// <param name="width">Preview width in pixels.</param>
+        /// <param name="height">Preview height in pixels.</param>
+        /// <param name="sprite">Sprite to preview.</param>
+        /// <param name="useSpriteShape">True to preserve the sprite aspect ratio; false to fill the full preview rect.</param>
         protected void DrawSpritePreview(float width, float height, Sprite sprite, bool useSpriteShape)
         {
             DrawSpritePreview(width, height, sprite, useSpriteShape, false, null, new Color(0, 0, 0, 0.3f));
         }
 
         /// <summary>
-        /// 
+        /// Draws a sprite preview with optional scaling, background, and border settings.
         /// </summary>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <param name="sprite"></param>
-        /// <param name="useSpriteShape"></param>
-        /// <param name="allowUpscaling"></param>
-        /// <param name="backgroundColor"></param>
-        /// <param name="borderColor"></param>
+        /// <param name="width">Preview width in pixels.</param>
+        /// <param name="height">Preview height in pixels.</param>
+        /// <param name="sprite">Sprite to preview.</param>
+        /// <param name="useSpriteShape">True to preserve the sprite aspect ratio; false to fill the full preview rect.</param>
+        /// <param name="allowUpscaling">True to allow sprites to scale above their source size.</param>
+        /// <param name="backgroundColor">Optional background color for the preview rect.</param>
+        /// <param name="borderColor">Optional border color for the preview rect.</param>
         protected void DrawSpritePreview(
             float width,
             float height,
@@ -725,7 +830,7 @@ namespace MasterServerToolkit.Editor
             Color? backgroundColor = null,
             Color? borderColor = null)
         {
-            // Автоматически создаем область нужного размера
+            // Reserve the preview rect before drawing the sprite content.
             Rect rect = GUILayoutUtility.GetRect(width, height, GUILayout.ExpandWidth(false));
 
             if (sprite == null)
@@ -734,46 +839,57 @@ namespace MasterServerToolkit.Editor
                 return;
             }
 
-            // Рисуем фон если указан
+            // Draw the optional preview background first.
             if (backgroundColor.HasValue)
             {
                 EditorGUI.DrawRect(rect, backgroundColor.Value);
             }
 
-            // Получаем реальные размеры спрайта в пикселях
+            // Use the sprite texture rect so packed sprites draw with correct dimensions.
             Vector2 spriteSize = new Vector2(sprite.textureRect.width, sprite.textureRect.height);
 
-            // Вычисляем область для отрисовки спрайта
+            // Calculate the final draw rect according to the requested scaling mode.
             Rect spriteDrawRect = useSpriteShape
                 ? CalculateProportionalRect(rect, spriteSize, allowUpscaling)
                 : rect;
 
-            // Отрисовываем спрайт с правильными UV координатами
+            // Draw the correct sprite region from the atlas or source texture.
             DrawSpriteWithUVCoords(spriteDrawRect, sprite);
 
-            // Рисуем рамку если указана
+            // Draw the optional border above the sprite.
             if (borderColor.HasValue)
             {
                 DrawBorder(rect, borderColor.Value);
             }
         }
 
+        /// <summary>
+        /// Draws an empty sprite preview placeholder.
+        /// </summary>
+        /// <param name="rect">Preview rect to fill.</param>
+        /// <param name="backgroundColor">Optional placeholder background color.</param>
+        /// <param name="borderColor">Optional placeholder border color.</param>
         protected void DrawEmptyPreview(Rect rect, Color? backgroundColor, Color? borderColor)
         {
-            // Фон
+            // Fill the placeholder background.
             Color bgColor = backgroundColor ?? new Color(0.5f, 0.5f, 0.5f, 0.3f);
             EditorGUI.DrawRect(rect, bgColor);
 
-            // Текст placeholder
+            // Draw centered placeholder text.
             GUI.Label(rect, "No Sprite", EditorStyles.centeredGreyMiniLabel);
 
-            // Рамка
+            // Draw the optional border.
             if (borderColor.HasValue)
             {
                 DrawBorder(rect, borderColor.Value);
             }
         }
 
+        /// <summary>
+        /// Draws only the sprite region from its source texture or atlas.
+        /// </summary>
+        /// <param name="drawRect">Screen rect where the sprite should be drawn.</param>
+        /// <param name="sprite">Sprite whose texture coordinates should be used.</param>
         protected void DrawSpriteWithUVCoords(Rect drawRect, Sprite sprite)
         {
             if (sprite?.texture == null) return;
@@ -789,34 +905,55 @@ namespace MasterServerToolkit.Editor
             GUI.DrawTextureWithTexCoords(drawRect, sprite.texture, uvRect);
         }
 
+        /// <summary>
+        /// Draws a one-pixel border around the provided rect.
+        /// </summary>
+        /// <param name="rect">Rect to outline.</param>
+        /// <param name="borderColor">Border color.</param>
         protected void DrawBorder(Rect rect, Color borderColor)
         {
-            // Рисуем рамку по периметру
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1), borderColor); // Верх
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1, rect.width, 1), borderColor); // Низ
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1, rect.height), borderColor); // Лево
-            EditorGUI.DrawRect(new Rect(rect.xMax - 1, rect.y, 1, rect.height), borderColor); // Право
+            // Draw each edge separately to avoid layout allocations.
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1), borderColor); // Top
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1, rect.width, 1), borderColor); // Bottom
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1, rect.height), borderColor); // Left
+            EditorGUI.DrawRect(new Rect(rect.xMax - 1, rect.y, 1, rect.height), borderColor); // Right
         }
 
         #endregion
 
         #region Window Messages
 
+        /// <summary>
+        /// Draws an informational message box.
+        /// </summary>
+        /// <param name="text">Message text.</param>
         protected virtual void DrawInfoMessage(string text)
         {
             EditorGUILayout.HelpBox(text, MessageType.Info);
         }
 
+        /// <summary>
+        /// Draws a warning message box.
+        /// </summary>
+        /// <param name="text">Message text.</param>
         protected virtual void DrawWarnMessage(string text)
         {
             EditorGUILayout.HelpBox(text, MessageType.Warning);
         }
 
+        /// <summary>
+        /// Draws an error message box.
+        /// </summary>
+        /// <param name="text">Message text.</param>
         protected virtual void DrawErrorMessage(string text)
         {
             EditorGUILayout.HelpBox(text, MessageType.Error);
         }
 
+        /// <summary>
+        /// Draws a neutral message box without a status icon.
+        /// </summary>
+        /// <param name="text">Message text.</param>
         protected virtual void DrawNeutralMessage(string text)
         {
             EditorGUILayout.HelpBox(text, MessageType.None);
@@ -827,22 +964,22 @@ namespace MasterServerToolkit.Editor
         #region Window Lifecycle Methods
 
         /// <summary>
-        /// Sets title and tooltip of current window
+        /// Sets the title and tooltip of the current editor window.
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="tooltip"></param>
+        /// <param name="text">Window title text.</param>
+        /// <param name="tooltip">Window title tooltip.</param>
         protected virtual void Title(string text, string tooltip)
         {
             Window.titleContent = new GUIContent(text, tooltip);
         }
 
         /// <summary>
-        /// Sets size of current window
+        /// Sets the minimum and maximum size of the current editor window.
         /// </summary>
-        /// <param name="minW"></param>
-        /// <param name="minH"></param>
-        /// <param name="maxW"></param>
-        /// <param name="maxH"></param>
+        /// <param name="minW">Minimum window width.</param>
+        /// <param name="minH">Minimum window height.</param>
+        /// <param name="maxW">Maximum window width.</param>
+        /// <param name="maxH">Maximum window height.</param>
         protected void Size(float minW, float minH, float maxW, float maxH)
         {
             Window.minSize = new Vector2(minW, minH);
@@ -853,12 +990,24 @@ namespace MasterServerToolkit.Editor
 
         #region EVENT HANDLERS
 
+        /// <summary>
+        /// Called when Unity reports that project assets changed.
+        /// Override this method to reload cached editor data.
+        /// </summary>
         protected virtual void ProjectChanged() { }
 
         #endregion
 
         #region UTILS
 
+        /// <summary>
+        /// Calculates the size a sprite will occupy inside the requested preview bounds.
+        /// </summary>
+        /// <param name="sprite">Sprite to measure.</param>
+        /// <param name="maxSize">Maximum allowed display size.</param>
+        /// <param name="useSpriteShape">True to preserve the sprite aspect ratio; false to use the full max size.</param>
+        /// <param name="allowUpscaling">True to allow sprites to scale above their source size.</param>
+        /// <returns>Final display size in pixels.</returns>
         protected Vector2 CalculateDisplaySize(Sprite sprite, Vector2 maxSize, bool useSpriteShape, bool allowUpscaling)
         {
             if (sprite == null) return maxSize;
@@ -872,29 +1021,36 @@ namespace MasterServerToolkit.Editor
             return new Vector2(finalRect.width, finalRect.height);
         }
 
+        /// <summary>
+        /// Calculates a centered rect that preserves source aspect ratio inside a target rect.
+        /// </summary>
+        /// <param name="targetRect">Available target rect.</param>
+        /// <param name="spriteSize">Source sprite size in pixels.</param>
+        /// <param name="allowUpscaling">True to allow scaling above the source size.</param>
+        /// <returns>Centered proportional rect.</returns>
         protected Rect CalculateProportionalRect(Rect targetRect, Vector2 spriteSize, bool allowUpscaling)
         {
             if (spriteSize.x <= 0 || spriteSize.y <= 0)
                 return targetRect;
 
-            // Вычисляем коэффициенты масштабирования для каждой оси
+            // Calculate scale factors for both axes.
             float scaleX = targetRect.width / spriteSize.x;
             float scaleY = targetRect.height / spriteSize.y;
 
-            // Берем минимальный коэффициент, чтобы спрайт полностью поместился
+            // Use the smaller scale to keep the whole sprite visible.
             float scale = Mathf.Min(scaleX, scaleY);
 
-            // Если не разрешено увеличение, ограничиваем масштаб единицей
+            // Keep the sprite at source size or smaller unless upscaling is explicitly allowed.
             if (!allowUpscaling)
             {
                 scale = Mathf.Min(scale, 1.0f);
             }
 
-            // Вычисляем итоговые размеры спрайта
+            // Calculate the final scaled sprite dimensions.
             float finalWidth = spriteSize.x * scale;
             float finalHeight = spriteSize.y * scale;
 
-            // Центрируем спрайт в целевой области
+            // Center the final rect inside the target rect.
             float offsetX = (targetRect.width - finalWidth) * 0.5f;
             float offsetY = (targetRect.height - finalHeight) * 0.5f;
 

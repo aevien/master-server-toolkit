@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Json
     {
         public static MstJson FromLayerMask(this LayerMask layerMask)
         {
-            var jsonObject = MstJson.EmptyObject;
+            var jsonObject = MstJson.CreateObject();
             jsonObject.AddField("value", layerMask.value);
             return jsonObject;
         }

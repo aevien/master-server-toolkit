@@ -38,6 +38,16 @@ namespace MasterServerToolkit.MasterServer
         public string UserId { get; set; }
 
         /// <summary>
+        /// User is guest or not
+        /// </summary>
+        public bool IsGuest { get; set; }
+
+        /// <summary>
+        /// Useris admin or not
+        /// </summary>
+        public bool IsAdmin { get; set; }
+
+        /// <summary>
         /// Custom options user can use in game
         /// </summary>
         public MstProperties ExtraProperties { get; set; }
@@ -49,10 +59,12 @@ namespace MasterServerToolkit.MasterServer
 
         public override string ToString()
         {
-            MstJson json = new MstJson();
+            MstJson json = new();
             json.AddField("username", Username);
             json.AddField("room_peer_id", RoomPeerId);
             json.AddField("master_peer_id", MasterPeerId);
+            json.AddField("is_guest", IsGuest);
+            json.AddField("is_admin", IsAdmin);
             json.AddField("profile", Profile.ToJson());
             json.AddField("extra_properties", MstJson.Create(ExtraProperties.ToDictionary()));
             return json.ToString();

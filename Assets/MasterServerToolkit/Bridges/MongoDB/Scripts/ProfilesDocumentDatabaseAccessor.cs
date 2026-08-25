@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.MongoDB
@@ -39,41 +40,74 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         public void Dispose() { }
 
-        public async Task RestoreProfileAsync(ObservableServerProfile profile)
+        public async Task RestoreProfileAsync(ObservableServerProfile profile,
+            CancellationToken cancellationToken = default)
         {
-            try
+            cancellationToken.ThrowIfCancellationRequested();
+            await RestoreProfilesAsync(new[] { profile }, cancellationToken);
+        }
+
+        public async Task RestoreProfilesAsync(IEnumerable<ObservableServerProfile> profiles,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (profiles == null)
+                throw new ArgumentNullException(nameof(profiles));
+
+            var profilesList = profiles as IList<ObservableServerProfile> ?? profiles.ToList();
+
+            foreach (var profile in profilesList)
             {
-                var data = await FindOrCreateData(profile);
-                var json = MstJson.Create(data.Document.ToDictionary(x => x.Key, x => x.Value));
-                profile.FromJson(json);
-            }
-            catch (Exception e)
-            {
-                UnityEngine.Debug.LogError(e);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (profile == null)
+                    continue;
+
+                try
+                {
+                    var data = await FindOrCreateData(profile, cancellationToken);
+                    var json = MstJson.Create(data.Document.ToDictionary(x => x.Key, x => x.Value));
+                    profile.FromJson(json);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    Logger?.Error(e);
+                }
             }
         }
 
-        public async Task UpdateProfileAsync(ObservableServerProfile profile)
+        public Task<DatabaseEntriesInfo<IProfilePropertyData>> Search(Dictionary<string, object> filter,
+            CancellationToken cancellationToken = default)
         {
-            var data = await FindOrCreateData(profile);
-            data.Document = profile.ToJson().ToDictionary();
-
-            var filter = Builders<ProfileInfoDocumentMongoDB>.Filter.Eq(e => e.UserId, profile.UserId);
-
-            await Task.Run(() =>
-            {
-                _profiles.ReplaceOne(filter, data);
-            });
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new DatabaseEntriesInfo<IProfilePropertyData>());
         }
 
-        private async Task<ProfileInfoDocumentMongoDB> FindOrCreateData(ObservableServerProfile profile)
+        public Task UpdateProfileAsync(ObservableServerProfile profile,
+            CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (profile == null)
+                throw new ArgumentNullException(nameof(profile));
+
+            return UpdateProfilesAsync(new[] { profile }, cancellationToken);
+        }
+
+        private async Task<ProfileInfoDocumentMongoDB> FindOrCreateData(ObservableServerProfile profile,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             string userId = profile.UserId;
 
-            var data = await Task.Run(() =>
-            {
-                return _profiles.Find(a => a.UserId == userId).FirstOrDefault();
-            });
+            var data = await _profiles
+                .Find(a => a.UserId == userId)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (data == null)
             {
@@ -83,18 +117,43 @@ namespace MasterServerToolkit.Bridges.MongoDB
                     Document = profile.ToJson().ToDictionary()
                 };
 
-                await Task.Run(() =>
-                {
-                    _profiles.InsertOne(data);
-                });
+                cancellationToken.ThrowIfCancellationRequested();
+                await _profiles.InsertOneAsync(data, cancellationToken: CancellationToken.None);
             }
 
             return data;
         }
 
-        public Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profile)
+        public async Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profiles,
+            CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            cancellationToken.ThrowIfCancellationRequested();
+            List<MongoDocumentProfileSaveSnapshot> snapshots =
+                MongoProfileSaveSnapshotFactory.CreateDocumentSnapshots(profiles);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (snapshots.Count == 0)
+                return;
+
+            var bulkOperations = new List<WriteModel<ProfileInfoDocumentMongoDB>>(snapshots.Count);
+
+            foreach (MongoDocumentProfileSaveSnapshot snapshot in snapshots)
+            {
+                var filter = Builders<ProfileInfoDocumentMongoDB>.Filter.Eq(e => e.UserId, snapshot.UserId);
+                var update = Builders<ProfileInfoDocumentMongoDB>.Update
+                    .Set(e => e.Document, snapshot.Document)
+                    .SetOnInsert(e => e.UserId, snapshot.UserId);
+
+                bulkOperations.Add(new UpdateOneModel<ProfileInfoDocumentMongoDB>(filter, update)
+                {
+                    IsUpsert = true
+                });
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            await _profiles.BulkWriteAsync(
+                bulkOperations,
+                cancellationToken: CancellationToken.None);
         }
     }
 }

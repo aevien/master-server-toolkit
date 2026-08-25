@@ -4,7 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -12,24 +12,42 @@ namespace MasterServerToolkit.MasterServer
 {
     public class RoomsModule : BaseServerModule, IGamesProvider
     {
+        private sealed class OwnerRoomsState
+        {
+            public OwnerRoomsState(IPeer peer)
+            {
+                Peer = peer;
+            }
+
+            public object Gate { get; } = new object();
+            public IPeer Peer { get; }
+            public ConcurrentDictionary<int, RegisteredRoom> Rooms { get; } =
+                new ConcurrentDictionary<int, RegisteredRoom>();
+            public bool IsActive { get; set; } = true;
+        }
+
         #region Unity Inspector
 
-        [Header("Permissions")]
-        [Tooltip("Minimal permission level, necessary to register a room")]
-        [SerializeField]
-        protected int registerRoomPermissionLevel = 0;
+        [SerializeField, Tooltip("Interval in realtime seconds between removal passes for disconnected rooms and expired unconfirmed access reservations. Use a positive value; smaller values clean faster but run the scans more often.")]
+        private float cleanRate = 1.0f;
+        [SerializeField, Min(1), Tooltip("Maximum seconds the master waits for an active room to save and release a player session during a trusted account takeover. Increase this when profile persistence or room leave confirmation can legitimately take longer.")]
+        private int playerSessionReleaseTimeoutSeconds = 30;
 
         #endregion
 
         /// <summary>
         /// ID of the last created room
         /// </summary>
-        private int lastRoomId = 0;
+        private int lastRoomId = -1;
 
         /// <summary>
         /// Registered rooms list
         /// </summary>
         protected readonly ConcurrentDictionary<int, RegisteredRoom> roomsList = new ConcurrentDictionary<int, RegisteredRoom>();
+        private readonly ConcurrentDictionary<int, OwnerRoomsState> ownerRoomsByPeerId =
+            new ConcurrentDictionary<int, OwnerRoomsState>();
+        private readonly object runGate = new object();
+        private bool acceptsRoomRegistrations = true;
 
         /// <summary>
         /// Fired when new room is registered
@@ -42,10 +60,13 @@ namespace MasterServerToolkit.MasterServer
         public event Action<RegisteredRoom> OnRoomDestroyedEvent;
 
         /// <summary>
-        /// Get next room id
+        /// Allocates the next room id.
         /// </summary>
         /// <returns></returns>
-        public int NextRoomId => lastRoomId++;
+        public int AllocateRoomId()
+        {
+            return Interlocked.Increment(ref lastRoomId);
+        }
 
         public override void Initialize(IServer server)
         {
@@ -57,84 +78,71 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.ValidateRoomAccessRequest, ValidateRoomAccessRequestHandler);
             server.RegisterMessageHandler(MstOpCodes.PlayerLeftRoomRequest, PlayerLeftRoomRequestHandler);
 
-            // Maintain unconfirmed accesses
-            InvokeRepeating(nameof(CleanUnconfirmedAccesses), 1f, 1f);
         }
 
-        public override MstProperties Info()
+        public override void StartServerRun(CancellationToken runCancellationToken)
         {
-            int totalPlayers = 0;
+            lock (runGate)
+                acceptsRoomRegistrations = true;
 
-            var info = base.Info();
-            info.Set("Description", "This module manages the registered rooms.");
-            info.Set("Total rooms", roomsList.Count);
+            InvokeRepeating(nameof(CleanUnconfirmedAccesses), cleanRate, cleanRate);
+            InvokeRepeating(nameof(CleanInvalidRooms), cleanRate, cleanRate);
+        }
 
-            StringBuilder html = new StringBuilder();
+        public override Task StopServerRunAsync()
+        {
+            List<RegisteredRoom> registeredRooms;
 
-            html.Append("<ol class=\"list-group list-group-numbered\">");
-
-            foreach (var room in roomsList.Values)
+            lock (runGate)
             {
-                totalPlayers += room.OnlineCount;
-
-                var options = room.Options;
-
-                html.Append("<li class=\"list-group-item\">");
-
-                html.Append($"<b>Room Id:</b> {room.RoomId}, ");
-                html.Append($"<b>Room Name:</b> {options.Name}, ");
-                html.Append($"<b>Room Ip:</b> {options.RoomIp}, ");
-                html.Append($"<b>RoomPort:</b> {options.RoomPort}, ");
-                html.Append($"<b>Is Public:</b> {options.IsPublic}, ");
-                html.Append($"<b>Online Count:</b> {room.OnlineCount}, ");
-                html.Append($"<b>Max Online Count:</b> {options.MaxConnections}, ");
-                html.Append($"<b>Password:</b> {options.Password}, ");
-                html.Append($"<b>Region:</b> {options.Region}, ");
-                html.Append($"<b>CustomOptions:</b> {options.CustomOptions}");
-
-                html.Append("</li>");
+                acceptsRoomRegistrations = false;
+                registeredRooms = roomsList.Values.ToList();
             }
 
-            html.Append("</ol>");
+            CancelInvoke(nameof(CleanUnconfirmedAccesses));
+            CancelInvoke(nameof(CleanInvalidRooms));
 
-            info.Set("Total players in rooms", totalPlayers);
-            info.Set("Rooms Info", html.ToString());
+            foreach (RegisteredRoom room in registeredRooms)
+                DestroyRoom(room);
 
-            return info;
+            ownerRoomsByPeerId.Clear();
+            return Task.CompletedTask;
         }
 
-        public override MstJson JsonInfo()
+        public override MstJson Details()
         {
             int totalPlayers = 0;
 
-            var json = base.JsonInfo();
-            json.AddField("description", "This module manages the registered rooms.");
-            json.AddField("rooms", MstJson.EmptyArray);
+            var info = base.Details();
+            info.SetField("description", "This module handles the creation, management, and distribution of game rooms, ensuring players connect to the correct sessions and controlling their lifecycle.");
+            info["properties"].AddField("rooms", MstJson.CreateArray());
 
             foreach (var room in roomsList.Values)
             {
-                totalPlayers += room.OnlineCount;
+                if (!room.TryGetSnapshot(out RoomOptions options, out _, out int onlineCount))
+                    continue;
 
-                var roomJson = MstJson.EmptyObject;
-                var options = room.Options;
+                totalPlayers += onlineCount;
+
+                var roomJson = MstJson.CreateObject();
 
                 roomJson.AddField("id", room.RoomId);
                 roomJson.AddField("name", options.Name);
                 roomJson.AddField("ip", options.RoomIp);
                 roomJson.AddField("port", options.RoomPort);
                 roomJson.AddField("is_public", options.IsPublic);
-                roomJson.AddField("players_count", room.OnlineCount);
-                roomJson.AddField("players_max", options.MaxConnections);
+                roomJson.AddField("players_count", onlineCount);
+                roomJson.AddField("players_max", options.MaxPlayers);
                 roomJson.AddField("password", options.Password);
                 roomJson.AddField("region", options.Region);
-                roomJson.AddField("custom_options", options.CustomOptions.ToJson());
+                roomJson.AddField("custom_options", options.ExtraParameters.ToJson());
 
-                json["rooms"].Add(roomJson);
+                info["properties"]["rooms"].Add(roomJson);
             }
 
-            json.AddField("total_players", totalPlayers);
+            info["properties"].AddField("total_players", totalPlayers);
 
-            return json;
+            return info;
         }
 
         /// <summary>
@@ -142,9 +150,28 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         private void CleanUnconfirmedAccesses()
         {
-            foreach (var registeredRoom in roomsList.Values)
+            foreach (var room in roomsList.Values)
             {
-                registeredRoom.ClearTimedOutAccesses();
+                room.ClearTimedOutAccesses();
+            }
+        }
+
+        private void CleanInvalidRooms()
+        {
+            List<RegisteredRoom> invalidRooms = new();
+
+            foreach (var room in roomsList.Values)
+            {
+                if (!room.Peer.IsConnected)
+                {
+                    invalidRooms.Add(room);
+                }
+            }
+
+            foreach (var room in invalidRooms)
+            {
+                logger.Warn($"Room {room.RoomId} peer is disconnected. Destroying invalid room");
+                DestroyRoom(room);
             }
         }
 
@@ -156,7 +183,9 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool HasRoomRegistrationPermissions(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-            return extension.PermissionLevel >= registerRoomPermissionLevel;
+            return extension != null &&
+                   (extension.HasPermission(MstPermissionKeys.RoomServer) ||
+                    extension.HasAccountPermission(MstPermissionLevels.Admin));
         }
 
         protected virtual void OnRoomRegistered(RegisteredRoom room) { }
@@ -169,22 +198,22 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         private void OnRegisteredPeerDisconnect(IPeer peer)
         {
-            Dictionary<int, RegisteredRoom> peerRooms = peer.GetProperty(MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
-
-            if (peerRooms == null)
-            {
+            if (peer == null || !ownerRoomsByPeerId.TryRemove(peer.Id, out OwnerRoomsState ownerState))
                 return;
-            }
 
             logger.Debug($"Client {peer.Id} was disconnected from server and it has registered rooms that also must be destroyed");
 
-            // Create a copy so that we can iterate safely
-            var registeredRooms = peerRooms.Values.ToList();
+            List<RegisteredRoom> registeredRooms;
+
+            lock (ownerState.Gate)
+            {
+                ownerState.IsActive = false;
+                registeredRooms = ownerState.Rooms.Values.ToList();
+                ownerState.Rooms.Clear();
+            }
 
             foreach (var registeredRoom in registeredRooms)
-            {
                 DestroyRoom(registeredRoom);
-            }
         }
 
         /// <summary>
@@ -195,32 +224,67 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual RegisteredRoom RegisterRoom(IPeer peer, RoomOptions options)
         {
-            var room = new RegisteredRoom(NextRoomId, peer, options);
-            Dictionary<int, RegisteredRoom> peerRooms = peer.GetProperty(MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
+            if (peer == null)
+                throw new ArgumentNullException(nameof(peer));
 
-            if (peerRooms == null)
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            RegisteredRoom room;
+            bool publishStateEvents;
+
+            lock (runGate)
             {
-                // If this is the first time creating a room
+                if (!acceptsRoomRegistrations)
+                    return null;
 
-                // Save the dictionary
-                peerRooms = new Dictionary<int, RegisteredRoom>();
-                peer.SetProperty(MstPeerPropertyCodes.RegisteredRooms, peerRooms);
+                OwnerRoomsState ownerState = GetOrCreateOwnerRoomsState(peer);
+                room = new RegisteredRoom(AllocateRoomId(), peer, options, true);
 
-                // Listen to disconnect event
-                peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
+                lock (ownerState.Gate)
+                {
+                    if (!ownerState.IsActive || !peer.IsConnected)
+                        return null;
+
+                    room.SetDestroyOwner(DestroyRoom);
+                    ownerState.Rooms[room.RoomId] = room;
+                    roomsList[room.RoomId] = room;
+
+                    if (!room.TryActivate(PublishRoomRegistered, out publishStateEvents))
+                    {
+                        ownerState.Rooms.TryRemove(room.RoomId, out _);
+                        roomsList.TryRemove(room.RoomId, out _);
+                        return null;
+                    }
+                }
             }
 
-            // Add a new room to peer
-            peerRooms[room.RoomId] = room;
-
-            // Add the room to a list of all rooms
-            roomsList[room.RoomId] = room;
-
-            // Invoke the event
-            OnRoomRegisteredEvent?.Invoke(room);
-            OnRoomRegistered(room);
+            if (publishStateEvents)
+                room.PublishPendingStateEvents();
 
             return room;
+        }
+
+        private OwnerRoomsState GetOrCreateOwnerRoomsState(IPeer peer)
+        {
+            while (true)
+            {
+                if (ownerRoomsByPeerId.TryGetValue(peer.Id, out OwnerRoomsState existingState))
+                    return existingState;
+
+                var newState = new OwnerRoomsState(peer);
+
+                if (!ownerRoomsByPeerId.TryAdd(peer.Id, newState))
+                    continue;
+
+                peer.SetProperty(MstPeerPropertyCodes.RegisteredRooms, newState.Rooms);
+                peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
+
+                if (!peer.IsConnected)
+                    OnRegisteredPeerDisconnect(peer);
+
+                return newState;
+            }
         }
 
         /// <summary>
@@ -229,31 +293,71 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="room"></param>
         public virtual void DestroyRoom(RegisteredRoom room)
         {
-            var peer = room.Peer;
-
-            if (peer != null)
+            if (room == null ||
+                !roomsList.TryRemove(room.RoomId, out RegisteredRoom removedRoom) ||
+                !ReferenceEquals(room, removedRoom))
             {
-                var peerRooms = peer.GetProperty(MstPeerPropertyCodes.RegisteredRooms) as Dictionary<int, RegisteredRoom>;
-
-                // Remove the room from peer
-                if (peerRooms != null)
-                {
-                    peerRooms.Remove(room.RoomId);
-                }
+                return;
             }
 
-            foreach (var player in room.Players)
-                player.Value.GetExtension<IUserPeerExtension>().JoinedRoomID = -1;
+            var peer = room.Peer;
 
-            // Remove the room from all rooms
-            roomsList.TryRemove(room.RoomId, out _);
-            room.Destroy();
+            if (peer != null && ownerRoomsByPeerId.TryGetValue(peer.Id, out OwnerRoomsState ownerState))
+            {
+                lock (ownerState.Gate)
+                    ownerState.Rooms.TryRemove(room.RoomId, out _);
+            }
+
+            if (!room.TryDestroy(out _, PublishRoomDestroyed))
+                return;
 
             logger.Debug($"Room {room.RoomId} has been successfully destroyed");
+        }
 
-            // Invoke the event
-            OnRoomDestroyedEvent?.Invoke(room);
-            OnRoomDestroyed(room);
+        private void PublishRoomRegistered(RegisteredRoom room)
+        {
+            InvokeRoomEventSafely(OnRoomRegisteredEvent, room, nameof(OnRoomRegisteredEvent));
+
+            try
+            {
+                OnRoomRegistered(room);
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"Room {room.RoomId} registration hook failed: {exception}");
+            }
+        }
+
+        private void PublishRoomDestroyed(RegisteredRoom room)
+        {
+            InvokeRoomEventSafely(OnRoomDestroyedEvent, room, nameof(OnRoomDestroyedEvent));
+
+            try
+            {
+                OnRoomDestroyed(room);
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"Room {room.RoomId} destruction hook failed: {exception}");
+            }
+        }
+
+        private void InvokeRoomEventSafely(Action<RegisteredRoom> handlers, RegisteredRoom room, string eventName)
+        {
+            if (handlers == null)
+                return;
+
+            foreach (Action<RegisteredRoom> handler in handlers.GetInvocationList())
+            {
+                try
+                {
+                    handler.Invoke(room);
+                }
+                catch (Exception exception)
+                {
+                    logger.Error($"{eventName} subscriber failed for room {room.RoomId}: {exception}");
+                }
+            }
         }
 
         /// <summary>
@@ -263,7 +367,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="options"></param>
         public virtual void ChangeRoomOptions(RegisteredRoom room, RoomOptions options)
         {
-            room.ChangeOptions(options);
+            room?.TryChangeOptions(options);
         }
 
         /// <summary>
@@ -274,28 +378,64 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
         {
-            var rooms = filters != null && filters.Has(MstDictKeys.ROOM_ID)
-                ? roomsList.Values.Where(r => (r.Players.ContainsKey(peer.Id) || r.Options.IsPublic) && r.RoomId == filters.AsInt(MstDictKeys.ROOM_ID))
-                : roomsList.Values.Where(r => r.Options.IsPublic);
             var games = new List<GameInfoPacket>();
+            bool filterByRoomId = filters != null && filters.Has(MstParamKeys.ROOM_ID);
+            int requestedRoomId = filterByRoomId ? filters.AsInt(MstParamKeys.ROOM_ID) : -1;
 
-            foreach (var room in rooms)
+            foreach (RegisteredRoom room in roomsList.Values)
             {
+                if (room == null ||
+                    !room.TryGetSnapshot(out RoomOptions options,
+                        out IReadOnlyDictionary<int, IPeer> roomPlayers, out int onlineCount))
+                {
+                    continue;
+                }
+
+                if (filterByRoomId)
+                {
+                    if (room.RoomId != requestedRoomId ||
+                        (!options.IsPublic && (peer == null || !roomPlayers.ContainsKey(peer.Id))))
+                    {
+                        continue;
+                    }
+                }
+                else if (!options.IsPublic)
+                {
+                    continue;
+                }
+
                 var game = new GameInfoPacket
                 {
                     Id = room.RoomId,
-                    Address = room.Options.RoomIp + ":" + room.Options.RoomPort,
-                    MaxPlayers = room.Options.MaxConnections,
-                    Name = room.Options.Name,
-                    OnlinePlayers = room.OnlineCount,
-                    Properties = GetPublicRoomOptions(peer, room, filters),
-                    IsPasswordProtected = !string.IsNullOrEmpty(room.Options.Password),
+                    Address = options.RoomIp + ":" + options.RoomPort,
+                    MaxPlayers = options.MaxPlayers,
+                    Name = options.Name,
+                    OnlinePlayers = onlineCount,
+                    IsPasswordProtected = !string.IsNullOrEmpty(options.Password),
                     Type = GameInfoType.Room,
-                    Region = room.Options.Region
+                    Region = options.Region,
+                    Properties = GetPublicRoomOptions(peer, room, filters, options)
                 };
 
-                var players = room.Players.Values.Where(pl => pl.HasExtension<IUserPeerExtension>()).Select(pl => pl.GetExtension<IUserPeerExtension>().Username);
-                game.OnlinePlayersList = players.ToList();
+                var players = new List<string>();
+
+                foreach (IPeer roomPlayer in roomPlayers.Values.Where(player => player != null))
+                {
+                    if (!roomPlayer.HasExtension<IUserPeerExtension>())
+                        continue;
+
+                    var userExtension = roomPlayer.GetExtension<IUserPeerExtension>();
+
+                    if (userExtension == null)
+                    {
+                        logger.Warn($"Peer {roomPlayer.Id} in room {room.RoomId} reported user extension but returned null");
+                        continue;
+                    }
+
+                    players.Add(userExtension.Username);
+                }
+
+                game.OnlinePlayersList = players;
                 games.Add(game);
             }
 
@@ -303,7 +443,8 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Returns list of properties of public room
+        /// Returns public room properties for callers that do not already own an options snapshot.
+        /// Base room listings use the four-argument overload instead.
         /// </summary>
         /// <param name="player"></param>
         /// <param name="room"></param>
@@ -311,7 +452,21 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual MstProperties GetPublicRoomOptions(IPeer player, RegisteredRoom room, MstProperties playerFilters)
         {
-            return room.Options.CustomOptions;
+            if (room == null || !room.TryGetSnapshot(out RoomOptions options, out _, out _))
+                return new MstProperties();
+
+            return GetPublicRoomOptions(player, room, playerFilters, options);
+        }
+
+        /// <summary>
+        /// Returns public room properties from the same options snapshot used to build a game packet.
+        /// MST5 room-listing customizations must override this overload; overriding only the
+        /// three-argument compatibility overload does not affect <see cref="GetPublicGames"/>.
+        /// </summary>
+        public virtual MstProperties GetPublicRoomOptions(IPeer player, RegisteredRoom room,
+            MstProperties playerFilters, RoomOptions optionsSnapshot)
+        {
+            return new MstProperties(optionsSnapshot?.ExtraParameters);
         }
 
         /// <summary>
@@ -322,7 +477,7 @@ namespace MasterServerToolkit.MasterServer
         public RegisteredRoom GetRoomById(int roomId)
         {
             roomsList.TryGetValue(roomId, out RegisteredRoom r);
-            return r;
+            return r != null && r.IsActive ? r : null;
         }
 
         /// <summary>
@@ -334,7 +489,7 @@ namespace MasterServerToolkit.MasterServer
         public bool TryGetRoomById(int roomId, out RegisteredRoom room)
         {
             room = GetRoomById(roomId);
-            return room != null;
+            return room != null && room.IsActive;
         }
 
         /// <summary>
@@ -344,7 +499,10 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public IEnumerable<RegisteredRoom> GetRoomsByRegion(string regionName)
         {
-            return GetAllRooms().Where(r => r.Options.Region == regionName);
+            return GetAllRooms()
+                .Where(room => room.TryGetSnapshot(out RoomOptions options, out _, out _) &&
+                               options.Region == regionName)
+                .ToList();
         }
 
         /// <summary>
@@ -353,7 +511,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public IEnumerable<RegisteredRoom> GetAllRooms()
         {
-            return roomsList.Values;
+            return roomsList.Values.Where(room => room != null && room.IsActive).ToList();
         }
 
         /// <summary>
@@ -363,7 +521,124 @@ namespace MasterServerToolkit.MasterServer
         public IEnumerable<IPeer> GetPlayersOfRoom(int roomId)
         {
             var r = GetRoomById(roomId);
-            return r?.Players.Values;
+
+            if (r != null)
+            {
+                return r.GetPlayersSnapshot().Values.ToList();
+            }
+            else
+            {
+                logger.Warn($"Room {roomId} not found");
+                return Enumerable.Empty<IPeer>();
+            }
+        }
+
+        /// <summary>
+        /// Notifies the active room process that an account connected to it was blocked.
+        /// </summary>
+        /// <returns><c>true</c> when the notification was sent to an active room.</returns>
+        public bool TryNotifyAccountBlocked(IUserPeerExtension user)
+        {
+            if (user == null || string.IsNullOrWhiteSpace(user.UserId) || !user.HasJoinedRoom())
+                return false;
+
+            if (!TryGetRoomById(user.JoinedRoomID, out RegisteredRoom room) ||
+                room.Peer == null ||
+                !room.Peer.IsConnected)
+            {
+                return false;
+            }
+
+            try
+            {
+                room.Peer.SendMessage(MstOpCodes.AccountBlocked, user.UserId);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                logger.Error(
+                    $"Failed to notify room about blocked account. AccountId={user.UserId}, RoomId={user.JoinedRoomID}, error={exception}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Asks the active room to persist and release the exact session represented by
+        /// <paramref name="user"/>. Missing or disconnected rooms are treated as stale
+        /// membership and cleaned locally.
+        /// </summary>
+        /// <param name="user">Current authenticated session that may own a room player.</param>
+        /// <param name="cancellationToken">Cancels waiting for the room response.</param>
+        /// <returns><c>true</c> when no active room remains responsible for the session.</returns>
+        public async Task<bool> ReleasePlayerSessionAsync(
+            IUserPeerExtension user,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (user == null || string.IsNullOrWhiteSpace(user.UserId) || !user.HasJoinedRoom())
+                return true;
+
+            int roomId = user.JoinedRoomID;
+
+            if (!roomsList.TryGetValue(roomId, out RegisteredRoom room) ||
+                room == null ||
+                !room.IsActive)
+            {
+                ClearStaleRoomMembership(user, roomId);
+                return true;
+            }
+
+            if (room.Peer == null || !room.Peer.IsConnected)
+            {
+                DestroyRoom(room);
+                ClearStaleRoomMembership(user, roomId);
+                return true;
+            }
+
+            var completion = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var packet = new RoomPlayerSessionPacket
+            {
+                AccountId = user.UserId,
+                MasterPeerId = user.Peer.Id
+            };
+
+            try
+            {
+                room.Peer.SendMessage(
+                    MstOpCodes.ReleaseRoomPlayerSessionRequest,
+                    packet,
+                    (status, _) => completion.TrySetResult(status == ResponseStatus.Success),
+                    Math.Max(1, playerSessionReleaseTimeoutSeconds));
+            }
+            catch (Exception exception)
+            {
+                logger.Error(
+                    $"Failed to request room player session release. " +
+                    $"AccountId={user.UserId}, PeerId={user.Peer.Id}, RoomId={roomId}, error={exception}");
+                return false;
+            }
+
+            using (cancellationToken.Register(() => completion.TrySetCanceled()))
+            {
+                bool released = await completion.Task;
+
+                if (user.JoinedRoomID != roomId)
+                    return true;
+
+                logger.Warn(
+                    $"Room did not confirm removal of the player session. " +
+                    $"AccountId={user.UserId}, PeerId={user.Peer.Id}, RoomId={roomId}, " +
+                    $"ResponseReceived={released}");
+                return false;
+            }
+        }
+
+        private static void ClearStaleRoomMembership(IUserPeerExtension user, int roomId)
+        {
+            if (user != null && user.JoinedRoomID == roomId)
+                user.JoinedRoomID = -1;
         }
 
         #region Message Handlers
@@ -377,12 +652,28 @@ namespace MasterServerToolkit.MasterServer
                 if (!HasRoomRegistrationPermissions(message.Peer))
                 {
                     logger.Debug($"But it has no permission");
-                    message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Unauthorized, MstErrorCodes.PERMISSION_DENIED);
                     return Task.CompletedTask;
                 }
 
                 var options = message.AsPacket<RoomOptions>();
                 var room = RegisterRoom(message.Peer, options);
+
+                if (room == null)
+                {
+                    if (!message.Peer.IsConnected)
+                    {
+                        message.RespondError(ResponseStatus.NotConnected,
+                            MstErrorCodes.ROOM_REGISTRATION_DISCONNECTED);
+                    }
+                    else
+                    {
+                        message.RespondError(ResponseStatus.ServiceUnavailable,
+                            MstErrorCodes.ROOM_REGISTRATION_UNAVAILABLE);
+                    }
+
+                    return Task.CompletedTask;
+                }
 
                 logger.Debug($"Room {room.RoomId} has been successfully registered with options: {options}");
 
@@ -392,6 +683,7 @@ namespace MasterServerToolkit.MasterServer
             }
             catch (Exception ex)
             {
+                logger.Error(ex);
                 return Task.FromException(ex);
             }
         }
@@ -406,15 +698,15 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!TryGetRoomById(roomId, out RegisteredRoom room))
                 {
-                    logger.Debug($"But this room does not exist");
-                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    logger.Warn($"But this room does not exist");
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
                 if (message.Peer != room.Peer)
                 {
-                    logger.Debug($"But it is not the creator of the room");
-                    message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
+                    logger.Warn($"But it is not the creator of the room");
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.ROOM_OWNER_REQUIRED);
                     return Task.CompletedTask;
                 }
 
@@ -424,6 +716,7 @@ namespace MasterServerToolkit.MasterServer
             }
             catch (Exception ex)
             {
+                logger.Error(ex);
                 return Task.FromException(ex);
             }
         }
@@ -438,7 +731,7 @@ namespace MasterServerToolkit.MasterServer
                 // Trying to find room in list of registered
                 if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
-                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
@@ -446,14 +739,14 @@ namespace MasterServerToolkit.MasterServer
                 if (message.Peer != room.Peer)
                 {
                     // Wrong peer of room registrar
-                    message.Respond("You're not the registrar of the room", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.ROOM_REGISTRAR_REQUIRED);
                     return Task.CompletedTask;
                 }
 
                 // Trying to validate room access token
                 if (!room.ValidateAccess(data.Token, out IPeer playerPeer))
                 {
-                    message.Respond("Failed to confirm the access", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Invalid, MstErrorCodes.ROOM_ACCESS_TOKEN_INVALID);
                     return Task.CompletedTask;
                 }
 
@@ -475,6 +768,7 @@ namespace MasterServerToolkit.MasterServer
             }
             catch (Exception ex)
             {
+                logger.Error(ex);
                 return Task.FromException(ex);
             }
         }
@@ -487,63 +781,93 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
-                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
                 if (message.Peer != room.Peer)
                 {
                     // Wrong peer unregistering the room
-                    message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.ROOM_OWNER_REQUIRED);
                     return Task.CompletedTask;
                 }
 
-                ChangeRoomOptions(room, data.Options);
+                if (!room.TryChangeOptions(data.Options))
+                {
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_NOT_FOUND);
+                    return Task.CompletedTask;
+                }
+
                 message.Respond(ResponseStatus.Success);
                 return Task.CompletedTask;
             }
             catch (Exception ex)
             {
+                logger.Error(ex);
                 return Task.FromException(ex);
             }
         }
 
-        protected virtual Task GetRoomAccessRequestHandler(IIncomingMessage message)
+        protected virtual async Task GetRoomAccessRequestHandler(IIncomingMessage message,
+            CancellationToken cancellationToken)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var data = message.AsPacket<RoomAccessRequestPacket>();
 
                 // Let's find a room by Id which the player wants to join
                 if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
-                    message.Respond("Room does not exist", ResponseStatus.Failed);
-                    return Task.CompletedTask;
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_NOT_FOUND);
+                    return;
+                }
+
+                if (!room.TryGetSnapshot(out RoomOptions roomOptions, out _, out _))
+                {
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_NOT_FOUND);
+                    return;
                 }
 
                 // If room requires the password and given password is not valid
-                if (!string.IsNullOrEmpty(room.Options.Password) && room.Options.Password != data.Password)
+                if (!string.IsNullOrEmpty(roomOptions.Password) && roomOptions.Password != data.Password)
                 {
-                    message.Respond("Invalid password", ResponseStatus.Unauthorized);
-                    return Task.CompletedTask;
+                    message.RespondError(ResponseStatus.Invalid, MstErrorCodes.ROOM_PASSWORD_INVALID);
+                    return;
                 }
 
                 // Send room access request to peer who owns it
-                room.GetAccess(message.Peer, data.CustomOptions, (packet, error) =>
+                await room.GetAccessResponseAsync(message.Peer, data.CustomOptions, (packet, status, errorPayload) =>
                 {
                     if (packet == null)
                     {
-                        message.Respond(error, ResponseStatus.Unauthorized);
+                        ResponseStatus errorStatus = status == ResponseStatus.Success
+                            ? ResponseStatus.Invalid
+                            : status;
+
+                        if (errorPayload == null || errorPayload.Length == 0)
+                        {
+                            message.RespondError(errorStatus, MstErrorCodes.RESPONSE_INVALID);
+                            return;
+                        }
+
+                        message.Respond(errorPayload, errorStatus);
+                        return;
                     }
 
                     message.Respond(packet, ResponseStatus.Success);
-                });
+                }, cancellationToken);
 
-                return Task.CompletedTask;
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                return Task.FromException(ex);
+                logger.Error(ex);
+                throw;
             }
         }
 
@@ -555,14 +879,14 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!TryGetRoomById(data.RoomId, out RegisteredRoom room))
                 {
-                    message.Respond("Room does not exist", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
                 if (message.Peer != room.Peer)
                 {
                     // Wrong peer unregistering the room
-                    message.Respond("You're not the creator of the room", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.ROOM_OWNER_REQUIRED);
                     return Task.CompletedTask;
                 }
 
@@ -572,6 +896,7 @@ namespace MasterServerToolkit.MasterServer
             }
             catch (Exception ex)
             {
+                logger.Error(ex);
                 return Task.FromException(ex);
             }
         }

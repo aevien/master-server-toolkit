@@ -97,9 +97,14 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool TryGet<T>(ushort key, out T result) where T : class, IObservableProperty
         {
-            bool getResult = Properties.TryGetValue(key, out IObservableProperty val);
-            result = val as T;
-            return getResult;
+            if (!Properties.TryGetValue(key, out IObservableProperty value))
+            {
+                result = null;
+                return false;
+            }
+
+            result = value as T;
+            return result != null;
         }
 
         /// <summary>
@@ -145,7 +150,10 @@ namespace MasterServerToolkit.MasterServer
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, stream))
                 {
                     // Write count
-                    writer.Write(Count);
+                    writer.WriteCount32(
+                        Count,
+                        MstNetworkLimits.MaxProfilePropertyCount,
+                        "Profile property");
 
                     foreach (var value in Properties)
                     {
@@ -172,25 +180,105 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void FromBytes(byte[] data)
         {
-            using (var ms = new MemoryStream(data))
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
+            if (data.Length > MstNetworkLimits.MaxMessagePayloadByteCount)
             {
-                using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
+                throw new InvalidDataException(
+                    $"Profile payload length {data.Length} exceeds the allowed limit " +
+                    $"{MstNetworkLimits.MaxMessagePayloadByteCount}");
+            }
+
+            var serializedValues = new List<KeyValuePair<ushort, byte[]>>();
+            var serializedKeys = new HashSet<ushort>();
+
+            try
+            {
+                using (var ms = new MemoryStream(data))
                 {
-                    var count = reader.ReadInt32();
-
-                    for (int i = 0; i < count; i++)
+                    using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                     {
-                        var key = reader.ReadUInt16();
-                        var length = reader.ReadInt32();
-                        var valueData = reader.ReadBytes(length);
+                        if (ms.Length < sizeof(int))
+                            throw new InvalidDataException("Profile payload does not contain a property count");
 
-                        if (Properties.ContainsKey(key))
+                        var count = reader.ReadCount32(
+                            MstNetworkLimits.MaxProfilePropertyCount,
+                            "Profile property");
+
+                        long minimumPropertiesSize = (long)count * (sizeof(ushort) + sizeof(int));
+                        if (minimumPropertiesSize > ms.Length - ms.Position)
+                            throw new InvalidDataException("Profile payload is truncated");
+
+                        for (int i = 0; i < count; i++)
                         {
-                            //Logs.Debug($"{GetType().Name} from bytes property with key {Extensions.StringExtensions.FromHash(key)}".ToGreen());
-                            Properties[key].FromBytes(valueData);
+                            var key = reader.ReadUInt16();
+                            var length = reader.ReadLength32(
+                                MstNetworkLimits.MaxMessagePayloadByteCount,
+                                $"Profile property [{key}] payload");
+
+                            if (!serializedKeys.Add(key))
+                                throw new InvalidDataException($"Profile payload contains duplicate property [{key}]");
+
+                            var valueData = reader.ReadBytesExact(
+                                length,
+                                MstNetworkLimits.MaxMessagePayloadByteCount);
+                            serializedValues.Add(new KeyValuePair<ushort, byte[]>(key, valueData));
                         }
+
+                        if (ms.Position != ms.Length)
+                            throw new InvalidDataException("Profile payload contains trailing data");
                     }
                 }
+            }
+            catch (EndOfStreamException exception)
+            {
+                throw new InvalidDataException("Profile payload is truncated", exception);
+            }
+
+            var originalValues = new Dictionary<ushort, byte[]>();
+
+            foreach (var serializedValue in serializedValues)
+            {
+                if (Properties.TryGetValue(serializedValue.Key, out IObservableProperty property))
+                    originalValues[serializedValue.Key] = property.ToBytes();
+            }
+
+            try
+            {
+                foreach (var serializedValue in serializedValues)
+                {
+                    if (Properties.TryGetValue(serializedValue.Key, out IObservableProperty property))
+                    {
+                        //Logs.Debug($"{GetType().Name} from bytes property with key {Extensions.StringExtensions.FromHash(serializedValue.Key)}".ToGreen());
+                        property.FromBytes(serializedValue.Value);
+                    }
+                }
+            }
+            catch (Exception applyException)
+            {
+                var rollbackExceptions = new List<Exception>();
+
+                foreach (var originalValue in originalValues)
+                {
+                    try
+                    {
+                        if (Properties.TryGetValue(originalValue.Key, out IObservableProperty property))
+                            property.FromBytes(originalValue.Value);
+                    }
+                    catch (Exception rollbackException)
+                    {
+                        rollbackExceptions.Add(rollbackException);
+                    }
+                }
+
+                if (rollbackExceptions.Count > 0)
+                {
+                    rollbackExceptions.Insert(0, applyException);
+                    throw new AggregateException("Profile payload application and rollback failed", rollbackExceptions);
+                }
+
+                throw;
             }
         }
 
@@ -218,7 +306,10 @@ namespace MasterServerToolkit.MasterServer
         public void WriteUpdates(EndianBinaryWriter writer)
         {
             // Write values count
-            writer.Write(propertiesToBeSent.Count);
+            writer.WriteCount32(
+                propertiesToBeSent.Count,
+                MstNetworkLimits.MaxProfilePropertyCount,
+                "Profile update");
 
             foreach (var property in propertiesToBeSent.Values)
             {
@@ -270,7 +361,9 @@ namespace MasterServerToolkit.MasterServer
         public void ReadUpdates(EndianBinaryReader reader)
         {
             // Read count
-            var count = reader.ReadInt32();
+            var count = reader.ReadCount32(
+                MstNetworkLimits.MaxProfilePropertyCount,
+                "Profile update");
 
             var dataRead = new Dictionary<ushort, byte[]>(count);
 
@@ -283,10 +376,14 @@ namespace MasterServerToolkit.MasterServer
                 var key = reader.ReadUInt16();
 
                 // Read length
-                var dataLength = reader.ReadInt32();
+                var dataLength = reader.ReadLength32(
+                    MstNetworkLimits.MaxMessagePayloadByteCount,
+                    $"Profile update [{key}] payload");
 
                 // Read update data
-                dataRead[key] = reader.ReadBytes(dataLength);
+                dataRead[key] = reader.ReadBytesExact(
+                    dataLength,
+                    MstNetworkLimits.MaxMessagePayloadByteCount);
             }
 
             // Update observables
@@ -314,7 +411,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public MstJson ToJson()
         {
-            var json = MstJson.EmptyObject;
+            var json = MstJson.CreateObject();
 
             foreach (var property in Properties.Values)
             {

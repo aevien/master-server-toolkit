@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Json
     {
         public static MstJson FromColor(this Color color)
         {
-            var jsonObject = MstJson.EmptyObject;
+            var jsonObject = MstJson.CreateObject();
             if (color.r != 0) jsonObject.AddField("r", color.r);
             if (color.g != 0) jsonObject.AddField("g", color.g);
             if (color.b != 0) jsonObject.AddField("b", color.b);

@@ -9,31 +9,36 @@ namespace MasterServerToolkit.UI
         #region INSPECTOR
 
         [Header("Componetnts"), SerializeField]
-        private TextMeshProUGUI statValue;
+        [Tooltip("Optional TextMeshPro component used to display the current progress percentage.")]
+        private TextMeshProUGUI valueLable;
         [SerializeField]
-        private Image icon;
+        [Tooltip("Optional Image whose color is updated to Progress Bar Color during Inspector validation.")]
+        private Image fill;
         [SerializeField]
-        private Slider progressBar;
-        [SerializeField]
-        private Image progressBarFill;
+        [Tooltip("Slider that receives the normalized current value. This reference is required before Set(...) is called.")]
+        private Slider slider;
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Color applied to the assigned Fill image in the Inspector.")]
         private Color progressBarColor = Color.white;
 
         #endregion
 
+        private float value = 0f;
+
         private void OnValidate()
         {
-            if (progressBarFill != null)
-            {
-                progressBarFill.color = progressBarColor;
-            }
+            if (fill != null)
+                fill.color = progressBarColor;
         }
 
-        public void Set(string value, float progress)
+        public void Set(float currentValue, float maxValue)
         {
-            statValue.text = value;
-            progressBar.value = progress;
+            value = currentValue / maxValue;
+            slider.value = value;
+
+            if(valueLable != null)
+                valueLable.text = $"{value * 100f:F0}";
         }
     }
 }

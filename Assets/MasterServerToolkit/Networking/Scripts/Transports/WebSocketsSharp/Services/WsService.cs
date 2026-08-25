@@ -1,4 +1,5 @@
 ﻿using System;
+#if !UNITY_WEBGL || UNITY_EDITOR
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
@@ -61,6 +62,11 @@ namespace MasterServerToolkit.Networking
             SendAsync(data, null);
         }
 
+        public new void SendAsync(byte[] data, Action<bool> completed)
+        {
+            base.SendAsync(data, completed);
+        }
+
         public void Disconnect(string reason = "")
         {
             CloseAsync((ushort)CloseStatusCode.Normal, reason);
@@ -100,3 +106,5 @@ namespace MasterServerToolkit.Networking
         }
     }
 }
+
+#endif

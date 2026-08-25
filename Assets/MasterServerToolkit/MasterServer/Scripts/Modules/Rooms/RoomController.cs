@@ -1,6 +1,5 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
-using System;
 using UnityEngine.SceneManagement;
 
 namespace MasterServerToolkit.MasterServer
@@ -53,7 +52,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Check if room is active
         /// </summary>
-        public bool IsActive => Connection != null && RoomId > -1;
+        public bool IsActive => Connection != null && Connection.IsConnected && RoomId > -1;
 
         /// <summary>
         /// Access provider of current room controller
@@ -95,24 +94,52 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public void Destroy(SuccessCallback callback)
         {
+            if (RoomId < 0)
+            {
+                callback?.Invoke(true);
+                return;
+            }
+
+            if (Connection == null || !Connection.IsConnected)
+            {
+                Mst.Server.Rooms.DestroyRoom(RoomId, null, Connection);
+                MarkAsDestroyed();
+                callback?.Invoke(true);
+                return;
+            }
+
+            var destroyedRoomId = RoomId;
+
             Mst.Server.Rooms.DestroyRoom(RoomId, (isSuccess, error) =>
             {
-
                 if (!isSuccess)
                 {
+                    if (Connection == null || !Connection.IsConnected)
+                    {
+                        MarkAsDestroyed();
+                        callback?.Invoke(true);
+                        return;
+                    }
+
                     callback?.Invoke(false, error);
-                    Logger.Error(error);
+                    Logger.Error($"Failed to unregister room {RoomId}");
                     return;
                 }
 
-                Logger.Debug($"Room {RoomId} was successfully unregistered");
+                MarkAsDestroyed();
 
-                callback?.Invoke(true, string.Empty);
+                Logger.Debug($"Room {destroyedRoomId} was successfully unregistered");
 
-                Connection = null;
-                RoomId = -1;
+                callback?.Invoke(true);
 
             }, Connection);
+        }
+
+        private void MarkAsDestroyed()
+        {
+            Options = null;
+            Connection = null;
+            RoomId = -1;
         }
 
         /// <summary>
@@ -140,16 +167,14 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (!isSuccessful)
                 {
-                    Logger.Error(error);
+                    Logger.Error($"Failed to save options for room {RoomId}");
                 }
                 else
                 {
-                    //Logger.Debug("Room " + RoomId + " options changed successfully");
                     Options = options;
                 }
 
                 callback?.Invoke(isSuccessful, error);
-
             }, Connection);
         }
 
@@ -171,14 +196,28 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peerId"></param>
         public void NotifyPlayerLeft(int peerId)
         {
+            NotifyPlayerLeft(peerId, null);
+        }
+
+        /// <summary>
+        /// Notifies the master that a player left and reports when the room membership
+        /// has been updated by the master.
+        /// </summary>
+        /// <param name="peerId">Master-server peer identifier stored for the room player.</param>
+        /// <param name="callback">Receives the confirmed master update result.</param>
+        public void NotifyPlayerLeft(int peerId, SuccessCallback callback)
+        {
             Mst.Server.Rooms.NotifyPlayerLeft(RoomId, peerId, (successful, error) =>
             {
                 if (!successful)
                 {
-                    Logger.Error(error);
+                    Logger.Error($"Failed to notify master that player {peerId} left room {RoomId}");
+                    callback?.Invoke(false, error);
+                    return;
                 }
 
                 Logger.Info($"Player {peerId} left room");
+                callback?.Invoke(true, string.Empty);
             }, Connection);
         }
 
@@ -191,35 +230,14 @@ namespace MasterServerToolkit.MasterServer
         {
             callback.Invoke(new RoomAccessPacket()
             {
-                RoomId = RoomId,
-                RoomIp = Options.RoomIp,
-                RoomPort = Options.RoomPort,
-                RoomMaxConnections = Options.MaxConnections,
-                CustomOptions = Options.CustomOptions,
+                Id = RoomId,
+                Ip = Options.RoomIp,
+                Port = Options.RoomPort,
+                MaxPlayers = Options.MaxPlayers,
+                ExtraParameters = Options.ExtraParameters,
                 Token = Mst.Helper.CreateGuidString(),
                 SceneName = SceneManager.GetActiveScene().name
             }, null);
-        }
-
-        /// <summary>
-        /// Makes the room public
-        /// </summary>
-        public void MakePublic()
-        {
-            Options.IsPublic = true;
-            SaveOptions(Options);
-        }
-
-        /// <summary>
-        /// Makes the room public
-        /// </summary>
-        public void MakePublic(Action callback)
-        {
-            Options.IsPublic = true;
-            SaveOptions(Options, (successful, error) =>
-            {
-                callback.Invoke();
-            });
         }
 
         #region MESSAGE HANDLERS
@@ -227,11 +245,13 @@ namespace MasterServerToolkit.MasterServer
         private void ProvideRoomAccessCheckHandler(IIncomingMessage message)
         {
             var provideRoomAccessCheckPacket = message.AsPacket<ProvideRoomAccessCheckPacket>();
-            var roomController = Mst.Server.Rooms.GetRoomController(provideRoomAccessCheckPacket.RoomId);
+            RoomController roomController = Mst.Server.Rooms.GetRoomController(provideRoomAccessCheckPacket.RoomId);
 
             if (roomController == null)
             {
-                message.Respond($"There's no room controller with room id {provideRoomAccessCheckPacket.RoomId}", ResponseStatus.NotHandled);
+                Logger.Warn($"Room controller {provideRoomAccessCheckPacket.RoomId} not found");
+                message.RespondError(ResponseStatus.NotFound, MstErrorCodes.ROOM_CONTROLLER_NOT_FOUND,
+                    CreateAccessErrorProperties(provideRoomAccessCheckPacket));
                 return;
             }
 
@@ -256,19 +276,17 @@ namespace MasterServerToolkit.MasterServer
 
                 isProviderDone = true;
 
+                // If access is not provided
                 if (access == null)
                 {
-                    // If access is not provided
-                    message.Respond(string.IsNullOrEmpty(error) ? "" : error, ResponseStatus.Failed);
+                    Logger.Warn($"Access for {provideRoomAccessCheckPacket.Username} was denied");
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.ROOM_ACCESS_DENIED,
+                        CreateAccessErrorProperties(provideRoomAccessCheckPacket));
                     return;
                 }
 
+                Logger.Info("Room controller gave address to peer " + provideRoomAccessCheckPacket.Username + ":" + access);
                 message.Respond(access, ResponseStatus.Success);
-
-                if (Logger.IsLogging(LogLevel.Trace))
-                {
-                    Logger.Trace("Room controller gave address to peer " + provideRoomAccessCheckPacket.PeerId + ":" + access);
-                }
             });
 
             // Timeout the access provider
@@ -277,13 +295,24 @@ namespace MasterServerToolkit.MasterServer
                 if (!isProviderDone)
                 {
                     isProviderDone = true;
-                    message.Respond("Timed out", ResponseStatus.Timeout);
-                    Logger.Error($"Access provider took longer than {Mst.Server.Rooms.AccessProviderTimeout} seconds to provide access. " +
-                               "If it's intended, increase the threshold at Mst.Server.Rooms.AccessProviderTimeout");
+                    var properties = CreateAccessErrorProperties(provideRoomAccessCheckPacket);
+                    properties.Set(MstErrorPropertyKeys.TIMEOUT_SECONDS, Mst.Server.Rooms.AccessProviderTimeout);
+                    message.RespondError(ResponseStatus.Timeout, MstErrorCodes.ROOM_ACCESS_PROVIDER_TIMEOUT,
+                        properties);
+                    Logger.Warn($"Access provider took longer than {Mst.Server.Rooms.AccessProviderTimeout} seconds to provide access. " +
+                               $"If it's intended, increase the threshold at {nameof(Mst.Server.Rooms.AccessProviderTimeout)}");
                 }
             });
         }
 
         #endregion
+
+        private static MstProperties CreateAccessErrorProperties(ProvideRoomAccessCheckPacket packet)
+        {
+            var properties = new MstProperties();
+            properties.Set(MstErrorPropertyKeys.ROOM_ID, packet.RoomId);
+            properties.Set(MstErrorPropertyKeys.USERNAME, packet.Username ?? string.Empty);
+            return properties;
+        }
     }
 }

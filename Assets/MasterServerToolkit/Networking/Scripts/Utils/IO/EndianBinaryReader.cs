@@ -117,6 +117,19 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         public Stream BaseStream { get; private set; }
 
+        /// <summary>
+        /// Number of bytes left in a seekable stream, or <c>-1</c> when the stream
+        /// cannot report its length.
+        /// </summary>
+        public long RemainingByteCount
+        {
+            get
+            {
+                CheckDisposed();
+                return BaseStream.CanSeek ? BaseStream.Length - BaseStream.Position : -1;
+            }
+        }
+
         #endregion
 
         #region Public methods
@@ -444,11 +457,15 @@ namespace MasterServerToolkit.Networking
                 throw new ArgumentOutOfRangeException("count");
             }
 
-            var ret = new byte[count];
+            long remainingByteCount = RemainingByteCount;
+            int safeCount = remainingByteCount >= 0
+                ? (int)Math.Min(count, remainingByteCount)
+                : count;
+            var ret = new byte[safeCount];
             var index = 0;
-            while (index < count)
+            while (index < safeCount)
             {
-                var read = BaseStream.Read(ret, index, count - index);
+                var read = BaseStream.Read(ret, index, safeCount - index);
                 // Stream has finished half way through. That's fine, return what we've got.
                 if (read == 0)
                 {
@@ -470,9 +487,77 @@ namespace MasterServerToolkit.Networking
         /// <returns>The bytes read</returns>
         public byte[] ReadBytesOrThrow(int count)
         {
+            return ReadBytesExact(count, int.MaxValue);
+        }
+
+        /// <summary>
+        /// Reads an exact number of bytes after validating both the configured
+        /// limit and the remaining bytes of a seekable stream.
+        /// </summary>
+        public byte[] ReadBytesExact(int count, int maxByteCount)
+        {
+            ValidateLength(count, maxByteCount, "Byte array");
+
             var ret = new byte[count];
             ReadInternal(ret, count);
             return ret;
+        }
+
+        /// <summary>
+        /// Reads and validates a signed 32-bit length prefix.
+        /// </summary>
+        public int ReadLength32(int maxLength, string valueName = "Payload")
+        {
+            int length = ReadInt32();
+            ValidateLength(length, maxLength, valueName);
+            return length;
+        }
+
+        /// <summary>
+        /// Reads a non-negative signed 32-bit item count with an upper bound.
+        /// </summary>
+        public int ReadCount32(int maxCount, string valueName = "Collection")
+        {
+            int count = ReadInt32();
+
+            if (maxCount < 0)
+                throw new ArgumentOutOfRangeException(nameof(maxCount));
+
+            if (count < 0 || count > maxCount)
+            {
+                throw new InvalidDataException(
+                    $"{valueName} count {count} exceeds the allowed range 0..{maxCount}");
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Skips an exact number of bytes without allocating a buffer based on
+        /// the untrusted length value.
+        /// </summary>
+        public void SkipBytesExact(int count, int maxByteCount)
+        {
+            ValidateLength(count, maxByteCount, "Skipped payload");
+
+            if (count == 0)
+                return;
+
+            if (BaseStream.CanSeek)
+            {
+                BaseStream.Seek(count, SeekOrigin.Current);
+                return;
+            }
+
+            byte[] skipBuffer = new byte[Math.Min(4096, count)];
+            int remaining = count;
+
+            while (remaining > 0)
+            {
+                int size = Math.Min(skipBuffer.Length, remaining);
+                ReadInternal(skipBuffer, size);
+                remaining -= size;
+            }
         }
 
         /// <summary>
@@ -544,10 +629,22 @@ namespace MasterServerToolkit.Networking
         /// <returns>The string read from the stream.</returns>
         public string ReadString()
         {
-            var bytesToRead = ReadInt16();
+            return ReadString(short.MaxValue);
+        }
 
-            var data = new byte[bytesToRead];
-            ReadInternal(data, bytesToRead);
+        /// <summary>
+        /// Reads a length-prefixed string after validating its encoded byte length.
+        /// </summary>
+        /// <param name="maxByteCount">Maximum allowed encoded byte length.</param>
+        /// <returns>The decoded string.</returns>
+        public string ReadString(int maxByteCount)
+        {
+            if (maxByteCount < 0)
+                throw new ArgumentOutOfRangeException(nameof(maxByteCount));
+
+            int bytesToRead = ReadInt16();
+            ValidateLength(bytesToRead, maxByteCount, "String");
+            byte[] data = ReadBytesExact(bytesToRead, maxByteCount);
             return Encoding.GetString(data, 0, data.Length);
         }
 
@@ -583,6 +680,26 @@ namespace MasterServerToolkit.Networking
             if (disposed)
             {
                 throw new ObjectDisposedException("EndianBinaryReader");
+            }
+        }
+
+        private void ValidateLength(int length, int maxLength, string valueName)
+        {
+            if (maxLength < 0)
+                throw new ArgumentOutOfRangeException(nameof(maxLength));
+
+            if (length < 0 || length > maxLength)
+            {
+                throw new InvalidDataException(
+                    $"{valueName} length {length} exceeds the allowed range 0..{maxLength}");
+            }
+
+            long remainingByteCount = RemainingByteCount;
+
+            if (remainingByteCount >= 0 && length > remainingByteCount)
+            {
+                throw new EndOfStreamException(
+                    $"{valueName} length {length} exceeds the remaining stream length {remainingByteCount}");
             }
         }
 

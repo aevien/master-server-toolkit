@@ -6,6 +6,7 @@ namespace MasterServerToolkit.UI
     public class UIMultiLable : MonoBehaviour
     {
         [Header("Components"), SerializeField]
+        [Tooltip("TextMeshPro labels updated by Text(...) in array order. Extra supplied values are ignored; labels without a corresponding value keep their current text.")]
         private TextMeshProUGUI[] lablesText;
 
         public void Text(params string[] values)

@@ -10,8 +10,10 @@ namespace MasterServerToolkit.Demos.BasicProfile
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required input field used to display and submit the profile's displayName value.")]
         private TMP_InputField displayNameInputField;
         [SerializeField]
+        [Tooltip("Required input field used to display and submit the profile's avatarUrl value. The demo sends the text as-is and performs no URL validation.")]
         private TMP_InputField avatarUrlInputField;
 
         #endregion

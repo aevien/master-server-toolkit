@@ -1,5 +1,7 @@
 ﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -8,7 +10,11 @@ namespace MasterServerToolkit.Bridges
     public class EmailConfirmationView : UIView
     {
         [Header("Components"), SerializeField]
+        [Tooltip("Input field containing the email confirmation code sent to the signed-in account.")]
         private TMP_InputField confirmationCodeInputField;
+
+        private IDisposable showEmailConfirmationListener;
+        private IDisposable hideEmailConfirmationListener;
 
         public string ConfirmationCode
         {
@@ -21,16 +27,30 @@ namespace MasterServerToolkit.Bridges
         protected void Start()
         {
             // Listen to show/hide events
-            Mst.Events.AddListener(MstEventKeys.showEmailConfirmationView, OnShowEmailConfirmationEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hideEmailConfirmationView, OnHideEmailConfirmationEventHandler);
+            showEmailConfirmationListener?.Dispose();
+            showEmailConfirmationListener = Mst.Events.AddListener(MstEventKeys.showEmailConfirmationView, OnShowEmailConfirmationEventHandler);
+
+            hideEmailConfirmationListener?.Dispose();
+            hideEmailConfirmationListener = Mst.Events.AddListener(MstEventKeys.hideEmailConfirmationView, OnHideEmailConfirmationEventHandler);
         }
 
-        private void OnShowEmailConfirmationEventHandler(EventMessage message)
+        protected override void OnDestroy()
+        {
+            showEmailConfirmationListener?.Dispose();
+            showEmailConfirmationListener = null;
+
+            hideEmailConfirmationListener?.Dispose();
+            hideEmailConfirmationListener = null;
+
+            base.OnDestroy();
+        }
+
+        private void OnShowEmailConfirmationEventHandler(EventPayload message)
         {
             Show();
         }
 
-        private void OnHideEmailConfirmationEventHandler(EventMessage message)
+        private void OnHideEmailConfirmationEventHandler(EventPayload message)
         {
             Hide();
         }
@@ -40,10 +60,28 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public void RequestConfirmationCode()
         {
-            if (AuthBehaviour.Instance)
-                AuthBehaviour.Instance.RequestConfirmationCode();
-            else
-                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
+            ViewsManager.Show<LoadingInfoView>(Mst.Localization["ui.loading.accountConfirmation.sendCode.message"]);
+
+            Logger.Debug(Mst.Localization["ui.loading.accountConfirmation.sendCode.message"]);
+
+            MstTimer.WaitForSeconds(0.1f, () =>
+            {
+                Mst.Client.Auth.RequestEmailConfirmationCode((isSuccessful, error) =>
+                {
+                    ViewsManager.Hide<LoadingInfoView>();
+
+                    if (isSuccessful)
+                    {
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage($"{Mst.Localization["ui.notification.accountConfirmation.sendCode.success.message"]} '{Mst.Client.Auth.Account.Email}'", null));
+                    }
+                    else
+                    {
+                        string outputMessage = $"{Mst.Localization["ui.notification.accountConfirmation.sendCode.error.message"]}: {error}";
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(outputMessage, null));
+                        Logger.Error(outputMessage);
+                    }
+                });
+            });
         }
 
         /// <summary>
@@ -51,10 +89,29 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public void ConfirmAccount()
         {
-            if (AuthBehaviour.Instance)
-                AuthBehaviour.Instance.ConfirmAccount(ConfirmationCode);
-            else
-                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
+            ViewsManager.Show<LoadingInfoView>(Mst.Localization["ui.loading.accountConfirmation.message"]);
+
+            Logger.Debug(Mst.Localization["ui.loading.accountConfirmation.message"]);
+
+            MstTimer.WaitForSeconds(0.1f, () =>
+            {
+                Mst.Client.Auth.ConfirmEmail(ConfirmationCode, (isSuccessful, error) =>
+                {
+                    ViewsManager.Hide<LoadingInfoView>();
+
+                    if (isSuccessful)
+                    {
+                        Mst.Events.Invoke(MstEventKeys.hideEmailConfirmationView);
+                        ViewsManager.Show<MainMenuView>();
+                    }
+                    else
+                    {
+                        string outputMessage = $"{Mst.Localization["ui.notification.accountConfirmation.error.message"]} {error}";
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(outputMessage, null));
+                        Logger.Error(outputMessage);
+                    }
+                });
+            });
         }
 
         /// <summary>
@@ -62,10 +119,11 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public void SignOut()
         {
-            if (AuthBehaviour.Instance)
-                AuthBehaviour.Instance.SignOut();
-            else
-                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
+            Logger.Debug("Sign out");
+            Mst.Client.Auth.SignOut();
+
+            ViewsManager.HideAllViews();
+            ViewsManager.Show<SignInView>();
         }
     }
 }

@@ -80,7 +80,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override MstJson ToJson()
         {
-            var json = MstJson.EmptyObject;
+            var json = MstJson.CreateObject();
 
             return json;
         }

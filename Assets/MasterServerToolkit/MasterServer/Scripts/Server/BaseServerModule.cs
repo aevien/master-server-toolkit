@@ -1,14 +1,21 @@
-﻿using MasterServerToolkit.Json;
+﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public abstract class BaseServerModule : MonoBehaviour, IBaseServerModule
+    public abstract class BaseServerModule : MonoBehaviour, IBaseServerModule, IServerRunModule
     {
+        #region INSPECTOR
+        [Header("Base Module Settings"), SerializeField, Tooltip("Minimum severity written by this server module. The owning server component has a separate Log Level setting.")]
+        protected LogLevel logLevel = LogLevel.Info; 
+        #endregion
+
         private static Dictionary<Type, GameObject> instances;
 
         /// <summary>
@@ -16,8 +23,10 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected Logging.Logger logger;
 
-        [Header("Base Module Settings"), SerializeField]
-        protected LogLevel logLevel = LogLevel.Info;
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Id {  get; private set; }
 
         /// <summary>
         /// Returns a list of module types this module depends on
@@ -40,6 +49,15 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public abstract void Initialize(IServer server);
 
+        /// <inheritdoc />
+        public virtual void StartServerRun(CancellationToken runCancellationToken) { }
+
+        /// <inheritdoc />
+        public virtual Task StopServerRunAsync()
+        {
+            return Task.CompletedTask;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -47,6 +65,8 @@ namespace MasterServerToolkit.MasterServer
         {
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
+
+            Id = GetType().Name.FromCamelcase().Replace(" ", "_").ToLower();
         }
 
         /// <summary>
@@ -96,18 +116,45 @@ namespace MasterServerToolkit.MasterServer
             OptionalDependencies.Add(typeof(T));
         }
 
-        public virtual MstJson JsonInfo()
+        /// <summary>
+        /// Resolves a configured server permission key to its numeric permission level.
+        /// </summary>
+        /// <param name="key">Permission key configured on the server.</param>
+        /// <param name="permissionLevel">Resolved permission level when the key exists.</param>
+        /// <returns><c>true</c> when the key exists; otherwise, <c>false</c>.</returns>
+        protected bool TryGetPermissionLevel(string key, out int permissionLevel)
         {
-            MstJson json = new MstJson();
+            permissionLevel = MstPermissionLevels.Default;
+            return Server != null && Server.TryGetPermissionLevel(key, out permissionLevel);
+        }
+
+        public virtual MstJson Info()
+        {
+            MstJson json = MstJson.CreateObject();
 
             try
             {
-                json.AddField("name", GetType().Name);
+                json.AddField("id", GetType().Name.FromCamelcase().Replace(" ", "_").ToLower());
+                json.AddField("name", GetType().Name.FromCamelcase());
                 json.AddField("description", GetType().Name);
+            }
+            catch (Exception e)
+            {
+                json.AddField("error", e.ToString());
+            }
 
+            return json;
+        }
+
+        public virtual MstJson Details()
+        {
+            MstJson json = Info();
+
+            try
+            {
                 if (Dependencies.Count > 0)
                 {
-                    var dependenciesArray = MstJson.EmptyArray;
+                    var dependenciesArray = MstJson.CreateArray();
 
                     for (int i = 0; i < Dependencies.Count; i++)
                     {
@@ -119,7 +166,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (OptionalDependencies.Count > 0)
                 {
-                    var optionalDependenciesArray = MstJson.EmptyArray;
+                    var optionalDependenciesArray = MstJson.CreateArray();
 
                     for (int i = 0; i < OptionalDependencies.Count; i++)
                     {
@@ -128,6 +175,8 @@ namespace MasterServerToolkit.MasterServer
 
                     json.AddField("optionalDependencies", optionalDependenciesArray);
                 }
+
+                json.AddField("properties", MstJson.CreateObject());
             }
             catch (Exception e)
             {
@@ -135,42 +184,6 @@ namespace MasterServerToolkit.MasterServer
             }
 
             return json;
-        }
-
-        /// <summary>
-        /// Gets base module info
-        /// </summary>
-        /// <returns></returns>
-        public virtual MstProperties Info()
-        {
-            MstProperties info = new MstProperties();
-            info.Set("Description", GetType().Name);
-
-            if (Dependencies.Count > 0)
-            {
-                StringBuilder dep = new StringBuilder();
-
-                for (int i = 0; i < Dependencies.Count; i++)
-                {
-                    dep.Append(Dependencies[i].Name + (Dependencies.Count == i + 1 ? "" : ", "));
-                }
-
-                info.Add("Dependencies", dep.ToString());
-            }
-
-            if (OptionalDependencies.Count > 0)
-            {
-                StringBuilder dep = new StringBuilder();
-
-                for (int i = 0; i < OptionalDependencies.Count; i++)
-                {
-                    dep.Append(OptionalDependencies[i].Name + (OptionalDependencies.Count == i + 1 ? "" : ", "));
-                }
-
-                info.Add("Optional Dependencies", dep.ToString());
-            }
-
-            return info;
         }
     }
 }

@@ -9,38 +9,38 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
     {
         #region INSPECTOR
 
-        [Header("TD Look Settings"), SerializeField]
+        [Header("TD Look Settings"), SerializeField, Tooltip("World-space offset added to the character position when placing the top-down camera root and casting collision rays.")]
         private Vector3 lookAtPoint = Vector3.zero;
-        [SerializeField, Range(1f, 5f)]
+        [SerializeField, Range(1f, 5f), Tooltip("Camera-root follow responsiveness multiplier. Higher values follow the owning character faster; this is not a duration in seconds.")]
         private float followSmoothTime = 2f;
 
-        [Header("TD Distance Settings"), SerializeField, Range(5f, 100f)]
+        [Header("TD Distance Settings"), SerializeField, Range(5f, 100f), Tooltip("Minimum zoom distance from the camera pivot in world units.")]
         private float minDistance = 5f;
-        [SerializeField, Range(5f, 100f)]
+        [SerializeField, Range(5f, 100f), Tooltip("Maximum zoom distance from the camera pivot in world units. Values at or below Min Distance are raised to Min Distance plus one at runtime.")]
         private float maxDistance = 15f;
-        [SerializeField, Range(5f, 100f)]
+        [SerializeField, Range(5f, 100f), Tooltip("Initial camera distance in world units. Runtime initialization clamps it between Min Distance and Max Distance.")]
         private float startDistance = 15f;
-        [SerializeField, Range(1f, 15f)]
+        [SerializeField, Range(1f, 15f), Tooltip("Zoom and collision-distance interpolation responsiveness. Higher values move the camera to the requested distance faster.")]
         private float distanceSmoothTime = 5f;
-        [SerializeField, Range(0.01f, 1f)]
+        [SerializeField, Range(0.01f, 1f), Tooltip("World-distance change applied per mouse-wheel input unit. Higher values make each wheel step zoom farther.")]
         private float distanceScrollPower = 1f;
-        [SerializeField]
+        [SerializeField, Tooltip("Moves the camera pivot ahead of a moving owning character to show more space in the travel direction.")]
         private bool applyOffsetDistance = true;
-        [SerializeField, Range(1f, 25f)]
+        [SerializeField, Range(1f, 25f), Tooltip("Maximum forward camera-pivot offset in world units while the owning character moves.")]
         private float maxOffsetDistance = 5f;
 
-        [Header("TD Rotation Settings"), SerializeField, Range(35f, 90f)]
+        [Header("TD Rotation Settings"), SerializeField, Range(35f, 90f), Tooltip("Fixed downward camera pitch in degrees for the top-down view.")]
         private float pitchAngle = 65f;
 
-        [Header("TD Screen Padding Settings"), SerializeField, Range(5f, 300f)]
+        [Header("TD Screen Padding Settings"), SerializeField, Range(5f, 300f), Tooltip("Minimum allowed distance from the left screen edge in pixels before forward camera offset is suppressed.")]
         private float minHorizontalPadding = 100f;
-        [SerializeField, Range(5f, 300f)]
+        [SerializeField, Range(5f, 300f), Tooltip("Minimum allowed distance from the bottom screen edge in pixels before forward camera offset is suppressed.")]
         private float minVerticalPadding = 100f;
-        [SerializeField, Range(5f, 300f)]
+        [SerializeField, Range(5f, 300f), Tooltip("Minimum allowed distance from the right screen edge in pixels before forward camera offset is suppressed.")]
         private float maxHorizontalPadding = 100f;
-        [SerializeField, Range(5f, 300f)]
+        [SerializeField, Range(5f, 300f), Tooltip("Minimum allowed distance from the top screen edge in pixels before forward camera offset is suppressed.")]
         private float maxVerticalPadding = 100f;
-        [SerializeField]
+        [SerializeField, Tooltip("Uses the four pixel padding values to keep the owning character away from screen edges. Disable to ignore screen position when applying forward camera offset.")]
         private bool usePadding = false;
 
         #endregion

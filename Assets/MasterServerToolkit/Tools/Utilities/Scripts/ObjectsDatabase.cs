@@ -1,24 +1,39 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace MasterServerToolkit.Utils
 {
     public abstract class ObjectsDatabase<ObjectType> : ScriptableObject, IEnumerable<ObjectType> where ObjectType : Object
     {
         [SerializeField]
+        [Tooltip("Project folders searched by AssetDatabase.FindAssets when the derived database rebuilds its index. Paths are relative to the project, for example Assets/GameData. An empty list resets to Assets/.")]
         protected string[] searchPaths = new string[] { "Assets/" };
         [SerializeField]
+        [Tooltip("Alphabetical asset-name order applied when the derived database rebuilds the serialized index.")]
+        protected SortOrder sortOrder = SortOrder.Ascending;
+        [SerializeField]
+        [Tooltip("Serialized asset index consumed by database lookups and enumeration. It is populated by derived database refresh logic; manual edits may be overwritten.")]
         protected List<ObjectType> objects;
+
+        protected enum SortOrder
+        {
+            Ascending,
+            Descending
+        }
 
         protected virtual void FindObjects()
         {
 #if UNITY_EDITOR
             objects.Clear();
 
-            var guids = AssetDatabase.FindAssets(SearchType(), searchPaths);
+            string type = SearchType();
+            var guids = AssetDatabase.FindAssets(type, searchPaths);
 
             foreach (var guid in guids)
             {
@@ -31,7 +46,15 @@ namespace MasterServerToolkit.Utils
                 }
             }
 
-            objects = objects.OrderBy(i => i.name).OrderBy(i => i.GetType().Name).ToList();
+            switch (sortOrder)
+            {
+                case SortOrder.Ascending:
+                    objects = objects.OrderBy(i => i.name).ToList();
+                    break;
+                case SortOrder.Descending:
+                    objects = objects.OrderByDescending(i => i.name).ToList();
+                    break;
+            }
 #endif
         }
 
@@ -50,7 +73,7 @@ namespace MasterServerToolkit.Utils
 
         protected virtual string SearchType()
         {
-            return "t:prefab";
+            return $"t:{typeof(ObjectType).Name}";
         }
 
         public T GetItemByName<T>(string itemName) where T : ObjectType

@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
     [DisallowMultipleComponent]
     public class PlayerCharacterAvatar : PlayerCharacterBehaviour
     {
-        [Header("Components"), SerializeField]
+        [Header("Components"), SerializeField, Tooltip("Render objects hidden for the owning client and shown for remote clients. Assign first-person body or head meshes that would obstruct the local camera.")]
         protected GameObject[] remoteParts;
 
         public override void OnStartClient()

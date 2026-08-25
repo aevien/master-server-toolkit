@@ -1,0 +1,24 @@
+{
+    "name": "MasterServerToolkit.Tests.EditMode",
+    "rootNamespace": "",
+    "references": [
+        "MasterServerToolkit",
+        "Unity.TextMeshPro",
+        "MasterServerToolkit.Bridges.MongoDB",
+        "MasterServerToolkit.Bridges.LiteDB"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

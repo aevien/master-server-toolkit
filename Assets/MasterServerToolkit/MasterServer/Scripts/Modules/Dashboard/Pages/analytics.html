@@ -1,0 +1,455 @@
+<style>
+    .analytics-query-path {
+        word-break: break-all;
+    }
+
+    #analyticsTable {
+        min-height: 520px;
+    }
+
+    #analyticsTable .tabulator-row.selectable {
+        cursor: pointer;
+    }
+</style>
+
+<div id="app">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-header">
+                    Statistics
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Loaded: {{ resultCount }}</li>
+                        <li class="list-group-item">Filtered: {{ filteredCount }}</li>
+                        <li class="list-group-item">Total: {{ totalCount }}</li>
+                        <li class="list-group-item">Query: {{ selectedQuery.label }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    Query Filters
+                </div>
+                <div class="card-body">
+                    <form @submit.prevent="loadAnalytics">
+                        <div class="mb-3">
+                            <label class="form-label" for="analyticsQueryType">Query</label>
+                            <select id="analyticsQueryType" class="form-select" v-model="queryType" :disabled="loading"
+                                title="Analytics query type">
+                                <option v-for="option in queryTypes" :key="option.value" :value="option.value">
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" v-if="requiresSingleValue">
+                            <label class="form-label" :for="singleValueInputId">{{ selectedQuery.valueLabel }}</label>
+                            <input :id="singleValueInputId" class="form-control" v-model="singleValue"
+                                :type="selectedQuery.inputType || 'text'" :disabled="loading"
+                                :title="selectedQuery.valueLabel">
+                        </div>
+
+                        <div class="mb-3" v-if="requiresRange">
+                            <label class="form-label" for="startTimestamp">Start timestamp</label>
+                            <input id="startTimestamp" class="form-control" type="datetime-local"
+                                v-model="startTimestamp" :disabled="loading" title="Start timestamp">
+                        </div>
+
+                        <div class="mb-3" v-if="requiresRange">
+                            <label class="form-label" for="endTimestamp">End timestamp</label>
+                            <input id="endTimestamp" class="form-control" type="datetime-local"
+                                v-model="endTimestamp" :disabled="loading" title="End timestamp">
+                        </div>
+
+                        <button class="btn btn-primary w-100" type="submit" :disabled="loading || !canSubmit"
+                            title="Load analytics">
+                            <span v-if="loading" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            {{ loading ? "Loading..." : "Load analytics" }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    Request
+                </div>
+                <div class="card-body">
+                    <code class="small analytics-query-path">{{ requestPath || "Not loaded yet" }}</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div v-if="errorMessage" class="alert alert-danger mb-3" role="alert">
+                {{ errorMessage }}
+            </div>
+
+            <div class="d-flex flex-column flex-lg-row gap-2 justify-content-between align-items-lg-center mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input v-model="searchValue" class="form-control" type="search"
+                        placeholder="Search by ID, user ID, key or category"
+                        title="Search by ID, user ID, key or category">
+                </div>
+                <button type="button" class="btn btn-outline-secondary flex-shrink-0" title="Reload analytics"
+                    @click="reloadAnalytics(false)">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+
+            <div id="analyticsTable"></div>
+        </div>
+    </div>
+
+    <teleport to="body">
+        <div ref="modal" class="modal fade" id="analyticsModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Analytics event
+                            <span v-if="selectedEvent" class="badge bg-secondary ms-2">{{ selectedEvent.key || "unknown" }}</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <template v-if="selectedEvent">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold bg-light">ID</td>
+                                        <td><code>{{ selectedEvent.id }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">User ID</td>
+                                        <td><code>{{ selectedEvent.user_id || "Not specified" }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Key</td>
+                                        <td>{{ selectedEvent.key }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Category</td>
+                                        <td>{{ selectedEvent.category || "Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold bg-light">Timestamp</td>
+                                        <td>{{ selectedEvent.timestamp }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h6>Data</h6>
+                            <div v-html="renderJson(selectedEvent.data || {})"></div>
+                        </template>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </teleport>
+</div>
+
+<script type="module">
+    import { createApp, ref, computed, watch, onMounted } from "vue";
+
+    createApp({
+        setup() {
+            const queryKeys = Object.freeze({
+                id: "id",
+                userId: "userId",
+                key: "key",
+                timestamp: "timestamp",
+                startTimestamp: "startTimestamp",
+                endTimestamp: "endTimestamp",
+                page: "page",
+                size: "size",
+                sortField: "sortField",
+                sortDirection: "sortDirection",
+                searchValue: "searchValue"
+            });
+
+            const queryTypes = Object.freeze([
+                { value: "all", label: "All events" },
+                { value: "user", label: "By user", valueKey: queryKeys.userId, valueLabel: "User ID" },
+                { value: "id", label: "By event ID", valueKey: queryKeys.id, valueLabel: "Event ID" },
+                { value: "key", label: "By event key", valueKey: queryKeys.key, valueLabel: "Event key" },
+                { value: "timestamp", label: "By timestamp", valueKey: queryKeys.timestamp, valueLabel: "Timestamp", inputType: "datetime-local" },
+                { value: "timestampRange", label: "By timestamp range", usesRange: true }
+            ]);
+
+            const queryType = ref("all");
+            const singleValue = ref("");
+            const startTimestamp = ref("");
+            const endTimestamp = ref("");
+            const searchValue = ref("");
+            const requestPath = ref("");
+            const errorMessage = ref("");
+            const loading = ref(false);
+            const analyticsTable = ref(null);
+            const modal = ref(null);
+            const selectedEvent = ref(null);
+            const resultCount = ref(0);
+            const filteredCount = ref(0);
+            const totalCount = ref(0);
+            let searchReloadTimeout = null;
+
+            const selectedQuery = computed(() => queryTypes.find(item => item.value === queryType.value) || queryTypes[0]);
+            const requiresSingleValue = computed(() => Boolean(selectedQuery.value.valueKey));
+            const requiresRange = computed(() => Boolean(selectedQuery.value.usesRange));
+            const singleValueInputId = computed(() => `${selectedQuery.value.valueKey || "analytics"}Input`);
+            const canSubmit = computed(() => {
+                if (requiresSingleValue.value && !String(singleValue.value || "").trim()) return false;
+                if (requiresRange.value && (!startTimestamp.value || !endTimestamp.value)) return false;
+                return true;
+            });
+
+            const renderText = (value) => mst.renderText(value);
+            const tooltipText = (value) => {
+                if (value === null || value === undefined) return "";
+                if (typeof value === "object") return JSON.stringify(value);
+                return String(value);
+            };
+            const setCellTitle = (cell, value) => {
+                const title = tooltipText(value);
+                cell.getElement().setAttribute("title", title);
+                return title;
+            };
+            const toUtcTimestamp = (value) => {
+                const date = new Date(String(value || "").trim());
+                return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+            };
+            const renderShortText = (value) => {
+                const text = String(value || "");
+                const shortText = text.length > 16 ? `${text.substring(0, 16)}...` : text;
+                return renderText(shortText);
+            };
+            const textFormatter = (cell) => renderText(setCellTitle(cell, cell.getValue()));
+            const shortTextFormatter = (cell) => renderShortText(setCellTitle(cell, cell.getValue()));
+            const dataSummary = (data) => {
+                if (!data || typeof data !== "object") return "";
+                const keys = Object.keys(data);
+                if (keys.length === 0) return "{}";
+                return keys.length === 1 ? keys[0] : `${keys.length} fields`;
+            };
+            const dataSummaryFormatter = (cell) => {
+                setCellTitle(cell, cell.getValue());
+                return renderText(dataSummary(cell.getValue()));
+            };
+
+            const getSortInstruction = (params) => {
+                const sorters = Array.isArray(params?.sorters)
+                    ? params.sorters
+                    : Array.isArray(params?.sort)
+                        ? params.sort
+                        : [];
+
+                return sorters.length > 0 ? sorters[0] : null;
+            };
+
+            const appendQueryFilters = (query) => {
+                const selected = selectedQuery.value;
+
+                if (selected.valueKey) {
+                    const value = selected.inputType === "datetime-local"
+                        ? toUtcTimestamp(singleValue.value)
+                        : String(singleValue.value || "").trim();
+                    query.set(selected.valueKey, value);
+                }
+
+                if (selected.usesRange) {
+                    query.set(queryKeys.startTimestamp,
+                        toUtcTimestamp(startTimestamp.value));
+                    query.set(queryKeys.endTimestamp,
+                        toUtcTimestamp(endTimestamp.value));
+                }
+            };
+
+            const createAnalyticsPath = (params) => {
+                const size = Number(params?.size) > 0 ? Number(params.size) : 25;
+                const page = Math.max((Number(params?.page) || 1) - 1, 0);
+                const sortInstruction = getSortInstruction(params);
+                const sortDirection = sortInstruction?.dir === "desc" ? "1" : "0";
+
+                const query = new URLSearchParams({
+                    [queryKeys.page]: page.toString(),
+                    [queryKeys.size]: size.toString(),
+                    [queryKeys.sortField]: sortInstruction?.field || "",
+                    [queryKeys.sortDirection]: sortInstruction ? sortDirection : "",
+                    [queryKeys.searchValue]: searchValue.value || ""
+                });
+
+                appendQueryFilters(query);
+                return `analytics/search?${query.toString()}`;
+            };
+
+            const getLastPage = (filtered, size) => {
+                const pageSize = Number(size) > 0 ? Number(size) : 25;
+                const rowCount = Number(filtered) || 0;
+                return Math.max(1, Math.ceil(rowCount / pageSize));
+            };
+
+            const resetTableCounters = () => {
+                resultCount.value = 0;
+                filteredCount.value = 0;
+                totalCount.value = 0;
+            };
+
+            const reloadAnalytics = (resetPage) => {
+                if (!analyticsTable.value) return;
+
+                if (resetPage) {
+                    if (analyticsTable.value.getPage && analyticsTable.value.getPage() !== 1) {
+                        analyticsTable.value.setPage(1).catch(() => analyticsTable.value?.replaceData());
+                    } else {
+                        analyticsTable.value.replaceData();
+                    }
+                    return;
+                }
+
+                analyticsTable.value.replaceData();
+            };
+
+            const reloadAnalyticsDebounced = () => {
+                clearTimeout(searchReloadTimeout);
+                searchReloadTimeout = setTimeout(() => reloadAnalytics(true), 250);
+            };
+
+            const loadAnalytics = () => {
+                if (!canSubmit.value || loading.value || !analyticsTable.value) return;
+
+                errorMessage.value = "";
+                selectedEvent.value = null;
+                reloadAnalytics(true);
+            };
+
+            const showEventDetails = (rowData) => {
+                selectedEvent.value = rowData;
+                modal.value.show();
+            };
+
+            const initializeTable = () => {
+                analyticsTable.value = new Tabulator("#analyticsTable", {
+                    ajaxURL: mst.createApiUrl("analytics/search"),
+                    ajaxRequestFunc: async (url, config, params) => {
+                        if (!canSubmit.value) {
+                            resetTableCounters();
+                            return { data: [], last_page: 1 };
+                        }
+
+                        loading.value = true;
+                        errorMessage.value = "";
+                        selectedEvent.value = null;
+                        requestPath.value = createAnalyticsPath(params);
+
+                        try {
+                            const response = await mst.apiFetch(requestPath.value, { method: "GET" }, { toastErrors: false });
+
+                            if (!response.ok) {
+                                throw new Error(await mst.getErrorMessage(response, `Failed to load analytics: ${response.status}`));
+                            }
+
+                            const responseJson = await response.json();
+                            const entries = responseJson.entries ?? [];
+
+                            resultCount.value = entries.length;
+                            filteredCount.value = responseJson.filtered ?? responseJson.recordsFiltered ?? responseJson.total ?? 0;
+                            totalCount.value = responseJson.total ?? responseJson.recordsTotal ?? 0;
+
+                            return {
+                                data: entries,
+                                last_page: getLastPage(filteredCount.value, params?.size)
+                            };
+                        } catch (error) {
+                            const message = error?.message || "Failed to load analytics";
+                            console.error("Analytics load failed:", error);
+                            errorMessage.value = message;
+                            mst.showError(message);
+                            resetTableCounters();
+
+                            return { data: [], last_page: 1 };
+                        } finally {
+                            loading.value = false;
+                        }
+                    },
+                    pagination: true,
+                    paginationMode: "remote",
+                    paginationSize: 25,
+                    paginationSizeSelector: [10, 25, 50, 100],
+                    sortMode: "remote",
+                    initialSort: [{ column: "timestamp", dir: "desc" }],
+                    layout: "fitColumns",
+                    responsiveLayout: "hide",
+                    placeholder: "No analytics events found",
+                    columnDefaults: {
+                        headerTooltip: true
+                    },
+                    rowFormatter: (row) => row.getElement().classList.add("selectable"),
+                    columns: [
+                        { title: "ID", field: "id", minWidth: 150, responsive: 4, formatter: shortTextFormatter },
+                        { title: "User ID", field: "user_id", minWidth: 150, responsive: 3, formatter: shortTextFormatter },
+                        { title: "Key", field: "key", minWidth: 120, responsive: 0, formatter: textFormatter },
+                        { title: "Category", field: "category", minWidth: 140, responsive: 1, formatter: textFormatter },
+                        { title: "Timestamp", field: "timestamp", minWidth: 165, responsive: 0, formatter: textFormatter },
+                        {
+                            title: "Data",
+                            field: "data",
+                            minWidth: 120,
+                            responsive: 2,
+                            headerSort: false,
+                            formatter: dataSummaryFormatter
+                        }
+                    ]
+                });
+
+                analyticsTable.value.on("rowClick", (event, row) => showEventDetails(row.getData()));
+            };
+
+            onMounted(async () => {
+                modal.value = new bootstrap.Modal("#analyticsModal");
+                initializeTable();
+            });
+
+            watch(queryType, () => {
+                singleValue.value = "";
+                startTimestamp.value = "";
+                endTimestamp.value = "";
+                errorMessage.value = "";
+                selectedEvent.value = null;
+                reloadAnalytics(true);
+            });
+
+            watch(searchValue, reloadAnalyticsDebounced);
+
+            return {
+                queryTypes,
+                queryType,
+                singleValue,
+                startTimestamp,
+                endTimestamp,
+                searchValue,
+                selectedQuery,
+                requiresSingleValue,
+                requiresRange,
+                singleValueInputId,
+                loading,
+                errorMessage,
+                requestPath,
+                resultCount,
+                filteredCount,
+                totalCount,
+                selectedEvent,
+                canSubmit,
+                renderJson: mst.renderJson,
+                loadAnalytics,
+                reloadAnalytics
+            };
+        }
+    }).mount("#app");
+</script>

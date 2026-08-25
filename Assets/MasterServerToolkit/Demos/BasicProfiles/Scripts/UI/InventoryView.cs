@@ -1,6 +1,7 @@
 using MasterServerToolkit.Bridges;
 using MasterServerToolkit.Extensions;
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,21 +13,29 @@ namespace MasterServerToolkit.Demos.BasicProfile
         #region INSPECTOR
 
         [Header("Inventory"), SerializeField]
+        [Tooltip("Required ItemUI prefab instantiated once for every offer in the demo store.")]
         private ItemUI storeItemUIPrefab;
         [SerializeField]
+        [Tooltip("Required RectTransform that receives instantiated store offer entries. Existing children are removed when the store is drawn.")]
         private RectTransform storeItemsContainer;
         [SerializeField]
+        [Tooltip("Required ItemUI prefab instantiated for item stacks currently stored in the loaded profile.")]
         private ItemUI backpackItemUIPrefab;
         [SerializeField]
+        [Tooltip("Required RectTransform that receives instantiated backpack entries. Existing children are removed when the profile inventory is drawn.")]
         private RectTransform backpackItemsContainer;
         [SerializeField]
+        [Tooltip("Required Basic Profiles offer database used to build store entries and resolve inventory item IDs to names, icons, prices, and currencies.")]
         private StoreOffersDatabase storeOffers;
 
         [Header("Currencies"), SerializeField]
+        [Tooltip("Required UIProperty that displays the loaded profile's bronze currency value.")]
         private UIProperty bronzeUIProperty;
         [SerializeField]
+        [Tooltip("Required UIProperty that displays the loaded profile's silver currency value.")]
         private UIProperty silverUIProperty;
         [SerializeField]
+        [Tooltip("Required UIProperty that displays the loaded profile's gold currency value.")]
         private UIProperty goldUIProperty;
 
         #endregion
@@ -178,7 +187,7 @@ namespace MasterServerToolkit.Demos.BasicProfile
 
         private void BuyItem(StoreOffer storeOffer)
         {
-            if (Mst.Client.Connection.IsConnected)
+            if (Mst.Connection.IsConnected)
             {
                 var data = new BuySellItemPacket
                 {
@@ -187,11 +196,11 @@ namespace MasterServerToolkit.Demos.BasicProfile
                     Currency = storeOffer.currency
                 };
 
-                Mst.Client.Connection.SendMessage(MessageOpCodes.BuyDemoItem, data, (status, responce) =>
+                Mst.Connection.SendMessage(MessageOpCodes.BuyDemoItem, data, (status, responce) =>
                 {
                     if (status != Networking.ResponseStatus.Success)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
                         return;
                     }
 
@@ -202,7 +211,7 @@ namespace MasterServerToolkit.Demos.BasicProfile
 
         private void SellItem(StoreOffer storeOffer)
         {
-            if (Mst.Client.Connection.IsConnected)
+            if (Mst.Connection.IsConnected)
             {
                 var data = new BuySellItemPacket
                 {
@@ -211,11 +220,11 @@ namespace MasterServerToolkit.Demos.BasicProfile
                     Currency = storeOffer.currency
                 };
 
-                Mst.Client.Connection.SendMessage(MessageOpCodes.SellDemoItem, data, (status, responce) =>
+                Mst.Connection.SendMessage(MessageOpCodes.SellDemoItem, data, (status, responce) =>
                 {
                     if (status != Networking.ResponseStatus.Success)
                     {
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage($"An error occurred: {responce.AsString("Unhandled")}", null));
                         return;
                     }
 

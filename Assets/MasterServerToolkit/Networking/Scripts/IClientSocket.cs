@@ -1,14 +1,26 @@
-﻿namespace MasterServerToolkit.Networking
+﻿using MasterServerToolkit.Logging;
+
+namespace MasterServerToolkit.Networking
 {
     public delegate void ConnectionDelegate(IClientSocket client);
     public delegate void ConnectionStatusDelegate(ConnectionStatus status);
 
-    public interface IClientSocket : IMsgDispatcher
+    public interface IClientSocket : IMessageDispatcher
     {
+        /// <summary>
+        /// Unique ID of connection
+        /// </summary>
+        string Id { get; }
+
         /// <summary>
         /// The code that the client receives when the connection is closed
         /// </summary>
         ushort CloseCode { get; }
+
+        /// <summary>
+        /// Log level of the client socket
+        /// </summary>
+        LogLevel LogLevel { get; set; }
 
         /// <summary>
         /// Connection status
@@ -46,11 +58,6 @@
         string Service { get; set; }
 
         /// <summary>
-        /// The password that the connection will use to authenticate to the server
-        /// </summary>
-        string Password { get; set; }
-
-        /// <summary>
         /// Event, which is invoked when we successfully 
         /// connect to another socket
         /// </summary>
@@ -85,16 +92,16 @@
         IClientSocket Connect(string ip, int port);
 
         /// <summary>
-        /// Invokes a callback when connection is established, or after the timeout
-        /// (even if failed to connect). If already connected, callback is invoked instantly
+        /// Invokes a callback exactly once when the connection is established, closed,
+        /// or the timeout expires. If already connected or disconnected, callback is invoked instantly.
         /// </summary>
         /// <param name="connectionCallback"></param>
         /// <param name="timeoutSeconds"></param>
         void WaitForConnection(ConnectionDelegate connectionCallback, float timeoutSeconds);
 
         /// <summary>
-        /// Invokes a callback when connection is established, or after the timeout
-        /// (even if failed to connect). If already connected, callback is invoked instantly
+        /// Invokes a callback exactly once when the connection is established, closed,
+        /// or the configured timeout expires. If already connected or disconnected, callback is invoked instantly.
         /// </summary>
         /// <param name="connectionCallback"></param>
         void WaitForConnection(ConnectionDelegate connectionCallback);

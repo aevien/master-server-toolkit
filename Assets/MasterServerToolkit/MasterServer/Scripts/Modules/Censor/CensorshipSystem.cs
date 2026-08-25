@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MasterServerToolkit.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,11 +10,11 @@ namespace MasterServerToolkit.MasterServer
 {
     public enum WordFileFormat
     {
-        [Tooltip("Words separated by commas: word1,word2,word3")]
+        [Tooltip("Parses comma-separated rules from the assigned TextAsset. Whitespace around each rule is ignored.")]
         CommaSeparated,
-        [Tooltip("Each word on a new line")]
+        [Tooltip("Parses one moderation rule per non-empty line from the assigned TextAsset.")]
         LineByLine,
-        [Tooltip("Automatic format detection")]
+        [Tooltip("Detects comma-separated content when commas are present; otherwise parses one rule per line.")]
         AutoDetect
     }
 
@@ -21,24 +22,28 @@ namespace MasterServerToolkit.MasterServer
     public class LanguageBadWords
     {
         [Header("Language Settings")]
+        [Tooltip("Human-readable language/category name attached to matches for diagnostics. It does not select the client language.")]
         public string languageName = "Russian";
 
         [Header("Words File")]
+        [Tooltip("TextAsset containing word, prefix, contains and allow rules for this language/category. Leave None to load no rules from this entry.")]
         public TextAsset badWordsFile;
 
         [Header("File Format")]
-        [Tooltip("Choose file format or use auto-detection")]
+        [Tooltip("Parser used for the assigned dictionary file. Auto Detect chooses comma-separated parsing only when commas are present.")]
         public WordFileFormat fileFormat = WordFileFormat.AutoDetect;
 
         [Header("Options")]
+        [Tooltip("Includes this dictionary when the censorship system initializes. Disabled entries are ignored without modifying their asset.")]
         public bool isActive = true;
 
         [Range(1, 3)]
-        [Tooltip("1 - Minor violations, 2 - Medium, 3 - Serious")]
+        [Tooltip("Default violation severity assigned to rules from this file: 1 minor, 2 medium, 3 serious. Used only when the severity system is enabled.")]
         public int severityLevel = 2;
 
         [Space]
         [TextArea(2, 4)]
+        [Tooltip("Designer note describing the dictionary purpose or moderation policy. It is not used during matching.")]
         public string description = "Word category description";
     }
 
@@ -48,21 +53,57 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class CensorshipSystem
     {
+        private const int MinExactWordLength = 3;
+        private const int MinSubstringSearchLength = 4;
+
+        private enum CensorPatternType
+        {
+            Word,
+            Prefix,
+            Contains,
+            Allow
+        }
+
+        private sealed class CensorPattern
+        {
+            public CensorPattern(CensorPatternType type, string rawValue, string normalizedValue, int severityLevel, string language)
+            {
+                Type = type;
+                RawValue = rawValue;
+                NormalizedValue = normalizedValue;
+                SeverityLevel = severityLevel;
+                Language = language;
+            }
+
+            public CensorPatternType Type { get; }
+            public string RawValue { get; }
+            public string NormalizedValue { get; }
+            public int SeverityLevel { get; set; }
+            public string Language { get; set; }
+
+            public string GetMarker() => $"{Type.ToString().ToLowerInvariant()}:{RawValue}";
+        }
+
         // Core data structures for word storage and metadata
-        private HashSet<string> allBadWords = new HashSet<string>();
-        private Dictionary<string, int> wordsWithSeverity = new Dictionary<string, int>();
-        private Dictionary<string, string> wordsWithLanguage = new Dictionary<string, string>();
-        private HashSet<string> normalizedBadWords = new HashSet<string>();
-        private Dictionary<string, string> normalizedToOriginalMap = new Dictionary<string, string>();
+        private readonly HashSet<string> allBadWords = new();
+        private readonly Dictionary<string, int> wordsWithSeverity = new();
+        private readonly Dictionary<string, string> wordsWithLanguage = new();
+        private readonly HashSet<string> normalizedBadWords = new();
+        private readonly Dictionary<string, string> normalizedToOriginalMap = new();
+        private readonly List<CensorPattern> wordPatterns = new();
+        private readonly List<CensorPattern> prefixPatterns = new();
+        private readonly List<CensorPattern> containsPatterns = new();
+        private readonly List<CensorPattern> allowPatterns = new();
 
         // System configuration flags
         private bool isInitialized = false;
-        private bool logLoadingDetails = true;
         private bool enableSeveritySystem = true;
         private bool enableAdvancedDetection = true;
         private bool enableTransliteration = true;
         private bool enableDigitSubstitution = true;
         private bool enableSeparatorRemoval = true;
+
+        private Logging.Logger logger;
 
         // Cyrillic to Latin transliteration map for unified text processing
         private readonly Dictionary<char, string> transliterationMap = new Dictionary<char, string>
@@ -80,20 +121,22 @@ namespace MasterServerToolkit.MasterServer
         /// Initialize the censorship system with language files and configuration.
         /// Must be called before using any other methods.
         /// </summary>
-        public void Initialize(LanguageBadWords[] languageFiles, bool enableAdvanced = true, bool enableLogging = true)
+        public void Initialize(LanguageBadWords[] languageFiles, bool enableAdvanced = true, LogLevel logLevel = LogLevel.Info)
         {
             if (isInitialized)
             {
                 return;
             }
 
+            logger = LogManager.GetLogger(GetType().Name);
+            logger.LogLevel = logLevel;
+
             enableAdvancedDetection = enableAdvanced;
-            logLoadingDetails = enableLogging;
 
             LoadAllBadWords(languageFiles);
             isInitialized = true;
 
-            Debug.Log("CensorshipManager: Static initialization completed successfully.");
+            logger.Debug("Static initialization completed successfully.");
         }
 
         /// <summary>
@@ -108,10 +151,14 @@ namespace MasterServerToolkit.MasterServer
             wordsWithLanguage.Clear();
             normalizedBadWords.Clear();
             normalizedToOriginalMap.Clear();
+            wordPatterns.Clear();
+            prefixPatterns.Clear();
+            containsPatterns.Clear();
+            allowPatterns.Clear();
 
             if (languageFiles == null || languageFiles.Length == 0)
             {
-                Debug.LogWarning("CensorshipManager: No language files provided!");
+                logger.Warn("No language files provided!");
                 return;
             }
 
@@ -121,32 +168,35 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (!languageData.isActive)
                 {
-                    if (logLoadingDetails)
-                        Debug.Log($"CensorshipManager: Language '{languageData.languageName}' is disabled, skipping");
+                    logger.Debug($"Language '{languageData.languageName}' is disabled, skipping");
                     continue;
                 }
 
                 if (languageData.badWordsFile == null)
                 {
-                    Debug.LogError($"CensorshipManager: No file assigned for language '{languageData.languageName}'!");
+                    logger.Error($"No file assigned for language '{languageData.languageName}'!");
                     continue;
                 }
 
                 int wordsLoadedForLanguage = LoadWordsFromFile(languageData);
                 totalWordsLoaded += wordsLoadedForLanguage;
 
-                if (logLoadingDetails)
-                {
-                    Debug.Log($"CensorshipManager: Loaded {wordsLoadedForLanguage} words for language '{languageData.languageName}' " +
+                logger.Debug($"Loaded {wordsLoadedForLanguage} words for language '{languageData.languageName}' " +
                              $"(severity level: {languageData.severityLevel})");
-                }
             }
 
-            Debug.Log($"CensorshipManager: Total loaded {totalWordsLoaded} profanity words");
+            logger.Info($"Total loaded {totalWordsLoaded} profanity entries");
+
+            int explicitPatternsCount = wordPatterns.Count + prefixPatterns.Count + containsPatterns.Count + allowPatterns.Count;
 
             if (enableAdvancedDetection)
             {
-                Debug.Log($"CensorshipManager: Advanced detection enabled with {normalizedBadWords.Count} normalized patterns");
+                logger.Info($"Advanced detection enabled with {normalizedBadWords.Count} normalized words");
+            }
+
+            if (explicitPatternsCount > 0)
+            {
+                logger.Info($"Loaded {explicitPatternsCount} explicit censor patterns");
             }
         }
 
@@ -162,11 +212,8 @@ namespace MasterServerToolkit.MasterServer
                 WordFileFormat actualFormat = DetermineFileFormat(fileContent, languageData.fileFormat);
                 string[] words = ParseWordsFromFile(fileContent, actualFormat);
 
-                if (logLoadingDetails)
-                {
-                    Debug.Log($"CensorshipManager: Detected format '{actualFormat}' for language '{languageData.languageName}'");
-                }
-
+                logger.Debug($"Detected format '{actualFormat}' for language '{languageData.languageName}'");
+                
                 int newWordsCount = 0;
 
                 foreach (string word in words)
@@ -174,6 +221,16 @@ namespace MasterServerToolkit.MasterServer
                     string cleanWord = word.Trim().ToLower();
                     if (string.IsNullOrEmpty(cleanWord))
                         continue;
+
+                    if (TryLoadExplicitPattern(cleanWord, languageData, out bool patternAdded))
+                    {
+                        if (patternAdded)
+                        {
+                            newWordsCount++;
+                        }
+
+                        continue;
+                    }
 
                     // Add original word to main list
                     if (allBadWords.Add(cleanWord))
@@ -214,9 +271,112 @@ namespace MasterServerToolkit.MasterServer
             }
             catch (Exception e)
             {
-                Debug.LogError($"CensorshipManager: Error loading words for language '{languageData.languageName}': {e.Message}");
+                logger.Error($"Error loading words for language '{languageData.languageName}': {e.Message}");
                 return 0;
             }
+        }
+
+        private bool TryLoadExplicitPattern(string cleanWord, LanguageBadWords languageData, out bool patternAdded)
+        {
+            patternAdded = false;
+
+            int separatorIndex = cleanWord.IndexOf(':');
+            if (separatorIndex <= 0)
+                return false;
+
+            string typeName = cleanWord.Substring(0, separatorIndex).Trim();
+            if (!TryGetPatternType(typeName, out CensorPatternType patternType))
+                return false;
+
+            string rawValue = cleanWord.Substring(separatorIndex + 1).Trim();
+            if (string.IsNullOrEmpty(rawValue))
+                return true;
+
+            string normalizedValue = NormalizeTextForDetection(rawValue);
+            if (!CanUsePattern(patternType, normalizedValue))
+                return true;
+
+            patternAdded = AddExplicitPattern(patternType, rawValue, normalizedValue,
+                languageData.severityLevel, languageData.languageName);
+            return true;
+        }
+
+        private bool TryGetPatternType(string typeName, out CensorPatternType patternType)
+        {
+            switch (typeName)
+            {
+                case "word":
+                    patternType = CensorPatternType.Word;
+                    return true;
+
+                case "prefix":
+                    patternType = CensorPatternType.Prefix;
+                    return true;
+
+                case "contains":
+                    patternType = CensorPatternType.Contains;
+                    return true;
+
+                case "allow":
+                    patternType = CensorPatternType.Allow;
+                    return true;
+
+                default:
+                    patternType = default;
+                    return false;
+            }
+        }
+
+        private bool AddExplicitPattern(CensorPatternType patternType, string rawValue,
+            string normalizedValue, int severityLevel, string language)
+        {
+            List<CensorPattern> patterns = GetPatterns(patternType);
+            CensorPattern existingPattern = patterns.FirstOrDefault(pattern => pattern.NormalizedValue == normalizedValue);
+
+            if (existingPattern != null)
+            {
+                if (existingPattern.SeverityLevel < severityLevel)
+                {
+                    existingPattern.SeverityLevel = severityLevel;
+                    existingPattern.Language = language;
+                }
+
+                return false;
+            }
+
+            patterns.Add(new CensorPattern(patternType, rawValue, normalizedValue, severityLevel, language));
+            patterns.Sort((left, right) => right.NormalizedValue.Length.CompareTo(left.NormalizedValue.Length));
+            return true;
+        }
+
+        private List<CensorPattern> GetPatterns(CensorPatternType patternType)
+        {
+            return patternType switch
+            {
+                CensorPatternType.Word => wordPatterns,
+                CensorPatternType.Prefix => prefixPatterns,
+                CensorPatternType.Contains => containsPatterns,
+                CensorPatternType.Allow => allowPatterns,
+                _ => throw new ArgumentOutOfRangeException(nameof(patternType), patternType, null)
+            };
+        }
+
+        private bool CanUsePattern(CensorPatternType patternType, string normalizedValue)
+        {
+            return patternType switch
+            {
+                CensorPatternType.Prefix => CanUseSubstringMatch(normalizedValue),
+                CensorPatternType.Contains => CanUseSubstringMatch(normalizedValue),
+                _ => CanUseExactWordMatch(normalizedValue)
+            };
+        }
+
+        private bool HasBadEntries()
+        {
+            return allBadWords.Count > 0
+                || wordPatterns.Count > 0
+                || prefixPatterns.Count > 0
+                || containsPatterns.Count > 0;
         }
 
         /// <summary>
@@ -249,6 +409,11 @@ namespace MasterServerToolkit.MasterServer
                     // Digit replaced with similar letter according to leet speak rules
                     string digitReplacement = ConvertDigitToLetter(c);
                     result.Append(digitReplacement);
+                }
+                else if (enableDigitSubstitution && TryConvertSymbolToLetter(c, out string symbolReplacement))
+                {
+                    // Common masked-word symbols. These are used only for detection, not for display text.
+                    result.Append(symbolReplacement);
                 }
                 else if (char.IsWhiteSpace(c))
                 {
@@ -292,6 +457,32 @@ namespace MasterServerToolkit.MasterServer
                 '8' => "b",  // eight resembles B
                 _ => digit.ToString()  // other digits remain unchanged
             };
+        }
+
+        /// <summary>
+        /// Convert common non-alphanumeric mask symbols to letters.
+        /// Kept intentionally small to avoid treating normal punctuation as text.
+        /// </summary>
+        private bool TryConvertSymbolToLetter(char symbol, out string replacement)
+        {
+            replacement = symbol switch
+            {
+                '$' => "s",
+                '@' => "a",
+                _ => null
+            };
+
+            return replacement != null;
+        }
+
+        private bool CanUseExactWordMatch(string word)
+        {
+            return !string.IsNullOrEmpty(word) && word.Length >= MinExactWordLength;
+        }
+
+        private bool CanUseSubstringMatch(string word)
+        {
+            return !string.IsNullOrEmpty(word) && word.Length >= MinSubstringSearchLength;
         }
 
         /// <summary>
@@ -356,11 +547,11 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!isInitialized)
             {
-                Debug.LogWarning("CensorshipManager: Not initialized. Call Initialize() first.");
+                logger.Warn("Not initialized. Call Initialize() first.");
                 return false;
             }
 
-            if (string.IsNullOrEmpty(message) || allBadWords.Count == 0)
+            if (string.IsNullOrEmpty(message) || !HasBadEntries())
                 return false;
 
             string lowerMessage = message.ToLower();
@@ -373,7 +564,7 @@ namespace MasterServerToolkit.MasterServer
 
             foreach (string word in words)
             {
-                if (allBadWords.Contains(word))
+                if (CanUseExactWordMatch(word) && allBadWords.Contains(word))
                 {
                     return true;
                 }
@@ -385,7 +576,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 // Apply substring check only for words 4+ characters long
                 // This reduces probability of false positives
-                if (badWord.Length >= 4 && lowerMessage.Contains(badWord))
+                if (CanUseSubstringMatch(badWord) && lowerMessage.Contains(badWord))
                 {
                     // Additional check: ensure found word is not part of longer innocent word
                     if (IsStandaloneWordInText(lowerMessage, badWord))
@@ -395,7 +586,13 @@ namespace MasterServerToolkit.MasterServer
                 }
             }
 
-            // Stage 3: Enhanced detection through normalization
+            // Stage 3: Explicit dictionary patterns. These are token-based to keep roots controlled.
+            if (ContainsExplicitPatternMatch(message))
+            {
+                return true;
+            }
+
+            // Stage 4: Enhanced detection through normalization
             if (enableAdvancedDetection)
             {
                 string normalizedMessage = NormalizeTextForDetection(message);
@@ -404,7 +601,7 @@ namespace MasterServerToolkit.MasterServer
                 string[] normalizedWords = normalizedMessage.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 foreach (string word in normalizedWords)
                 {
-                    if (allBadWords.Contains(word))
+                    if (CanUseExactWordMatch(word) && allBadWords.Contains(word))
                     {
                         return true;
                     }
@@ -413,7 +610,7 @@ namespace MasterServerToolkit.MasterServer
                 // Check against normalized dictionary with caution
                 foreach (string normalizedBadWord in normalizedBadWords)
                 {
-                    if (normalizedBadWord.Length >= 4 && normalizedMessage.Contains(normalizedBadWord))
+                    if (CanUseSubstringMatch(normalizedBadWord) && normalizedMessage.Contains(normalizedBadWord))
                     {
                         if (IsStandaloneWordInText(normalizedMessage, normalizedBadWord))
                         {
@@ -436,6 +633,67 @@ namespace MasterServerToolkit.MasterServer
             // \b denotes word boundary - position between letter and non-letter character
             string pattern = @"\b" + Regex.Escape(word) + @"\b";
             return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
+        }
+
+        private bool ContainsExplicitPatternMatch(string message)
+        {
+            foreach (Match tokenMatch in Regex.Matches(message, @"\S+"))
+            {
+                string normalizedToken = NormalizeTextForDetection(tokenMatch.Value);
+
+                if (string.IsNullOrEmpty(normalizedToken) || IsAllowedByExplicitPattern(normalizedToken))
+                    continue;
+
+                if (TryFindExplicitPattern(normalizedToken, out _))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsAllowedByExplicitPattern(string normalizedToken)
+        {
+            return allowPatterns.Any(pattern => normalizedToken == pattern.NormalizedValue);
+        }
+
+        private bool TryFindExplicitPattern(string normalizedToken, out CensorPattern matchedPattern)
+        {
+            matchedPattern = GetExplicitPatternMatches(normalizedToken).FirstOrDefault();
+            return matchedPattern != null;
+        }
+
+        private IEnumerable<CensorPattern> GetExplicitPatternMatches(string normalizedToken)
+        {
+            var matchedValues = new HashSet<string>();
+
+            foreach (CensorPattern pattern in wordPatterns)
+            {
+                if (normalizedToken == pattern.NormalizedValue)
+                {
+                    matchedValues.Add(pattern.NormalizedValue);
+                    yield return pattern;
+                }
+            }
+
+            foreach (CensorPattern pattern in prefixPatterns)
+            {
+                if (normalizedToken.StartsWith(pattern.NormalizedValue, StringComparison.Ordinal))
+                {
+                    matchedValues.Add(pattern.NormalizedValue);
+                    yield return pattern;
+                }
+            }
+
+            foreach (CensorPattern pattern in containsPatterns)
+            {
+                if (!matchedValues.Contains(pattern.NormalizedValue) && normalizedToken.Contains(pattern.NormalizedValue))
+                {
+                    matchedValues.Add(pattern.NormalizedValue);
+                    yield return pattern;
+                }
+            }
         }
 
         /// <summary>
@@ -477,13 +735,13 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!isInitialized)
             {
-                Debug.LogWarning("CensorshipManager: Not initialized. Call Initialize() first.");
+                logger.Warn("Not initialized. Call Initialize() first.");
                 return new List<BadWordInfo>();
             }
 
             List<BadWordInfo> foundBadWords = new List<BadWordInfo>();
 
-            if (string.IsNullOrEmpty(message) || allBadWords.Count == 0)
+            if (string.IsNullOrEmpty(message) || !HasBadEntries())
                 return foundBadWords;
 
             HashSet<string> alreadyFound = new HashSet<string>();
@@ -491,7 +749,10 @@ namespace MasterServerToolkit.MasterServer
             // Stage 1: Standard search in original text
             PerformStandardSearch(message, foundBadWords, alreadyFound);
 
-            // Stage 2: Enhanced search through normalization (if enabled)
+            // Stage 2: Explicit dictionary patterns
+            PerformExplicitPatternSearch(message, foundBadWords, alreadyFound);
+
+            // Stage 3: Enhanced search through normalization (if enabled)
             if (enableAdvancedDetection)
             {
                 PerformAdvancedSearch(message, foundBadWords, alreadyFound);
@@ -514,7 +775,7 @@ namespace MasterServerToolkit.MasterServer
             // Search by individual words
             foreach (string word in words)
             {
-                if (allBadWords.Contains(word) && !alreadyFound.Contains(word))
+                if (CanUseExactWordMatch(word) && allBadWords.Contains(word) && !alreadyFound.Contains(word))
                 {
                     AddFoundWord(word, foundBadWords, alreadyFound);
                 }
@@ -523,7 +784,10 @@ namespace MasterServerToolkit.MasterServer
             // Substring search for cases of merged writing
             foreach (string badWord in allBadWords)
             {
-                if (lowerMessage.Contains(badWord) && !alreadyFound.Contains(badWord))
+                if (CanUseSubstringMatch(badWord)
+                    && lowerMessage.Contains(badWord)
+                    && IsStandaloneWordInText(lowerMessage, badWord)
+                    && !alreadyFound.Contains(badWord))
                 {
                     AddFoundWord(badWord, foundBadWords, alreadyFound);
                 }
@@ -542,7 +806,9 @@ namespace MasterServerToolkit.MasterServer
             // Search normalized words against regular dictionary
             foreach (string normalizedWord in normalizedWords)
             {
-                if (allBadWords.Contains(normalizedWord) && !alreadyFound.Contains(normalizedWord))
+                if (CanUseExactWordMatch(normalizedWord)
+                    && allBadWords.Contains(normalizedWord)
+                    && !alreadyFound.Contains(normalizedWord))
                 {
                     AddFoundWord(normalizedWord, foundBadWords, alreadyFound);
                 }
@@ -551,7 +817,10 @@ namespace MasterServerToolkit.MasterServer
             // Search against special normalized dictionary
             foreach (string normalizedBadWord in normalizedBadWords)
             {
-                if (normalizedMessage.Contains(normalizedBadWord) && !alreadyFound.Contains(normalizedBadWord))
+                if (CanUseSubstringMatch(normalizedBadWord)
+                    && normalizedMessage.Contains(normalizedBadWord)
+                    && IsStandaloneWordInText(normalizedMessage, normalizedBadWord)
+                    && !alreadyFound.Contains(normalizedBadWord))
                 {
                     // Try to find original word for more accurate display
                     string originalWord = normalizedToOriginalMap.ContainsKey(normalizedBadWord)
@@ -562,6 +831,23 @@ namespace MasterServerToolkit.MasterServer
                     {
                         AddFoundWord(originalWord, foundBadWords, alreadyFound);
                     }
+                }
+            }
+        }
+
+        private void PerformExplicitPatternSearch(string message,
+            List<BadWordInfo> foundBadWords, HashSet<string> alreadyFound)
+        {
+            foreach (Match tokenMatch in Regex.Matches(message, @"\S+"))
+            {
+                string normalizedToken = NormalizeTextForDetection(tokenMatch.Value);
+
+                if (string.IsNullOrEmpty(normalizedToken) || IsAllowedByExplicitPattern(normalizedToken))
+                    continue;
+
+                foreach (CensorPattern pattern in GetExplicitPatternMatches(normalizedToken))
+                {
+                    AddFoundPattern(pattern, foundBadWords, alreadyFound);
                 }
             }
         }
@@ -581,6 +867,17 @@ namespace MasterServerToolkit.MasterServer
             alreadyFound.Add(word);
         }
 
+        private void AddFoundPattern(CensorPattern pattern, List<BadWordInfo> foundBadWords, HashSet<string> alreadyFound)
+        {
+            string marker = pattern.GetMarker();
+            if (alreadyFound.Contains(marker))
+                return;
+
+            string word = pattern.Type == CensorPatternType.Word ? pattern.RawValue : marker;
+            foundBadWords.Add(new BadWordInfo(word, pattern.SeverityLevel, pattern.Language));
+            alreadyFound.Add(marker);
+        }
+
         /// <summary>
         /// Check text and return found profanity words as simple list.
         /// </summary>
@@ -597,11 +894,11 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!isInitialized)
             {
-                Debug.LogWarning("CensorshipManager: Not initialized. Call Initialize() first.");
+                logger.Warn("Not initialized. Call Initialize() first.");
                 return message;
             }
 
-            if (string.IsNullOrEmpty(message) || allBadWords.Count == 0)
+            if (string.IsNullOrEmpty(message) || !HasBadEntries())
                 return message;
 
             string result = message;
@@ -610,14 +907,32 @@ namespace MasterServerToolkit.MasterServer
             if (foundWords.Count == 0)
                 return message;
 
+            result = ApplyExplicitPatternCensorship(result, message, replacement);
+
             // Create set of unique words for processing
-            var uniqueWords = foundWords.Select(fw => fw.word).Distinct().ToList();
+            var uniqueWords = foundWords.Select(fw => fw.word)
+                .Distinct()
+                .OrderByDescending(word => NormalizeTextForDetection(word).Length)
+                .ThenByDescending(word => word.Length)
+                .ToList();
 
             // Apply censorship for each found word
             foreach (string badWord in uniqueWords)
             {
+                if (IsExplicitPatternMarker(badWord))
+                    continue;
+
                 // Use regex for precise word boundary search and replacement
                 result = ApplyCensorshipToWord(result, badWord, replacement);
+
+                if (enableAdvancedDetection)
+                {
+                    string normalizedBadWord = NormalizeTextForDetection(badWord);
+                    if (CanUseExactWordMatch(normalizedBadWord))
+                    {
+                        result = FindAndCensorMaskedWord(result, message, normalizedBadWord, replacement);
+                    }
+                }
             }
 
             // Additional processing for cases where words might be masked
@@ -629,6 +944,16 @@ namespace MasterServerToolkit.MasterServer
             return result;
         }
 
+        private bool IsExplicitPatternMarker(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            int separatorIndex = value.IndexOf(':');
+            return separatorIndex > 0
+                && TryGetPatternType(value.Substring(0, separatorIndex), out _);
+        }
+
         /// <summary>
         /// Apply censorship to specific word in text.
         /// Searches all word occurrences and replaces with asterisks, considering word boundaries.
@@ -637,9 +962,34 @@ namespace MasterServerToolkit.MasterServer
         {
             // Create pattern for word search considering boundaries
             string pattern = @"\b" + Regex.Escape(badWord) + @"\b";
-            string replacementStr = new string(replacement, badWord.Length);
+            string replacementStr = new(replacement, badWord.Length);
 
             return Regex.Replace(text, pattern, replacementStr, RegexOptions.IgnoreCase);
+        }
+
+        private string ApplyExplicitPatternCensorship(string currentResult, string originalMessage, char replacement)
+        {
+            var resultBuilder = new StringBuilder(currentResult);
+
+            foreach (Match tokenMatch in Regex.Matches(originalMessage, @"\S+"))
+            {
+                string token = tokenMatch.Value;
+                string normalizedToken = NormalizeTextForDetection(token);
+
+                if (string.IsNullOrEmpty(normalizedToken) || IsAllowedByExplicitPattern(normalizedToken))
+                    continue;
+
+                if (!TryFindExplicitPattern(normalizedToken, out _))
+                    continue;
+
+                int endIndex = Math.Min(tokenMatch.Index + tokenMatch.Length, resultBuilder.Length);
+                for (int i = tokenMatch.Index; i < endIndex; i++)
+                {
+                    resultBuilder[i] = replacement;
+                }
+            }
+
+            return resultBuilder.ToString();
         }
 
         /// <summary>
@@ -653,7 +1003,9 @@ namespace MasterServerToolkit.MasterServer
             // Search for masked words in normalized text
             foreach (string normalizedBadWord in normalizedBadWords)
             {
-                if (normalizedMessage.Contains(normalizedBadWord))
+                if (CanUseSubstringMatch(normalizedBadWord)
+                    && normalizedMessage.Contains(normalizedBadWord)
+                    && IsStandaloneWordInText(normalizedMessage, normalizedBadWord))
                 {
                     // Try to find corresponding fragment in original
                     currentResult = FindAndCensorMaskedWord(currentResult, originalMessage,
@@ -701,32 +1053,32 @@ namespace MasterServerToolkit.MasterServer
         {
             if (!isInitialized)
             {
-                Debug.LogWarning("CensorshipManager: Not initialized. Call Initialize() first.");
+                logger.Warn("Not initialized. Call Initialize() first.");
                 return;
             }
 
             LoadAllBadWords(languageFiles);
-            Debug.Log("CensorshipManager: Word lists reloaded successfully.");
+            logger.Info("Word lists reloaded successfully.");
         }
 
         /// <summary>
         /// Configure system settings at runtime.
         /// </summary>
-        public void ConfigureSettings(bool advanced = true, 
-            bool severity = true, 
+        public void ConfigureSettings(bool advanced = true,
+            bool severity = true,
             bool transliteration = true,
-            bool digitSub = true, 
-            bool separatorRemoval = true, 
-            bool logging = true)
+            bool digitSub = true,
+            bool separatorRemoval = true,
+            LogLevel logLevel = LogLevel.Info)
         {
             enableAdvancedDetection = advanced;
             enableSeveritySystem = severity;
             enableTransliteration = transliteration;
             enableDigitSubstitution = digitSub;
             enableSeparatorRemoval = separatorRemoval;
-            logLoadingDetails = logging;
+            logger.LogLevel = logLevel;
 
-            Debug.Log("CensorshipManager: Settings updated successfully.");
+            logger.Info("Settings updated successfully.");
         }
 
         /// <summary>
@@ -744,6 +1096,10 @@ namespace MasterServerToolkit.MasterServer
                 {"SeparatorRemovalEnabled", enableSeparatorRemoval},
                 {"TotalBadWords", allBadWords.Count},
                 {"NormalizedBadWords", normalizedBadWords.Count},
+                {"WordPatterns", wordPatterns.Count},
+                {"PrefixPatterns", prefixPatterns.Count},
+                {"ContainsPatterns", containsPatterns.Count},
+                {"AllowPatterns", allowPatterns.Count},
                 {"SeveritySystemEnabled", enableSeveritySystem}
             };
         }
@@ -776,6 +1132,7 @@ namespace MasterServerToolkit.MasterServer
             result["DetectionMethods"] = new Dictionary<string, bool>
             {
                 {"StandardSearch", true},
+                {"ExplicitPatterns", wordPatterns.Count + prefixPatterns.Count + containsPatterns.Count > 0},
                 {"AdvancedSearch", enableAdvancedDetection},
                 {"Transliteration", enableTransliteration},
                 {"DigitSubstitution", enableDigitSubstitution}
@@ -801,14 +1158,14 @@ namespace MasterServerToolkit.MasterServer
                 };
             }
 
-            Debug.Log("=== Normalization Test Results ===");
+            logger.Info("=== Normalization Test Results ===");
             foreach (string message in testMessages)
             {
                 string normalized = NormalizeTextForDetection(message);
                 bool containsBad = ContainsBadWords(message);
-                Debug.Log($"'{message}' → '{normalized}' [Bad: {containsBad}]");
+                logger.Info($"'{message}' → '{normalized}' [Bad: {containsBad}]");
             }
-            Debug.Log("=====================================");
+            logger.Info("=====================================");
         }
     }
 }

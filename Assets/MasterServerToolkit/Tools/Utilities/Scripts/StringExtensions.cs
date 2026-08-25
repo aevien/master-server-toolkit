@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ namespace MasterServerToolkit.Extensions
         }
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function
+        /// https://en.wikipedia.org/wiki/Fowler-Noll-Vo_hash_function
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
@@ -119,11 +120,13 @@ namespace MasterServerToolkit.Extensions
         /// <returns></returns>
         public static string FromCamelcase(this string value)
         {
-            return Regex.Replace(value, "[A-Z]", (match) =>
+            string result = Regex.Replace(value, "[A-Z]", (match) =>
             {
                 string v = match.ToString();
                 return $" {v}";
             });
+
+            return result.Trim();
         }
 
         /// <summary>
@@ -160,10 +163,10 @@ namespace MasterServerToolkit.Extensions
         }
 
         /// <summary>
-        /// 
+        /// Converts PascalCase, camelCase, and acronym-based names to lower snake_case.
         /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <param name="value">String value to convert.</param>
+        /// <returns>Snake case string value.</returns>
         public static string ToSnakeCase(this string value)
         {
             if (string.IsNullOrEmpty(value))
@@ -171,8 +174,14 @@ namespace MasterServerToolkit.Extensions
                 return value;
             }
 
-            var startUnderscores = Regex.Match(value, @"^[A-Z]+(?=[A-Z][a-z])|^[A-Z]");
-            return startUnderscores + Regex.Replace(value, @"([a-z0-9])([A-Z])", "$1_$2").ToLower();
+            string startUnderscores = Regex.Match(value, @"^_+").Value;
+            string body = value.Substring(startUnderscores.Length);
+
+            body = Regex.Replace(body, @"([A-Z]+)([A-Z][a-z])", "$1_$2");
+            body = Regex.Replace(body, @"([a-z0-9])([A-Z])", "$1_$2");
+            body = Regex.Replace(body, @"[\s\.\-]+", "_");
+
+            return startUnderscores + body.ToLowerInvariant();
         }
 
         /// <summary>

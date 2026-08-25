@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>{{{ PRODUCT_NAME }}}</title>
+	<style>
+		.loading-wrapper span.progress-value,.loading-wrapper span.title{font-size:30px;text-transform:uppercase;text-align:center;width:100%}body{padding:0;margin:0;width:100%;height:100vh;background:radial-gradient(#29293d,#171722);font-family:'Gill Sans','Gill Sans MT',Calibri,'Trebuchet MS',sans-serif}#unity-container{position:fixed;width:100%;height:100%}#unity-canvas{width:100%;height:100%}#unity-warning{position:absolute;left:50%;top:5%;transform:translate(-50%);background:#fff;padding:10px;display:none}.loading-wrapper{width:400px;height:180px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}.loading-wrapper span.title{position:absolute;top:80px;color:#21b3d2}.loading-wrapper span.progress-bar-wrapper{position:absolute;top:130px;height:10px;width:100%;background:#555}.loading-wrapper span.progress-bar-wrapper span.progress-bar{height:10px;width:25%;background:#b7e117;display:block}.loading-wrapper span.progress-value{position:absolute;top:150px;color:#b7e117}.circles-wrapper{position:absolute;left:100px;top:0;height:60px;width:200px}.circle,.shadow{width:20px;border-radius:50%;position:absolute;transform-origin:50%;left:15%}.circle{height:20px;background-color:#b7e117;animation:.5s infinite alternate circle}@keyframes circle{0%{top:60px;height:5px;border-radius:50px 50px 25px 25px;transform:scaleX(1.7)}40%{height:20px;border-radius:50%;transform:scaleX(1)}100%{top:0}}.circle:nth-child(2),.shadow:nth-child(4){left:45%;animation-delay:.2s}.circle:nth-child(3),.shadow:nth-child(5){left:auto;right:15%;animation-delay:.3s}.shadow{height:4px;background-color:rgba(0,0,0,.5);top:62px;z-index:-1;filter:blur(1px);animation:.5s infinite alternate shadow}@keyframes shadow{0%{transform:scaleX(1.5)}40%{transform:scaleX(1);opacity:.7}100%{transform:scaleX(.2);opacity:.4}}
+	</style>
+</head>
+
+<body>
+    <div id="unity-container">
+        <canvas id="unity-canvas"></canvas>
+        <div id="unity-warning"></div>
+    </div>
+
+    <div id="loading-wrapper" class="loading-wrapper">
+        <div class="circles-wrapper">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="shadow"></div>
+            <div class="shadow"></div>
+            <div class="shadow"></div>
+        </div>
+        <span class="title">{{{COMPANY_NAME}}}</span>
+        <span class="progress-bar-wrapper">
+            <span class="progress-bar" id="progress-bar"></span>
+        </span>
+        <span class="progress-value" id="progress-value">0%</span>
+    </div>
+	{{{ CUSTOM_JS }}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var container = document.querySelector("#unity-container");
+            var canvas = document.querySelector("#unity-canvas");
+            var loadingScreen = document.querySelector("#loading-wrapper");
+            var progressBar = document.querySelector("#progress-bar");
+            var progressValue = document.querySelector("#progress-value");
+            var warningBanner = document.querySelector("#unity-warning");
+
+            // Shows a temporary message banner/ribbon for a few seconds, or
+            // a permanent error message on top of the canvas if type=='error'.
+            // If type=='warning', a yellow highlight color is used.
+            // Modify or remove this function to customize the visually presented
+            // way that non-critical warnings and error messages are presented to the
+            // user.
+            function unityShowBanner(msg, type) {
+                function updateBannerVisibility() {
+                    warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+                }
+                var div = document.createElement('div');
+                div.innerHTML = msg;
+
+                warningBanner.appendChild(div);
+
+                if (type == 'error') {
+                    div.style = 'background: red; padding: 10px;';
+                }
+                else {
+                    if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+
+                    setTimeout(function () {
+                        warningBanner.removeChild(div);
+                        updateBannerVisibility();
+                    }, 5000);
+                }
+
+                updateBannerVisibility();
+            }
+
+            var buildUrl = "Build";
+            var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+            var config = {
+                dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+                frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+		#if USE_WASM
+				codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+		#endif
+		#if MEMORY_FILENAME
+				memoryUrl: buildUrl + "/{{{ MEMORY_FILENAME }}}",
+		#endif
+		#if SYMBOLS_FILENAME
+				symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+		#endif
+				streamingAssetsUrl: "StreamingAssets",
+					companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+				productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+				productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+				showBanner: unityShowBanner,
+			};
+
+			// By default Unity keeps WebGL canvas render target size matched with
+			// the DOM size of the canvas element (scaled by window.devicePixelRatio)
+			// Set this to false if you want to decouple this synchronization from
+			// happening inside the engine, and you would instead like to size up
+			// the canvas DOM size and WebGL render target sizes yourself.
+			// config.matchWebGLToCanvasSize = false;
+
+			if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+				// Mobile device style: fill the whole browser client area with the game canvas:
+				var meta = document.createElement('meta');
+				meta.name = 'viewport';
+				meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+				document.getElementsByTagName('head')[0].appendChild(meta);
+			}
+
+		#if BACKGROUND_FILENAME
+			let background = "url('" + buildUrl + "/{{{ BACKGROUND_FILENAME.replace(/'/g, '%27') }}}') center / cover";
+			canvas.style.background = background;
+		#endif
+
+			var script = document.createElement("script");
+			script.src = loaderUrl;
+			script.onload = () => {
+				createUnityInstance(canvas, config, (progress) => {
+					progressValue.innerHTML = Math.round(100 * progress) + "%";
+					progressBar.style.width = Math.round(100 * progress) + "%";
+				}).then((unityInstance) => {
+					loadingScreen.style.display = "none";
+					window.unityInstance = unityInstance;
+				}).catch((message) => {
+					alert(message);
+				});
+			};
+
+			document.body.appendChild(script);
+        });
+    </script>
+</body>
+
+</html>

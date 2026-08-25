@@ -43,10 +43,8 @@ namespace MasterServerToolkit.MasterServer
         {
             Mst.Server.Spawners.FinalizeSpawnedProcess(SpawnId, finalizationData, (successful, error) =>
             {
-                if (error != null)
-                {
-                    Logs.Error("Error while completing the spawn task: " + error);
-                }
+                if (!successful)
+                    Logs.Error($"Failed to complete spawn task. spawnId={SpawnId}");
 
                 callback.Invoke();
             }, _connection);

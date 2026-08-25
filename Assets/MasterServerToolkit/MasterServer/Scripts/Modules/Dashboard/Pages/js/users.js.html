@@ -1,0 +1,1251 @@
+<script type="module">
+    import { createApp, ref, onMounted, watch, computed, nextTick } from "vue";
+
+    const cloneProfileValue = (value) => {
+        if (value === undefined) return undefined;
+        return JSON.parse(JSON.stringify(value));
+    };
+
+    const isProfilePlainObjectValue = (value) => Boolean(value && typeof value === "object" && !Array.isArray(value));
+
+    const inferProfileClientSchema = (value) => {
+        if (value === null || value === undefined) {
+            return { type: "null", editable: false, reason: "null_value" };
+        }
+
+        if (Array.isArray(value)) {
+            const schema = {
+                type: "array",
+                editable: true,
+                originalLength: value.length,
+                allowAdd: true,
+                allowRemove: true,
+                itemSchemas: value.map(inferProfileClientSchema),
+                items: value.length > 0 ? inferProfileClientSchema(value[0]) : { type: "unknown", editable: true, allowAny: true }
+            };
+
+            if (value.length === 0) {
+                schema.reason = "empty_array";
+            }
+
+            return schema;
+        }
+
+        if (isProfilePlainObjectValue(value)) {
+            const properties = {};
+            Object.keys(value).forEach((key) => {
+                properties[key] = inferProfileClientSchema(value[key]);
+            });
+
+            return {
+                type: "object",
+                editable: true,
+                additionalProperties: false,
+                properties
+            };
+        }
+
+        if (typeof value === "boolean") return { type: "boolean", editable: true };
+        if (typeof value === "number") return { type: Number.isInteger(value) ? "integer" : "number", editable: true };
+        if (typeof value === "string") return { type: "string", editable: true };
+
+        return { type: "unknown", editable: false, reason: "unsupported_value_type" };
+    };
+
+    const schemaProperties = (schema) => {
+        return isProfilePlainObjectValue(schema?.properties) ? schema.properties : {};
+    };
+
+    const schemaValueSchema = (schema) => {
+        return isProfilePlainObjectValue(schema?.valueSchema) ? schema.valueSchema : null;
+    };
+
+    const schemaAllowsAdditionalProperties = (schema) => schema?.additionalProperties === true;
+
+    const schemaTypeLabel = (schema) => {
+        const type = schema?.type || "unknown";
+        return schema?.format ? `${type}:${schema.format}` : type;
+    };
+
+    const schemaReasonText = (schema) => {
+        const reason = schema?.reason || "";
+
+        if (reason === "empty_array") return "Empty array";
+        if (reason === "mixed_array") return "Mixed array cannot be safely edited";
+        if (reason === "null_value") return "Empty value";
+        if (reason === "missing_item_schema") return "Missing item schema";
+        if (reason === "unsupported_json_type" || reason === "unsupported_value_type") return "Unsupported value type";
+
+        return reason || "This value cannot be edited";
+    };
+
+    const createDefaultProfileValue = (schema, fallbackType = "string") => {
+        const type = schema?.type && schema.type !== "unknown" && schema.type !== "mixed"
+            ? schema.type
+            : fallbackType;
+
+        if (type === "boolean") return false;
+        if (type === "integer" || type === "number") return 0;
+        if (type === "string") return "";
+        if (type === "array") return [];
+        if (type === "object") {
+            const result = {};
+            Object.keys(schemaProperties(schema)).forEach((key) => {
+                result[key] = createDefaultProfileValue(schemaProperties(schema)[key]);
+            });
+            return result;
+        }
+
+        return null;
+    };
+
+    const normalizeProfileObjectKey = (key, schema) => {
+        const normalizedKey = String(key ?? "").trim();
+
+        if (!normalizedKey) {
+            throw new Error("Key is required");
+        }
+
+        if (schema?.keyType === "integer") {
+            if (!/^-?\d+$/.test(normalizedKey)) {
+                throw new Error("Key must be an integer");
+            }
+
+            return String(Number(normalizedKey));
+        }
+
+        return normalizedKey;
+    };
+
+    const stableProfileStringify = (value) => {
+        if (Array.isArray(value)) {
+            return `[${value.map(stableProfileStringify).join(",")}]`;
+        }
+
+        if (isProfilePlainObjectValue(value)) {
+            return `{${Object.keys(value).sort((a, b) => a.localeCompare(b)).map((key) => {
+                return `${JSON.stringify(key)}:${stableProfileStringify(value[key])}`;
+            }).join(",")}}`;
+        }
+
+        return JSON.stringify(value);
+    };
+
+    const areProfileValuesEqual = (left, right) => stableProfileStringify(left) === stableProfileStringify(right);
+
+    const getProfileValueType = (value) => {
+        if (value === null || value === undefined) return "empty";
+        if (Array.isArray(value)) return "array";
+        return typeof value;
+    };
+
+    const getProfileItemCount = (value) => {
+        if (Array.isArray(value)) return value.length;
+        if (value && typeof value === "object") return Object.keys(value).length;
+        return "";
+    };
+
+    const getPluralSuffix = (count) => count === 1 ? "" : "s";
+
+    const shortProfileText = (value, maxLength) => {
+        const text = String(value || "");
+        return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+    };
+
+    const createProfilePreview = (value) => {
+        const type = getProfileValueType(value);
+
+        if (type === "empty") return "Empty";
+        if (type === "boolean") return value ? "Yes" : "No";
+        if (type === "number" || type === "bigint") return String(value);
+        if (type === "string") return shortProfileText(value, 64) || "Empty";
+        if (type === "array") return `${value.length} item${getPluralSuffix(value.length)}`;
+        if (type === "object") {
+            const count = Object.keys(value).length;
+            return `${count} field${getPluralSuffix(count)}`;
+        }
+
+        return String(value);
+    };
+
+    const validateDraftAgainstSchema = (value, schema, path = "value") => {
+        const normalizedSchema = schema || inferProfileClientSchema(value);
+        const type = normalizedSchema.type || "unknown";
+
+        if (path === "value" && normalizedSchema.editable === false) {
+            throw new Error(`${path} cannot be edited`);
+        }
+
+        if (type === "unknown" && normalizedSchema.allowAny === true) {
+            return;
+        }
+
+        if (type === "boolean") {
+            if (typeof value !== "boolean") {
+                throw new Error(`${path} must be boolean`);
+            }
+
+            return;
+        }
+
+        if (type === "integer") {
+            if (!Number.isInteger(value) || !Number.isFinite(value)) {
+                throw new Error(`${path} must be an integer`);
+            }
+
+            return;
+        }
+
+        if (type === "number") {
+            if (typeof value !== "number" || !Number.isFinite(value)) {
+                throw new Error(`${path} must be a number`);
+            }
+
+            return;
+        }
+
+        if (type === "string") {
+            if (typeof value !== "string") {
+                throw new Error(`${path} must be text`);
+            }
+
+            return;
+        }
+
+        if (type === "null") {
+            if (value !== null) {
+                throw new Error(`${path} must be empty`);
+            }
+
+            return;
+        }
+
+        if (type === "object") {
+            if (!isProfilePlainObjectValue(value)) {
+                throw new Error(`${path} must be an object`);
+            }
+
+            const properties = schemaProperties(normalizedSchema);
+            const allowAdditionalProperties = schemaAllowsAdditionalProperties(normalizedSchema);
+            const additionalPropertySchema = schemaValueSchema(normalizedSchema);
+            const expectedKeys = Object.keys(properties);
+            const actualKeys = Object.keys(value);
+
+            if (!allowAdditionalProperties) {
+                expectedKeys.forEach((key) => {
+                    if (!Object.prototype.hasOwnProperty.call(value, key)) {
+                        throw new Error(`${path}.${key} is missing`);
+                    }
+                });
+            }
+
+            actualKeys.forEach((key) => {
+                const propertySchema = properties[key] || additionalPropertySchema;
+
+                if (!propertySchema || (!Object.prototype.hasOwnProperty.call(properties, key) && !allowAdditionalProperties)) {
+                    throw new Error(`${path}.${key} is not allowed`);
+                }
+
+                validateDraftAgainstSchema(value[key], propertySchema, `${path}.${key}`);
+            });
+            return;
+        }
+
+        if (type === "array") {
+            if (!Array.isArray(value)) {
+                throw new Error(`${path} must be an array`);
+            }
+
+            value.forEach((item, index) => {
+                const itemSchema = Array.isArray(normalizedSchema.itemSchemas)
+                    ? (normalizedSchema.itemSchemas[index] || normalizedSchema.items)
+                    : normalizedSchema.items;
+
+                validateDraftAgainstSchema(item, itemSchema, `${path}[${index}]`);
+            });
+            return;
+        }
+
+        throw new Error(`${path} has unsupported type`);
+    };
+
+    const profilePathKey = (path) => JSON.stringify(path || []);
+
+    const profilePathLabel = (path) => {
+        return (path || []).map((part, index) => {
+            if (typeof part === "number") return `[${part}]`;
+            return index === 0 ? String(part) : `.${part}`;
+        }).join("");
+    };
+
+    const getProfileValueAtPath = (root, path) => {
+        return (path || []).reduce((value, part) => value?.[part], root);
+    };
+
+    const getProfileChildSchema = (parentSchema, part, value) => {
+        if (parentSchema?.type === "object") {
+            return schemaProperties(parentSchema)[part]
+                || schemaValueSchema(parentSchema)
+                || inferProfileClientSchema(value);
+        }
+
+        if (parentSchema?.type === "array") {
+            return Array.isArray(parentSchema.itemSchemas)
+                ? (parentSchema.itemSchemas[part] || parentSchema.items || inferProfileClientSchema(value))
+                : (parentSchema.items || inferProfileClientSchema(value));
+        }
+
+        return inferProfileClientSchema(value);
+    };
+
+    const getProfileSchemaAtPath = (rootSchema, rootValue, path) => {
+        let schema = rootSchema || inferProfileClientSchema(rootValue);
+        let value = rootValue;
+
+        (path || []).forEach((part) => {
+            value = value?.[part];
+            schema = getProfileChildSchema(schema, part, value);
+        });
+
+        return schema || inferProfileClientSchema(value);
+    };
+
+    const setProfileValueAtPath = (root, path, nextValue) => {
+        if (!path || path.length === 0) return nextValue;
+
+        const [part, ...rest] = path;
+
+        if (Array.isArray(root)) {
+            const next = [...root];
+            next[part] = setProfileValueAtPath(next[part], rest, nextValue);
+            return next;
+        }
+
+        const next = isProfilePlainObjectValue(root) ? { ...root } : {};
+        next[part] = setProfileValueAtPath(next[part], rest, nextValue);
+        return next;
+    };
+
+    const removeProfileValueAtPath = (root, path) => {
+        if (!path || path.length === 0) return root;
+
+        const [part, ...rest] = path;
+
+        if (Array.isArray(root)) {
+            const next = [...root];
+
+            if (rest.length === 0) {
+                next.splice(part, 1);
+            } else {
+                next[part] = removeProfileValueAtPath(next[part], rest);
+            }
+
+            return next;
+        }
+
+        const next = isProfilePlainObjectValue(root) ? { ...root } : {};
+
+        if (rest.length === 0) {
+            delete next[part];
+        } else {
+            next[part] = removeProfileValueAtPath(next[part], rest);
+        }
+
+        return next;
+    };
+
+    const createProfileTreeRows = (profile, profileSchema, originalProfile) => {
+        const rows = [];
+
+        const visit = (value, schema, originalValue, path) => {
+            if (!path || path.length > 0) {
+                const type = schema?.type || getProfileValueType(value);
+
+                rows.push({
+                    path,
+                    pathKey: profilePathKey(path),
+                    pathLabel: profilePathLabel(path),
+                    key: path[path.length - 1],
+                    label: typeof path[path.length - 1] === "number" ? `[${path[path.length - 1]}]` : mst.toTitleCase(path[path.length - 1]),
+                    depth: Math.min(Math.max(path.length - 1, 0), 5),
+                    type,
+                    format: schema?.format || "",
+                    schema,
+                    value,
+                    preview: createProfilePreview(value),
+                    changed: !areProfileValuesEqual(value, originalValue),
+                    isContainer: type === "object" || type === "array"
+                });
+            }
+
+            if (schema?.type === "object" && isProfilePlainObjectValue(value)) {
+                const keys = new Set(Object.keys(schemaProperties(schema)));
+                Object.keys(value).forEach((key) => keys.add(key));
+
+                Array.from(keys).sort((a, b) => a.localeCompare(b)).forEach((key) => {
+                    const childValue = value[key];
+                    const childSchema = getProfileChildSchema(schema, key, childValue);
+                    visit(childValue, childSchema, originalValue?.[key], [...path, key]);
+                });
+            }
+
+            if (schema?.type === "array" && Array.isArray(value)) {
+                value.forEach((item, index) => {
+                    const itemSchema = getProfileChildSchema(schema, index, item);
+                    visit(item, itemSchema, Array.isArray(originalValue) ? originalValue[index] : undefined, [...path, index]);
+                });
+            }
+        };
+
+        if (isProfilePlainObjectValue(profile)) {
+            visit(profile, profileSchema || inferProfileClientSchema(profile), originalProfile, []);
+        }
+
+        return rows;
+    };
+
+    createApp({
+        setup() {
+            const selectedUser = ref();
+            const searchValue = ref("");
+            const searchDateFrom = ref();
+            const searchDateTo = ref();
+            const searchDateValue = ref(["lastLoginAt", "createdAt", "updatedAt"]);
+            const usersTable = ref(null);
+            const blockHistoryTable = ref(null);
+            const blockHistoryTableElement = ref(null);
+            const profileOriginal = ref(null);
+            const profileDraft = ref(null);
+            const profileEditError = ref("");
+            const profileSaving = ref(false);
+            const selectedProfilePathKey = ref("");
+            const newProfileFieldKey = ref("");
+            const newProfileFieldType = ref("string");
+            const newProfileArrayItemType = ref("string");
+            const profileAddError = ref("");
+            const info = ref({});
+            const loading = ref(false);
+            const playerDetailsLoading = ref(false);
+            const blockHistoryLoading = ref(false);
+            const blockHistoryTotal = ref(0);
+            const blockHistory = ref([]);
+            const modal = ref(null);
+            const blockReason = ref("");
+            const notificationMessage = ref("");
+            const notificationSending = ref(false);
+            const blockForever = ref(false);
+            const blockUntil = ref("");
+            const blockMaxDate = ref("2099-12-31");
+            const selectedBlockPreset = ref("");
+            const blockValidationVisible = ref(false);
+            const hasBlockReason = computed(() => Boolean((blockReason.value || "").trim()));
+            const hasBlockUntil = computed(() => Boolean((blockUntil.value || "").trim()));
+            const canEditProfile = computed(() => Boolean(selectedUser.value?.id && selectedUser.value?.extras?.isOnline !== true));
+            const profileTreeRows = computed(() => createProfileTreeRows(profileDraft.value, selectedUser.value?.profileSchema, profileOriginal.value));
+            const selectedProfileNode = computed(() => {
+                return profileTreeRows.value.find((row) => row.pathKey === selectedProfilePathKey.value)
+                    || profileTreeRows.value[0]
+                    || null;
+            });
+            const selectedProfileValue = computed(() => selectedProfileNode.value ? getProfileValueAtPath(profileDraft.value, selectedProfileNode.value.path) : null);
+            const selectedProfileSchema = computed(() => selectedProfileNode.value
+                ? getProfileSchemaAtPath(selectedUser.value?.profileSchema, profileDraft.value, selectedProfileNode.value.path)
+                : null);
+            const selectedProfileType = computed(() => selectedProfileSchema.value?.type || getProfileValueType(selectedProfileValue.value));
+            const selectedProfileChildren = computed(() => {
+                const node = selectedProfileNode.value;
+                if (!node) return [];
+
+                return profileTreeRows.value.filter((row) => {
+                    return row.path.length === node.path.length + 1
+                        && row.path.slice(0, node.path.length).every((part, index) => part === node.path[index]);
+                });
+            });
+            const profileDirty = computed(() => !areProfileValuesEqual(profileOriginal.value, profileDraft.value));
+            const blockPresets = [
+                { value: "", label: "Manual" },
+                { value: "chat-abuse", label: "Chat abuse", reason: "Violation of chat communication rules", days: 3 },
+                { value: "spam", label: "Spam / flood", reason: "Spam or flood in chat", days: 1 },
+                { value: "explicit", label: "Explicit content", reason: "Inappropriate or explicit content", days: 3 },
+                { value: "ads", label: "Advertising", reason: "Advertising third-party resources", days: 7 },
+                { value: "cheats", label: "Cheats / exploits", reason: "Using cheats or exploits", days: 30 },
+                { value: "scam", label: "Scam", reason: "Attempt to scam or deceive other players", days: 14 },
+                { value: "ban-evasion", label: "Ban evasion", reason: "Attempt to evade an active punishment", days: 30 }
+            ];
+
+            let searchReloadTimeout = null;
+
+            const formatDateForInput = (date) => {
+                if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+                return date.toISOString().slice(0, 10);
+            };
+
+            const addDaysToToday = (days) => {
+                const result = new Date();
+                result.setHours(0, 0, 0, 0);
+                result.setDate(result.getDate() + days);
+                return formatDateForInput(result);
+            };
+
+            const renderText = (value) => mst.renderText(value);
+            const renderJson = (json) => mst.renderJson(json);
+            const toTitleCase = (str) => mst.toTitleCase(str);
+            const tooltipText = (value) => {
+                if (value === null || value === undefined) return "";
+                if (typeof value === "boolean") return value ? "Yes" : "No";
+                if (typeof value === "object") return JSON.stringify(value);
+                return String(value);
+            };
+            const setCellTitle = (cell, value) => {
+                const title = tooltipText(value);
+                cell.getElement().setAttribute("title", title);
+                return title;
+            };
+            const shortText = (value, maxLength) => {
+                const text = String(value || "");
+                return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+            };
+            const textFormatter = (cell) => renderText(setCellTitle(cell, cell.getValue()));
+            const shortTextFormatter = (maxLength) => (cell) => {
+                const title = setCellTitle(cell, cell.getValue());
+                return renderText(shortText(title, maxLength));
+            };
+            const booleanIconFormatter = (enabledClass, label) => (cell) => {
+                const title = `${label || cell.getColumn().getDefinition().title}: ${tooltipText(cell.getValue())}`;
+                cell.getElement().setAttribute("title", title);
+
+                return cell.getValue() === true
+                    ? `<i class="bi bi-check-circle-fill ${enabledClass || "text-success"}" title="${mst.escapeHtml(title)}"></i>`
+                    : `<i class="bi bi-x-circle-fill text-secondary" title="${mst.escapeHtml(title)}"></i>`;
+            };
+            const profileTreeIndentClass = (row) => `ps-${Math.min((row?.depth || 0) + 2, 5)}`;
+            const profileNodeTypeLabel = (node) => schemaTypeLabel(node?.schema || selectedProfileSchema.value);
+            const selectedProfileStringValue = computed(() => selectedProfileValue.value === null || selectedProfileValue.value === undefined ? "" : String(selectedProfileValue.value));
+            const selectedProfileEditable = computed(() => {
+                const schema = selectedProfileSchema.value;
+                const type = selectedProfileType.value;
+                return canEditProfile.value
+                    && schema?.editable !== false
+                    && type !== "null"
+                    && type !== "unknown"
+                    && type !== "mixed";
+            });
+            const selectedProfileReadOnlyText = computed(() => {
+                if (!canEditProfile.value) {
+                    return "Profile editing is available only while the user is offline.";
+                }
+
+                return schemaReasonText(selectedProfileSchema.value);
+            });
+            const selectedObjectAddValueSchema = computed(() => schemaValueSchema(selectedProfileSchema.value));
+            const selectedObjectUsesFixedValueSchema = computed(() => {
+                const schema = selectedObjectAddValueSchema.value;
+                return Boolean(schema && schema.type && schema.type !== "unknown");
+            });
+            const canAddSelectedObjectField = computed(() => {
+                return selectedProfileType.value === "object"
+                    && selectedProfileEditable.value
+                    && schemaAllowsAdditionalProperties(selectedProfileSchema.value);
+            });
+            const canRemoveSelectedChildren = computed(() => {
+                if (!selectedProfileEditable.value) return false;
+                if (selectedProfileType.value === "array") return selectedProfileSchema.value?.allowRemove !== false;
+                if (selectedProfileType.value === "object") {
+                    return schemaAllowsAdditionalProperties(selectedProfileSchema.value)
+                        && selectedProfileSchema.value?.allowRemove !== false;
+                }
+                return false;
+            });
+            const selectedArrayAddSchema = computed(() => {
+                const schema = selectedProfileSchema.value;
+                const items = schema?.items;
+
+                if (!items || items.allowAny === true || items.type === "unknown") {
+                    return { type: newProfileArrayItemType.value, editable: true };
+                }
+
+                return items;
+            });
+            const canAddSelectedArrayItem = computed(() => {
+                return selectedProfileType.value === "array"
+                    && selectedProfileEditable.value
+                    && selectedProfileSchema.value?.allowAdd !== false
+                    && selectedArrayAddSchema.value?.type !== "mixed";
+            });
+            const selectedArrayUsesFixedValueSchema = computed(() => {
+                const items = selectedProfileSchema.value?.items;
+                return Boolean(items && items.type && items.type !== "unknown" && items.allowAny !== true);
+            });
+            const selectedProfileIsContainer = computed(() => selectedProfileType.value === "object" || selectedProfileType.value === "array");
+            const shouldUseSelectedProfileTextarea = computed(() => {
+                const text = selectedProfileStringValue.value;
+                return text.length > 80 || text.includes("\n");
+            });
+            const selectProfileNode = (row) => {
+                selectedProfilePathKey.value = row?.pathKey || "";
+                profileAddError.value = "";
+            };
+            const isSelectedProfileNode = (row) => Boolean(row && selectedProfileNode.value?.pathKey === row.pathKey);
+            const updateSelectedProfileValue = (value) => {
+                if (!selectedProfileNode.value) return;
+                profileDraft.value = setProfileValueAtPath(profileDraft.value, selectedProfileNode.value.path, value);
+            };
+            const updateSelectedProfileString = (event) => updateSelectedProfileValue(event.target.value);
+            const updateSelectedProfileNumber = (rawValue) => {
+                const value = String(rawValue ?? "").trim();
+
+                if (!value) {
+                    updateSelectedProfileValue("");
+                    return;
+                }
+
+                if (selectedProfileType.value === "integer" && !/^-?\d+$/.test(value)) {
+                    updateSelectedProfileValue(value);
+                    return;
+                }
+
+                const numberValue = Number(value);
+                updateSelectedProfileValue(Number.isFinite(numberValue) ? numberValue : value);
+            };
+            const addSelectedObjectField = () => {
+                try {
+                    const schema = selectedProfileSchema.value;
+                    const key = normalizeProfileObjectKey(newProfileFieldKey.value, schema);
+                    const currentValue = isProfilePlainObjectValue(selectedProfileValue.value) ? selectedProfileValue.value : {};
+
+                    if (Object.prototype.hasOwnProperty.call(currentValue, key)) {
+                        throw new Error("Key already exists");
+                    }
+
+                    const valueSchema = selectedObjectAddValueSchema.value || { type: newProfileFieldType.value, editable: true };
+                    const nextValue = {
+                        ...currentValue,
+                        [key]: createDefaultProfileValue(valueSchema, newProfileFieldType.value)
+                    };
+
+                    newProfileFieldKey.value = "";
+                    profileAddError.value = "";
+                    updateSelectedProfileValue(nextValue);
+                } catch (error) {
+                    profileAddError.value = error?.message || "Failed to add field";
+                }
+            };
+            const addSelectedArrayItem = () => {
+                const currentValue = Array.isArray(selectedProfileValue.value) ? selectedProfileValue.value : [];
+                const nextValue = [...currentValue, createDefaultProfileValue(selectedArrayAddSchema.value, newProfileArrayItemType.value)];
+                profileAddError.value = "";
+                updateSelectedProfileValue(nextValue);
+            };
+            const removeProfileChild = (row) => {
+                if (!row) return;
+
+                const parentPath = row.path.slice(0, -1);
+                profileDraft.value = removeProfileValueAtPath(profileDraft.value, row.path);
+                selectedProfilePathKey.value = profilePathKey(parentPath.length > 0 ? parentPath : (profileTreeRows.value[0]?.path || []));
+            };
+            const resetProfileEditor = () => {
+                profileEditError.value = "";
+                profileSaving.value = false;
+                profileDraft.value = cloneProfileValue(profileOriginal.value);
+                profileAddError.value = "";
+            };
+            const setProfileDraft = (profile) => {
+                profileOriginal.value = cloneProfileValue(profile || null);
+                profileDraft.value = cloneProfileValue(profile || null);
+                profileEditError.value = "";
+                profileSaving.value = false;
+                profileAddError.value = "";
+                selectedProfilePathKey.value = isProfilePlainObjectValue(profile)
+                    ? profilePathKey(Object.keys(profile).sort((a, b) => a.localeCompare(b)).slice(0, 1))
+                    : "";
+            };
+            const getChangedProfileKeys = () => {
+                if (!isProfilePlainObjectValue(profileDraft.value) || !isProfilePlainObjectValue(profileOriginal.value)) {
+                    return [];
+                }
+
+                const keys = new Set([
+                    ...Object.keys(profileDraft.value),
+                    ...Object.keys(profileOriginal.value)
+                ]);
+
+                return Array.from(keys)
+                    .sort((a, b) => a.localeCompare(b))
+                    .filter((key) => !areProfileValuesEqual(profileDraft.value[key], profileOriginal.value[key]));
+            };
+            const validateChangedProfileProperties = (changedKeys) => {
+                const propertiesSchema = schemaProperties(selectedUser.value?.profileSchema);
+
+                changedKeys.forEach((key) => {
+                    const schema = propertiesSchema[key] || inferProfileClientSchema(profileDraft.value?.[key]);
+                    validateDraftAgainstSchema(profileDraft.value?.[key], schema, key);
+                });
+            };
+            const getSortInstruction = (params) => {
+                const sorters = Array.isArray(params?.sorters)
+                    ? params.sorters
+                    : Array.isArray(params?.sort)
+                        ? params.sort
+                        : [];
+
+                return sorters.length > 0 ? sorters[0] : null;
+            };
+
+            const createUsersQuery = (params) => {
+                const size = Number(params?.size) > 0 ? Number(params.size) : 10;
+                const page = Math.max((Number(params?.page) || 1) - 1, 0);
+                const sortInstruction = getSortInstruction(params);
+                const sortDirection = sortInstruction?.dir === "desc" ? "1" : "0";
+
+                return new URLSearchParams({
+                    page: page.toString(),
+                    size: size.toString(),
+                    sortField: sortInstruction?.field || "",
+                    sortDirection: sortInstruction ? sortDirection : "",
+                    searchValue: searchValue.value || "",
+                    searchDateFrom: searchDateFrom.value || "",
+                    searchDateTo: searchDateTo.value || "",
+                    searchDateValue: (searchDateValue.value || []).join(",")
+                });
+            };
+
+            const getLastPage = (filtered, size) => {
+                const pageSize = Number(size) > 0 ? Number(size) : 10;
+                const rowCount = Number(filtered) || 0;
+                return Math.max(1, Math.ceil(rowCount / pageSize));
+            };
+
+            const reloadUsers = (resetPage) => {
+                if (!usersTable.value) return;
+
+                if (resetPage) {
+                    if (usersTable.value.getPage && usersTable.value.getPage() !== 1) {
+                        usersTable.value.setPage(1).catch(() => usersTable.value?.replaceData());
+                    } else {
+                        usersTable.value.replaceData();
+                    }
+                    return;
+                }
+
+                usersTable.value.replaceData();
+            };
+
+            const reloadUsersDebounced = () => {
+                clearTimeout(searchReloadTimeout);
+                searchReloadTimeout = setTimeout(() => reloadUsers(true), 250);
+            };
+
+            const syncBlockForm = (user) => {
+                const blockedUntilValue = mst.normalizeDateInputValue(user?.blockedUntil);
+                const isBlocked = Boolean(user?.isBlocked);
+
+                blockReason.value = isBlocked ? (user?.blockReason || "") : "";
+                notificationMessage.value = "";
+                notificationSending.value = false;
+                blockForever.value = Boolean(isBlocked && blockedUntilValue === blockMaxDate.value);
+                blockUntil.value = isBlocked
+                    ? (blockForever.value ? blockMaxDate.value : blockedUntilValue)
+                    : "";
+                selectedBlockPreset.value = "";
+                blockValidationVisible.value = false;
+            };
+
+            const setBlockHistory = (entries) => {
+                blockHistory.value = entries || [];
+
+                if (blockHistoryTable.value) {
+                    blockHistoryTable.value.replaceData(blockHistory.value);
+                    setTimeout(() => blockHistoryTable.value?.redraw(true), 0);
+                }
+            };
+
+            const destroyBlockHistoryTable = () => {
+                if (!blockHistoryTable.value) return;
+
+                blockHistoryTable.value.destroy();
+                blockHistoryTable.value = null;
+            };
+
+            const loadBlockHistory = async (userId) => {
+                if (!userId) {
+                    blockHistoryTotal.value = 0;
+                    setBlockHistory([]);
+                    return;
+                }
+
+                blockHistoryLoading.value = true;
+
+                try {
+                    const qs = new URLSearchParams({ id: userId, page: "0", size: "100" });
+                    const response = await mst.apiFetch(`users/block/history?${qs.toString()}`, { method: "GET" }, { toastErrors: false });
+
+                    if (!response.ok) {
+                        throw new Error(await mst.getErrorMessage(response, `Failed to load block history: ${response.status}`));
+                    }
+
+                    const historyJson = await response.json();
+                    blockHistoryTotal.value = historyJson.filtered ?? historyJson.total ?? 0;
+                    setBlockHistory(historyJson.entries ?? []);
+                } catch (error) {
+                    blockHistoryTotal.value = 0;
+                    setBlockHistory([]);
+                    mst.showError(error?.message || "Failed to load block history");
+                } finally {
+                    blockHistoryLoading.value = false;
+                }
+            };
+
+            const loadUserDetails = async (userId) => {
+                destroyBlockHistoryTable();
+                setProfileDraft(null);
+                playerDetailsLoading.value = true;
+                const qs = new URLSearchParams({ id: userId });
+                const r = await mst.apiFetch(`users/id?${qs.toString()}`, { method: "GET" }, { errorMessage: "Failed to load user details", toastErrors: false });
+                if (!r.ok) {
+                    mst.showError(await mst.getErrorMessage(r, `Failed to load user: ${r.status}`));
+                    selectedUser.value = null;
+                    syncBlockForm(null);
+                    setProfileDraft(null);
+                    await loadBlockHistory(null);
+                    playerDetailsLoading.value = false;
+                    return;
+                }
+
+                selectedUser.value = await r.json();
+                syncBlockForm(selectedUser.value);
+                setProfileDraft(selectedUser.value?.profile);
+                playerDetailsLoading.value = false;
+                await nextTick();
+                initializeBlockHistoryTable();
+                await loadBlockHistory(userId);
+            };
+
+            const showUserDetails = async (rowData) => {
+                modal.value.show();
+                await loadUserDetails(rowData.id);
+            };
+
+            const blockUser = async () => {
+                if (!selectedUser.value?.id) return;
+                const userId = selectedUser.value.id;
+                const isUserBlocked = Boolean(selectedUser.value?.isBlocked);
+                const actionLabel = isUserBlocked ? "unblock" : "block";
+                const normalizedBlockReason = (blockReason.value || "").trim();
+                const normalizedBlockUntil = blockForever.value
+                    ? blockMaxDate.value
+                    : (blockUntil.value || "").trim();
+
+                blockValidationVisible.value = false;
+
+                if (actionLabel === "block" && !normalizedBlockReason) {
+                    blockValidationVisible.value = true;
+                    mst.showError("Block reason is required");
+                    return;
+                }
+
+                if (actionLabel === "block" && !normalizedBlockUntil) {
+                    blockValidationVisible.value = true;
+                    mst.showError("Block date is required");
+                    return;
+                }
+
+                const confirmed = await mst.confirm(`Are you sure you want to ${actionLabel} this user?`, {
+                    title: "Confirm user action",
+                    confirmText: actionLabel === "block" ? "Block" : "Unblock",
+                    variant: actionLabel === "block" ? "danger" : "warning"
+                });
+                if (!confirmed) return;
+
+                const requestQuery = new URLSearchParams({ id: userId });
+
+                if (actionLabel === "block") {
+                    requestQuery.set("blockReason", normalizedBlockReason);
+                    requestQuery.set("blockUntil", normalizedBlockUntil);
+                } else {
+                    requestQuery.set("removeReason", "");
+                }
+
+                try {
+                    const response = await mst.apiFetch(`users/block?${requestQuery.toString()}`, {
+                        method: actionLabel === "block" ? "PUT" : "DELETE"
+                    }, { toastErrors: false });
+
+                    if (response.ok) {
+                        const result = await response.json().catch(() => null);
+                        reloadUsers(false);
+                        await loadUserDetails(userId);
+
+                        if (actionLabel === "block" && result === true) {
+                            mst.showSuccess("User blocked");
+                        } else if (actionLabel === "unblock" && result === true) {
+                            mst.showSuccess("User unblocked");
+                        } else if (actionLabel === "unblock" && result === false) {
+                            mst.showSuccess("User was not blocked");
+                        } else {
+                            mst.showSuccess("Operation completed");
+                        }
+                    } else {
+                        mst.showError(await mst.getErrorMessage(response, `Failed to ${actionLabel} user: ${response.status}`));
+                    }
+                } catch (error) {
+                    mst.showError(error?.message || "Network error");
+                }
+            };
+
+            const sendNotification = async () => {
+                if (!selectedUser.value?.id || notificationSending.value) return;
+
+                const normalizedNoticeMessage = (notificationMessage.value || "").trim();
+                if (!normalizedNoticeMessage) {
+                    mst.showError("Notification message is required");
+                    return;
+                }
+
+                notificationSending.value = true;
+
+                try {
+                    const response = await mst.apiFetch("notification/user", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            id: selectedUser.value.id,
+                            message: normalizedNoticeMessage
+                        })
+                    }, { toastErrors: false });
+
+                    if (response.ok) {
+                        notificationMessage.value = "";
+                        mst.showSuccess("Notification sent");
+                    } else {
+                        mst.showError(await mst.getErrorMessage(response, `Failed to send notification: ${response.status}`));
+                    }
+                } catch (error) {
+                    mst.showError(error?.message || "Network error");
+                } finally {
+                    notificationSending.value = false;
+                }
+            };
+
+            const saveProfileChanges = async () => {
+                if (!selectedUser.value?.id || profileSaving.value) return;
+
+                if (!canEditProfile.value) {
+                    mst.showError("Profile editing is available only while user is offline");
+                    return;
+                }
+
+                profileEditError.value = "";
+
+                const changedKeys = getChangedProfileKeys();
+
+                if (changedKeys.length === 0) {
+                    mst.showSuccess("No profile changes");
+                    return;
+                }
+
+                try {
+                    validateChangedProfileProperties(changedKeys);
+                } catch (error) {
+                    profileEditError.value = error?.message || "Profile property value is invalid";
+                    mst.showError(profileEditError.value);
+                    return;
+                }
+
+                profileSaving.value = true;
+
+                try {
+                    let result = null;
+
+                    for (const propertyKey of changedKeys) {
+                        const qs = new URLSearchParams({
+                            id: selectedUser.value.id,
+                            key: propertyKey
+                        });
+                        const response = await mst.apiFetch(`users/profile-property?${qs.toString()}`, {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ value: profileDraft.value[propertyKey] })
+                        }, { toastErrors: false });
+
+                        if (!response.ok) {
+                            throw new Error(await mst.getErrorMessage(response, `Failed to save profile property '${propertyKey}': ${response.status}`));
+                        }
+
+                        result = await response.json();
+                    }
+
+                    selectedUser.value.profile = result?.profile || selectedUser.value.profile;
+                    selectedUser.value.profileSchema = result?.profileSchema || selectedUser.value.profileSchema;
+                    setProfileDraft(selectedUser.value.profile);
+                    mst.showSuccess("Profile changes saved");
+                } catch (error) {
+                    profileEditError.value = error?.message || "Failed to save profile changes";
+                    mst.showError(profileEditError.value);
+                } finally {
+                    profileSaving.value = false;
+                }
+            };
+
+            const initializeUsersTable = () => {
+                usersTable.value = new Tabulator("#usersTable", {
+                    ajaxURL: mst.createApiUrl("users"),
+                    ajaxRequestFunc: async (url, config, params) => {
+                        loading.value = true;
+
+                        try {
+                            const query = createUsersQuery(params);
+                            const response = await mst.apiFetch(`users?${query.toString()}`, { method: "GET" }, { toastErrors: false });
+
+                            if (!response.ok) {
+                                throw new Error(await mst.getErrorMessage(response, `Failed to load users: ${response.status}`));
+                            }
+
+                            const responseJson = await response.json();
+                            const filtered = responseJson.filtered ?? responseJson.recordsFiltered ?? responseJson.total ?? 0;
+                            info.value = responseJson.info || {};
+
+                            return {
+                                data: responseJson.entries ?? [],
+                                last_page: getLastPage(filtered, params?.size)
+                            };
+                        } catch (error) {
+                            console.error("Users load failed:", error);
+                            info.value = {};
+                            mst.showError(error?.message || "Failed to load users");
+
+                            return {
+                                data: [],
+                                last_page: 1
+                            };
+                        } finally {
+                            loading.value = false;
+                        }
+                    },
+                    pagination: true,
+                    paginationMode: "remote",
+                    paginationSize: 10,
+                    paginationSizeSelector: [10, 25, 50, 100],
+                    sortMode: "remote",
+                    layout: "fitDataFill",
+                    responsiveLayout: "hide",
+                    placeholder: "No users found",
+                    columnDefaults: {
+                        headerTooltip: true
+                    },
+                    rowFormatter: (row) => row.getElement().classList.add("selectable"),
+                    columns: [
+                        { title: "Username", field: "username", responsive: 0, formatter: textFormatter },
+                        {
+                            title: "Admin",
+                            field: "isAdmin",
+                            hozAlign: "center",
+                            responsive: 4,
+                            formatter: booleanIconFormatter("text-success", "Admin")
+                        },
+                        {
+                            title: "Guest",
+                            field: "isGuest",
+                            hozAlign: "center",
+                            responsive: 5,
+                            formatter: booleanIconFormatter("text-success", "Guest")
+                        },
+                        {
+                            title: "Online",
+                            field: "extras.isOnline",
+                            hozAlign: "center",
+                            responsive: 1,
+                            headerSort: false,
+                            formatter: booleanIconFormatter("text-success", "Online")
+                        },
+                        {
+                            title: "In Room",
+                            field: "extras.isInRoom",
+                            hozAlign: "center",
+                            responsive: 2,
+                            headerSort: false,
+                            formatter: booleanIconFormatter("text-success", "In Room")
+                        },
+                        {
+                            title: "Blocked",
+                            field: "isBlocked",
+                            hozAlign: "center",
+                            responsive: 1,
+                            formatter: booleanIconFormatter("text-danger", "Blocked")
+                        },
+                        { title: "Last Login", field: "lastLoginAt", responsive: 3, formatter: textFormatter }
+                    ]
+                });
+
+                usersTable.value.on("rowClick", (event, row) => showUserDetails(row.getData()));
+            };
+
+            const initializeBlockHistoryTable = () => {
+                if (!blockHistoryTableElement.value || blockHistoryTable.value) return;
+
+                blockHistoryTable.value = new Tabulator(blockHistoryTableElement.value, {
+                    data: blockHistory.value,
+                    layout: "fitColumns",
+                    responsiveLayout: "collapse",
+                    responsiveLayoutCollapseStartOpen: false,
+                    placeholder: "No block history",
+                    columnDefaults: {
+                        headerTooltip: true
+                    },
+                    columns: [
+                        {
+                            title: "Status",
+                            field: "isActive",
+                            width: 95,
+                            responsive: 0,
+                            formatter: (cell) => {
+                                const title = cell.getValue() ? "Active" : "Closed";
+                                cell.getElement().setAttribute("title", title);
+                                return cell.getValue()
+                                    ? `<span class="badge bg-danger" title="${title}">Active</span>`
+                                    : `<span class="badge bg-secondary" title="${title}">Closed</span>`;
+                            }
+                        },
+                        { title: "Created", field: "createdAt", minWidth: 165, responsive: 2, formatter: textFormatter },
+                        { title: "Until", field: "blockedUntil", minWidth: 165, responsive: 1, formatter: textFormatter },
+                        { title: "Removed", field: "removedAt", minWidth: 165, responsive: 5, formatter: textFormatter },
+                        { title: "Block Reason", field: "blockReason", minWidth: 220, responsive: 0, formatter: textFormatter },
+                        { title: "Remove Reason", field: "removeReason", minWidth: 220, responsive: 4, formatter: textFormatter },
+                        {
+                            title: "ID",
+                            field: "id",
+                            minWidth: 120,
+                            responsive: 6,
+                            formatter: shortTextFormatter(8)
+                        }
+                    ]
+                });
+            };
+
+            onMounted(async () => {
+                modal.value = new bootstrap.Modal("#userModal");
+                initializeUsersTable();
+                initializeBlockHistoryTable();
+
+                document.getElementById("nav-user-block-history-tab")?.addEventListener("shown.bs.tab", () => {
+                    blockHistoryTable.value?.redraw(true);
+                });
+
+                document.getElementById("userModal")?.addEventListener("shown.bs.modal", () => {
+                    blockHistoryTable.value?.redraw(true);
+                });
+
+                watch([searchDateFrom, searchDateTo, searchDateValue], () => reloadUsers(true));
+                watch(searchValue, reloadUsersDebounced);
+                watch(profileTreeRows, (rows) => {
+                    if (!rows.length) {
+                        selectedProfilePathKey.value = "";
+                        return;
+                    }
+
+                    if (!rows.some((row) => row.pathKey === selectedProfilePathKey.value)) {
+                        selectedProfilePathKey.value = rows[0].pathKey;
+                    }
+                });
+
+                watch(blockForever, (isForever, wasForever) => {
+                    if (isForever) {
+                        blockUntil.value = blockMaxDate.value;
+                        return;
+                    }
+
+                    if (wasForever && blockUntil.value === blockMaxDate.value) {
+                        blockUntil.value = "";
+                    }
+                });
+
+                watch(selectedBlockPreset, (presetValue) => {
+                    if (!presetValue) return;
+
+                    const preset = blockPresets.find((item) => item.value === presetValue);
+                    if (!preset) return;
+
+                    blockReason.value = preset.reason || "";
+                    blockForever.value = false;
+                    blockUntil.value = typeof preset.days === "number"
+                        ? addDaysToToday(preset.days)
+                        : "";
+                    blockValidationVisible.value = false;
+                });
+            });
+
+            return {
+                info,
+                loading,
+                playerDetailsLoading,
+                blockHistoryLoading,
+                blockHistoryTotal,
+                blockHistoryTableElement,
+                profileDraft,
+                profileTreeRows,
+                selectedProfileNode,
+                selectedProfileValue,
+                selectedProfileType,
+                selectedProfileChildren,
+                selectedProfileStringValue,
+                selectedProfileEditable,
+                selectedProfileReadOnlyText,
+                selectedObjectAddValueSchema,
+                selectedObjectUsesFixedValueSchema,
+                selectedArrayAddSchema,
+                selectedArrayUsesFixedValueSchema,
+                canAddSelectedObjectField,
+                canAddSelectedArrayItem,
+                canRemoveSelectedChildren,
+                selectedProfileIsContainer,
+                shouldUseSelectedProfileTextarea,
+                newProfileFieldKey,
+                newProfileFieldType,
+                newProfileArrayItemType,
+                profileAddError,
+                profileEditError,
+                profileSaving,
+                profileDirty,
+                canEditProfile,
+                profileTreeIndentClass,
+                profileNodeTypeLabel,
+                selectProfileNode,
+                isSelectedProfileNode,
+                updateSelectedProfileValue,
+                updateSelectedProfileString,
+                updateSelectedProfileNumber,
+                addSelectedObjectField,
+                addSelectedArrayItem,
+                removeProfileChild,
+                resetProfileEditor,
+                saveProfileChanges,
+                selectedUser,
+                searchValue,
+                searchDateFrom,
+                searchDateTo,
+                searchDateValue,
+                toTitleCase,
+                renderJson,
+                renderText,
+                tooltipText,
+                blockReason,
+                notificationMessage,
+                notificationSending,
+                blockForever,
+                blockUntil,
+                blockMaxDate,
+                selectedBlockPreset,
+                blockValidationVisible,
+                blockPresets,
+                hasBlockReason,
+                hasBlockUntil,
+                reloadUsers,
+                blockUser,
+                sendNotification
+            };
+        }
+    }).mount("#app");
+</script>

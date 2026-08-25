@@ -11,31 +11,31 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
     {
         #region INSPECTOR
 
-        [Header("Gravity Settings"), SerializeField]
+        [Header("Gravity Settings"), SerializeField, Tooltip("Multiplier applied to Physics.gravity while the owning character is airborne. 0 disables airborne gravity in this demo controller.")]
         protected float gravityMultiplier = 3f;
-        [SerializeField, Range(0, 100)]
+        [SerializeField, Range(0, 100), Tooltip("Downward speed in world units per second applied while grounded to keep the CharacterController attached to slopes. 0 removes this grounding force.")]
         protected float stickToGroundPower = 5f;
 
-        [Header("Movement Settings"), SerializeField, Range(0, 100)]
+        [Header("Movement Settings"), SerializeField, Range(0, 100), Tooltip("Walking speed in world units per second for the owning client. The resulting walking state is reported to the server.")]
         protected float walkSpeed = 5f;
-        [SerializeField, Range(0, 100)]
+        [SerializeField, Range(0, 100), Tooltip("Running speed in world units per second for the owning client. Set to 0 to prevent positional movement while the running state is active.")]
         protected float runSpeed = 10f;
 
-        [Header("Jump Settings"), SerializeField]
+        [Header("Jump Settings"), SerializeField, Tooltip("Allows the owning client to initiate jumps. The server-controlled movement permission remains independent.")]
         protected bool jumpIsAllowed = true;
-        [SerializeField, Range(0, 100)]
+        [SerializeField, Range(0, 100), Tooltip("Initial upward jump speed in world units per second. 0 produces no upward lift.")]
         protected float jumpPower = 8f;
-        [SerializeField, Range(0, 100)]
+        [SerializeField, Range(0, 100), Tooltip("Minimum delay between jumps in seconds. 0 allows another jump as soon as the controller is grounded.")]
         protected float jumpRate = 1f;
 
-        [Header("Components"), SerializeField]
+        [Header("Components"), SerializeField, Tooltip("Required input component read only by the owning client.")]
         protected PlayerCharacterInput inputController;
-        [SerializeField]
+        [SerializeField, Tooltip("Required CharacterController that applies movement for the owning network character.")]
         protected CharacterController characterController;
-        [SerializeField]
+        [SerializeField, Tooltip("Required look component used by top-down movement to align the owning character with the current camera direction.")]
         protected PlayerCharacterLook lookController;
 
-        [Header("Rotation Settings"), SerializeField, Range(5f, 20f)]
+        [Header("Rotation Settings"), SerializeField, Range(5f, 20f), Tooltip("Rotation interpolation responsiveness used by top-down movement. Higher values turn the character toward the target direction faster.")]
         protected float rotationSmoothTime = 5f;
 
         #endregion

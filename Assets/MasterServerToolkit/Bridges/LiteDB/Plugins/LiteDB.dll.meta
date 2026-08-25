@@ -8,7 +8,7 @@ PluginImporter:
   defineConstraints: []
   isPreloaded: 0
   isOverridable: 0
-  isExplicitlyReferenced: 0
+  isExplicitlyReferenced: 1
   validateReferences: 1
   platformData:
   - first:
@@ -20,7 +20,7 @@ PluginImporter:
         Exclude Editor: 0
         Exclude Linux64: 0
         Exclude OSXUniversal: 0
-        Exclude WebGL: 0
+        Exclude WebGL: 1
         Exclude Win: 0
         Exclude Win64: 0
   - first:
@@ -30,10 +30,11 @@ PluginImporter:
       settings:
         CPU: ARMv7
   - first:
-      Any: 
+      Any:
     second:
       enabled: 1
-      settings: {}
+      settings:
+        Exclude WebGL: 1
   - first:
       Editor: Editor
     second:
@@ -69,7 +70,7 @@ PluginImporter:
   - first:
       WebGL: WebGL
     second:
-      enabled: 1
+      enabled: 0
       settings: {}
   - first:
       Windows Store Apps: WindowsStoreApps
@@ -77,6 +78,6 @@ PluginImporter:
       enabled: 0
       settings:
         CPU: AnyCPU
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:
+  assetBundleName:
+  assetBundleVariant:

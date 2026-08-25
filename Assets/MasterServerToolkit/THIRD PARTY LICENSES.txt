@@ -1,6 +1,9 @@
 WebSockets Sharp https://github.com/sta/websocket-sharp
 path "Assets\MasterServerToolkit\Networking\Plugins\WebSocketSharp"
 
+Bouncy Castle C# https://www.bouncycastle.org/csharp
+path "Assets\MasterServerToolkit\Networking\Plugins\BouncyCastle"
+
 LiteDB https://www.litedb.org
 path "Assets\MasterServerToolkit\Bridges\LiteDB\Plugins"
 

@@ -1,6 +1,7 @@
 using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 using System;
+using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -39,7 +40,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override MstJson ToJson()
         {
-            var json = MstJson.EmptyArray;
+            var json = MstJson.CreateArray();
 
             foreach (var item in _value)
             {
@@ -74,10 +75,48 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
+        public AchievementProgressInfo Get(string key)
+        {
+            return _value.FirstOrDefault(v => v.key == key);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public bool IsUnlocked(string key)
         {
-            var achievemet = _value.Find(v => v.key == key);
-            return achievemet != null ? achievemet.IsUnlocked : false;
+            var achievemet = _value.FirstOrDefault(v => v.key == key);
+            return achievemet != null && achievemet.IsUnlocked;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="key"></param>
+        public void Reset(string key)
+        {
+            int index = Value.FindIndex(v => v.key == key);
+
+            if (index < 0)
+            {
+                return;
+            }
+
+            var item = this[index];
+
+            if (item.IsUnlocked)
+            {
+                return;
+            }
+
+            var updatedItem = new AchievementProgressInfo(item)
+            {
+                progress = 0
+            };
+
+            this[index] = updatedItem;
         }
 
         /// <summary>
@@ -88,35 +127,105 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool TryToUnlock(string key, int progress)
         {
-            var index = Value.FindIndex(v => v.key == key);
+            int index = Value.FindIndex(v => v.key == key);
 
-            if (index >= 0)
-            {
-                var item = this[index];
-
-                if (!item.IsUnlocked)
-                {
-                    item.progress += progress;
-
-                    if (item.IsUnlocked)
-                    {
-                        item.unlockDate = DateTime.UtcNow;
-                    }
-
-                    this[index] = item;
-
-                    return item.IsUnlocked;
-                }
-                else
-                {
-                    // Return false to prevent new achievement unlock reward
-                    return false;
-                }
-            }
-            else
+            if (index < 0)
             {
                 return false;
             }
+
+            var item = this[index];
+
+            if (!item.IsUnlocked)
+            {
+                var updatedItem = new AchievementProgressInfo(item)
+                {
+                    progress = item.progress + progress
+                };
+
+                if (updatedItem.progress >= updatedItem.required)
+                    updatedItem.unlockedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                this[index] = updatedItem;
+                return updatedItem.IsUnlocked;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Applies an absolute progress value if it advances the achievement.
+        /// </summary>
+        /// <param name="key">Achievement key.</param>
+        /// <param name="progress">Absolute progress reported by an authoritative source.</param>
+        /// <returns><c>true</c> only when this update unlocks the achievement.</returns>
+        public bool TrySetProgress(string key, int progress)
+        {
+            int index = Value.FindIndex(v => v.key == key);
+
+            if (index < 0)
+                return false;
+
+            var item = this[index];
+
+            if (item.IsUnlocked || progress <= item.progress)
+                return false;
+
+            var updatedItem = new AchievementProgressInfo(item)
+            {
+                progress = progress
+            };
+
+            if (updatedItem.progress >= updatedItem.required)
+                updatedItem.unlockedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            this[index] = updatedItem;
+            return updatedItem.IsUnlocked;
+        }
+
+        /// <summary>
+        /// Marks the reward for an unlocked achievement as successfully applied.
+        /// </summary>
+        /// <param name="key">Achievement key.</param>
+        /// <returns><c>true</c> when the pending reward was marked as applied.</returns>
+        public bool MarkRewardApplied(string key)
+        {
+            int index = Value.FindIndex(v => v.key == key);
+
+            if (index < 0)
+                return false;
+
+            AchievementProgressInfo item = this[index];
+
+            if (!item.IsUnlocked || item.IsRewardApplied)
+                return false;
+
+            var updatedItem = new AchievementProgressInfo(item)
+            {
+                rewardApplied = true
+            };
+
+            this[index] = updatedItem;
+            return true;
+        }
+
+        /// <summary>
+        /// Restores an authoritative unlocked state after a stale profile update.
+        /// </summary>
+        /// <param name="unlockedState">Previously confirmed achievement state.</param>
+        /// <returns><c>true</c> when the unlocked state was restored.</returns>
+        public bool RestoreUnlockedState(AchievementProgressInfo unlockedState)
+        {
+            if (unlockedState == null || !unlockedState.IsUnlocked)
+                return false;
+
+            int index = Value.FindIndex(v => v.key == unlockedState.key);
+
+            if (index < 0)
+                return false;
+
+            this[index] = new AchievementProgressInfo(unlockedState);
+            return true;
         }
     }
 }

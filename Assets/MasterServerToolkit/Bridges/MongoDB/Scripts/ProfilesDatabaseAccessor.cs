@@ -5,6 +5,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.MongoDB
@@ -38,40 +39,73 @@ namespace MasterServerToolkit.Bridges.MongoDB
 
         public void Dispose() { }
 
-        public async Task RestoreProfileAsync(ObservableServerProfile profile)
+        public async Task RestoreProfileAsync(ObservableServerProfile profile,
+            CancellationToken cancellationToken = default)
         {
-            try
+            cancellationToken.ThrowIfCancellationRequested();
+            await RestoreProfilesAsync(new[] { profile }, cancellationToken);
+        }
+
+        public async Task RestoreProfilesAsync(IEnumerable<ObservableServerProfile> profiles,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (profiles == null)
+                throw new ArgumentNullException(nameof(profiles));
+
+            var profilesList = profiles as IList<ObservableServerProfile> ?? profiles.ToList();
+
+            foreach (var profile in profilesList)
             {
-                var data = await FindOrCreateData(profile);
-                profile.FromBytes(data.Data);
-            }
-            catch (Exception e)
-            {
-                UnityEngine.Debug.LogError(e);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (profile == null)
+                    continue;
+
+                try
+                {
+                    var data = await FindOrCreateData(profile, cancellationToken);
+                    profile.FromBytes(data.Data);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    Logger?.Error(e);
+                }
             }
         }
 
-        public async Task UpdateProfileAsync(ObservableServerProfile profile)
+        public Task<DatabaseEntriesInfo<IProfilePropertyData>> Search(Dictionary<string, object> filter,
+            CancellationToken cancellationToken = default)
         {
-            var data = await FindOrCreateData(profile);
-            data.Data = profile.ToBytes();
-
-            var filter = Builders<ProfileInfoDataMongoDB>.Filter.Eq(e => e.UserId, profile.UserId);
-
-            await Task.Run(() =>
-            {
-                _profiles.ReplaceOne(filter, data);
-            });
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new DatabaseEntriesInfo<IProfilePropertyData>());
         }
 
-        private async Task<ProfileInfoDataMongoDB> FindOrCreateData(ObservableServerProfile profile)
+        public Task UpdateProfileAsync(ObservableServerProfile profile,
+            CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (profile == null)
+                throw new ArgumentNullException(nameof(profile));
+
+            return UpdateProfilesAsync(new[] { profile }, cancellationToken);
+        }
+
+        private async Task<ProfileInfoDataMongoDB> FindOrCreateData(ObservableServerProfile profile,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             string userId = profile.UserId;
 
-            var data = await Task.Run(() =>
-            {
-                return _profiles.Find(a => a.UserId == userId).FirstOrDefault();
-            });
+            var data = await _profiles
+                .Find(a => a.UserId == userId)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (data == null)
             {
@@ -81,41 +115,43 @@ namespace MasterServerToolkit.Bridges.MongoDB
                     Data = profile.ToBytes()
                 };
 
-                await Task.Run(() =>
-                {
-                    _profiles.InsertOne(data);
-                });
+                cancellationToken.ThrowIfCancellationRequested();
+                await _profiles.InsertOneAsync(data, cancellationToken: CancellationToken.None);
             }
 
             return data;
         }
 
-        public async Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profiles)
+        public async Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profiles,
+            CancellationToken cancellationToken = default)
         {
-            if (profiles == null || !profiles.Any())
-                throw new ArgumentException("Profiles collection is null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+            List<MongoBinaryProfileSaveSnapshot> snapshots =
+                MongoProfileSaveSnapshotFactory.CreateBinarySnapshots(profiles);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            var bulkOperations = new List<WriteModel<ProfileInfoDataMongoDB>>();
+            if (snapshots.Count == 0)
+                return;
 
-            foreach (var profile in profiles)
+            var bulkOperations = new List<WriteModel<ProfileInfoDataMongoDB>>(snapshots.Count);
+
+            foreach (MongoBinaryProfileSaveSnapshot snapshot in snapshots)
             {
-                var data = await FindOrCreateData(profile);
-                data.Data = profile.ToBytes();
+                var filter = Builders<ProfileInfoDataMongoDB>.Filter.Eq(e => e.UserId, snapshot.UserId);
+                var update = Builders<ProfileInfoDataMongoDB>.Update
+                    .Set(e => e.Data, snapshot.Data)
+                    .SetOnInsert(e => e.UserId, snapshot.UserId);
 
-                var filter = Builders<ProfileInfoDataMongoDB>.Filter.Eq(e => e.UserId, profile.UserId);
-
-                var replaceOne = new ReplaceOneModel<ProfileInfoDataMongoDB>(filter, data)
+                bulkOperations.Add(new UpdateOneModel<ProfileInfoDataMongoDB>(filter, update)
                 {
                     IsUpsert = true
-                };
-
-                bulkOperations.Add(replaceOne);
+                });
             }
 
-            if (bulkOperations.Any())
-            {
-                await _profiles.BulkWriteAsync(bulkOperations);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            await _profiles.BulkWriteAsync(
+                bulkOperations,
+                cancellationToken: CancellationToken.None);
         }
     }
 }

@@ -9,9 +9,14 @@ namespace MasterServerToolkit.MasterServer
     /// </summary>
     public class ObservableInt : ObservableBase<int>
     {
-        public ObservableInt(ushort key, int defaultValue = 0) : base(key)
+        private readonly bool useDeltaUpdates;
+        private int synchronizedValue;
+
+        public ObservableInt(ushort key, int defaultValue = 0, bool useDeltaUpdates = false) : base(key)
         {
             _value = defaultValue;
+            synchronizedValue = defaultValue;
+            this.useDeltaUpdates = useDeltaUpdates;
         }
 
         public override int Value
@@ -33,9 +38,11 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="value"></param>
         public bool Add(int value, int max = int.MaxValue)
         {
-            if (_value + value <= max)
+            long result = (long)_value + value;
+
+            if (result >= int.MinValue && result <= max)
             {
-                _value += value;
+                _value = (int)result;
                 MarkAsDirty();
                 return true;
             }
@@ -51,9 +58,11 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool Subtract(int value, int min = int.MinValue)
         {
-            if (_value - value >= min)
+            long result = (long)_value - value;
+
+            if (result >= min && result <= int.MaxValue)
             {
-                _value -= value;
+                _value = (int)result;
                 MarkAsDirty();
                 return true;
             }
@@ -71,6 +80,7 @@ namespace MasterServerToolkit.MasterServer
         public override void FromBytes(byte[] data)
         {
             _value = EndianBitConverter.Big.ToInt32(data, 0);
+            synchronizedValue = _value;
             MarkAsDirty();
         }
 
@@ -86,15 +96,38 @@ namespace MasterServerToolkit.MasterServer
 
         public override byte[] GetUpdates()
         {
+            if (useDeltaUpdates)
+            {
+                var data = new byte[8];
+                EndianBitConverter.Big.CopyBytes((long)_value - synchronizedValue, data, 0);
+                return data;
+            }
+
             return ToBytes();
         }
 
         public override void ApplyUpdates(byte[] data)
         {
+            if (useDeltaUpdates)
+            {
+                long result = _value + EndianBitConverter.Big.ToInt64(data, 0);
+
+                if (result < int.MinValue || result > int.MaxValue)
+                    throw new OverflowException("Observable integer delta exceeds Int32 limits");
+
+                _value = (int)result;
+                MarkAsDirty();
+                return;
+            }
+
             FromBytes(data);
         }
 
-        public override void ClearUpdates() { }
+        public override void ClearUpdates()
+        {
+            if (useDeltaUpdates)
+                synchronizedValue = _value;
+        }
 
         public override MstJson ToJson()
         {
@@ -104,6 +137,7 @@ namespace MasterServerToolkit.MasterServer
         public override void FromJson(MstJson json)
         {
             _value = json.IntValue;
+            synchronizedValue = _value;
         }
 
         public override void FromJson(string json)

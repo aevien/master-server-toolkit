@@ -9,7 +9,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Client handlers list. Requires for connection changing process. <seealso cref="ChangeConnection(IClientSocket)"/>
         /// </summary>
-        protected readonly Dictionary<ushort, IPacketHandler> handlers = new Dictionary<ushort, IPacketHandler>();
+        protected readonly Dictionary<ushort, IPacketHandler> handlers = new();
 
         /// <summary>
         /// Logger of current module
@@ -36,20 +36,23 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void ClearConnection(bool clearHandlers = true)
         {
-            if (Connection != null)
-            {
-                if (handlers != null && clearHandlers)
-                {
-                    foreach (var handler in handlers.Values)
-                    {
-                        Connection.UnregisterMessageHandler(handler);
-                    }
+            if (Connection == null)
+                return;
 
-                    handlers.Clear();
+            if (handlers == null)
+                return;
+
+            if (clearHandlers)
+            {
+                foreach (var handler in handlers.Values)
+                {
+                    Connection.UnregisterMessageHandler(handler);
                 }
 
-                Connection.OnStatusChangedEvent -= OnConnectionStatusChanged;
+                handlers.Clear();
             }
+
+            Connection.OnStatusChangedEvent -= OnConnectionStatusChanged;
         }
 
         /// <summary>
@@ -59,7 +62,14 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="handler"></param>
         public void RegisterMessageHandler(IPacketHandler handler)
         {
-            handlers[handler.OpCode] = Connection?.RegisterMessageHandler(handler);
+            if (Connection == null)
+            {
+                Logs.Warn($"The handler with code [{Extensions.StringExtensions.FromHash(handler.OpCode)}] cannot be registered. " +
+                        $"Connection is null");
+                return;
+            }
+
+            handlers[handler.OpCode] = Connection.RegisterMessageHandler(handler);
         }
 
         /// <summary>
@@ -119,5 +129,18 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="status"></param>
         protected virtual void OnConnectionStatusChanged(ConnectionStatus status) { }
+
+        /// <summary>
+        /// Registers conventional localized errors owned by this client module.
+        /// Existing registrations are preserved so shared codes can be declared by several modules.
+        /// </summary>
+        protected void RegisterErrors(params string[] codes)
+        {
+            if (codes == null)
+                return;
+
+            for (int i = 0; i < codes.Length; i++)
+                Mst.Errors.TryRegister(codes[i]);
+        }
     }
 }

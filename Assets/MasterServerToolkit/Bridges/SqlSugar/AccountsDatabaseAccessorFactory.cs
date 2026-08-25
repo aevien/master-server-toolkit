@@ -6,13 +6,14 @@ namespace MasterServerToolkit.Bridges.SqlSugar
     public class AccountsDatabaseAccessorFactory : SqlSugarDatabaseAccessorFactory
     {
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
-        private AccountsDatabaseAccessor accessor;
+        private AccountsDatabaseAccessor accountsAccessor;
 #endif
 
         private void OnDestroy()
         {
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
-            accessor?.Dispose();
+            accountsAccessor?.Dispose();
+            accountsAccessor = null;
 #endif
         }
 
@@ -21,15 +22,17 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
             try
             {
-                accessor = new AccountsDatabaseAccessor(configuration)
+                accountsAccessor = new AccountsDatabaseAccessor(configuration)
                 {
                     Logger = logger
                 };
 
-                Mst.Server.DbAccessors.AddAccessor(accessor);
+                Mst.Server.DbAccessors.AddAccessor(accountsAccessor);
             }
             catch (Exception e)
             {
+                accountsAccessor?.Dispose();
+                accountsAccessor = null;
                 logger.Error($"Failed to setup {GetType().Name}");
                 logger.Error(e);
             }

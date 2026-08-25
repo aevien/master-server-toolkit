@@ -12,8 +12,14 @@ namespace MasterServerToolkit.MasterServer
         Logger Logger { get; }
         IClientSocket Connection { get; }
         int SpawnerId { get; }
+
+        /// <summary>
+        /// Requests removal of this controller's registration from the master server.
+        /// </summary>
+        /// <param name="callback">Receives whether the master server accepted the request.</param>
+        void RequestUnregister(SuccessCallback callback = null);
         void SpawnRequestHandler(SpawnRequestPacket data, SuccessCallback callback);
-        void KillRequestHandler(int spawnId);
+        ResponseStatus KillRequestHandler(int spawnId);
         void KillProcesses();
         int ProcessesCount();
     }

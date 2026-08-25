@@ -9,7 +9,7 @@ namespace MasterServerToolkit.MasterServer
     {
         #region INSPECTOR
 
-        [SerializeField, TextArea(3, 5)]
+        [SerializeField, TextArea(3, 5), Tooltip("Text returned by the Ping request handler. Keep it short because every ping response sends the complete string.")]
         private string pongMessage = "Hello, Pong!";
 
         #endregion
@@ -34,18 +34,11 @@ namespace MasterServerToolkit.MasterServer
             return Task.CompletedTask;
         }
 
-        public override MstJson JsonInfo()
+        public override MstJson Details()
         {
-            var data = base.JsonInfo();
-            data.SetField("description", $"This is just a ping testing module that sends a response message \"{pongMessage}\" to any client who has made a request.");
-            return data;
-        }
-
-        public override MstProperties Info()
-        {
-            var properties = base.Info();
-            properties.Set("Description", $"This is just a ping testing module that sends a response message \"<b>{pongMessage}</b>\" to any client who has made a request.");
-            return properties;
+            var info = base.Details();
+            info.SetField("description", $"This is just a ping testing module that sends a response message \"{pongMessage}\" to any client who has made a request.");
+            return info;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace MasterServerToolkit.Networking
 
         public IncomingMessage(ushort opCode, byte flags, byte[] data, DeliveryMethod deliveryMethod, IPeer peer)
         {
-            _data = data;
+            _data = data ?? Array.Empty<byte>();
 
             OpCode = opCode;
             Peer = peer;
@@ -49,10 +49,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Returns true, if sender expects a response to this message
         /// </summary>
-        public bool IsExpectingResponse
-        {
-            get { return AckResponseId.HasValue; }
-        }
+        public bool IsExpectingResponse => AckResponseId.HasValue;
 
         /// <summary>
         /// For ordering
@@ -69,7 +66,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="message"></param>
         /// <param name="statusCode"></param>
-        public void Respond(IOutgoingMessage message, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(IOutgoingMessage message, ResponseStatus statusCode = ResponseStatus.Success)
         {
             message.Status = statusCode;
 
@@ -86,7 +83,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="data"></param>
         /// <param name="statusCode"></param>
-        public void Respond(byte[] data, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(byte[] data, ResponseStatus statusCode = ResponseStatus.Success)
         {
             Respond(MessageHelper.Create(OpCode, data), statusCode);
         }
@@ -96,7 +93,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="packet"></param>
         /// <param name="statusCode"></param>
-        public void Respond(ISerializablePacket packet, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(ISerializablePacket packet, ResponseStatus statusCode = ResponseStatus.Success)
         {
             Respond(MessageHelper.Create(OpCode, packet.ToBytes()), statusCode);
         }
@@ -105,7 +102,7 @@ namespace MasterServerToolkit.Networking
         /// Respond with empty message and status code
         /// </summary>
         /// <param name="statusCode"></param>
-        public void Respond(ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(ResponseStatus statusCode = ResponseStatus.Success)
         {
             Respond(MessageHelper.Create(OpCode), statusCode);
         }
@@ -115,7 +112,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="message"></param>
         /// <param name="statusCode"></param>
-        public void Respond(string message, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(string message, ResponseStatus statusCode = ResponseStatus.Success)
         {
             Respond(message.ToBytes(), statusCode);
         }
@@ -125,7 +122,7 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="message"></param>
         /// <param name="statusCode"></param>
-        public void Respond(int message, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(int message, ResponseStatus statusCode = ResponseStatus.Success)
         {
             Respond(MessageHelper.Create(OpCode, message), statusCode);
         }
@@ -136,7 +133,7 @@ namespace MasterServerToolkit.Networking
         /// <param name="message"></param>
         /// <param name="statusCode"></param>
         /// <exception cref="NotImplementedException"></exception>
-        public void Respond(bool message, ResponseStatus statusCode = ResponseStatus.Default)
+        public void Respond(bool message, ResponseStatus statusCode = ResponseStatus.Success)
         {
             Respond(MessageHelper.Create(OpCode, message), statusCode);
         }
@@ -166,6 +163,13 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public string AsString()
         {
+            if (_data.Length > MstNetworkLimits.MaxTextPayloadByteCount)
+            {
+                throw new InvalidOperationException(
+                    $"Text payload length {_data.Length} exceeds the allowed limit " +
+                    $"{MstNetworkLimits.MaxTextPayloadByteCount}");
+            }
+
             return Encoding.UTF8.GetString(_data);
         }
 

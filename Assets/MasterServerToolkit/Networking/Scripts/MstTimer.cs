@@ -1,6 +1,8 @@
 ﻿using MasterServerToolkit.Utils;
+using MasterServerToolkit.Logging;
 using System;
 using System.Collections;
+using System.Threading;
 using UnityEngine;
 
 namespace MasterServerToolkit.Networking
@@ -15,18 +17,56 @@ namespace MasterServerToolkit.Networking
 
     public class MstTimer : SingletonBehaviour<MstTimer>
     {
-        private readonly WaitForSecondsRealtime waitForTick = new WaitForSecondsRealtime(1f);
-        private readonly WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
+        private static readonly object tickHandlersSync = new();
+        private static TickActionHandler onTickEvent;
+        private static TickActionHandler[] tickHandlerSnapshot = Array.Empty<TickActionHandler>();
+
+        private readonly WaitForSecondsRealtime waitForTick = new(1f);
+        private readonly WaitForEndOfFrame waitForEndOfFrame = new();
 
         /// <summary>
-        /// Current tick of scaled time
+        /// Current count of one-second realtime ticks. The counter is not affected by Time.timeScale.
         /// </summary>
         public static long CurrentTick { get; protected set; }
 
         /// <summary>
-        /// Event, which is invoked every second
+        /// Event, which is invoked every second. An exception from one subscriber does not stop
+        /// the remaining subscribers or future timer ticks.
         /// </summary>
-        public static event TickActionHandler OnTickEvent;
+        public static event TickActionHandler OnTickEvent
+        {
+            add
+            {
+                if (value == null)
+                    return;
+
+                lock (tickHandlersSync)
+                {
+                    onTickEvent += value;
+                    UpdateTickHandlerSnapshot();
+                }
+            }
+            remove
+            {
+                if (value == null)
+                    return;
+
+                lock (tickHandlersSync)
+                {
+                    onTickEvent -= value;
+                    UpdateTickHandlerSnapshot();
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEditorPlayModeState()
+        {
+            CurrentTick = 0;
+            ClearTickHandlers();
+        }
+#endif
 
         protected override void Awake()
         {
@@ -46,7 +86,7 @@ namespace MasterServerToolkit.Networking
         {
             base.OnDestroy();
             CurrentTick = 0;
-            OnTickEvent = null;
+            ClearTickHandlers();
         }
 
         /// <summary>
@@ -54,16 +94,17 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="address"></param>
         /// <param name="callback"></param>
-        public static void WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
+        public static Coroutine WaitPing(string address, WaitPingCallback callback, float timeout = 5f)
         {
 
 #if !UNITY_WEBGL
             if (TryGetOrCreate(out var instance))
-                instance.StartCoroutine(instance.WaitPingCoroutine(address, callback, timeout));
+                return instance.StartCoroutine(instance.WaitPingCoroutine(address, callback, timeout));
 #else
-            _instance.logger.Warn("You cannot use Ping in WebGL. Ping time will always be zero");
+            Logs.Warn("You cannot use Ping in WebGL. Ping time will always be zero");
             callback?.Invoke(0);
 #endif
+            return null;
         }
 
 #if !UNITY_WEBGL
@@ -96,10 +137,12 @@ namespace MasterServerToolkit.Networking
         /// <param name="condition"></param>
         /// <param name="completeCallback"></param>
         /// <param name="timeoutSeconds"></param>
-        public static void WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
+        public static Coroutine WaitUntil(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
             if (TryGetOrCreate(out var instance))
-                instance.StartCoroutine(instance.WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
+                return instance.StartCoroutine(instance.WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds, true));
+
+            return null;
         }
 
         /// <summary>
@@ -109,10 +152,32 @@ namespace MasterServerToolkit.Networking
         /// <param name="condition"></param>
         /// <param name="completeCallback"></param>
         /// <param name="timeoutSeconds"></param>
-        public static void WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
+        public static Coroutine WaitWhile(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds)
         {
             if (TryGetOrCreate(out var instance))
-                instance.StartCoroutine(instance.WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
+                return instance.StartCoroutine(instance.WaitWhileTrueCoroutine(condition, completeCallback, timeoutSeconds));
+
+            return null;
+        }
+
+        /// <summary>
+        /// Stops a coroutine on the active MST timer if it still exists.
+        /// This does not create a new timer during shutdown.
+        /// </summary>
+        /// <param name="coroutine">Coroutine handle to stop.</param>
+        /// <returns>True if a timer existed and StopCoroutine was called.</returns>
+        public static bool TryStopCoroutine(Coroutine coroutine)
+        {
+            if (coroutine == null)
+                return false;
+
+            var instance = _instance;
+
+            if (instance == null)
+                return false;
+
+            instance.StopCoroutine(coroutine);
+            return true;
         }
 
         /// <summary>
@@ -125,13 +190,13 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         private IEnumerator WaitWhileTrueCoroutine(Func<bool> condition, TimerActionCompleteHandler completeCallback, float timeoutSeconds, bool reverseCondition = false)
         {
-            while ((timeoutSeconds > 0) && (condition.Invoke() == !reverseCondition))
+            while ((timeoutSeconds > 0) && (condition != null && condition.Invoke() == !reverseCondition))
             {
-                timeoutSeconds -= Time.deltaTime;
+                timeoutSeconds -= Time.unscaledDeltaTime;
                 yield return null;
             }
 
-            completeCallback.Invoke(timeoutSeconds > 0);
+            completeCallback?.Invoke(timeoutSeconds > 0);
         }
 
         /// <summary>
@@ -139,10 +204,12 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="time"></param>
         /// <param name="callback"></param>
-        public static void WaitForSeconds(float time, Action callback)
+        public static Coroutine WaitForSeconds(float time, Action callback)
         {
             if (TryGetOrCreate(out var instance))
-                instance.StartCoroutine(instance.StartWaitingForSeconds(time, callback));
+                return instance.StartCoroutine(instance.StartWaitingForSeconds(time, callback));
+
+            return null;
         }
 
         /// <summary>
@@ -154,7 +221,7 @@ namespace MasterServerToolkit.Networking
         private IEnumerator StartWaitingForSeconds(float time, Action callback)
         {
             yield return new WaitForSeconds(time);
-            callback.Invoke();
+            callback?.Invoke();
         }
 
         /// <summary>
@@ -162,10 +229,12 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="time"></param>
         /// <param name="callback"></param>
-        public static void WaitForRealtimeSeconds(float time, Action callback)
+        public static Coroutine WaitForRealtimeSeconds(float time, Action callback)
         {
             if (TryGetOrCreate(out var instance))
-                instance.StartCoroutine(instance.StartWaitingForRealtimeSeconds(time, callback));
+                return instance.StartCoroutine(instance.StartWaitingForRealtimeSeconds(time, callback));
+
+            return null;
         }
 
         /// <summary>
@@ -177,17 +246,19 @@ namespace MasterServerToolkit.Networking
         private IEnumerator StartWaitingForRealtimeSeconds(float time, Action callback)
         {
             yield return new WaitForSecondsRealtime(time);
-            callback.Invoke();
+            callback?.Invoke();
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="callback"></param>
-        public static void WaitForEndOfFrame(Action callback)
+        public static Coroutine WaitForEndOfFrame(Action callback)
         {
             if (TryGetOrCreate(out var instance))
-                instance.StartCoroutine(instance.StartWaitingForEndOfFrame(callback));
+                return instance.StartCoroutine(instance.StartWaitingForEndOfFrame(callback));
+
+            return null;
         }
 
         /// <summary>
@@ -198,7 +269,7 @@ namespace MasterServerToolkit.Networking
         private IEnumerator StartWaitingForEndOfFrame(Action callback)
         {
             yield return waitForEndOfFrame;
-            callback.Invoke();
+            callback?.Invoke();
         }
 
         /// <summary>
@@ -211,8 +282,64 @@ namespace MasterServerToolkit.Networking
             {
                 yield return waitForTick;
                 CurrentTick++;
-                OnTickEvent?.Invoke(CurrentTick);
+                InvokeTickHandlers(CurrentTick);
             }
+        }
+
+        private static void InvokeTickHandlers(long currentTick)
+        {
+            TickActionHandler[] handlers = Volatile.Read(ref tickHandlerSnapshot);
+
+            foreach (TickActionHandler handler in handlers)
+            {
+                try
+                {
+                    handler.Invoke(currentTick);
+                }
+                catch (Exception exception)
+                {
+                    LogTickHandlerException(handler, currentTick, exception);
+                }
+            }
+        }
+
+        private static void LogTickHandlerException(TickActionHandler handler, long currentTick, Exception exception)
+        {
+            try
+            {
+                string declaringType = handler.Method.DeclaringType?.FullName ?? "UnknownType";
+                Logs.Error($"MstTimer tick subscriber '{declaringType}.{handler.Method.Name}' failed at tick {currentTick}: {exception}");
+            }
+            catch
+            {
+                // Timer processing must survive even when logging is unavailable during shutdown.
+            }
+        }
+
+        private static void ClearTickHandlers()
+        {
+            lock (tickHandlersSync)
+            {
+                onTickEvent = null;
+                UpdateTickHandlerSnapshot();
+            }
+        }
+
+        private static void UpdateTickHandlerSnapshot()
+        {
+            if (onTickEvent == null)
+            {
+                Volatile.Write(ref tickHandlerSnapshot, Array.Empty<TickActionHandler>());
+                return;
+            }
+
+            Delegate[] invocationList = onTickEvent.GetInvocationList();
+            var handlers = new TickActionHandler[invocationList.Length];
+
+            for (int i = 0; i < invocationList.Length; i++)
+                handlers[i] = (TickActionHandler)invocationList[i];
+
+            Volatile.Write(ref tickHandlerSnapshot, handlers);
         }
     }
 }

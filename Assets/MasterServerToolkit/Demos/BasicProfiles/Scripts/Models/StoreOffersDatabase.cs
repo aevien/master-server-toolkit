@@ -8,6 +8,7 @@ namespace MasterServerToolkit.Demos.BasicProfile
     public class StoreOffersDatabase : ScriptableObject
     {
         [SerializeField]
+        [Tooltip("Offers displayed by the Basic Profiles store. Keep item IDs unique; an empty array produces an empty store without changing the player's profile.")]
         private StoreOffer[] offers;
 
         public StoreOffer[] Offers => offers;

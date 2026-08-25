@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace MasterServerToolkit.Utils
 {
@@ -50,6 +49,39 @@ namespace MasterServerToolkit.Utils
         }
 
         /// <summary>
+        /// Generates full random gender name
+        /// </summary>
+        /// <returns></returns>
+        public static string Generate()
+        {
+            var rnd = new Random();
+            var g = rnd.Next(0, 1);
+            return Generate(g == 0 ? Gender.Male : Gender.Female);
+        }
+
+        /// <summary>
+        /// Generates short name to J. Doe
+        /// </summary>
+        /// <param name="gender"></param>
+        /// <returns></returns>
+        public static string GenerateShort(Gender gender)
+        {
+            return ToShort(Generate(gender));
+        }
+
+        /// <summary>
+        /// Generates short name to J. Doe
+        /// </summary>
+        /// <param name="gender"></param>
+        /// <returns></returns>
+        public static string GenerateShort()
+        {
+            var rnd = new Random();
+            var g = rnd.Next(0, 1);
+            return GenerateShort(g == 0 ? Gender.Male : Gender.Female);
+        }
+
+        /// <summary>
         /// Generate surname
         /// </summary>
         /// <returns></returns>
@@ -71,32 +103,6 @@ namespace MasterServerToolkit.Utils
         }
 
         /// <summary>
-        /// Get saved name of player
-        /// </summary>
-        /// <param name="defaultGender">If name is not saved than use gender to generate new one</param>
-        /// <returns></returns>
-        public static string LoadName(Gender defaultGender = Gender.Male)
-        {
-            if (PlayerPrefs.HasKey("player_display_name"))
-            {
-                return PlayerPrefs.GetString("player_display_name");
-            }
-            else
-            {
-                return Generate(defaultGender);
-            }
-        }
-
-        /// <summary>
-        /// Save name of player
-        /// </summary>
-        /// <param name="p_name"></param>
-        public static void SaveName(string name)
-        {
-            PlayerPrefs.SetString("player_display_name", name);
-        }
-
-        /// <summary>
         /// Capitalize string
         /// </summary>
         /// <param name="value"></param>
@@ -108,8 +114,20 @@ namespace MasterServerToolkit.Utils
 
             return string.Join(" ", array.Select((i) =>
             {
-                return i.First().ToString().ToUpper() + i.Substring(1).ToLower();
+                return i.First().ToString().ToUpper() + i[1..].ToLower();
             }));
+        }
+
+        /// <summary>
+        /// Shorten full name to J. Doe
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string ToShort(string value)
+        {
+            char[] chars = new char[] { ' ' };
+            string[] array = value.Split(chars, StringSplitOptions.RemoveEmptyEntries);
+            return $"{array[0][..1]}. {array[1]}";
         }
     }
 

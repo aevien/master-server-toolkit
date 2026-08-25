@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
 using System;
 using TMPro;
@@ -9,11 +10,17 @@ namespace MasterServerToolkit.Bridges
     public class PasswordResetView : UIView
     {
         [Header("Components"), SerializeField]
+        [Tooltip("Input field containing the password reset code received by the user.")]
         private TMP_InputField resetCodeInputField;
         [SerializeField]
+        [Tooltip("Input field containing the new password sent to the authentication module.")]
         private TMP_InputField newPasswordInputField;
         [SerializeField]
+        [Tooltip("Confirmation input for the new password. The current view exposes this value but does not validate it before sending the reset request.")]
         private TMP_InputField newPasswordConfirmInputField;
+
+        private IDisposable showPasswordResetListener;
+        private IDisposable hidePasswordResetListener;
 
         public string ResetCode
         {
@@ -44,16 +51,30 @@ namespace MasterServerToolkit.Bridges
             base.Awake();
 
             // Listen to show/hide events
-            Mst.Events.AddListener(MstEventKeys.showPasswordResetView, OnShowPasswordResetEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hidePasswordResetView, OnHidePasswordResetEventHandler);
+            showPasswordResetListener?.Dispose();
+            showPasswordResetListener = Mst.Events.AddListener(MstEventKeys.showPasswordResetView, OnShowPasswordResetEventHandler);
+
+            hidePasswordResetListener?.Dispose();
+            hidePasswordResetListener = Mst.Events.AddListener(MstEventKeys.hidePasswordResetView, OnHidePasswordResetEventHandler);
         }
 
-        private void OnShowPasswordResetEventHandler(EventMessage message)
+        protected override void OnDestroy()
+        {
+            showPasswordResetListener?.Dispose();
+            showPasswordResetListener = null;
+
+            hidePasswordResetListener?.Dispose();
+            hidePasswordResetListener = null;
+
+            base.OnDestroy();
+        }
+
+        private void OnShowPasswordResetEventHandler(EventPayload message)
         {
             Show();
         }
 
-        private void OnHidePasswordResetEventHandler(EventMessage message)
+        private void OnHidePasswordResetEventHandler(EventPayload message)
         {
             Hide();
         }
@@ -63,12 +84,36 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public void ResetPassword()
         {
-            if (!Mst.Options.Has(MstDictKeys.RESET_PASSWORD_EMAIL)) throw new Exception("You have no reset email");
+            if (!Mst.Options.Has(MstParamKeys.RESET_PASSWORD_EMAIL)) throw new Exception("You have no reset email");
 
-            if (AuthBehaviour.Instance)
-                AuthBehaviour.Instance.ResetPassword(Mst.Options.AsString(MstDictKeys.RESET_PASSWORD_EMAIL), ResetCode, NewPassword);
-            else
-                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
+            ViewsManager.Show<LoadingInfoView>(Mst.Localization["ui.loading.passwordChange.message"]);
+
+            Logger.Debug(Mst.Localization["ui.loading.passwordChange.message"]);
+
+            MstTimer.WaitForSeconds(0.1f, () =>
+            {
+                Mst.Client.Auth.ChangePassword(Mst.Options.AsString(MstParamKeys.RESET_PASSWORD_EMAIL), ResetCode, NewPassword, (isSuccessful, error) =>
+                {
+                    ViewsManager.Hide<LoadingInfoView>();
+
+                    if (isSuccessful)
+                    {
+                        ViewsManager.Hide<PasswordResetView>();
+                        ViewsManager.Show<SignUpView>();
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(Mst.Localization["ui.loading.passwordChange.message"], null));
+                    }
+                    else
+                    {
+                        string outputMessage = $"{Mst.Localization["ui.notification.passwordChange.error.message"]} {error}";
+                        Logger.Error(outputMessage);
+
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(outputMessage, () =>
+                        {
+                            Mst.Events.Invoke(MstEventKeys.showPasswordResetView);
+                        }));
+                    }
+                });
+            });
         }
 
         /// <summary>
@@ -76,7 +121,7 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public void ShowSignInView()
         {
-            Mst.Events.Invoke(MstEventKeys.showSignInView);
+            ViewsManager.Show<SignUpView>();
         }
     }
 }

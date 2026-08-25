@@ -1,6 +1,7 @@
 using MasterServerToolkit.Json;
 using MasterServerToolkit.Networking;
 using System;
+using System.Globalization;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -23,12 +24,17 @@ namespace MasterServerToolkit.MasterServer
 
         public override string Serialize()
         {
-            return _value.ToString();
+            return _value.ToString("O", CultureInfo.InvariantCulture);
         }
 
         public override void Deserialize(string value)
         {
-            DateTime.TryParse(value, out _value);
+            DateTime.TryParseExact(
+                value,
+                "O",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind,
+                out _value);
             MarkAsDirty();
         }
 
@@ -48,18 +54,18 @@ namespace MasterServerToolkit.MasterServer
 
         public override MstJson ToJson()
         {
-            return MstJson.Create(_value.ToString());
+            return MstJson.Create(_value);
         }
 
         public override void FromJson(MstJson json)
         {
-            DateTime.TryParse(json.StringValue, out _value);
+            _value = json.GetDateTimeValue();
             MarkAsDirty();
         }
 
         public override void FromJson(string json)
         {
-            FromJson(new MstJson(json));
+            FromJson(MstJson.Create(json));
         }
     }
 }

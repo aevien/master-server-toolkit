@@ -46,12 +46,12 @@ namespace MasterServerToolkit.GameService
         /// <summary>
         /// 
         /// </summary>
-        public MstJson PriceCurrencyImage { get; set; } = MstJson.NullObject;
+        public MstJson PriceCurrencyImage { get; set; } = MstJson.CreateNull();
 
         /// <summary>
         /// 
         /// </summary>
-        public MstJson Extra { get; set; } = MstJson.NullObject;
+        public MstJson Extra { get; set; } = MstJson.CreateObject();
 
         /// <summary>
         /// Gets or sets the platform associated with the product, such as VKPlay, YandexGames, or VK.

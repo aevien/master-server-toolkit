@@ -18,6 +18,10 @@ namespace MasterServerToolkit.MasterServer
         public AnalyticsDataInfoPacket()
         {
             Id = Guid.NewGuid().ToString();
+            UserId = string.Empty;
+            Key = string.Empty;
+            Category = string.Empty;
+            Data = new Dictionary<string, string>();
             Timestamp = DateTime.UtcNow;
         }
 
@@ -48,7 +52,7 @@ namespace MasterServerToolkit.MasterServer
             UserId = json["user_id"].StringValue;
             Key = json["key"].StringValue;
             Category = json["category"].StringValue;
-            Timestamp = DateTime.Parse(json["timestamp"].StringValue);
+            Timestamp = json["timestamp"].GetDateTimeValue();
             Data = json["data"].ToDictionary();
         }
 
@@ -59,9 +63,9 @@ namespace MasterServerToolkit.MasterServer
             json.AddField("user_id", UserId);
             json.AddField("key", Key);
             json.AddField("category", Category);
-            json.AddField("timestamp", Timestamp.ToString());
+            json.AddField("timestamp", Timestamp);
             json.AddField("data", MstJson.Create(Data));
-            return base.ToJson();
+            return json;
         }
     }
 }

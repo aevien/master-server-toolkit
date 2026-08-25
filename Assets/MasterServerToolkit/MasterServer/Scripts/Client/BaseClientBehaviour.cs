@@ -20,9 +20,9 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Log level of this module
         /// </summary>
-        [Header("Base Settings"), SerializeField]
+        [Header("Base Settings"), SerializeField, Tooltip("Minimum severity written by this client behaviour. Child modules use their own Log Level settings.")]
         protected LogLevel logLevel = LogLevel.Info;
-        [SerializeField]
+        [SerializeField, Tooltip("Initializes every child component implementing IBaseClientModule during Start. Disable only when module initialization is performed explicitly from project code.")]
         protected bool initModulesAtStart = true;
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         protected virtual IClientSocket ConnectionFactory()
         {
-            return Mst.Client.Connection;
+            return Mst.Connection;
         }
 
         /// <summary>

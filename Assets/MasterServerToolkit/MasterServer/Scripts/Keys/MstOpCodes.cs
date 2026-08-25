@@ -2,17 +2,19 @@
 
 namespace MasterServerToolkit.MasterServer
 {
-    public struct MstOpCodes
+    public class MstOpCodes
     {
         public static ushort Error = "mst.error".ToUint16Hash();
 
         public static ushort Ping = nameof(Ping).ToUint16Hash();
 
+        public static ushort GetRemoteConfig = nameof(GetRemoteConfig).ToUint16Hash();
+
         public static ushort SendAnalyticsData = nameof(SendAnalyticsData).ToUint16Hash();
 
+        public static ushort ServerAccessChallengeRequest = nameof(ServerAccessChallengeRequest).ToUint16Hash();
         public static ushort ServerAccessRequest = nameof(ServerAccessRequest).ToUint16Hash();
-        public static ushort AesKeyRequest = nameof(AesKeyRequest).ToUint16Hash();
-        public static ushort PermissionLevelRequest = nameof(PermissionLevelRequest).ToUint16Hash();
+        public static ushort SealChallengeRequest = nameof(SealChallengeRequest).ToUint16Hash();
         public static ushort PeerGuidRequest = nameof(PeerGuidRequest).ToUint16Hash();
 
         public static ushort RegisterRoomRequest = nameof(RegisterRoomRequest).ToUint16Hash();
@@ -22,8 +24,11 @@ namespace MasterServerToolkit.MasterServer
         public static ushort ProvideRoomAccessCheck = nameof(ProvideRoomAccessCheck).ToUint16Hash();
         public static ushort ValidateRoomAccessRequest = nameof(ValidateRoomAccessRequest).ToUint16Hash();
         public static ushort PlayerLeftRoomRequest = nameof(PlayerLeftRoomRequest).ToUint16Hash();
+        public static ushort ReleaseRoomPlayerSessionRequest = nameof(ReleaseRoomPlayerSessionRequest).ToUint16Hash();
+        public static ushort AccountBlocked = nameof(AccountBlocked).ToUint16Hash();
 
         public static ushort RegisterSpawner = nameof(RegisterSpawner).ToUint16Hash();
+        public static ushort UnregisterSpawner = nameof(UnregisterSpawner).ToUint16Hash();
         public static ushort SpawnProcessRequest = nameof(SpawnProcessRequest).ToUint16Hash();
         public static ushort ClientsSpawnRequest = nameof(ClientsSpawnRequest).ToUint16Hash();
         public static ushort SpawnRequestStatusChange = nameof(SpawnRequestStatusChange).ToUint16Hash();
@@ -50,7 +55,7 @@ namespace MasterServerToolkit.MasterServer
         public static ushort ChangePassword = nameof(ChangePassword).ToUint16Hash();
         public static ushort GetAccountInfoByPeer = nameof(GetAccountInfoByPeer).ToUint16Hash();
         public static ushort GetAccountInfoByUsername = nameof(GetAccountInfoByUsername).ToUint16Hash();
-        public static ushort BindExtraProperties = nameof(BindExtraProperties).ToUint16Hash();
+        public static ushort SetProperties = nameof(SetProperties).ToUint16Hash();
 
         public static ushort PickUsername = nameof(PickUsername).ToUint16Hash();
         public static ushort JoinChannel = nameof(JoinChannel).ToUint16Hash();
@@ -61,6 +66,29 @@ namespace MasterServerToolkit.MasterServer
         public static ushort UserJoinedChannel = nameof(UserJoinedChannel).ToUint16Hash();
         public static ushort UserLeftChannel = nameof(UserLeftChannel).ToUint16Hash();
         public static ushort SetDefaultChannel = nameof(SetDefaultChannel).ToUint16Hash();
+        public static ushort CreateChatChannel = nameof(CreateChatChannel).ToUint16Hash();
+        public static ushort GetChatChannelInfo = nameof(GetChatChannelInfo).ToUint16Hash();
+        public static ushort GetChatInvites = nameof(GetChatInvites).ToUint16Hash();
+        public static ushort InviteToChatChannel = nameof(InviteToChatChannel).ToUint16Hash();
+        public static ushort RevokeChatInvite = nameof(RevokeChatInvite).ToUint16Hash();
+        public static ushort AcceptChatInvite = nameof(AcceptChatInvite).ToUint16Hash();
+        public static ushort DeclineChatInvite = nameof(DeclineChatInvite).ToUint16Hash();
+        public static ushort KickChatUser = nameof(KickChatUser).ToUint16Hash();
+        public static ushort BanChatUser = nameof(BanChatUser).ToUint16Hash();
+        public static ushort UnbanChatUser = nameof(UnbanChatUser).ToUint16Hash();
+        public static ushort SetChatUserPermissions = nameof(SetChatUserPermissions).ToUint16Hash();
+        public static ushort ServerEnsureChatChannel = nameof(ServerEnsureChatChannel).ToUint16Hash();
+        public static ushort ServerAddChatUserToChannel = nameof(ServerAddChatUserToChannel).ToUint16Hash();
+        public static ushort ServerRemoveChatUserFromChannel = nameof(ServerRemoveChatUserFromChannel).ToUint16Hash();
+        public static ushort ServerSendChatMessageToUsers = nameof(ServerSendChatMessageToUsers).ToUint16Hash();
+
+        public static ushort ClientGroupCreate = nameof(ClientGroupCreate).ToUint16Hash();
+        public static ushort ClientGroupGetMine = nameof(ClientGroupGetMine).ToUint16Hash();
+        public static ushort ClientGroupInviteMember = nameof(ClientGroupInviteMember).ToUint16Hash();
+        public static ushort ClientGroupGetInvites = nameof(ClientGroupGetInvites).ToUint16Hash();
+        public static ushort ClientGroupAcceptInvite = nameof(ClientGroupAcceptInvite).ToUint16Hash();
+        public static ushort ClientGroupLeave = nameof(ClientGroupLeave).ToUint16Hash();
+        public static ushort ServerGetPlayerGroup = nameof(ServerGetPlayerGroup).ToUint16Hash();
 
         public static ushort JoinLobby = nameof(JoinLobby).ToUint16Hash();
         public static ushort LeaveLobby = nameof(LeaveLobby).ToUint16Hash();
@@ -114,6 +142,13 @@ namespace MasterServerToolkit.MasterServer
         public static ushort ClientUpdateAchievementProgress = nameof(ClientUpdateAchievementProgress).ToUint16Hash();
         public static ushort ClientAchievementUnlocked = nameof(ClientAchievementUnlocked).ToUint16Hash();
         public static ushort ServerUpdateAchievementProgress = nameof(ServerUpdateAchievementProgress).ToUint16Hash();
+
+        public static ushort ClientGetLeaderboards = nameof(ClientGetLeaderboards).ToUint16Hash();
+        public static ushort ClientGetLeaderboardEntries = nameof(ClientGetLeaderboardEntries).ToUint16Hash();
+        public static ushort ClientGetLeaderboardAroundMe = nameof(ClientGetLeaderboardAroundMe).ToUint16Hash();
+        public static ushort ClientGetLeaderboardEntry = nameof(ClientGetLeaderboardEntry).ToUint16Hash();
+        public static ushort ClientSubmitLeaderboardScore = nameof(ClientSubmitLeaderboardScore).ToUint16Hash();
+        public static ushort ServerSubmitLeaderboardScore = nameof(ServerSubmitLeaderboardScore).ToUint16Hash();
 
         public static ushort ClientGetQuests = nameof(ClientGetQuests).ToUint16Hash();
         public static ushort ClientStartQuest = nameof(ClientStartQuest).ToUint16Hash();

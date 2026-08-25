@@ -6,9 +6,9 @@ namespace MasterServerToolkit.MasterServer
     public interface IWebController : IDisposable
     {
         bool UseCredentials { get; set; }
-        WebServerModule WebServer { get; set; }
-        ServerBehaviour MasterServer { get; set; }
-        void Initialize(WebServerModule server);
+        HttpServerModule WebServer { get; set; }
+        ServerBehaviour Server { get; set; }
+        void Initialize(HttpServerModule server);
         MstJson JsonInfo();
     }
 }

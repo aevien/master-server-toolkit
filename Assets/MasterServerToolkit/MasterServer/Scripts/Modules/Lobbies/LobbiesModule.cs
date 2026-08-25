@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -12,10 +13,12 @@ namespace MasterServerToolkit.MasterServer
         #region INSPECTOR
 
         [Header("Configuration")]
+        [Range(MstPermissionLevels.Min, MstPermissionLevels.Max)]
+        [Tooltip("Minimum numeric permission level required to create a lobby. 0 allows a normal connected client; values up to 999 can restrict creation to trusted users or services.")]
         public int createLobbiesPermissionLevel = 0;
-        [Tooltip("If true, don't allow player to create a lobby if he has already joined one")]
+        [Tooltip("Rejects lobby creation while the requesting user already belongs to a lobby. Keep enabled while the module stores only one Current Lobby per user.")]
         public bool dontAllowCreatingIfJoined = true;
-        [Tooltip("How many lobbies can a user join concurrently")]
+        [Tooltip("Reserved concurrent-lobby limit. The current MST5 user state stores one Current Lobby and does not enforce values above 1.")]
         public int joinedLobbiesLimit = 1;
 
         #endregion
@@ -23,7 +26,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Next lobby Id
         /// </summary>
-        private int nextLobbyId;
+        private int lastLobbyId = -1;
 
         /// <summary>
         /// Lobby factories list
@@ -77,7 +80,7 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool HasPermissionToCreate(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-            return extension != null && extension.PermissionLevel >= createLobbiesPermissionLevel;
+            return extension != null && MstPermissionLevels.HasAccess(extension.PermissionLevel, createLobbiesPermissionLevel);
         }
 
         /// <summary>
@@ -86,7 +89,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public int NextLobbyId()
         {
-            return nextLobbyId++;
+            return Interlocked.Increment(ref lastLobbyId);
         }
 
         /// <summary>
@@ -169,7 +172,7 @@ namespace MasterServerToolkit.MasterServer
                 // We may need to check permission of requester
                 if (!HasPermissionToCreate(message.Peer))
                 {
-                    message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Unauthorized, MstErrorCodes.PERMISSION_DENIED);
                     return Task.CompletedTask;
                 }
 
@@ -179,7 +182,7 @@ namespace MasterServerToolkit.MasterServer
                 // If peer is already in a lobby and system does not allow to create if user is joined
                 if (dontAllowCreatingIfJoined && lobbyUser.CurrentLobby != null)
                 {
-                    message.Respond("You are already in a lobby", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict, MstErrorCodes.LOBBY_ALREADY_JOINED);
                     return Task.CompletedTask;
                 }
 
@@ -187,11 +190,11 @@ namespace MasterServerToolkit.MasterServer
                 var options = MstProperties.FromBytes(message.AsBytes());
 
                 // Get lobby factory Id or empty string
-                string lobbyFactoryId = options.AsString(MstDictKeys.LOBBY_FACTORY_ID);
+                string lobbyFactoryId = options.AsString(MstParamKeys.LOBBY_FACTORY_ID);
 
                 if (string.IsNullOrEmpty(lobbyFactoryId))
                 {
-                    message.Respond("Invalid request (undefined factory)", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Invalid, MstErrorCodes.LOBBY_FACTORY_REQUIRED);
                     return Task.CompletedTask;
                 }
 
@@ -200,7 +203,10 @@ namespace MasterServerToolkit.MasterServer
 
                 if (factory == null)
                 {
-                    message.Respond("Unavailable lobby factory", ResponseStatus.Failed);
+                    var properties = new MstProperties();
+                    properties.Set(MstErrorPropertyKeys.FACTORY_ID, lobbyFactoryId);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_FACTORY_NOT_FOUND,
+                        properties);
                     return Task.CompletedTask;
                 }
 
@@ -208,7 +214,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!AddLobby(newLobby))
                 {
-                    message.Respond("Lobby registration failed", ResponseStatus.Error);
+                    message.RespondError(ResponseStatus.Error, MstErrorCodes.LOBBY_CREATION_FAILED);
                     return Task.CompletedTask;
                 }
 
@@ -236,7 +242,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobbyUser.CurrentLobby != null)
                 {
-                    message.Respond("You're already in a lobby", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict, MstErrorCodes.LOBBY_ALREADY_JOINED);
                     return Task.CompletedTask;
                 }
 
@@ -246,13 +252,14 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobby == null)
                 {
-                    message.Respond("Lobby was not found", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
-                if (!lobby.AddPlayer(lobbyUser, out string error))
+                if (!lobby.AddPlayer(lobbyUser, out string errorCode))
                 {
-                    message.Respond(error ?? "Failed to add player to lobby", ResponseStatus.Failed);
+                    message.RespondError(GetJoinFailureStatus(errorCode),
+                        string.IsNullOrWhiteSpace(errorCode) ? MstErrorCodes.LOBBY_JOIN_FAILED : errorCode);
                     return Task.CompletedTask;
                 }
 
@@ -310,7 +317,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobby == null)
                 {
-                    message.Respond("Lobby was not found", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
@@ -320,8 +327,10 @@ namespace MasterServerToolkit.MasterServer
                 {
                     if (!lobby.SetProperty(lobbiesExt, dataProperty.Key, dataProperty.Value))
                     {
-                        message.Respond("Failed to set the property: " + dataProperty.Key,
-                            ResponseStatus.Failed);
+                        var properties = new MstProperties();
+                        properties.Set(MstErrorPropertyKeys.PROPERTY, dataProperty.Key);
+                        message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.LOBBY_PROPERTY_REJECTED,
+                            properties);
 
                         return Task.CompletedTask;
                     }
@@ -353,7 +362,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobby == null)
                 {
-                    message.Respond("Lobby was not found", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
@@ -370,7 +379,10 @@ namespace MasterServerToolkit.MasterServer
                     // to do "sanity" checking
                     if (!lobby.SetPlayerProperty(member, dataProperty.Key, dataProperty.Value))
                     {
-                        message.Respond("Failed to set property: " + dataProperty.Key, ResponseStatus.Failed);
+                        var errorProperties = new MstProperties();
+                        errorProperties.Set(MstErrorPropertyKeys.PROPERTY, dataProperty.Key);
+                        message.RespondError(ResponseStatus.Forbidden,
+                            MstErrorCodes.LOBBY_MEMBER_PROPERTY_REJECTED, errorProperties);
                         return Task.CompletedTask;
                     }
                 }
@@ -400,7 +412,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobby == null)
                 {
-                    message.Respond("You're not in a lobby", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict, MstErrorCodes.LOBBY_NOT_JOINED);
                     return Task.CompletedTask;
                 }
 
@@ -408,7 +420,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (member == null)
                 {
-                    message.Respond("Invalid request", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_MEMBER_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
@@ -438,7 +450,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobby == null)
                 {
-                    message.Respond("You're not in a lobby", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict, MstErrorCodes.LOBBY_NOT_JOINED);
                     return Task.CompletedTask;
                 }
 
@@ -446,13 +458,16 @@ namespace MasterServerToolkit.MasterServer
 
                 if (player == null)
                 {
-                    message.Respond("Invalid request", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_MEMBER_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
                 if (!lobby.TryJoinTeam(data.TeamName, player))
                 {
-                    message.Respond("Failed to join a team: " + data.TeamName, ResponseStatus.Failed);
+                    var properties = new MstProperties();
+                    properties.Set(MstErrorPropertyKeys.TEAM_NAME, data.TeamName);
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.LOBBY_TEAM_JOIN_FORBIDDEN,
+                        properties);
                     return Task.CompletedTask;
                 }
 
@@ -508,7 +523,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!lobby.StartGameManually(lobbiesExt))
                 {
-                    message.Respond("Failed starting the game", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict, MstErrorCodes.LOBBY_GAME_START_FAILED);
                     return Task.CompletedTask;
                 }
 
@@ -526,19 +541,25 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        protected virtual Task GetLobbyRoomAccessMessageHandler(IIncomingMessage message)
+        protected virtual async Task GetLobbyRoomAccessMessageHandler(IIncomingMessage message,
+            CancellationToken cancellationToken)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var lobbiesExt = GetOrCreateLobbyUserPeerExtension(message.Peer);
                 var lobby = lobbiesExt.CurrentLobby;
 
-                lobby.GameAccessRequestHandler(message);
-                return Task.CompletedTask;
+                await lobby.GameAccessRequestHandler(message, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
             }
-            catch (Exception ex)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                return Task.FromException(ex);
+                throw;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -559,7 +580,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobby == null)
                 {
-                    message.Respond("Lobby not found", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
@@ -567,7 +588,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (member == null)
                 {
-                    message.Respond("Player is not in the lobby", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_MEMBER_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
@@ -595,7 +616,7 @@ namespace MasterServerToolkit.MasterServer
 
                 if (lobby == null)
                 {
-                    message.Respond("Lobby not found", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.LOBBY_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
@@ -610,9 +631,31 @@ namespace MasterServerToolkit.MasterServer
 
         #endregion
 
+        private static ResponseStatus GetJoinFailureStatus(string errorCode)
+        {
+            switch (errorCode)
+            {
+                case MstErrorCodes.LOBBY_USERNAME_INVALID:
+                    return ResponseStatus.Invalid;
+                case MstErrorCodes.LOBBY_DESTROYED:
+                case MstErrorCodes.LOBBY_TEAM_NOT_FOUND:
+                    return ResponseStatus.NotFound;
+                case MstErrorCodes.LOBBY_JOIN_FORBIDDEN:
+                case MstErrorCodes.LOBBY_TEAM_JOIN_FORBIDDEN:
+                    return ResponseStatus.Forbidden;
+                case MstErrorCodes.LOBBY_ALREADY_JOINED:
+                case MstErrorCodes.LOBBY_MEMBER_ALREADY_EXISTS:
+                case MstErrorCodes.LOBBY_FULL:
+                case MstErrorCodes.LOBBY_GAME_IN_PROGRESS:
+                    return ResponseStatus.Conflict;
+                default:
+                    return ResponseStatus.Error;
+            }
+        }
+
         public virtual IEnumerable<GameInfoPacket> GetPublicGames(IPeer peer, MstProperties filters)
         {
-            var lobbiesList = filters != null && filters.Has(MstDictKeys.ROOM_ID) ? lobbies.Values.Where(l => l.Id == filters.AsInt(MstDictKeys.ROOM_ID)) : lobbies.Values;
+            var lobbiesList = filters != null && filters.Has(MstParamKeys.ROOM_ID) ? lobbies.Values.Where(l => l.Id == filters.AsInt(MstParamKeys.ROOM_ID)) : lobbies.Values;
             var games = new List<GameInfoPacket>();
 
             foreach (var lobby in lobbiesList)
@@ -629,7 +672,7 @@ namespace MasterServerToolkit.MasterServer
                     Type = GameInfoType.Lobby
                 };
 
-                game.OnlinePlayersList = lobby.Members.Select(m => m.Username).ToList();
+                game.OnlinePlayersList = lobby.GetMembersSnapshot().Select(m => m.Username).ToList();
                 games.Add(game);
             }
 

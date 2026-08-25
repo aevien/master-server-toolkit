@@ -1,6 +1,6 @@
 ﻿using MasterServerToolkit.MasterServer;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System;
+#if !UNITY_WEBGL || UNITY_EDITOR
 using WebSocketSharp;
 
 namespace MasterServerToolkit.Networking
@@ -8,8 +8,6 @@ namespace MasterServerToolkit.Networking
     public class WsServerPeer : BasePeer
     {
         private readonly WsService serviceForPeer;
-        private Queue<byte[]> delayedMessages;
-
         public override bool IsConnected => serviceForPeer != null 
             && serviceForPeer.ReadyState == WebSocketState.Open;
 
@@ -21,8 +19,6 @@ namespace MasterServerToolkit.Networking
             serviceForPeer.OnCloseEvent += ServiceForPeer_OnCloseEvent;
             serviceForPeer.OnErrorEvent += ServiceForPeer_OnErrorEvent;
             serviceForPeer.OnMessageEvent += ServiceForPeer_OnMessageEvent;
-
-            delayedMessages = new Queue<byte[]>();
         }
 
         private void ServiceForPeer_OnMessageEvent(byte[] data)
@@ -32,7 +28,6 @@ namespace MasterServerToolkit.Networking
 
         private void ServiceForPeer_OnOpenEvent()
         {
-            _ = SendDelayedMessages();
             NotifyConnectionOpenEvent();
         }
 
@@ -49,74 +44,47 @@ namespace MasterServerToolkit.Networking
 
         protected override void Dispose(bool disposing)
         {
-            if (serviceForPeer != null)
+            try
             {
-                serviceForPeer.OnOpenEvent -= ServiceForPeer_OnOpenEvent;
-                serviceForPeer.OnCloseEvent -= ServiceForPeer_OnCloseEvent;
-                serviceForPeer.OnErrorEvent -= ServiceForPeer_OnErrorEvent;
-                serviceForPeer.OnMessageEvent -= ServiceForPeer_OnMessageEvent;
-                serviceForPeer.Dispose();
+                if (serviceForPeer != null)
+                {
+                    serviceForPeer.OnOpenEvent -= ServiceForPeer_OnOpenEvent;
+                    serviceForPeer.OnCloseEvent -= ServiceForPeer_OnCloseEvent;
+                    serviceForPeer.OnErrorEvent -= ServiceForPeer_OnErrorEvent;
+                    serviceForPeer.OnMessageEvent -= ServiceForPeer_OnMessageEvent;
+                    serviceForPeer.Dispose();
+                }
             }
-
-            delayedMessages?.Clear();
-
-            base.Dispose(disposing);
-        }
-
-        private Task SendDelayedMessages()
-        {
-            return Task.Run(async () =>
+            finally
             {
-                await Task.Delay(200);
-
-                if (delayedMessages == null)
-                {
-                    logger.Error("Delayed messages are already sent");
-                    return;
-                }
-
-                lock (delayedMessages)
-                {
-                    if (delayedMessages == null)
-                        return;
-
-                    var delayedMessagesCopy = delayedMessages;
-                    delayedMessages = null;
-
-                    foreach (var data in delayedMessagesCopy)
-                        serviceForPeer.SendAsync(data);
-                }
-            });
+                base.Dispose(disposing);
+            }
         }
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
             if (IsConnected)
             {
-                // There's a bug in websockets
-                // When server sends a message to client right after client
-                // connects to it, the message is lost somewhere.
-                // Sending first few messages with a small delay fixes this issue.
-
-                if (delayedMessages != null)
-                {
-                    lock (delayedMessages)
-                    {
-                        if (delayedMessages != null)
-                        {
-                            delayedMessages.Enqueue(message.ToBytes());
-                            return;
-                        }
-                    }
-                }
-
-                Mst.TrafficStatistics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+                Mst.Traffic.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
                 serviceForPeer.SendAsync(message.ToBytes());
             }
             else
             {
                 logger.Error($"Server is trying to send data to peer {Id}, but it is not connected");
             }
+        }
+
+        protected override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod,
+            Action<bool> completionCallback)
+        {
+            if (!IsConnected)
+            {
+                completionCallback?.Invoke(false);
+                return;
+            }
+
+            Mst.Traffic.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+            serviceForPeer.SendAsync(message.ToBytes(), completionCallback);
         }
 
         public override void Disconnect(string reason = "")
@@ -127,6 +95,9 @@ namespace MasterServerToolkit.Networking
         public override void Disconnect(ushort code, string reason = "")
         {
             serviceForPeer.Disconnect(code, reason);
+            BeginDisconnect();
         }
     }
 }
+
+#endif

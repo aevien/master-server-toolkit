@@ -11,8 +11,10 @@ namespace MasterServerToolkit.Demos.BasicTelegramBotLogger
     public class TelegramBotLogger : SingletonBehaviour<TelegramBotLogger>
     {
         [Header("Settings"), SerializeField]
+        [Tooltip("Telegram Bot API token used to call getMe and sendMessage. This demo stores the token in the scene and is intended for local evaluation, not secure production secret storage.")]
         private string botApiToken;
         [SerializeField]
+        [Tooltip("Telegram chat IDs that receive Unity error and exception messages. Leave the array empty to validate the bot without forwarding logs.")]
         private string[] chatIds;
 
         private void Start()

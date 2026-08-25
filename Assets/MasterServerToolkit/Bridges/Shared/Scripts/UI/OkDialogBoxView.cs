@@ -1,23 +1,18 @@
 ﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
+using UnityEngine.Events;
 
 namespace MasterServerToolkit.Bridges
 {
     public class OkDialogBoxView : PopupView
     {
-        protected override void Awake()
+        protected override void OnStartShow()
         {
-            base.Awake();
+            base.OnStartShow();
 
-            Mst.Events.AddListener(MstEventKeys.showOkDialogBox, OnShowDialogBoxEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hideOkDialogBox, OnHideDialogBoxEventHandler);
-        }
+            var messageData = Payload.As<OkDialogBoxEventMessage>();
 
-        private void OnShowDialogBoxEventHandler(EventMessage message)
-        {
-            var messageData = message.As<OkDialogBoxEventMessage>();
-
-            SetLables(messageData.Message);
+            SetLabels(messageData.Message);
 
             SetButtonsClick(() =>
             {
@@ -25,12 +20,31 @@ namespace MasterServerToolkit.Bridges
                 Hide();
             });
 
+            SetMessageIcon((int)messageData.MessageType);
             Show();
         }
 
-        private void OnHideDialogBoxEventHandler(EventMessage message)
+        private void SetMessageIcon(int index)
         {
-            Hide();
+            for (int i = 0; i < helpers.Length; i++)
+                helpers[i].SetActive(i == index);
         }
+    }
+
+    public class OkDialogBoxEventMessage : DialogBoxEventMessage
+    {
+        public OkDialogBoxEventMessage() : base() { }
+
+        public OkDialogBoxEventMessage(string message) : base(message)
+        {
+            OkCallback = null;
+        }
+
+        public OkDialogBoxEventMessage(string message, UnityAction okCallback) : base(message)
+        {
+            OkCallback = okCallback;
+        }
+
+        public UnityAction OkCallback { get; set; }
     }
 }

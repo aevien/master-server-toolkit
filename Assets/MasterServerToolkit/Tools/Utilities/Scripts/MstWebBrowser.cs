@@ -22,7 +22,7 @@ namespace MasterServerToolkit.Utils
             string jsonString = Marshal.PtrToStringUTF8(jsonPtr);
             return new MstJson(jsonString);
 #else
-            var demo = MstJson.EmptyObject;
+            var demo = MstJson.CreateObject();
             demo.AddField("param1", "Master");
             demo.AddField("param2", "Server");
             demo.AddField("param3", "Toolkit");
@@ -37,7 +37,7 @@ namespace MasterServerToolkit.Utils
             string jsonString = Marshal.PtrToStringUTF8(jsonPtr);
             return new MstJson(jsonString);
 #else
-            var demo = MstJson.EmptyObject;
+            var demo = MstJson.CreateObject();
             demo.AddField("currentUrl", "http://localhost/");
             return demo;
 #endif

@@ -9,22 +9,22 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
     {
         #region INSPECTOR
 
-        [Header("Base Components"), SerializeField]
+        [Header("Base Components"), SerializeField, Tooltip("Camera controlled only by the owning client. If left empty, the concrete look component uses Camera.main or creates a runtime camera.")]
         protected Camera lookCamera;
-        [SerializeField]
+        [SerializeField, Tooltip("Required local input source used by the owning client for camera rotation, zoom, and aiming.")]
         protected PlayerCharacterInput inputController;
-        [SerializeField]
+        [SerializeField, Tooltip("Required movement component used to confirm that the local network character is ready for camera control.")]
         protected PlayerCharacterMovement movementController = null;
 
-        [Header("Base Settings"), SerializeField]
+        [Header("Base Settings"), SerializeField, Tooltip("Legacy prefab setting retained for compatibility. PlayerCharacterLook currently restores the owning client's camera whenever ownership changes, regardless of this value.")]
         protected bool resetCameraAfterDestroy = true;
 
-        [Header("Base Rotation Settings"), SerializeField, Range(1f, 10f)]
+        [Header("Base Rotation Settings"), SerializeField, Range(1f, 10f), Tooltip("Yaw rotation applied per mouse-axis unit by the top-down camera on the owning client. Higher values rotate faster.")]
         protected float rotationSencitivity = 3f;
 
-        [Header("Base Collision Settings"), SerializeField, Range(1f, 15f)]
+        [Header("Base Collision Settings"), SerializeField, Range(1f, 15f), Tooltip("Camera collision recovery responsiveness multiplier. Higher values move the camera to the collision-safe distance faster.")]
         protected float collisionDstanceSmoothTime = 5f;
-        [SerializeField]
+        [SerializeField, Tooltip("Prevents the owning client's top-down camera from passing through scene colliders. Disable only when camera obstruction is handled elsewhere.")]
         protected bool useCollisionDetection = true;
 
         #endregion

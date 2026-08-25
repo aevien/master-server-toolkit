@@ -8,8 +8,10 @@ namespace MasterServerToolkit.Bridges
     public class ChatChannelItem : MonoBehaviour
     {
         [Header("Components"), SerializeField]
+        [Tooltip("Required Image whose sprite is cleared when channel information is assigned.")]
         private Image iconImage;
         [SerializeField]
+        [Tooltip("Required text label that displays the channel name and current online-user count.")]
         private TMP_Text titleText;
 
         public void Set(ChatChannelInfo channelInfo)

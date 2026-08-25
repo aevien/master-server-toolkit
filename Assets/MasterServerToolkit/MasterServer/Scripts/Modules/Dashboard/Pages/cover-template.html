@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>#MST_TITLE#</title>
+  <link rel="icon" type="image/png" href="#MST_FAVICON#">
+  <!-- Bootstrap 5 (latest) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/cerulean/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Scripts: load BEFORE modules -->
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"
+    integrity="sha256-Lye89HGy1p3XhJT24hcvsoRw64Q4IOL5a7hdOflhjTA=" crossorigin="anonymous"></script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+      }
+    }
+  </script>
+
+  #JAVA_SCRIPT#
+
+  <style>
+    :root {
+      --brand: #00986A;
+      --brand-2: #004E80;
+      --ink: #363636;
+      --muted: #A1A1A1;
+      --panel: #ffffff;
+      --panel-2: #EDEAE9;
+      --edge: rgba(54, 54, 54, 0.12);
+      --accent: #D74518;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 420px at 8% -8%, rgba(0, 152, 106, 0.12), transparent 55%),
+        radial-gradient(900px 520px at 110% 12%, rgba(0, 78, 128, 0.12), transparent 55%),
+        linear-gradient(180deg, #f7f6f5 0%, #efeeed 100%);
+    }
+
+    .cover-shell {
+      animation: fadeUp 420ms ease both;
+    }
+
+    .cover-card {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid var(--edge);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.1);
+      backdrop-filter: blur(6px);
+      padding: 28px;
+    }
+
+    .cover-card .display-1 {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      letter-spacing: 0.6px;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      border-color: var(--brand);
+    }
+
+    .btn-primary:hover {
+      background: #007a55;
+      border-color: #007a55;
+    }
+
+    footer {
+      border-top: 1px solid var(--edge);
+      backdrop-filter: blur(6px);
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="bg-light">
+
+  <div class="min-vh-100 d-flex flex-column">
+    <main class="container flex-grow-1 d-flex align-items-center justify-content-center cover-shell">
+      <div class="cover-card">
+        #INNER_HTML#
+      </div>
+    </main>
+
+    <footer class="border-top bg-white">
+      <div class="container py-3 text-center text-body-secondary small">
+        © <span id="year"></span> #MST_TITLE#
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>

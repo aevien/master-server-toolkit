@@ -20,7 +20,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         /// <summary>
         /// Name of the room that will be loaded after a match is successfully created
         /// </summary>
-        [Header("Settings"), SerializeField, Tooltip("The name of the room that will be loaded after the client leaves the room")]
+        [Header("Settings"), SerializeField, Tooltip("Scene loaded on the client after a normal room disconnect. It is not used during zone changes; the scene must be available to the player build.")]
         private string offlineRoomScene = "Client";
 
         #endregion
@@ -73,7 +73,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
 
         private void SceneManager_OnLoadEnd(SceneLoadEndEventArgs _)
         {
-            Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+            ViewsManager.Hide<LoadingInfoView>();
         }
 
         private void ClientManager_OnClientConnectionState(ClientConnectionStateArgs state)
@@ -162,7 +162,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         {
             if (message.Status != ResponseStatus.Success)
             {
-                logger.Error(message.Error);
+                logger.Error(Mst.Errors.Parse(message.Status, message.Error));
                 StartDisconnection();
                 return;
             }

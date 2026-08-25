@@ -4,22 +4,26 @@ namespace MasterServerToolkit.MasterServer
 {
     public class ProvideServerAccessCheckPacket : SerializablePacket
     {
-        public string DeviceId { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public MstProperties CustomOptions { get; set; } = new MstProperties();
+        public const byte CurrentVersion = 2;
+        public const int ChallengeIdSize = 16;
+        public const int ProofSize = 32;
+
+        public byte Version { get; set; } = CurrentVersion;
+        public byte[] ChallengeId { get; set; } = new byte[ChallengeIdSize];
+        public byte[] Proof { get; set; } = new byte[ProofSize];
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write(DeviceId);
-            writer.Write(Password);
-            writer.Write(CustomOptions.ToDictionary());
+            writer.Write(Version);
+            writer.Write(ChallengeId);
+            writer.Write(Proof);
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
-            DeviceId = reader.ReadString();
-            Password = reader.ReadString();
-            CustomOptions = new MstProperties(reader.ReadDictionary());
+            Version = reader.ReadByte();
+            ChallengeId = reader.ReadBytesOrThrow(ChallengeIdSize);
+            Proof = reader.ReadBytesOrThrow(ProofSize);
         }
     }
 }

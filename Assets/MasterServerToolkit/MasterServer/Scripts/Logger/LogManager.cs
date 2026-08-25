@@ -1,28 +1,43 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace MasterServerToolkit.Logging
 {
     public class LogManager
     {
-        private static LogHandler _appenders;
-        private static readonly Dictionary<string, Logger> _loggers = new Dictionary<string, Logger>();
-        private static readonly Queue<PooledLog> _pooledLogs = new Queue<PooledLog>();
+        private static readonly object syncRoot = new();
+        private static readonly Dictionary<string, Logger> loggers = new();
+        private static readonly HashSet<Logger> pooledLoggers = new();
+        private static readonly Queue<PooledLog> pooledLogs = new();
+
+        private static LogHandler appenders;
+        private static int globalLogLevel;
+        private static int logLevel;
+        private static int isInitialized;
 
         /// <summary>
         /// Overrides logging set
         /// </summary>
-        public static LogLevel GlobalLogLevel { get; set; }
+        public static LogLevel GlobalLogLevel
+        {
+            get => (LogLevel)Volatile.Read(ref globalLogLevel);
+            set => Volatile.Write(ref globalLogLevel, (int)value);
+        }
 
         /// <summary>
         /// This overrides all logging settings
         /// </summary>
-        public static LogLevel LogLevel { get; set; }
+        public static LogLevel LogLevel
+        {
+            get => (LogLevel)Volatile.Read(ref logLevel);
+            set => Volatile.Write(ref logLevel, (int)value);
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        public static bool IsInitialized { get; private set; }
+        public static bool IsInitialized => Volatile.Read(ref isInitialized) != 0;
 
         /// <summary>
         /// 
@@ -32,37 +47,29 @@ namespace MasterServerToolkit.Logging
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="appenders"></param>
-        /// <param name="globalLogLevel"></param>
-        public static void Initialize(IEnumerable<LogHandler> appenders, LogLevel globalLogLevel)
+        /// <param name="newAppenders"></param>
+        /// <param name="newGlobalLogLevel"></param>
+        public static void Initialize(IEnumerable<LogHandler> newAppenders, LogLevel newGlobalLogLevel)
         {
-            _appenders = null;
-            _loggers.Clear();
-            _pooledLogs.Clear();
+            LogHandler nextAppenders = null;
 
-            GlobalLogLevel = globalLogLevel;
+            foreach (LogHandler appender in newAppenders)
+                nextAppenders += appender;
 
-            foreach (var appender in appenders)
+            PooledLog[] logsToReplay;
+
+            lock (syncRoot)
             {
-                AddAppender(appender);
+                appenders = nextAppenders;
+                GlobalLogLevel = newGlobalLogLevel;
+                logsToReplay = pooledLogs.ToArray();
+                pooledLogs.Clear();
+                pooledLoggers.Clear();
+                Volatile.Write(ref isInitialized, 1);
             }
 
-            IsInitialized = true;
-
-            // Disable pre-initialization pooling
-            foreach (var logger in _loggers.Values)
-            {
-                logger.OnLogEvent -= OnPooledLoggerLog;
-            }
-
-            // Push logger messages from pool to loggers
-            while (_pooledLogs.Count > 0)
-            {
-                var log = _pooledLogs.Dequeue();
-                log.Logger.Log(log.LogLevel, log.Message);
-            }
-
-            _pooledLogs.Clear();
+            foreach (PooledLog log in logsToReplay)
+                log.Logger.Log(log.LogLevel, log.Message, log.Channel);
         }
 
         /// <summary>
@@ -71,10 +78,9 @@ namespace MasterServerToolkit.Logging
         /// <param name="appender"></param>
         public static void AddAppender(LogHandler appender)
         {
-            _appenders += appender;
-            foreach (var logger in _loggers.Values)
+            lock (syncRoot)
             {
-                logger.OnLogEvent += appender;
+                appenders += appender;
             }
         }
 
@@ -84,10 +90,9 @@ namespace MasterServerToolkit.Logging
         /// <param name="appender"></param>
         public static void RemoveAppender(LogHandler appender)
         {
-            _appenders -= appender;
-            foreach (var logger in _loggers.Values)
+            lock (syncRoot)
             {
-                logger.OnLogEvent -= appender;
+                appenders -= appender;
             }
         }
 
@@ -109,37 +114,34 @@ namespace MasterServerToolkit.Logging
         /// <returns></returns>
         public static Logger GetLogger(string name, bool poolUntilInitialized)
         {
-            if (!_loggers.TryGetValue(name, out Logger logger))
+            lock (syncRoot)
             {
-                logger = CreateLogger(name);
-                _loggers.Add(name, logger);
+                if (!loggers.TryGetValue(name, out Logger logger))
+                {
+                    logger = CreateLogger(name);
+                    loggers.Add(name, logger);
+                }
+
+                if (!IsInitialized && poolUntilInitialized)
+                    pooledLoggers.Add(logger);
+
+                return logger;
             }
-
-            if (!IsInitialized && poolUntilInitialized)
-            {
-                // Register to pre-initialization pooling
-                logger.OnLogEvent += OnPooledLoggerLog;
-            }
-
-            return logger;
-        }
-
-        private static void OnPooledLoggerLog(Logger logger, LogLevel level, object message)
-        {
-            var log = _pooledLogs.Count >= InitializationPoolSize ? _pooledLogs.Dequeue() : new PooledLog();
-
-            log.LogLevel = level;
-            log.Logger = logger;
-            log.Message = message;
-            log.Date = DateTime.Now;
-
-            _pooledLogs.Enqueue(log);
         }
 
         public static void Reset()
         {
-            _loggers.Clear();
-            _appenders = null;
+            lock (syncRoot)
+            {
+                foreach (Logger logger in loggers.Values)
+                    logger.OnLogEvent -= RouteLog;
+
+                loggers.Clear();
+                pooledLoggers.Clear();
+                pooledLogs.Clear();
+                appenders = null;
+                Volatile.Write(ref isInitialized, 0);
+            }
         }
 
         private static Logger CreateLogger(string name)
@@ -149,15 +151,53 @@ namespace MasterServerToolkit.Logging
                 LogLevel = GlobalLogLevel
             };
 
-            logger.OnLogEvent += _appenders;
+            logger.OnLogEvent += RouteLog;
             return logger;
         }
 
-        private class PooledLog
+        private static void RouteLog(Logger logger, LogLevel level, string channel, object message)
+        {
+            LogHandler currentAppenders;
+
+            lock (syncRoot)
+            {
+                if (!loggers.TryGetValue(logger.Name, out Logger currentLogger) ||
+                    !ReferenceEquals(currentLogger, logger))
+                {
+                    return;
+                }
+
+                if (!IsInitialized && pooledLoggers.Contains(logger))
+                    AddPooledLog(logger, level, channel, message);
+
+                currentAppenders = appenders;
+            }
+
+            currentAppenders?.Invoke(logger, level, channel, message);
+        }
+
+        private static void AddPooledLog(Logger logger, LogLevel level, string channel, object message)
+        {
+            int poolSize = InitializationPoolSize;
+
+            if (poolSize <= 0)
+                return;
+
+            PooledLog log = pooledLogs.Count >= poolSize ? pooledLogs.Dequeue() : new PooledLog();
+            log.LogLevel = level;
+            log.Logger = logger;
+            log.Channel = channel;
+            log.Message = message;
+            log.Date = DateTime.Now;
+            pooledLogs.Enqueue(log);
+        }
+
+        private sealed class PooledLog
         {
             public DateTime Date;
             public LogLevel LogLevel;
             public Logger Logger;
+            public string Channel;
             public object Message;
         }
     }

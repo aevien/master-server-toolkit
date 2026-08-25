@@ -2,6 +2,7 @@
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
+using System;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -11,13 +12,20 @@ namespace MasterServerToolkit.Bridges
     public class CreateNewRoomView : UIView
     {
         [Header("Components"), SerializeField]
+        [Tooltip("Input field used as the new room title. The view generates a friendly default title when initialized.")]
         private TMP_InputField roomNameInputField;
         [SerializeField]
+        [Tooltip("Input field whose text is sent as the room maximum-connections argument. Configure numeric input validation in the TMP_InputField.")]
         private TMP_InputField roomMaxConnectionsInputField;
         [SerializeField]
+        [Tooltip("Required dropdown populated with regions returned by the matchmaker when the view opens. Its selected region is used for room creation.")]
         private TMP_Dropdown roomRegionNameInputDropdown;
         [SerializeField]
+        [Tooltip("Optional password input. An empty value creates a room without the room-password spawn option.")]
         private TMP_InputField roomPasswordInputField;
+
+        private IDisposable showCreateNewRoomListener;
+        private IDisposable hideCreateNewRoomListener;
 
         protected override void Awake()
         {
@@ -26,23 +34,37 @@ namespace MasterServerToolkit.Bridges
             RoomName = $"Room-{Mst.Helper.CreateFriendlyId()}";
 
             // Listen to show/hide events
-            Mst.Events.AddListener(MstEventKeys.showCreateNewRoomView, OnShowCreateNewRoomEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hideCreateNewRoomView, OnHideCreateNewRoomEventHandler);
+            showCreateNewRoomListener?.Dispose();
+            showCreateNewRoomListener = Mst.Events.AddListener(MstEventKeys.showCreateNewRoomView, OnShowCreateNewRoomEventHandler);
+
+            hideCreateNewRoomListener?.Dispose();
+            hideCreateNewRoomListener = Mst.Events.AddListener(MstEventKeys.hideCreateNewRoomView, OnHideCreateNewRoomEventHandler);
         }
 
-        private void OnShowCreateNewRoomEventHandler(EventMessage message)
+        protected override void OnDestroy()
+        {
+            showCreateNewRoomListener?.Dispose();
+            showCreateNewRoomListener = null;
+
+            hideCreateNewRoomListener?.Dispose();
+            hideCreateNewRoomListener = null;
+
+            base.OnDestroy();
+        }
+
+        private void OnShowCreateNewRoomEventHandler(EventPayload message)
         {
             Show();
         }
 
-        private void OnHideCreateNewRoomEventHandler(EventMessage message)
+        private void OnHideCreateNewRoomEventHandler(EventPayload message)
         {
             Hide();
         }
 
-        protected override void OnShow()
+        protected override void OnEndShow()
         {
-            base.OnShow();
+            base.OnEndShow();
 
             Mst.Client.Matchmaker.GetRegions(regions =>
             {
@@ -111,14 +133,14 @@ namespace MasterServerToolkit.Bridges
 
         public void CreateNewMatch()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room... Please wait!");
+            ViewsManager.Show<LoadingInfoView>("Starting room... Please wait!");
 
             Logs.Debug("Starting room... Please wait!");
 
             // Spawn options for spawner controller
             var spawnOptions = new MstProperties();
             spawnOptions.Add(Mst.Args.Names.RoomMaxConnections, MaxConnections);
-            spawnOptions.Add(Mst.Args.Names.RoomName, RoomName.Escape());
+            spawnOptions.Add(Mst.Args.Names.RoomTitle, RoomName.Escape());
 
             if (!string.IsNullOrEmpty(Password))
                 spawnOptions.Add(Mst.Args.Names.RoomPassword, Password);

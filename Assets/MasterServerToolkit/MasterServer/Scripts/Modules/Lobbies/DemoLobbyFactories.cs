@@ -231,7 +231,7 @@ namespace MasterServerToolkit.MasterServer
 
         public static string ExtractLobbyName(Dictionary<string, string> properties)
         {
-            return properties.ContainsKey(MstDictKeys.LOBBY_NAME) ? properties[MstDictKeys.LOBBY_NAME] : DefaultName;
+            return properties.ContainsKey(MstParamKeys.LOBBY_NAME) ? properties[MstParamKeys.LOBBY_NAME] : DefaultName;
         }
     }
 }

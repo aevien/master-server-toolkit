@@ -15,6 +15,7 @@
 /[Pp]ackages
 /[Aa]ssets/*
 !/[Aa]ssets/MasterServerToolkit/
+!/[Aa]ssets/MasterServerToolkit.Tests/
 /[Aa]ssets/MasterServerToolkit/Templates/
 /[Aa]ssets/MasterServerToolkit/Demos/BasicStepByStep/
 /SerializedBuildInfo/
@@ -30,6 +31,7 @@
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/MasterServerToolkit/*.meta
+!/[Aa]ssets/MasterServerToolkit.Tests.meta
 
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
@@ -86,3 +88,4 @@ crashlytics-build.properties
 Assets/MasterServerToolkit/Addons.meta
 wwwroot/
 application.cfg
+*.cfg

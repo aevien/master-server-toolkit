@@ -12,14 +12,18 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Number of reusable notice items created at startup. Use at least 1; a value of 0 leaves no item available for incoming notifications.")]
         private int maxNotices = 5;
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required container that receives the notice-item pool. Existing children are removed during initialization.")]
         private RectTransform messagesContainer;
         [SerializeField]
+        [Tooltip("Required NoticeItem prefab instantiated Max Notices times to form the reusable notification pool.")]
         private NoticeItem noticeItemPrefab;
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Seconds each notice remains visible, measured with scaled game time. A value of 0 hides it on the next coroutine update.")]
         private float destroyAfter = 5f;
 
         #endregion
@@ -38,21 +42,6 @@ namespace MasterServerToolkit.Bridges
 
         protected virtual void Start()
         {
-            // Initialize all items for notice items
-            InitAllNotices();
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            Mst.Client.Notifications.OnNotificationReceivedEvent -= Notifications_OnNotificationReceivedEvent;
-        }
-
-        /// <summary>
-        /// Initializes all items for notice items
-        /// </summary>
-        private void InitAllNotices()
-        {
             for (int i = 0; i < maxNotices; i++)
             {
                 var noticeItem = Instantiate(noticeItemPrefab, messagesContainer, false);
@@ -61,25 +50,22 @@ namespace MasterServerToolkit.Bridges
             }
         }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            Mst.Client.Notifications.OnNotificationReceivedEvent -= Notifications_OnNotificationReceivedEvent;
+        }
+
         protected virtual void Notifications_OnNotificationReceivedEvent(string message)
         {
             Show();
 
             var noticeItem = noticeItems.FirstOrDefault();
-
             noticeItem.transform.SetAsLastSibling();
-            noticeItem.Show();
-
-            noticeItem.OutputMessage(message);
-            noticeItem.WaitAndHide(destroyAfter);
+            noticeItem.Show(message, destroyAfter);
 
             noticeItems.RemoveAt(0);
             noticeItems.Add(noticeItem);
-        }
-
-        public void Message(string message)
-        {
-            Notifications_OnNotificationReceivedEvent(message);
         }
     }
 }

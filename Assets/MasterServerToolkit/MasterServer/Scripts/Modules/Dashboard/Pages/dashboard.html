@@ -1,0 +1,316 @@
+<style>
+    .char-block {
+        min-height: 350px;
+    }
+</style>
+
+<div id="app">
+    <!-- When loading=false, show tabs with server/modules/traffic/chart info -->
+    <template v-if="!loading">
+        <div v-if="refreshErrorMessages.length > 0" class="alert alert-warning" role="alert">
+            <div class="fw-semibold">Dashboard refresh issue</div>
+            <div v-for="message in refreshErrorMessages" :key="message">{{ message }}</div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-bg-primary mb-3">
+                    <div class="card-body">
+                        <p class="card-text">
+                            <i class="bi bi-hdd-stack-fill"></i> Rooms
+                        </p>
+                        <h5 class="card-title display-5">
+                            {{ rooms.properties.rooms.length}}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-bg-secondary mb-3">
+                    <div class="card-body">
+                        <p class="card-text">
+                            <i class="bi bi-arrow-bar-up"></i> Spawners
+                        </p>
+                        <h5 class="card-title display-5">
+                            {{ spawners.properties.spawners.length}}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-bg-success mb-3">
+                    <div class="card-body">
+                        <p class="card-text">
+                            <i class="bi bi-people-fill"></i> Max CCU
+                        </p>
+                        <h5 class="card-title display-5">
+                            {{ clients.highestClients}}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-bg-danger mb-3">
+                    <div class="card-body">
+                        <p class="card-text">
+                            <i class="bi bi-watch"></i> Uptime
+                        </p>
+                        <h5 class="card-title display-5">
+                            {{ server.upTime }}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card text-bg-light mb-3">
+                    <div class="card-header"><i class="bi bi-people"></i> Users</div>
+                    <div class="card-body char-block">
+                        <canvas class="img-fluid" id="usersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card text-bg-light mb-3">
+                    <div class="card-header"><i class="bi bi-arrow-down-up"></i> Network Traffic</div>
+                    <div class="card-body char-block">
+                        <canvas class="img-fluid" id="trafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Spinner shown while loading=true -->
+    <template v-if="loading">
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script type="module">
+    import { createApp, ref, shallowRef, markRaw, onMounted, nextTick, computed } from 'vue'
+
+    createApp({
+        setup() {
+            const updateInterval = 5_000;
+
+            const server = ref({});
+            const modules = ref([]);
+            const traffic = ref({});
+            const clients = ref({});
+            const users = ref({});
+            const rooms = ref({
+                'properties': {
+                    'rooms': []
+                }
+            });
+            const spawners = ref({
+                'properties': {
+                    'spawners': []
+                }
+            });
+
+            const trafficChart = shallowRef(null);
+            const usersChart = shallowRef(null);
+
+            const loading = ref(true);
+            const refreshErrors = ref({});
+            const refreshErrorMessages = computed(() => Object.values(refreshErrors.value));
+
+            const setRefreshError = (key, message) => {
+                const hasErrors = Object.keys(refreshErrors.value).length > 0;
+
+                if (refreshErrors.value[key] === message) {
+                    return;
+                }
+
+                refreshErrors.value = { ...refreshErrors.value, [key]: message };
+
+                if (!hasErrors) {
+                    mst.showError(message);
+                }
+            };
+
+            const clearRefreshError = (key) => {
+                if (!(key in refreshErrors.value)) {
+                    return;
+                }
+
+                const nextErrors = { ...refreshErrors.value };
+                delete nextErrors[key];
+                refreshErrors.value = nextErrors;
+            };
+
+            const fetchDashboardJson = async (key, path, fallbackMessage) => {
+                try {
+                    const response = await mst.apiFetch(path, { method: "GET" }, { toastErrors: false });
+
+                    if (!response.ok) {
+                        const message = await mst.getErrorMessage(response, `${fallbackMessage}: ${response.status}`);
+                        setRefreshError(key, message);
+                        return null;
+                    }
+
+                    const data = await response.json();
+                    clearRefreshError(key);
+                    return data;
+                } catch (error) {
+                    const message = error?.message || fallbackMessage;
+                    setRefreshError(key, message);
+                    console.error(`${fallbackMessage}:`, error);
+                    return null;
+                }
+            };
+
+            const getServerInfo = async () => {
+                const data = await fetchDashboardJson("server", "server/info", "Failed to load server info");
+
+                if (!data) return;
+
+                server.value = data.server;
+                modules.value = data.modules;
+                traffic.value = data.traffic;
+                clients.value = data.clients;
+            };
+
+            const getUsersInfo = async () => {
+                const data = await fetchDashboardJson("users", "users/info", "Failed to load users info");
+
+                if (data && 'id' in data)
+                    users.value = data;
+            };
+
+            const getRoomsInfo = async () => {
+                const data = await fetchDashboardJson("rooms", "rooms/info", "Failed to load rooms info");
+
+                if (data && 'id' in data)
+                    rooms.value = data;
+            };
+
+            const getSpawnersInfo = async () => {
+                const data = await fetchDashboardJson("spawners", "spawners/info", "Failed to load spawners info");
+
+                if (data && 'id' in data)
+                    spawners.value = data;
+            };
+
+            // init traffic chart
+            const initTrafficChart = () => {
+                const canvas = document.getElementById('trafficChart');
+                if (!canvas) return;
+
+                trafficChart.value = markRaw(new Chart(canvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Traffic'],
+                        datasets: [
+                            { label: 'Sent (KB)', data: [0] },
+                            { label: 'Received (KB)', data: [0] }
+                        ]
+                    },
+                    options: {
+                        animation: false,
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                }));
+            };
+
+            // init users chart
+            const initUsersChart = () => {
+                const canvas = document.getElementById('usersChart');
+                if (!canvas) return;
+
+                usersChart.value = markRaw(new Chart(canvas.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ["Active clients", "Inactive clients", "Logged in", "Logged in as Guest", "In Rooms"],
+                        datasets: [
+                            {
+                                label: 'Users',
+                                data: [0, 0, 0, 0, 0]
+                            }
+                        ]
+                    },
+                    options: {
+                        animation: false,
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                }));
+            };
+
+            // update traffic chart
+            const updateTrafficChart = () => {
+                if (!trafficChart.value || !traffic.value) return;
+
+                const sentKb = (Number(traffic.value.totalSent) || 0) / 1024;
+                const recvKb = (Number(traffic.value.totalReceived) || 0) / 1024;
+
+                const ch = trafficChart.value;
+                ch.data.datasets[0].data = [Number(sentKb.toFixed(4))];
+                ch.data.datasets[1].data = [Number(recvKb.toFixed(4))];
+                ch.update();
+            };
+
+            // update users chart
+            const updateUsersChart = () => {
+                if (!usersChart.value || !users.value || !server.value) return;
+
+                const values = [
+                    Number(clients.value.active) || 0,
+                    Number(clients.value.inactive) || 0,
+                    Number(users.value.properties.loggedIn) || 0,
+                    Number(users.value.properties.loggedInAsGuest) || 0,
+                    Number(users.value.properties.inRooms) || 0
+                ];
+
+                const ch = usersChart.value;
+                ch.data.datasets[0].data = values;
+                ch.update();
+            };
+
+            onMounted(async () => {
+                await getServerInfo();
+                await getUsersInfo();
+                await getRoomsInfo();
+                await getSpawnersInfo();
+
+                loading.value = false;
+
+                await nextTick();
+
+                initUsersChart();
+                initTrafficChart();
+
+                updateUsersChart();
+                updateTrafficChart();
+
+                setInterval(async () => {
+                    await getServerInfo();
+                    await getUsersInfo();
+                    await getRoomsInfo();
+                    await getSpawnersInfo();
+
+                    updateUsersChart();
+                    updateTrafficChart();
+                }, updateInterval);
+            });
+
+            return { server, clients, users, rooms, spawners, modules, traffic, loading, refreshErrorMessages };
+        }
+    }).mount('#app');
+</script>
+
+
+
+
+

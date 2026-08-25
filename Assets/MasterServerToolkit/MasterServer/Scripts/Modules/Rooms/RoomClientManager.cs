@@ -1,11 +1,12 @@
 using MasterServerToolkit.Bridges;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.UI;
 using MasterServerToolkit.Utils;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class RoomClientManager : RoomClient<RoomClientManager>
+    public class RoomClientManager : RoomClient
     {
         #region INSPECTOR
 
@@ -30,24 +31,24 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        protected override void StartConnection(RoomAccessPacket access)
+        protected override void Connect(RoomAccessPacket access)
         {
             if (roomConnection != null)
                 roomConnection.Close(false);
             else
-                roomConnection = Mst.Create.ClientSocket();
+                roomConnection = Mst.Connection;
 
             roomConnection.AddConnectionOpenListener(OnConnectedToRoomEventHandler);
             roomConnection.AddConnectionCloseListener(OnDisconnectedFromRoomEventHandler, false);
 
-            roomConnection.Connect(access.RoomIp, access.RoomPort, roomConnectionTimeout);
+            roomConnection.Connect(access.Ip, access.Port, roomConnectionTimeout);
 
             roomConnection.WaitForConnection((socket) =>
             {
-                if (socket == null)
+                if (!socket.IsConnected)
                 {
                     roomConnection.Close();
-                    logger.Error($"Connection timeout has expired");
+                    logger.Error("Room connection failed or timed out");
                 }
             });
         }
@@ -55,7 +56,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Disconnects client from room server
         /// </summary>
-        protected override void StartDisconnection()
+        protected override void Disconnect()
         {
             // Stop client
             roomConnection.Close();
@@ -72,8 +73,9 @@ namespace MasterServerToolkit.MasterServer
                 }
                 else
                 {
-                    logger.Info(response.AsString("Error"));
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(response.AsString("Error"), null));
+                    string error = Mst.Errors.Parse(status, response);
+                    logger.Info(error);
+                    ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage(error, null));
                 }
             });
         }
@@ -90,7 +92,7 @@ namespace MasterServerToolkit.MasterServer
         {
             ScenesLoader.LoadSceneByName(Mst.Client.Rooms.ReceivedAccess.SceneName, (progressValue) =>
             {
-                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
+                ViewsManager.Show<LoadingInfoView>($"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
             }, null);
         }
 
@@ -103,7 +105,7 @@ namespace MasterServerToolkit.MasterServer
             {
                 ScenesLoader.LoadSceneByName(offlineRoomScene, (progressValue) =>
                 {
-                    Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
+                    ViewsManager.Show<LoadingInfoView>($"Loading scene {Mathf.RoundToInt(progressValue * 100f)}% ... Please wait!");
                 }, null);
             }
         }

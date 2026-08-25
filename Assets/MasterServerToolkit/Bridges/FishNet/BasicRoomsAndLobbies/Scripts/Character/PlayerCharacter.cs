@@ -1,5 +1,6 @@
 ﻿#if FISHNET
 using System;
+using UnityEngine;
 
 namespace MasterServerToolkit.Bridges.FishNetworking.Character
 {
@@ -9,6 +10,17 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         public static event Action<PlayerCharacter> OnClientCharacterSpawnedEvent;
         public static event Action<PlayerCharacter> OnLocalCharacterSpawnedEvent;
         public static event Action<PlayerCharacter> OnCharacterDestroyedEvent;
+
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEditorPlayModeState()
+        {
+            OnServerCharacterSpawnedEvent = null;
+            OnClientCharacterSpawnedEvent = null;
+            OnLocalCharacterSpawnedEvent = null;
+            OnCharacterDestroyedEvent = null;
+        }
+#endif
 
         private void OnDestroy()
         {

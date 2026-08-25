@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -13,29 +13,76 @@ namespace MasterServerToolkit.MasterServer
 {
     public class SpawnersModule : BaseServerModule
     {
+        private sealed class OwnerSpawnersState
+        {
+            public OwnerSpawnersState(IPeer peer)
+            {
+                Peer = peer;
+            }
+
+            public object Gate { get; } = new object();
+            public IPeer Peer { get; }
+            public ConcurrentDictionary<int, RegisteredSpawner> Spawners { get; } =
+                new ConcurrentDictionary<int, RegisteredSpawner>();
+            public bool IsActive { get; set; } = true;
+        }
+
+        private sealed class ClientSpawnRequestState
+        {
+            public ClientSpawnRequestState(IPeer peer)
+            {
+                Peer = peer;
+            }
+
+            public object Gate { get; } = new object();
+            public IPeer Peer { get; }
+        }
+
         public delegate void SpawnedProcessRegistrationHandler(SpawnTask task, IPeer peer);
 
         #region INSPECTOR
 
-        [Header("Permissions"), SerializeField, Tooltip("Minimal permission level, necessary to register a spanwer")]
-        protected int createSpawnerPermissionLevel = 0;
-
-        [Tooltip("How often spawner queues are updated"), SerializeField]
+        [Tooltip("Realtime interval in seconds between master-side spawner queue dispatch passes. Values below 0.01 seconds are treated as 0.01 and increase master update work."), SerializeField]
         protected float queueUpdateFrequency = 0.1f;
 
-        [Tooltip("If true, clients will be able to request spawns"), SerializeField]
+        [Tooltip("Maximum process-start requests concurrently awaiting responses from each registered spawner. Values below 1 are treated as 1."), SerializeField]
+        protected int maxConcurrentSpawnRequests = 8;
+
+        [Tooltip("Minimum delay in milliseconds between process-start requests sent to one registered spawner. 0 disables throttling; negative values are treated as 0."), SerializeField]
+        protected int spawnRequestThrottleIntervalMs = 100;
+
+        [Tooltip("Allows ordinary client spawn requests. Lobby/server-owned spawn flows remain available when this setting is disabled."), SerializeField]
         protected bool enableClientSpawnRequests = true;
+
+        [Tooltip("Maximum time in milliseconds to wait for process-killed confirmation while supervising spawner closure. Minimum Inspector and runtime value is 1 millisecond."),
+         SerializeField, Min(1)]
+        protected int shutdownConfirmationTimeoutMs = 5000;
 
         #endregion
 
-        private int nextSpawnerId = 0;
-        private int nextSpawnTaskId = 0;
+        private int lastSpawnerId = -1;
+        private int lastSpawnTaskId = -1;
 
         protected readonly ConcurrentDictionary<int, RegisteredSpawner> spawnersList = new ConcurrentDictionary<int, RegisteredSpawner>();
         protected readonly ConcurrentDictionary<int, SpawnTask> spawnTasksList = new ConcurrentDictionary<int, SpawnTask>();
+        private readonly ConcurrentDictionary<int, RegisteredSpawner> closingSpawnersList =
+            new ConcurrentDictionary<int, RegisteredSpawner>();
+        private readonly ConcurrentDictionary<int, Lazy<Task>> closeSupervisors =
+            new ConcurrentDictionary<int, Lazy<Task>>();
+        private readonly ConcurrentDictionary<int, OwnerSpawnersState> ownerSpawnersByPeerId =
+            new ConcurrentDictionary<int, OwnerSpawnersState>();
+        private readonly ConcurrentDictionary<int, ClientSpawnRequestState> clientSpawnRequestStates =
+            new ConcurrentDictionary<int, ClientSpawnRequestState>();
+        private readonly object runGate = new object();
+        private Coroutine queueUpdaterCoroutine;
+        private bool acceptsSpawnerWork = true;
 
         public IEnumerable<RegisteredSpawner> Spawners => spawnersList.Values;
         public IEnumerable<SpawnTask> Tasks => spawnTasksList.Values;
+        private int MaxConcurrentSpawnRequests => Mathf.Max(1, maxConcurrentSpawnRequests);
+        private int SpawnRequestThrottleIntervalMs => Mathf.Max(0, spawnRequestThrottleIntervalMs);
+        protected virtual int ShutdownConfirmationTimeoutMs => Mathf.Max(1, shutdownConfirmationTimeoutMs);
+        protected int PendingCloseSupervisionCount => closeSupervisors.Count;
 
         public event Action<RegisteredSpawner> OnSpawnerRegisteredEvent;
         public event Action<RegisteredSpawner> OnSpawnerDestroyedEvent;
@@ -43,8 +90,12 @@ namespace MasterServerToolkit.MasterServer
 
         public override void Initialize(IServer server)
         {
+            RegisteredSpawner.MaxConcurrentRequests = MaxConcurrentSpawnRequests;
+            RegisteredSpawner.SpawnRequestThrottleIntervalMs = SpawnRequestThrottleIntervalMs;
+
             // Add handlers
             server.RegisterMessageHandler(MstOpCodes.RegisterSpawner, RegisterSpawnerRequestHandler);
+            server.RegisterMessageHandler(MstOpCodes.UnregisterSpawner, UnregisterSpawnerRequestHandler);
             server.RegisterMessageHandler(MstOpCodes.ClientsSpawnRequest, ClientsSpawnRequestHandler);
             server.RegisterMessageHandler(MstOpCodes.RegisterSpawnedProcess, RegisterSpawnedProcessRequestHandler);
             server.RegisterMessageHandler(MstOpCodes.CompleteSpawnProcess, CompleteSpawnProcessRequestHandler);
@@ -54,35 +105,90 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.GetSpawnFinalizationData, GetCompletionDataRequestHandler);
             server.RegisterMessageHandler(MstOpCodes.UpdateSpawnerProcessesCount, SetSpawnedProcessesCountRequestHandler);
 
-            // Coroutines
-            StartCoroutine(StartQueueUpdater());
         }
 
-        public override MstJson JsonInfo()
+        public override void StartServerRun(CancellationToken runCancellationToken)
         {
-            var data = base.JsonInfo();
-            data.SetField("description", "This module manages the processes of running rooms.");
-            data.SetField("totalSpawners", spawnersList.Count);
+            lock (runGate)
+                acceptsSpawnerWork = true;
+
+            if (queueUpdaterCoroutine == null)
+                queueUpdaterCoroutine = StartCoroutine(StartQueueUpdater());
+        }
+
+        public override async Task StopServerRunAsync()
+        {
+            List<RegisteredSpawner> registeredSpawners;
+            List<Lazy<Task>> supervisors;
+
+            lock (runGate)
+            {
+                acceptsSpawnerWork = false;
+                registeredSpawners = spawnersList.Values
+                    .Concat(closingSpawnersList.Values)
+                    .Distinct()
+                    .ToList();
+                supervisors = closeSupervisors.Values
+                    .Concat(registeredSpawners.Select(GetOrCreateCloseSupervisor))
+                    .Distinct()
+                    .ToList();
+            }
+
+            if (queueUpdaterCoroutine != null)
+            {
+                StopCoroutine(queueUpdaterCoroutine);
+                queueUpdaterCoroutine = null;
+            }
+
+            foreach (RegisteredSpawner spawner in registeredSpawners)
+            {
+                if (TryDestroySpawner(spawner, true))
+                    continue;
+
+                foreach (SpawnTask task in spawner.GetAllTasksSnapshot())
+                    SendShutdownKillRequest(spawner, task, true);
+            }
+
+            await Task.WhenAll(supervisors.Select(supervisor => supervisor.Value)).ConfigureAwait(false);
+
+            foreach (OwnerSpawnersState ownerState in ownerSpawnersByPeerId.Values)
+                ownerState.Peer.OnConnectionCloseEvent -= OnRegisteredPeerDisconnect;
+
+            ownerSpawnersByPeerId.Clear();
+            foreach (ClientSpawnRequestState requestState in clientSpawnRequestStates.Values)
+                requestState.Peer.OnConnectionCloseEvent -= OnClientSpawnRequesterDisconnect;
+
+            clientSpawnRequestStates.Clear();
+            spawnTasksList.Clear();
+            closingSpawnersList.Clear();
+            closeSupervisors.Clear();
+        }
+
+        public override MstJson Details()
+        {
+            var info = base.Details();
+            info.SetField("description", "This module manages the processes of running rooms.");
+            info["properties"].SetField("totalSpawners", spawnersList.Count);
 
             int totalRooms = 0;
 
-            MstJson spawners = new MstJson();
+            MstJson spawners = MstJson.CreateArray();
 
             foreach (var spawner in spawnersList.Values)
             {
                 totalRooms += spawner.ProcessesRunning;
 
-                var spawnerJson = new MstJson();
+                var spawnerJson = MstJson.CreateObject();
                 spawnerJson.AddField("id", spawner.SpawnerId);
                 spawnerJson.AddField("processes", spawner.ProcessesRunning);
                 spawnerJson.AddField("processes", spawner.ProcessesRunning);
 
-                var options = new MstJson();
+                var options = MstJson.CreateObject();
                 options.AddField("machineIp", spawner.Options.MachineIp);
                 options.AddField("maxProcesses", spawner.Options.MaxProcesses);
                 options.AddField("region", spawner.Options.Region);
 
-                var customOptions = new MstJson();
+                var customOptions = MstJson.CreateObject();
 
                 foreach (var option in spawner.Options.CustomOptions)
                     customOptions.AddField(option.Key, option.Value);
@@ -94,56 +200,17 @@ namespace MasterServerToolkit.MasterServer
                 spawners.Add(spawnerJson);
             }
 
-            data.SetField("totalStartedRooms", totalRooms);
+            info["properties"].SetField("totalStartedRooms", totalRooms);
 
-            var allRegions = new MstJson();
+            var allRegions = MstJson.CreateArray();
 
             foreach (var region in GetRegions().Select(i => i.Name))
                 allRegions.Add(region);
 
-            data.SetField("allRegions", allRegions);
-            data.SetField("maxConcurrentRequests", RegisteredSpawner.MaxConcurrentRequests);
-            data.SetField("spawners", spawners);
-
-            return data;
-        }
-
-        public override MstProperties Info()
-        {
-            int totalRooms = 0;
-
-            var info = base.Info();
-            info.Set("Description", "This module manages the processes of running rooms.");
-            info.Set("Total spawners", spawnersList.Count);
-
-            StringBuilder html = new StringBuilder();
-
-            html.Append("<ol class=\"list-group list-group-numbered\">");
-
-            foreach (var spawner in spawnersList.Values)
-            {
-                totalRooms += spawner.ProcessesRunning;
-
-                var options = spawner.Options;
-
-                html.Append("<li class=\"list-group-item\">");
-
-                html.Append($"<b>SpawnerId:</b> {spawner.SpawnerId}, ");
-                html.Append($"<b>Processes:</b> {spawner.ProcessesRunning}, ");
-                html.Append($"<b>MachineIp:</b> {options.MachineIp}, ");
-                html.Append($"<b>MaxProcesses:</b> {options.MaxProcesses}, ");
-                html.Append($"<b>Region:</b> {options.Region}, ");
-                html.Append($"<b>CustomOptions:</b> {options.CustomOptions}");
-
-                html.Append("</li>");
-            }
-
-            html.Append("</ol>");
-
-            info.Set("Total processes (Rooms)", totalRooms);
-            info.Set("Total regions", string.Join(",", GetRegions().Select(i => i.Name)));
-            info.Set("MaxConcurrentRequests", RegisteredSpawner.MaxConcurrentRequests);
-            info.Set("Spawners Info", html.ToString());
+            info["properties"].SetField("allRegions", allRegions);
+            info["properties"].SetField("maxConcurrentRequests", MaxConcurrentSpawnRequests);
+            info["properties"].SetField("spawnRequestThrottleIntervalMs", SpawnRequestThrottleIntervalMs);
+            info["properties"].SetField("spawners", spawners);
 
             return info;
         }
@@ -156,33 +223,64 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual RegisteredSpawner CreateSpawner(IPeer peer, SpawnerOptions options)
         {
-            // Create registered spawner instance
-            var spawnerInstance = new RegisteredSpawner(GenerateSpawnerId(), peer, options, logger);
+            if (peer == null)
+                throw new ArgumentNullException(nameof(peer));
 
-            // Find spawners in peer property
-            Dictionary<int, RegisteredSpawner> peerSpawners = peer.GetProperty(MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
 
-            // If this is the first time registering a spawners
-            if (peerSpawners == null)
+            RegisteredSpawner spawnerInstance;
+            bool shouldPublishLifecycleEvents;
+
+            lock (runGate)
             {
-                // Save the dictionary
-                peerSpawners = new Dictionary<int, RegisteredSpawner>();
-                peer.SetProperty(MstPeerPropertyCodes.RegisteredSpawners, peerSpawners);
+                if (!acceptsSpawnerWork || !peer.IsConnected)
+                    return null;
 
-                // Listen to disconnection
-                peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
+                OwnerSpawnersState ownerState = GetOrCreateOwnerSpawnersState(peer);
+                spawnerInstance = new RegisteredSpawner(GenerateSpawnerId(), peer, options, logger,
+                    MaxConcurrentSpawnRequests, SpawnRequestThrottleIntervalMs);
+
+                lock (ownerState.Gate)
+                {
+                    if (!ownerState.IsActive || !peer.IsConnected)
+                        return null;
+
+                    ownerState.Spawners[spawnerInstance.SpawnerId] = spawnerInstance;
+                    spawnersList[spawnerInstance.SpawnerId] = spawnerInstance;
+                }
+
+                shouldPublishLifecycleEvents = spawnerInstance.QueueLifecycleEvent(() =>
+                    InvokeSpawnerEventSafely(OnSpawnerRegisteredEvent, spawnerInstance,
+                        nameof(OnSpawnerRegisteredEvent)));
             }
 
-            // Add a new spawner
-            peerSpawners[spawnerInstance.SpawnerId] = spawnerInstance;
-
-            // Add the spawner to a list of all spawners
-            spawnersList[spawnerInstance.SpawnerId] = spawnerInstance;
-
-            // Invoke the event
-            OnSpawnerRegisteredEvent?.Invoke(spawnerInstance);
+            if (shouldPublishLifecycleEvents)
+                spawnerInstance.PublishPendingLifecycleEvents();
 
             return spawnerInstance;
+        }
+
+        private OwnerSpawnersState GetOrCreateOwnerSpawnersState(IPeer peer)
+        {
+            while (true)
+            {
+                if (ownerSpawnersByPeerId.TryGetValue(peer.Id, out OwnerSpawnersState existingState))
+                    return existingState;
+
+                var newState = new OwnerSpawnersState(peer);
+
+                if (!ownerSpawnersByPeerId.TryAdd(peer.Id, newState))
+                    continue;
+
+                peer.SetProperty(MstPeerPropertyCodes.RegisteredSpawners, newState.Spawners);
+                peer.OnConnectionCloseEvent += OnRegisteredPeerDisconnect;
+
+                if (!peer.IsConnected)
+                    OnRegisteredPeerDisconnect(peer);
+
+                return newState;
+            }
         }
 
         /// <summary>
@@ -191,23 +289,52 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="peer"></param>
         private void OnRegisteredPeerDisconnect(IPeer peer)
         {
-            // Get registered spawners from peer property
-            var peerSpawners = peer.GetProperty(MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
+            if (peer == null || !ownerSpawnersByPeerId.TryRemove(peer.Id, out OwnerSpawnersState ownerState))
+                return;
 
-            // Return if now spawner found
-            if (peerSpawners == null)
+            List<RegisteredSpawner> registeredSpawners;
+
+            lock (ownerState.Gate)
+            {
+                ownerState.IsActive = false;
+                registeredSpawners = ownerState.Spawners.Values.ToList();
+                ownerState.Spawners.Clear();
+            }
+
+            foreach (var registeredSpawner in registeredSpawners)
+                DestroySpawner(registeredSpawner);
+        }
+
+        private ClientSpawnRequestState GetOrCreateClientSpawnRequestState(IPeer peer)
+        {
+            while (true)
+            {
+                if (clientSpawnRequestStates.TryGetValue(peer.Id, out ClientSpawnRequestState existingState))
+                    return existingState;
+
+                var newState = new ClientSpawnRequestState(peer);
+
+                if (!clientSpawnRequestStates.TryAdd(peer.Id, newState))
+                    continue;
+
+                peer.OnConnectionCloseEvent += OnClientSpawnRequesterDisconnect;
+
+                if (!peer.IsConnected)
+                    OnClientSpawnRequesterDisconnect(peer);
+
+                return newState;
+            }
+        }
+
+        private void OnClientSpawnRequesterDisconnect(IPeer peer)
+        {
+            if (peer == null ||
+                !clientSpawnRequestStates.TryRemove(peer.Id, out ClientSpawnRequestState requestState))
             {
                 return;
             }
 
-            // Create a copy so that we can iterate safely
-            var registeredSpawners = peerSpawners.Values.ToList();
-
-            // Destroy all spawners
-            foreach (var registeredSpawner in registeredSpawners)
-            {
-                DestroySpawner(registeredSpawner);
-            }
+            requestState.Peer.OnConnectionCloseEvent -= OnClientSpawnRequesterDisconnect;
         }
 
         /// <summary>
@@ -216,24 +343,190 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="spawner"></param>
         public void DestroySpawner(RegisteredSpawner spawner)
         {
-            // Get spawner owner peer
-            var peer = spawner.Peer;
+            TryDestroySpawner(spawner);
+        }
 
-            // If peer exists
-            if (peer != null)
+        private bool TryDestroySpawner(RegisteredSpawner spawner, bool abandonOnKillResponse = false)
+        {
+            Lazy<Task> closeSupervisor;
+
+            lock (runGate)
             {
-                // Get spawners from peer property
-                var peerSpawners = peer.GetProperty(MstPeerPropertyCodes.RegisteredSpawners) as Dictionary<int, RegisteredSpawner>;
+                if (spawner == null ||
+                    !spawnersList.TryGetValue(spawner.SpawnerId, out RegisteredSpawner current) ||
+                    !ReferenceEquals(spawner, current) ||
+                    !((ICollection<KeyValuePair<int, RegisteredSpawner>>)spawnersList).Remove(
+                        new KeyValuePair<int, RegisteredSpawner>(spawner.SpawnerId, spawner)))
+                {
+                    return false;
+                }
 
-                // Remove the spawner from peer
-                if (peerSpawners != null)
-                    peerSpawners.Remove(spawner.SpawnerId);
+                closingSpawnersList[spawner.SpawnerId] = spawner;
+                closeSupervisor = GetOrCreateCloseSupervisor(spawner);
             }
 
-            // Remove the spawner from all spawners
-            if (spawnersList.TryRemove(spawner.SpawnerId, out _))
-                // Invoke the event
-                OnSpawnerDestroyedEvent?.Invoke(spawner);
+            var peer = spawner.Peer;
+
+            if (peer != null && ownerSpawnersByPeerId.TryGetValue(peer.Id, out OwnerSpawnersState ownerState))
+            {
+                lock (ownerState.Gate)
+                    ownerState.Spawners.TryRemove(spawner.SpawnerId, out _);
+            }
+
+            IReadOnlyList<SpawnTask> liveTasks = spawner.CloseAndGetTasksSnapshot();
+
+            if (peer == null || !peer.IsConnected)
+            {
+                foreach (SpawnTask task in spawner.ForceCloseAfterTimeout())
+                    spawnTasksList.TryRemove(task.Id, out _);
+
+                closingSpawnersList.TryRemove(spawner.SpawnerId, out _);
+            }
+            else
+            {
+                foreach (SpawnTask task in liveTasks)
+                    SendShutdownKillRequest(spawner, task, abandonOnKillResponse);
+            }
+
+            _ = closeSupervisor.Value;
+
+            bool shouldPublishLifecycleEvents = spawner.QueueLifecycleEvent(() =>
+                InvokeSpawnerEventSafely(OnSpawnerDestroyedEvent, spawner, nameof(OnSpawnerDestroyedEvent)));
+
+            if (shouldPublishLifecycleEvents)
+                spawner.PublishPendingLifecycleEvents();
+
+            if (spawner.LifecycleState == RegisteredSpawnerLifecycleState.Closed)
+                closingSpawnersList.TryRemove(spawner.SpawnerId, out _);
+
+            return true;
+        }
+
+        private Lazy<Task> GetOrCreateCloseSupervisor(RegisteredSpawner spawner)
+        {
+            return closeSupervisors.GetOrAdd(spawner.SpawnerId, _ =>
+                new Lazy<Task>(() => SuperviseSpawnerCloseAsync(spawner),
+                    LazyThreadSafetyMode.ExecutionAndPublication));
+        }
+
+        private async Task SuperviseSpawnerCloseAsync(RegisteredSpawner spawner)
+        {
+            try
+            {
+                using var timeoutCancellation = new CancellationTokenSource();
+                Task timeout = Task.Delay(ShutdownConfirmationTimeoutMs, timeoutCancellation.Token);
+
+                if (await Task.WhenAny(spawner.CloseCompletion, timeout).ConfigureAwait(false) ==
+                    spawner.CloseCompletion)
+                {
+                    timeoutCancellation.Cancel();
+                    await spawner.CloseCompletion.ConfigureAwait(false);
+                    return;
+                }
+
+                if (spawner.CloseCompletion.IsCompleted)
+                {
+                    await spawner.CloseCompletion.ConfigureAwait(false);
+                    return;
+                }
+
+                IReadOnlyList<SpawnTask> abandonedTasks = spawner.ForceCloseAfterTimeout();
+
+                foreach (SpawnTask task in abandonedTasks)
+                    spawnTasksList.TryRemove(task.Id, out _);
+
+                logger.Warn($"Spawner [{spawner.SpawnerId}] close confirmation timed out after " +
+                            $"{ShutdownConfirmationTimeoutMs} ms. Abandoned task supervision: {abandonedTasks.Count}");
+            }
+            finally
+            {
+                ((ICollection<KeyValuePair<int, RegisteredSpawner>>)closingSpawnersList).Remove(
+                    new KeyValuePair<int, RegisteredSpawner>(spawner.SpawnerId, spawner));
+                closeSupervisors.TryRemove(spawner.SpawnerId, out _);
+            }
+        }
+
+        private void SendShutdownKillRequest(RegisteredSpawner spawner, SpawnTask task,
+            bool abandonOnResponse = false)
+        {
+            spawner.SendKillRequest(task.Id, status =>
+            {
+                if (spawner.LifecycleState == RegisteredSpawnerLifecycleState.Closed)
+                    return;
+
+                if (status == ResponseStatus.NotFound)
+                {
+                    CompleteKilledTask(spawner, task);
+                    return;
+                }
+
+                if (abandonOnResponse)
+                {
+                    AbandonTaskSupervision(spawner, task);
+
+                    if (status != ResponseStatus.Success)
+                    {
+                        logger.Warn($"Spawner [{spawner.SpawnerId}] could not confirm shutdown kill request for task " +
+                                    $"[{task.Id}]. Status: {status}. Process state remains unknown");
+                    }
+
+                    return;
+                }
+
+                if (status != ResponseStatus.Success)
+                {
+                    logger.Warn($"Spawner [{spawner.SpawnerId}] did not accept shutdown kill request for task " +
+                                $"[{task.Id}]. Status: {status}");
+                }
+            });
+        }
+
+        private void AbandonTaskSupervision(RegisteredSpawner spawner, SpawnTask task)
+        {
+            if (!spawner.AbandonTaskSupervision(task))
+                return;
+
+            spawnTasksList.TryRemove(task.Id, out _);
+
+            if (spawner.LifecycleState == RegisteredSpawnerLifecycleState.Closed)
+                closingSpawnersList.TryRemove(spawner.SpawnerId, out _);
+        }
+
+        private void CompleteKilledTask(RegisteredSpawner spawner, SpawnTask task)
+        {
+            if (!spawner.TryMarkProcessKilled(task))
+                return;
+
+            spawnTasksList.TryRemove(task.Id, out _);
+            spawner.RemoveTask(task);
+
+            if (spawner.LifecycleState == RegisteredSpawnerLifecycleState.Closed)
+                closingSpawnersList.TryRemove(spawner.SpawnerId, out _);
+        }
+
+        private void InvokeSpawnerEventSafely(Action<RegisteredSpawner> handlers,
+            RegisteredSpawner spawner, string eventName)
+        {
+            if (handlers == null)
+                return;
+
+            foreach (Action<RegisteredSpawner> handler in handlers.GetInvocationList())
+            {
+                try
+                {
+                    handler.Invoke(spawner);
+                }
+                catch (Exception exception)
+                {
+                    logger.Error($"{eventName} subscriber failed for spawner {spawner.SpawnerId}: {exception}");
+                }
+            }
+        }
+
+        private bool IsAcceptingSpawnerWork()
+        {
+            lock (runGate)
+                return acceptsSpawnerWork;
         }
 
         /// <summary>
@@ -242,7 +535,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public int GenerateSpawnerId()
         {
-            return nextSpawnerId++;
+            return Interlocked.Increment(ref lastSpawnerId);
         }
 
         /// <summary>
@@ -251,7 +544,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public int GenerateSpawnTaskId()
         {
-            return nextSpawnTaskId++;
+            return Interlocked.Increment(ref lastSpawnTaskId);
         }
 
         /// <summary>
@@ -273,8 +566,19 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual SpawnTask Spawn(MstProperties options, string region)
         {
-            // Get registered spawner by options and region
-            var spawners = GetFilteredSpawners(options, region);
+            return SpawnConfigured(options, region, null);
+        }
+
+        private SpawnTask SpawnConfigured(MstProperties options, string region, Action<SpawnTask> configureTask)
+        {
+            if (options == null)
+                return null;
+
+            List<RegisteredSpawner> spawners = (GetFilteredSpawners(options, region) ??
+                    Enumerable.Empty<RegisteredSpawner>())
+                .Where(spawner => spawner != null && spawner.IsActive)
+                .OrderByDescending(spawner => spawner.CalculateFreeSlotsCount())
+                .ToList();
 
             if (spawners.Count == 0)
             {
@@ -282,17 +586,15 @@ namespace MasterServerToolkit.MasterServer
                 return null;
             }
 
-            // Order from least busy server
-            var orderedSpawners = spawners.OrderByDescending(s => s.CalculateFreeSlotsCount());
-            var availableSpawner = orderedSpawners.FirstOrDefault(s => s.CanSpawnAnotherProcess());
-
-            // Ignore, if all of the spawners are busy
-            if (availableSpawner == null)
+            foreach (RegisteredSpawner spawner in spawners)
             {
-                return null;
+                SpawnTask task = TryCreateSpawnTask(options, spawner, configureTask);
+
+                if (task != null)
+                    return task;
             }
 
-            return Spawn(options, availableSpawner);
+            return null;
         }
 
         /// <summary>
@@ -304,18 +606,47 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public virtual SpawnTask Spawn(MstProperties options, RegisteredSpawner spawner)
         {
-            // Create new spawn task
-            var task = new SpawnTask(GenerateSpawnTaskId(), spawner, options);
+            return TryCreateSpawnTask(options, spawner, null);
+        }
 
-            // List this task
-            spawnTasksList[task.Id] = task;
+        private SpawnTask TryCreateSpawnTask(MstProperties options, RegisteredSpawner spawner,
+            Action<SpawnTask> configureTask)
+        {
+            lock (runGate)
+            {
+                if (!acceptsSpawnerWork || options == null || spawner == null || !spawner.IsActive)
+                    return null;
 
-            // Add this task to queue
-            spawner.AddTaskToQueue(task);
+                var task = new SpawnTask(GenerateSpawnTaskId(), spawner, options);
+                Action<SpawnStatus> lifecycleHandler = null;
+                lifecycleHandler = status =>
+                {
+                    if (status != SpawnStatus.Aborted && status != SpawnStatus.Killed)
+                        return;
 
-            logger.Debug($"Spawner was found, and spawn task created: {task}");
+                    if (status == SpawnStatus.Aborted && task.IsProcessRunning)
+                        return;
 
-            return task;
+                    task.OnStatusChangedEvent -= lifecycleHandler;
+                    spawnTasksList.TryRemove(task.Id, out _);
+                    spawner.RemoveTask(task);
+                };
+
+                task.OnStatusChangedEvent += lifecycleHandler;
+                configureTask?.Invoke(task);
+
+                spawnTasksList[task.Id] = task;
+
+                if (!spawner.TryReserveAndEnqueue(task))
+                {
+                    task.OnStatusChangedEvent -= lifecycleHandler;
+                    spawnTasksList.TryRemove(task.Id, out _);
+                    return null;
+                }
+
+                logger.Debug($"Spawner was found, and spawn task created: {task}");
+                return task;
+            }
         }
 
         /// <summary>
@@ -324,7 +655,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="properties"></param>
         /// <param name="region"></param>
         /// <returns></returns>
-        public virtual List<RegisteredSpawner> GetFilteredSpawners(MstProperties properties, string region)
+        public virtual IEnumerable<RegisteredSpawner> GetFilteredSpawners(MstProperties properties, string region)
         {
             return GetSpawners(region);
         }
@@ -333,7 +664,7 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <returns></returns>
-        public virtual List<RegisteredSpawner> GetSpawners()
+        public virtual IEnumerable<RegisteredSpawner> GetSpawners()
         {
             return GetSpawners(null);
         }
@@ -343,7 +674,7 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         /// <param name="region"></param>
         /// <returns></returns>
-        public virtual List<RegisteredSpawner> GetSpawners(string region)
+        public virtual IEnumerable<RegisteredSpawner> GetSpawners(string region)
         {
             // If region is not provided, retrieve all spawners
             if (string.IsNullOrEmpty(region))
@@ -351,16 +682,6 @@ namespace MasterServerToolkit.MasterServer
                 return spawnersList.Values.ToList();
             }
 
-            return GetSpawnersInRegion(region);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="region"></param>
-        /// <returns></returns>
-        public virtual List<RegisteredSpawner> GetSpawnersInRegion(string region)
-        {
             return spawnersList.Values
                 .Where(s => s.Options.Region == region)
                 .ToList();
@@ -398,7 +719,9 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool HasCreationPermissions(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-            return extension != null && extension.PermissionLevel >= createSpawnerPermissionLevel;
+            return extension != null &&
+                   (extension.HasPermission(MstPermissionKeys.Spawner) ||
+                    extension.HasAccountPermission(MstPermissionLevels.Admin));
         }
 
         /// <summary>
@@ -420,9 +743,9 @@ namespace MasterServerToolkit.MasterServer
         {
             while (true)
             {
-                yield return new WaitForSeconds(queueUpdateFrequency);
+                yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, queueUpdateFrequency));
 
-                foreach (var spawner in spawnersList.Values)
+                foreach (var spawner in Spawners)
                 {
                     try
                     {
@@ -446,71 +769,172 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
+                if (!IsAcceptingSpawnerWork())
+                {
+                    message.RespondError(ResponseStatus.ServiceUnavailable, MstErrorCodes.SPAWNER_MODULE_STOPPING);
+                    return Task.CompletedTask;
+                }
+
                 // Parse data from message
                 var options = MstProperties.FromBytes(message.AsBytes());
                 var peer = message.Peer;
+                ClientSpawnRequestState requestState = GetOrCreateClientSpawnRequestState(peer);
+                var pendingStatuses = new Queue<SpawnStatus>();
+                var statusGate = new object();
+                bool statusDeliveryEnabled = false;
+                bool isDispatchingStatuses = false;
+                int spawnTaskId = -1;
+
+                void DispatchPendingStatuses()
+                {
+                    while (true)
+                    {
+                        SpawnStatus status;
+
+                        lock (statusGate)
+                        {
+                            if (!statusDeliveryEnabled || pendingStatuses.Count == 0)
+                            {
+                                isDispatchingStatuses = false;
+                                return;
+                            }
+
+                            status = pendingStatuses.Dequeue();
+                        }
+
+                        try
+                        {
+                            if (peer.IsConnected)
+                            {
+                                peer.SendMessage(MessageHelper.Create(MstOpCodes.SpawnRequestStatusChange,
+                                    new SpawnStatusUpdatePacket
+                                    {
+                                        SpawnId = spawnTaskId,
+                                        Status = status
+                                    }));
+                            }
+                        }
+                        catch (Exception exception)
+                        {
+                            logger.Error($"Failed to send status [{status}] for spawn task [{spawnTaskId}]: {exception}");
+                        }
+                    }
+                }
+
+                void QueueStatus(SpawnStatus status)
+                {
+                    bool shouldDispatch;
+
+                    lock (statusGate)
+                    {
+                        pendingStatuses.Enqueue(status);
+                        shouldDispatch = statusDeliveryEnabled && !isDispatchingStatuses;
+
+                        if (shouldDispatch)
+                            isDispatchingStatuses = true;
+                    }
+
+                    if (shouldDispatch)
+                        DispatchPendingStatuses();
+                }
+
+                void EnableStatusDelivery()
+                {
+                    bool shouldDispatch;
+
+                    lock (statusGate)
+                    {
+                        statusDeliveryEnabled = true;
+                        shouldDispatch = pendingStatuses.Count > 0 && !isDispatchingStatuses;
+
+                        if (shouldDispatch)
+                            isDispatchingStatuses = true;
+                    }
+
+                    if (shouldDispatch)
+                        DispatchPendingStatuses();
+                }
 
                 logger.Info($"Client {peer.Id} requested to spawn room with options: {options}");
 
                 if (spawnersList.Count == 0)
                 {
                     logger.Error("But no registered spawner was found!");
-                    message.Respond("No registered spawner was found", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.ServiceUnavailable,
+                        MstErrorCodes.SPAWNER_NOT_REGISTERED);
                     return Task.CompletedTask;
                 }
 
                 if (!CanClientSpawn(peer, options))
                 {
                     logger.Error("Unauthorized request");
-                    message.Respond(ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Unauthorized, MstErrorCodes.SPAWN_PERMISSION_DENIED);
                     return Task.CompletedTask;
                 }
 
-                // Try to find existing request to prevent new one
-                SpawnTask prevRequest = peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
+                SpawnTask task;
 
-                if (prevRequest != null && !prevRequest.IsDoneStartingProcess)
+                lock (requestState.Gate)
                 {
-                    logger.Warn("And he already has an active request");
-                    // Client has unfinished request
-                    message.Respond("You already have an active request", ResponseStatus.Failed);
-                    return Task.CompletedTask;
-                }
-
-                // Create a new spawn task
-                var task = Spawn(options, options.AsString(Mst.Args.Names.RoomRegion));
-
-                // If spawn task is not created
-                if (task == null)
-                {
-                    logger.Warn("But all the servers are busy. Let him try again later");
-                    message.Respond("All the servers are busy. Try again later", ResponseStatus.Failed);
-                    return Task.CompletedTask;
-                }
-
-                // Save spawn task requester
-                task.Requester = peer;
-
-                // Save the task as peer property
-                peer.SetProperty(MstPeerPropertyCodes.ClientSpawnRequest, task);
-
-                // Listen to status changes
-                task.OnStatusChangedEvent += (status) =>
-                {
-                    // Send status update
-                    var msg = Mst.Create.Message(MstOpCodes.SpawnRequestStatusChange, new SpawnStatusUpdatePacket()
+                    if (!peer.IsConnected)
                     {
-                        SpawnId = task.Id,
-                        Status = status
+                        message.RespondError(ResponseStatus.NotConnected,
+                            MstErrorCodes.SPAWN_REQUESTER_DISCONNECTED);
+                        return Task.CompletedTask;
+                    }
+
+                    SpawnTask prevRequest = peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
+
+                    if (prevRequest != null && !prevRequest.IsDoneStartingProcess)
+                    {
+                        logger.Warn("And he already has an active request");
+                        message.RespondError(ResponseStatus.Conflict,
+                            MstErrorCodes.SPAWN_REQUEST_ALREADY_ACTIVE);
+                        return Task.CompletedTask;
+                    }
+
+                    task = SpawnConfigured(options, options.AsString(Mst.Args.Names.RoomRegion), configuredTask =>
+                    {
+                        spawnTaskId = configuredTask.Id;
+                        configuredTask.Requester = peer;
+                        configuredTask.OnStatusChangedEvent += QueueStatus;
                     });
 
-                    if (task.Requester != null && task.Requester.IsConnected)
+                    if (task == null)
                     {
-                        peer.SendMessage(msg);
-                    }
-                };
+                        if (!IsAcceptingSpawnerWork())
+                        {
+                            message.RespondError(ResponseStatus.ServiceUnavailable,
+                                MstErrorCodes.SPAWNER_MODULE_STOPPING);
+                            return Task.CompletedTask;
+                        }
 
-                message.Respond(task.Id, ResponseStatus.Success);
+                        logger.Warn("But all the servers are busy. Let him try again later");
+                        message.RespondError(ResponseStatus.ServiceUnavailable,
+                            MstErrorCodes.SPAWNER_CAPACITY_UNAVAILABLE);
+                        return Task.CompletedTask;
+                    }
+
+                    if (!peer.IsConnected)
+                    {
+                        task.Abort();
+                        return Task.CompletedTask;
+                    }
+
+                    peer.SetProperty(MstPeerPropertyCodes.ClientSpawnRequest, task);
+                }
+
+                try
+                {
+                    message.Respond(task.Id, ResponseStatus.Success);
+                    EnableStatusDelivery();
+                }
+                catch
+                {
+                    task.Abort();
+                    throw;
+                }
+
                 return Task.CompletedTask;
             }
             catch (Exception ex)
@@ -527,17 +951,20 @@ namespace MasterServerToolkit.MasterServer
 
                 if (prevRequest == null)
                 {
-                    message.Respond("There's nothing to abort", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.SPAWN_REQUEST_NOT_FOUND);
                     return Task.CompletedTask;
                 }
 
-                if (prevRequest.Status >= SpawnStatus.Finalized)
+                if (prevRequest.Status == SpawnStatus.Finalized)
                 {
-                    message.Respond("You can't abort a completed request", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict,
+                        MstErrorCodes.SPAWN_REQUEST_ALREADY_COMPLETED);
                     return Task.CompletedTask;
                 }
 
-                if (prevRequest.Status <= SpawnStatus.None)
+                if (prevRequest.Status == SpawnStatus.Aborting ||
+                    prevRequest.Status == SpawnStatus.Aborted ||
+                    prevRequest.Status == SpawnStatus.Killed)
                 {
                     message.Respond("Already aborting", ResponseStatus.Success);
                     return Task.CompletedTask;
@@ -563,19 +990,25 @@ namespace MasterServerToolkit.MasterServer
 
                 if (!spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
                 {
-                    message.Respond("Invalid request", ResponseStatus.Failed);
-                    return Task.CompletedTask;
+                    task = message.Peer.GetProperty(MstPeerPropertyCodes.ClientSpawnRequest) as SpawnTask;
+
+                    if (task == null || task.Id != spawnId)
+                    {
+                        message.RespondError(ResponseStatus.NotFound, MstErrorCodes.SPAWN_REQUEST_NOT_FOUND);
+                        return Task.CompletedTask;
+                    }
                 }
 
                 if (task.Requester != message.Peer)
                 {
-                    message.Respond("You're not the requester", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.SPAWN_REQUEST_OWNER_REQUIRED);
                     return Task.CompletedTask;
                 }
 
                 if (task.FinalizationPacket == null)
                 {
-                    message.Respond("Task has no completion data", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict,
+                        MstErrorCodes.SPAWN_FINALIZATION_UNAVAILABLE);
                     return Task.CompletedTask;
                 }
 
@@ -595,10 +1028,17 @@ namespace MasterServerToolkit.MasterServer
             {
                 logger.Debug($"Client [{message.Peer.Id}] requested to be registered as spawner");
 
+                if (!IsAcceptingSpawnerWork())
+                {
+                    message.RespondError(ResponseStatus.ServiceUnavailable, MstErrorCodes.SPAWNER_MODULE_STOPPING);
+                    return Task.CompletedTask;
+                }
+
                 // Check if peer has permissions to register spawner
                 if (!HasCreationPermissions(message.Peer))
                 {
-                    message.Respond("Insufficient permissions", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Unauthorized,
+                        MstErrorCodes.SPAWNER_REGISTRATION_PERMISSION_DENIED);
                     return Task.CompletedTask;
                 }
 
@@ -608,10 +1048,68 @@ namespace MasterServerToolkit.MasterServer
                 // Create new spawner
                 var spawner = CreateSpawner(message.Peer, options);
 
+                if (spawner == null)
+                {
+                    if (!message.Peer.IsConnected)
+                    {
+                        message.RespondError(ResponseStatus.NotConnected,
+                            MstErrorCodes.SPAWNER_REGISTRATION_DISCONNECTED);
+                    }
+                    else if (!IsAcceptingSpawnerWork())
+                    {
+                        message.RespondError(ResponseStatus.ServiceUnavailable,
+                            MstErrorCodes.SPAWNER_MODULE_STOPPING);
+                    }
+                    else
+                    {
+                        message.RespondError(ResponseStatus.Conflict,
+                            MstErrorCodes.SPAWNER_REGISTRATION_REJECTED);
+                    }
+
+                    return Task.CompletedTask;
+                }
+
                 logger.Debug($"Client [{message.Peer.Id}] was successfully registered as spawner [{spawner.SpawnerId}] with options: {options}");
 
                 // Respond with spawner id
                 message.Respond(spawner.SpawnerId, ResponseStatus.Success);
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException(ex);
+            }
+        }
+
+        protected virtual Task UnregisterSpawnerRequestHandler(IIncomingMessage message)
+        {
+            try
+            {
+                int spawnerId = message.AsInt();
+
+                if (!spawnersList.TryGetValue(spawnerId, out RegisteredSpawner spawner))
+                {
+                    message.RespondError(ResponseStatus.NotFound,
+                        MstErrorCodes.SPAWNER_REGISTRATION_NOT_FOUND);
+                    return Task.CompletedTask;
+                }
+
+                if (!ReferenceEquals(spawner.Peer, message.Peer))
+                {
+                    logger.Warn($"Peer [{message.Peer.Id}] tried to unregister spawner [{spawnerId}] owned by another peer");
+                    message.RespondError(ResponseStatus.Forbidden,
+                        MstErrorCodes.SPAWNER_REGISTRATION_OWNER_REQUIRED);
+                    return Task.CompletedTask;
+                }
+
+                if (!TryDestroySpawner(spawner))
+                {
+                    message.RespondError(ResponseStatus.NotFound,
+                        MstErrorCodes.SPAWNER_REGISTRATION_NOT_FOUND);
+                    return Task.CompletedTask;
+                }
+
+                message.Respond(ResponseStatus.Success);
                 return Task.CompletedTask;
             }
             catch (Exception ex)
@@ -629,12 +1127,24 @@ namespace MasterServerToolkit.MasterServer
         {
             try
             {
+                var security = message.Peer.GetExtension<SecurityInfoPeerExtension>();
+
+                if (security == null ||
+                    (!security.HasPermission(MstPermissionKeys.RoomServer) &&
+                     !security.HasAccountPermission(MstPermissionLevels.Admin)))
+                {
+                    message.RespondError(ResponseStatus.Unauthorized,
+                        MstErrorCodes.SPAWNED_PROCESS_PERMISSION_DENIED);
+                    logger.Warn($"Peer [{message.Peer.Id}] tried to register a spawned process without '{MstPermissionKeys.RoomServer}' permission");
+                    return Task.CompletedTask;
+                }
+
                 var data = message.AsPacket<RegisterSpawnedProcessPacket>();
 
                 // Try get spawn task by ID
                 if (!spawnTasksList.TryGetValue(data.SpawnId, out SpawnTask task))
                 {
-                    message.Respond("Invalid spawn task", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.SPAWN_TASK_NOT_FOUND);
                     logger.Error("Process tried to register to an unknown task");
                     return Task.CompletedTask;
                 }
@@ -642,16 +1152,34 @@ namespace MasterServerToolkit.MasterServer
                 // Check spawn task unique code
                 if (task.UniqueCode != data.SpawnCode)
                 {
-                    message.Respond("Unauthorized", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Unauthorized, MstErrorCodes.SPAWN_CODE_INVALID);
                     logger.Error("Spawned process tried to register, but failed due to mismaching unique code");
                     return Task.CompletedTask;
                 }
 
-                // Set task as registered
-                task.OnRegistered(message.Peer);
+                if (!task.TryRegister(message.Peer))
+                {
+                    message.RespondError(ResponseStatus.Conflict,
+                        MstErrorCodes.SPAWN_TASK_ALREADY_REGISTERED);
+                    return Task.CompletedTask;
+                }
 
-                // Invoke event
-                OnSpawnedProcessRegisteredEvent?.Invoke(task, message.Peer);
+                SpawnedProcessRegistrationHandler registeredHandlers = OnSpawnedProcessRegisteredEvent;
+
+                if (registeredHandlers != null)
+                {
+                    foreach (SpawnedProcessRegistrationHandler handler in registeredHandlers.GetInvocationList())
+                    {
+                        try
+                        {
+                            handler.Invoke(task, message.Peer);
+                        }
+                        catch (Exception exception)
+                        {
+                            logger.Error($"Spawned process registration subscriber failed for task {task.Id}: {exception}");
+                        }
+                    }
+                }
 
                 // Respon to requester
                 message.Respond(task.Options.ToBytes(), ResponseStatus.Success);
@@ -673,18 +1201,26 @@ namespace MasterServerToolkit.MasterServer
                 {
                     if (task.RegisteredPeer != message.Peer)
                     {
-                        message.Respond(ResponseStatus.Unauthorized);
+                        message.RespondError(ResponseStatus.Forbidden,
+                            MstErrorCodes.SPAWN_TASK_OWNER_REQUIRED);
                         logger.Error("Spawned process tried to complete spawn task, but it's not the same peer who registered to the task");
                     }
                     else
                     {
-                        task.OnFinalized(data);
-                        message.Respond(ResponseStatus.Success);
+                        if (task.TryFinalize(data))
+                        {
+                            message.Respond(ResponseStatus.Success);
+                        }
+                        else
+                        {
+                            message.RespondError(ResponseStatus.Conflict,
+                                MstErrorCodes.SPAWN_TASK_ALREADY_COMPLETED);
+                        }
                     }
                 }
                 else
                 {
-                    message.Respond(ResponseStatus.Invalid);
+                    message.RespondError(ResponseStatus.NotFound, MstErrorCodes.SPAWN_TASK_NOT_FOUND);
                     logger.Error("Process tried to complete to an unknown task");
                 }
 
@@ -704,8 +1240,13 @@ namespace MasterServerToolkit.MasterServer
 
                 if (spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
                 {
-                    task.OnProcessKilled();
-                    task.Spawner.OnProcessKilled();
+                    if (message.Peer != task.Spawner.Peer)
+                    {
+                        logger.Warn($"Peer [{message.Peer.Id}] tried to report a killed process for task [{spawnId}] owned by another spawner");
+                        return Task.CompletedTask;
+                    }
+
+                    CompleteKilledTask(task.Spawner, task);
                 }
 
                 return Task.CompletedTask;
@@ -724,8 +1265,13 @@ namespace MasterServerToolkit.MasterServer
 
                 if (spawnTasksList.TryGetValue(spawnId, out SpawnTask task))
                 {
-                    task.OnProcessStarted();
-                    task.Spawner.OnProcessStarted();
+                    if (message.Peer != task.Spawner.Peer)
+                    {
+                        logger.Warn($"Peer [{message.Peer.Id}] tried to report a started process for task [{spawnId}] owned by another spawner");
+                        return Task.CompletedTask;
+                    }
+
+                    task.Spawner.TryMarkProcessStarted(task);
                 }
 
                 return Task.CompletedTask;
@@ -736,7 +1282,7 @@ namespace MasterServerToolkit.MasterServer
             }
         }
 
-        private Task SetSpawnedProcessesCountRequestHandler(IIncomingMessage message)
+        protected virtual Task SetSpawnedProcessesCountRequestHandler(IIncomingMessage message)
         {
             try
             {
@@ -744,7 +1290,14 @@ namespace MasterServerToolkit.MasterServer
 
                 if (spawnersList.TryGetValue(packet.A, out RegisteredSpawner spawner))
                 {
-                    spawner.UpdateProcessesCount(packet.B);
+                    if (message.Peer == spawner.Peer)
+                    {
+                        spawner.UpdateProcessesCount(packet.B);
+                    }
+                    else
+                    {
+                        logger.Warn($"Peer [{message.Peer.Id}] tried to update process count for spawner [{packet.A}] owned by another peer");
+                    }
                 }
 
                 return Task.CompletedTask;

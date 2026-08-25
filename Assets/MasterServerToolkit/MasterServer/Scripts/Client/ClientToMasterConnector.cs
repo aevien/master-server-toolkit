@@ -17,16 +17,16 @@ namespace MasterServerToolkit.MasterServer
             serverPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, serverPort);
         }
 
-        [ContextMenu("Connect")]
+        [ContextMenu("Start Connection")]
         private void Connect()
         {
             StartConnection();
         }
 
-        [ContextMenu("Disconnect")]
+        [ContextMenu("Close Connection")]
         private void Disconnect()
         {
-            Connection.Close();
+            CloseConnection();
         }
     }
 }

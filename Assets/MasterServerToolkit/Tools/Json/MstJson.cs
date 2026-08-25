@@ -41,6 +41,7 @@ using UnityEngine;
 using Debug = UnityEngine.Debug;
 using MasterServerToolkit.Extensions;
 using System.Text.RegularExpressions;
+using System.Linq;
 #endif
 
 namespace MasterServerToolkit.Json
@@ -77,6 +78,7 @@ namespace MasterServerToolkit.Json
 
         private const string _infinity = "Infinity";
         private const string _negativeInfinity = "-Infinity";
+        private const string _dateTimeFormat = "O";
         private const string _naN = "NaN";
         private const string _true = "true";
         private const string _false = "false";
@@ -89,9 +91,23 @@ namespace MasterServerToolkit.Json
         public bool IsContainer => Type == ValueType.Array || Type == ValueType.Object;
         public ValueType Type { get; private set; } = ValueType.Null;
         public int Count => Values == null ? 0 : Values.Count;
-        public static MstJson NullObject => Create(ValueType.Null);
-        public static MstJson EmptyObject => Create(ValueType.Object);
-        public static MstJson EmptyArray => Create(ValueType.Array);
+        public bool Any() => Values != null && Values.Any();
+
+        /// <summary>
+        /// Creates a new JSON null value.
+        /// </summary>
+        public static MstJson CreateNull() => Create(ValueType.Null);
+
+        /// <summary>
+        /// Creates a new mutable JSON object.
+        /// </summary>
+        public static MstJson CreateObject() => Create(ValueType.Object);
+
+        /// <summary>
+        /// Creates a new mutable JSON array.
+        /// </summary>
+        public static MstJson CreateArray() => Create(ValueType.Array);
+
         public bool IsNumber => Type == ValueType.Number;
         public bool IsNull => Type == ValueType.Null;
         public bool IsString => Type == ValueType.String;
@@ -102,6 +118,18 @@ namespace MasterServerToolkit.Json
         public List<MstJson> Values { get; set; } = new List<MstJson>();
         public List<string> Keys { get; set; } = new List<string>();
         public string StringValue { get; set; }
+        /// <summary>
+        /// Parses the string value as an ISO 8601 round-trip timestamp.
+        /// </summary>
+        /// <exception cref="FormatException">The value is not a valid round-trip timestamp.</exception>
+        public DateTime GetDateTimeValue()
+        {
+            return DateTime.ParseExact(
+                StringValue,
+                _dateTimeFormat,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind);
+        }
         public bool IsInteger { get; set; }
         public long LongValue { get; set; }
         public bool BoolValue { get; set; }
@@ -205,9 +233,14 @@ namespace MasterServerToolkit.Json
             return jsonObject;
         }
 
+        public static MstJson Create(DateTime value)
+        {
+            return Create(value.ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
+        }
+
         public static MstJson Create(bool[] values)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             foreach (var v in values)
             {
                 jsonObject.Add(v);
@@ -230,7 +263,7 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(float[] values)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             foreach (var v in values)
             {
                 jsonObject.Add(v);
@@ -253,7 +286,7 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(double[] values)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             foreach (var v in values)
             {
                 jsonObject.Add(v);
@@ -278,7 +311,7 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(int[] values)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             foreach (var v in values)
             {
                 jsonObject.Add(v);
@@ -303,7 +336,7 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(long[] values)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             foreach (var v in values)
             {
                 jsonObject.Add(v);
@@ -341,7 +374,7 @@ namespace MasterServerToolkit.Json
 
         public static MstJson Create(string[] values)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             foreach (var v in values)
             {
                 jsonObject.Add(v);
@@ -382,7 +415,7 @@ namespace MasterServerToolkit.Json
         /// <returns></returns>
         public static MstJson Create(MstJson[] objects)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             jsonObject.Values.AddRange(objects);
             return jsonObject;
         }
@@ -394,7 +427,7 @@ namespace MasterServerToolkit.Json
         /// <returns></returns>
         public static MstJson Create(List<MstJson> objects)
         {
-            var jsonObject = EmptyArray;
+            var jsonObject = CreateArray();
             jsonObject.Values.AddRange(objects);
             return jsonObject;
         }
@@ -406,7 +439,7 @@ namespace MasterServerToolkit.Json
         /// <returns></returns>
         public static MstJson Create(Dictionary<string, string> dictionary)
         {
-            var jsonObject = EmptyObject;
+            var jsonObject = CreateObject();
 
             foreach (var kvp in dictionary)
             {
@@ -423,7 +456,7 @@ namespace MasterServerToolkit.Json
         /// <returns></returns>
         public static MstJson Create(Dictionary<string, MstJson> dictionary)
         {
-            var jsonObject = EmptyObject;
+            var jsonObject = CreateObject();
 
             foreach (var kvp in dictionary)
             {
@@ -476,57 +509,265 @@ namespace MasterServerToolkit.Json
         }
 
         /// <summary>
-        /// 
+        /// Determines whether a string contains one complete JSON object or array.
         /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
+        /// <param name="input">String to validate.</param>
+        /// <returns><c>true</c> when the complete string is a valid JSON object or array.</returns>
         public static bool IsJson(string input)
         {
-            // Check if the input string is null, empty, or consists only of whitespace characters.
-            // If true, it's not a valid JSON, so return false.
             if (string.IsNullOrWhiteSpace(input))
                 return false;
 
-            // Trim whitespace from the start and end of the input to simplify further checks.
-            // This removes any unnecessary spaces that might interfere with pattern matching.
-            input = input.Trim();
+            return new JsonSyntaxValidator(input).ValidateContainer();
+        }
 
-            // Check if the string has the basic structure of a JSON object or array:
-            // - Objects should start with '{' and end with '}'.
-            // - Arrays should start with '[' and end with ']'.
-            if ((input.StartsWith("{") && input.EndsWith("}")) || (input.StartsWith("[") && input.EndsWith("]")))
+        private sealed class JsonSyntaxValidator
+        {
+            private const int MaxDepth = 128;
+            private readonly string input;
+            private int index;
+
+            public JsonSyntaxValidator(string input)
             {
-                try
-                {
-                    // If the string starts with '{', it's potentially a JSON object.
-                    if (input.StartsWith("{"))
-                    {
-                        // Minimal check for an object: look for the presence of at least one colon (':') and double quotes ('"').
-                        // These characters are required to form a key-value pair in a JSON object, e.g., {"key": "value"}.
-                        return input.Contains(":") && input.Contains("\"");
-                    }
+                this.input = input;
+            }
 
-                    // If the string starts with '[', it's potentially a JSON array.
-                    if (input.StartsWith("["))
-                    {
-                        // Check for signs that indicate a JSON array:
-                        // - Contains commas (',') which separate elements in an array.
-                        // - Contains nested objects ('{') or strings ('"'), which are common in JSON arrays.
-                        // For example, ["item1", {"key": "value"}, "item2"].
-                        return input.Contains(",") || input.Contains("{") || input.Contains("\"");
-                    }
-                }
-                catch
-                {
-                    // If any error occurs during the checks (though unlikely with these basic checks), 
-                    // assume it's not a valid JSON and return false.
+            public bool ValidateContainer()
+            {
+                SkipWhitespace();
+
+                bool isValid = index < input.Length &&
+                    (input[index] == '{' ? ParseObject(1) : input[index] == '[' && ParseArray(1));
+
+                SkipWhitespace();
+                return isValid && index == input.Length;
+            }
+
+            private bool ParseValue(int depth)
+            {
+                SkipWhitespace();
+
+                if (index >= input.Length)
                     return false;
+
+                char token = input[index];
+
+                if (token == '{')
+                    return depth < MaxDepth && ParseObject(depth + 1);
+
+                if (token == '[')
+                    return depth < MaxDepth && ParseArray(depth + 1);
+
+                if (token == '"')
+                    return ParseString();
+
+                if (token == 't')
+                    return ParseLiteral("true");
+
+                if (token == 'f')
+                    return ParseLiteral("false");
+
+                if (token == 'n')
+                    return ParseLiteral("null");
+
+                return token == '-' || IsDigit(token) ? ParseNumber() : false;
+            }
+
+            private bool ParseObject(int depth)
+            {
+                if (!Consume('{'))
+                    return false;
+
+                SkipWhitespace();
+
+                if (Consume('}'))
+                    return true;
+
+                while (true)
+                {
+                    if (!ParseString())
+                        return false;
+
+                    SkipWhitespace();
+
+                    if (!Consume(':') || !ParseValue(depth))
+                        return false;
+
+                    SkipWhitespace();
+
+                    if (Consume('}'))
+                        return true;
+
+                    if (!Consume(','))
+                        return false;
+
+                    SkipWhitespace();
                 }
             }
 
-            // If the input does not match the basic structure of a JSON object or array, return false.
-            // This means it doesn't start and end with the correct symbols ('{}' or '[]').
-            return false;
+            private bool ParseArray(int depth)
+            {
+                if (!Consume('['))
+                    return false;
+
+                SkipWhitespace();
+
+                if (Consume(']'))
+                    return true;
+
+                while (true)
+                {
+                    if (!ParseValue(depth))
+                        return false;
+
+                    SkipWhitespace();
+
+                    if (Consume(']'))
+                        return true;
+
+                    if (!Consume(','))
+                        return false;
+
+                    SkipWhitespace();
+                }
+            }
+
+            private bool ParseString()
+            {
+                if (!Consume('"'))
+                    return false;
+
+                while (index < input.Length)
+                {
+                    char character = input[index++];
+
+                    if (character == '"')
+                        return true;
+
+                    if (character < ' ')
+                        return false;
+
+                    if (character != '\\')
+                        continue;
+
+                    if (index >= input.Length)
+                        return false;
+
+                    char escaped = input[index++];
+
+                    if (escaped == '"' || escaped == '\\' || escaped == '/' ||
+                        escaped == 'b' || escaped == 'f' || escaped == 'n' ||
+                        escaped == 'r' || escaped == 't')
+                    {
+                        continue;
+                    }
+
+                    if (escaped != 'u' || index + 4 > input.Length)
+                        return false;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (!IsHexDigit(input[index++]))
+                            return false;
+                    }
+                }
+
+                return false;
+            }
+
+            private bool ParseNumber()
+            {
+                if (Consume('-') && index >= input.Length)
+                    return false;
+
+                if (Consume('0'))
+                {
+                    if (index < input.Length && IsDigit(input[index]))
+                        return false;
+                }
+                else
+                {
+                    if (index >= input.Length || input[index] < '1' || input[index] > '9')
+                        return false;
+
+                    while (index < input.Length && IsDigit(input[index]))
+                        index++;
+                }
+
+                if (Consume('.'))
+                {
+                    if (index >= input.Length || !IsDigit(input[index]))
+                        return false;
+
+                    while (index < input.Length && IsDigit(input[index]))
+                        index++;
+                }
+
+                if (index < input.Length && (input[index] == 'e' || input[index] == 'E'))
+                {
+                    index++;
+
+                    if (index < input.Length && (input[index] == '+' || input[index] == '-'))
+                        index++;
+
+                    if (index >= input.Length || !IsDigit(input[index]))
+                        return false;
+
+                    while (index < input.Length && IsDigit(input[index]))
+                        index++;
+                }
+
+                return true;
+            }
+
+            private bool ParseLiteral(string literal)
+            {
+                if (index + literal.Length > input.Length)
+                    return false;
+
+                for (int i = 0; i < literal.Length; i++)
+                {
+                    if (input[index + i] != literal[i])
+                        return false;
+                }
+
+                index += literal.Length;
+                return true;
+            }
+
+            private bool Consume(char expected)
+            {
+                if (index >= input.Length || input[index] != expected)
+                    return false;
+
+                index++;
+                return true;
+            }
+
+            private void SkipWhitespace()
+            {
+                while (index < input.Length)
+                {
+                    char character = input[index];
+
+                    if (character != ' ' && character != '\t' && character != '\r' && character != '\n')
+                        return;
+
+                    index++;
+                }
+            }
+
+            private static bool IsDigit(char character)
+            {
+                return character >= '0' && character <= '9';
+            }
+
+            private static bool IsHexDigit(char character)
+            {
+                return IsDigit(character) ||
+                       character >= 'a' && character <= 'f' ||
+                       character >= 'A' && character <= 'F';
+            }
         }
 
         /// <summary>
@@ -953,7 +1194,7 @@ namespace MasterServerToolkit.Json
                     SafeAddChild(container,
                         storeExcessLevels
                             ? CreateBakedObject(inputString.Substring(startOffset, offset - startOffset))
-                            : NullObject);
+                            : CreateNull());
                 }
 
                 if (bakeDepth >= 0)
@@ -984,7 +1225,7 @@ namespace MasterServerToolkit.Json
                     SafeAddChild(container,
                         storeExcessLevels
                             ? CreateBakedObject(inputString.Substring(startOffset, offset - startOffset))
-                            : NullObject);
+                            : CreateNull());
                 }
 
                 if (bakeDepth >= 0)
@@ -1087,13 +1328,70 @@ namespace MasterServerToolkit.Json
 
         static string UnEscapeString(string input)
         {
-            var unescaped = input.Replace("\\\"", "\"");
-            unescaped = unescaped.Replace("\\b", "\b");
-            unescaped = unescaped.Replace("\\f", "\f");
-            unescaped = unescaped.Replace("\\n", "\n");
-            unescaped = unescaped.Replace("\\r", "\r");
-            unescaped = unescaped.Replace("\\t", "\t");
-            return unescaped;
+            if (string.IsNullOrEmpty(input) || input.IndexOf('\\') < 0)
+                return input;
+
+            var unescaped = new StringBuilder(input.Length);
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                char character = input[i];
+
+                if (character != '\\' || i + 1 >= input.Length)
+                {
+                    unescaped.Append(character);
+                    continue;
+                }
+
+                char escaped = input[++i];
+
+                switch (escaped)
+                {
+                    case '"':
+                    case '\\':
+                    case '/':
+                        unescaped.Append(escaped);
+                        break;
+                    case 'b':
+                        unescaped.Append('\b');
+                        break;
+                    case 'f':
+                        unescaped.Append('\f');
+                        break;
+                    case 'n':
+                        unescaped.Append('\n');
+                        break;
+                    case 'r':
+                        unescaped.Append('\r');
+                        break;
+                    case 't':
+                        unescaped.Append('\t');
+                        break;
+                    case 'u':
+                        if (i + 4 < input.Length &&
+                            int.TryParse(
+                                input.Substring(i + 1, 4),
+                                NumberStyles.HexNumber,
+                                CultureInfo.InvariantCulture,
+                                out int codePoint))
+                        {
+                            unescaped.Append((char)codePoint);
+                            i += 4;
+                        }
+                        else
+                        {
+                            unescaped.Append('\\');
+                            unescaped.Append(escaped);
+                        }
+                        break;
+                    default:
+                        unescaped.Append('\\');
+                        unescaped.Append(escaped);
+                        break;
+                }
+            }
+
+            return unescaped.ToString();
         }
 
         /// <summary>
@@ -1541,7 +1839,7 @@ namespace MasterServerToolkit.Json
 
         public void AddField(string name, DateTime value)
         {
-            AddField(name, value.ToString());
+            AddField(name, Create(value));
         }
 
         public void AddField(string name, bool value)
@@ -1589,15 +1887,8 @@ namespace MasterServerToolkit.Json
             // Convert to object if needed to support fields
             Type = ValueType.Object;
 
-            if (Values == null)
-            {
-                Values = new List<MstJson>();
-            }
-
-            if (Keys == null)
-            {
-                Keys = new List<string>();
-            }
+            Values ??= new List<MstJson>();
+            Keys ??= new List<string>();
 
             while (Keys.Count < Values.Count)
             {

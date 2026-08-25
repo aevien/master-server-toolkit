@@ -7,11 +7,14 @@ namespace MasterServerToolkit.UI
     public class UIButtonSound : MonoBehaviour
     {
         [Header("Audio"), SerializeField]
+        [Tooltip("Optional one-shot clip played when the assigned button is clicked. Leave empty to keep the button silent.")]
         protected AudioClip clickClip;
 
         [Header("Components"), SerializeField]
+        [Tooltip("AudioSource used for the click one-shot. OnValidate assigns the AudioSource on this GameObject when empty; it must be enabled and active to play.")]
         protected AudioSource audioSource;
         [SerializeField]
+        [Tooltip("Button whose onClick event triggers the sound. OnValidate assigns the Button on this GameObject when empty.")]
         protected Button button;
 
         private void OnValidate()
@@ -39,8 +42,13 @@ namespace MasterServerToolkit.UI
 
         private void OnClick()
         {
-            if (audioSource != null && clickClip != null)
+            if (CanPlay(audioSource) && clickClip != null)
                 audioSource.PlayOneShot(clickClip);
+        }
+
+        private static bool CanPlay(AudioSource source)
+        {
+            return source != null && source.enabled && source.gameObject.activeInHierarchy;
         }
     }
 }

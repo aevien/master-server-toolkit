@@ -8,8 +8,9 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Absolute URL opened by Open(). Leave empty only when the component is intentionally disabled.")]
         private string url;
-        [SerializeField]
+        [SerializeField, Tooltip("Delay in realtime seconds between calling Open() and opening the URL. 0 opens it immediately through the timer callback.")]
         private float delayTime = 0f;
 
         #endregion
@@ -25,7 +26,9 @@ namespace MasterServerToolkit.Bridges
             }
             else
             {
-                Debug.LogError($"Field {nameof(url)} is empty");
+                MasterServerToolkit.Logging.Logs.Error(
+                    $"Cannot open URL because field {nameof(url)} is empty",
+                    MasterServerToolkit.Logging.LogChannels.System);
             }
         }
     }

@@ -11,6 +11,7 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Selectable colors used to generate palette toggles in array order. An empty array creates no selectable colors.")]
         private Color32[] colors = new Color32[]
         {
             new Color(1f,0.8666667f,0.7254902f),
@@ -39,10 +40,13 @@ namespace MasterServerToolkit.Bridges
         };
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required Toggle template cloned once for every configured color. It must contain a child named Background with an Image component.")]
         private Toggle togglePrefab;
         [SerializeField]
+        [Tooltip("Required container that receives generated color toggles. Existing children except the template are removed during initialization.")]
         private RectTransform container;
 
+        [Tooltip("Invoked with the selected color whenever a generated palette toggle changes to the on state.")]
         public UnityEvent<Color> OnColorChangeEvent;
 
         #endregion

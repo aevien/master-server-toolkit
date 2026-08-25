@@ -1,16 +1,18 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Networking
 {
     public delegate Task AsyncIncommingMessageHandler(IIncomingMessage message);
+    public delegate Task CancellableAsyncIncomingMessageHandler(IIncomingMessage message, CancellationToken cancellationToken);
     public delegate void IncommingMessageHandler(IIncomingMessage message);
     public delegate void ResponseCallback(ResponseStatus status, IIncomingMessage response);
 
     /// <summary>
     /// Represents connection peer
     /// </summary>
-    public interface IPeer : IDisposable, IMsgDispatcher
+    public interface IPeer : IDisposable, IMessageDispatcher
     {
         /// <summary>
         /// Unique peer id
@@ -33,7 +35,7 @@ namespace MasterServerToolkit.Networking
         DateTime LastActivity { get; set; }
 
         /// <summary>
-        /// True, if connection is stil valid
+        /// True, if connection is still valid
         /// </summary>
         bool IsConnected { get; }
 
@@ -67,14 +69,6 @@ namespace MasterServerToolkit.Networking
         /// <param name="deliveryMethod">Delivery method</param>
         /// <returns></returns>
         int SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs, DeliveryMethod deliveryMethod);
-
-        /// <summary>
-        /// Sends a message to peer
-        /// </summary>
-        /// <param name="message">Message to send</param>
-        /// <param name="deliveryMethod">Delivery method</param>
-        /// <returns></returns>
-        void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod);
 
         /// <summary>
         /// Stores a property into peer

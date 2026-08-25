@@ -176,7 +176,10 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(_value.Count);
+                    writer.WriteCount32(
+                        _value.Count,
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable dictionary");
 
                     foreach (var item in _value)
                     {
@@ -196,7 +199,9 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable dictionary");
 
                     for (var i = 0; i < count; i++)
                     {
@@ -227,7 +232,10 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(_updates.Count);
+                    writer.WriteCount32(
+                        _updates.Count,
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable dictionary update");
 
                     foreach (var update in _updates)
                     {
@@ -247,22 +255,40 @@ namespace MasterServerToolkit.MasterServer
 
         public override void ApplyUpdates(byte[] data)
         {
+            bool hasChanges = false;
+
             using (var ms = new MemoryStream(data))
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable dictionary update");
 
                     for (var i = 0; i < count; i++)
                     {
                         var operation = (ObservableListOperation)reader.ReadByte();
                         var key = ReadKey(reader);
 
-                        if (operation == ObservableListOperation.Remove
-                            && _value.TryRemove(key, out var valueToBeRemoved))
+                        if (operation == ObservableListOperation.Remove)
                         {
-                            OnRemoveEvent?.Invoke(key, valueToBeRemoved);
+                            if (_value.TryRemove(key, out var valueToBeRemoved))
+                                OnRemoveEvent?.Invoke(key, valueToBeRemoved);
+
+                            _updates.Enqueue(new DictionaryUpdateEntry
+                            {
+                                key = key,
+                                operation = ObservableListOperation.Remove
+                            });
+                            hasChanges = true;
+
                             continue;
+                        }
+
+                        if (operation != ObservableListOperation.Set)
+                        {
+                            throw new InvalidDataException(
+                                $"Unsupported observable dictionary operation: {operation}");
                         }
 
                         var value = ReadValue(reader);
@@ -278,9 +304,20 @@ namespace MasterServerToolkit.MasterServer
                             _value.TryAdd(key, value);
                             OnAddEvent?.Invoke(key, value);
                         }
+
+                        _updates.Enqueue(new DictionaryUpdateEntry
+                        {
+                            key = key,
+                            operation = ObservableListOperation.Set,
+                            value = value
+                        });
+                        hasChanges = true;
                     }
                 }
             }
+
+            if (hasChanges)
+                MarkAsDirty();
         }
 
         public override void ClearUpdates()

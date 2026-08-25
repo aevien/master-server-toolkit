@@ -11,33 +11,19 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required password input. Submit stores its current text as the MST room password before invoking the dialog callback.")]
         private TMP_InputField passwordInputField;
 
         #endregion
 
         private UnityAction submitCallback;
 
-        protected override void Awake()
+        protected override void OnStartShow()
         {
-            base.Awake();
-
-            Mst.Events.AddListener(MstEventKeys.showPasswordDialogBox, OnShowPasswordDialogBoxEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hidePasswordDialogBox, OnHidePasswordDialogBoxEventHandler);
-        }
-
-        private void OnHidePasswordDialogBoxEventHandler(EventMessage message)
-        {
-            Hide();
-        }
-
-        private void OnShowPasswordDialogBoxEventHandler(EventMessage message)
-        {
-            var messageData = message.As<PasswordInputDialoxBoxEventMessage>();
-
-            SetLables(messageData.Message);
+            base.OnStartShow();
+            var messageData = Payload.As<PasswordInputDialoxBoxEventMessage>();
+            SetLabels(messageData.Message);
             submitCallback = messageData.OkCallback;
-
-            Show();
         }
 
         public void Submit()
@@ -46,5 +32,25 @@ namespace MasterServerToolkit.Bridges
             submitCallback?.Invoke();
             Hide();
         }
+    }
+
+    public class PasswordInputDialoxBoxEventMessage
+    {
+        public PasswordInputDialoxBoxEventMessage() { }
+
+        public PasswordInputDialoxBoxEventMessage(string message)
+        {
+            Message = message;
+            OkCallback = null;
+        }
+
+        public PasswordInputDialoxBoxEventMessage(string message, UnityAction submitCallback)
+        {
+            Message = message;
+            OkCallback = submitCallback;
+        }
+
+        public string Message { get; set; }
+        public UnityAction OkCallback { get; set; }
     }
 }

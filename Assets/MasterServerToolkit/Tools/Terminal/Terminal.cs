@@ -1,7 +1,8 @@
 using MasterServerToolkit.Utils;
 using System;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace MasterServerToolkit.CommandTerminal
 {
@@ -14,140 +15,317 @@ namespace MasterServerToolkit.CommandTerminal
 
     public class Terminal : SingletonBehaviour<Terminal>
     {
-        [Header("Window")]
-        [Range(0, 1)]
+        [Header("Terminal Backend")]
+        [SerializeField, Min(1)]
+        [Tooltip("Maximum number of log entries retained in memory. When the limit is exceeded, the oldest entries are removed. Minimum is 1.")]
+        private int bufferCapacity = 5000;
+
+        [SerializeField, Min(1)]
+        [Tooltip("Default number of log entries returned by backend read and search methods that do not specify a page size. It is clamped from 1 to Buffer Capacity; TerminalUI calculates its own visible page size.")]
+        private int maxVisibleLines = 100;
+
         [SerializeField]
-        float maxHeight = 0.7f;
+        [Tooltip("When enabled, messages emitted through Unity's application log callback are copied into the terminal buffer.")]
+        private bool captureUnityLogs = true;
 
-        [Range(100, 1000)]
         [SerializeField]
-        float toggleSpeed = 360;
+        [Tooltip("When enabled, the terminal registers its standard commands such as help, clear, echo, logs, time, and quit during runtime initialization.")]
+        private bool registerBuiltInCommands = true;
 
-        [SerializeField] string toggleHotkey = "`";
-        [SerializeField] string toggleFullHotkey = "#`";
-        [SerializeField] int bufferSize = 512;
+        private bool initialized;
+        private int initializedGeneration = -1;
+        private bool unityLogSubscribed;
+        private bool builtInsRegistered;
+        private string searchQuery = string.Empty;
+        private int searchPageIndex = -1;
+        private bool searchFollowsLatest = true;
+        private CommandLog subscribedBuffer;
+        private CommandShell subscribedShell;
+        private static int runtimeGeneration;
 
-        [Header("Input")]
-        [SerializeField] Font consoleFont;
-        [SerializeField] string inputCaret = ">";
-        [SerializeField] bool showGUIButtons;
-        [SerializeField] bool rightAlignButtons;
-
-        [Header("Theme")]
-        [Range(0, 1)]
-        [SerializeField] float inputContrast;
-
-        [SerializeField] Color backgroundColor = Color.black;
-        [SerializeField] Color foregroundColor = Color.white;
-        [SerializeField] Color shellColor = Color.white;
-        [SerializeField] Color inputColor = Color.cyan;
-        [SerializeField] Color warningColor = Color.yellow;
-        [SerializeField] Color errorColor = Color.red;
-
-        private TerminalState state;
-        private TextEditor editor_state;
-        private bool input_fix;
-        private bool move_cursor;
-        private bool initial_open; // Used to focus on TextField when console opens
-        private Rect window;
-        private float current_open_t;
-        private float open_target;
-        private float real_window_size;
-        private string command_text;
-        private string cached_command_text;
-        private Vector2 scroll_position;
-        private GUIStyle window_style;
-        private GUIStyle label_style;
-        private GUIStyle input_style;
-        private Texture2D background_texture;
+        public event Action<Terminal> Changed;
+        public event Action<LogItem> LogEntryAdded;
+        public event Action CommandsChanged;
+        public event Action<TerminalSearchResult> SearchChanged;
 
         public static CommandLog Buffer { get; private set; }
         public static CommandShell Shell { get; private set; } = new CommandShell();
         public static CommandHistory History { get; private set; } = new CommandHistory();
         public static CommandAutocomplete Autocomplete { get; private set; } = new CommandAutocomplete();
+        public static bool IssuedError => Shell != null && !string.IsNullOrWhiteSpace(Shell.IssuedErrorMessage);
 
-        public static bool IssuedError
+        public CommandLog GetLogBuffer()
         {
-            get { return Shell.IssuedErrorMessage != null; }
+            InitializeRuntime();
+            return Buffer;
         }
 
-        public bool IsClosed
+        public CommandShell GetCommandShell()
         {
-            get { return state == TerminalState.Close && Mathf.Approximately(current_open_t, open_target); }
+            InitializeRuntime();
+            return Shell;
+        }
+
+        public CommandHistory GetCommandHistory()
+        {
+            InitializeRuntime();
+            return History;
+        }
+
+        public CommandAutocomplete GetCommandAutocomplete()
+        {
+            InitializeRuntime();
+            return Autocomplete;
+        }
+
+        public int BufferCapacity => bufferCapacity;
+        public int MaxVisibleLines => maxVisibleLines;
+        public string SearchQuery => searchQuery;
+        public int SearchPageIndex => searchPageIndex;
+        public bool HasActiveSearch => !string.IsNullOrWhiteSpace(searchQuery);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticRuntimeState()
+        {
+            runtimeGeneration++;
+            Buffer = null;
+            Shell = new CommandShell();
+            History = new CommandHistory();
+            Autocomplete = new CommandAutocomplete();
+
+            _instance = null;
+            _wasCreated = false;
+            _creationHasPendingConfig = false;
+            _creationIsGlobal = true;
         }
 
         protected override void Awake()
         {
             base.Awake();
-            if (isNowDestroying) return;
 
-            Buffer = new CommandLog(bufferSize);
+            if (isNowDestroying)
+                return;
 
-            // Hook Unity log events
-            Application.logMessageReceived += HandleUnityLog;
+            InitializeRuntime();
         }
 
-        void Start()
+        protected virtual void OnEnable()
         {
-            if (consoleFont == null)
-            {
-                consoleFont = Font.CreateDynamicFontFromOSFont("Courier New", 16);
-                logger.Warn("Command Console Warning: Please assign a font.");
-            }
+            InitializeRuntime();
 
-            command_text = "";
-            cached_command_text = command_text;
-            Assert.AreNotEqual(toggleHotkey.ToLower(), "return", "Return is not a valid ToggleHotkey");
+            if (isNowDestroying)
+                return;
 
-            SetupWindow();
-            SetupInput();
-            SetupLabels();
-
-            Shell.RegisterCommands();
-
-            if (IssuedError)
-            {
-                Log(TerminalLogType.Error, "Error: {0}", Shell.IssuedErrorMessage);
-            }
-
-            foreach (var command in Shell.Commands)
-            {
-                Autocomplete.Register(command.Key);
-            }
+            SubscribeUnityLog();
         }
 
         protected override void OnDestroy()
         {
+            UnsubscribeUnityLog();
+            UnsubscribeRuntimeEvents();
             base.OnDestroy();
-
-            Application.logMessageReceived -= HandleUnityLog;
         }
 
-        void OnGUI()
+        protected virtual void OnValidate()
         {
-            if (Event.current.Equals(Event.KeyboardEvent(toggleHotkey)))
+            bufferCapacity = Mathf.Max(1, bufferCapacity);
+            maxVisibleLines = Mathf.Clamp(maxVisibleLines, 1, bufferCapacity);
+
+            if (Buffer != null)
+                Buffer.SetCapacity(bufferCapacity);
+        }
+
+        public bool AddCommand(string name,
+                               Action<CommandArg[]> proc,
+                               int minArgCount = 0,
+                               int maxArgCount = -1,
+                               string help = "",
+                               bool replaceExisting = false)
+        {
+            InitializeRuntime();
+            return Shell.AddCommand(name, proc, minArgCount, maxArgCount, help, replaceExisting);
+        }
+
+        public bool RemoveCommand(string name)
+        {
+            InitializeRuntime();
+            return Shell.RemoveCommand(name);
+        }
+
+        public bool SubmitCommand(string commandLine)
+        {
+            InitializeRuntime();
+
+            if (string.IsNullOrWhiteSpace(commandLine))
+                return false;
+
+            Log(TerminalLogType.Input, commandLine);
+            Shell.RunCommand(commandLine);
+            History.Push(commandLine);
+
+            if (IssuedError)
             {
-                SetState(TerminalState.OpenSmall);
-                initial_open = true;
-            }
-            else if (Event.current.Equals(Event.KeyboardEvent(toggleFullHotkey)))
-            {
-                SetState(TerminalState.OpenFull);
-                initial_open = true;
+                Log(TerminalLogType.Error, "Error: {0}", Shell.IssuedErrorMessage);
+                return false;
             }
 
-            if (showGUIButtons)
-            {
-                DrawGUIButtons();
-            }
+            return true;
+        }
 
-            if (IsClosed)
-            {
-                return;
-            }
+        public void ClearLog()
+        {
+            InitializeRuntime();
+            Buffer.Clear();
+        }
 
-            HandleOpenness();
-            window = GUILayout.Window(88, window, DrawConsole, "", window_style);
+        public IReadOnlyList<LogItem> GetVisibleEntries()
+        {
+            InitializeRuntime();
+
+            if (HasActiveSearch)
+                return GetCurrentSearchResult().Entries;
+
+            return Buffer.Latest(maxVisibleLines);
+        }
+
+        public IReadOnlyList<LogItem> GetVisibleEntries(int maxCount)
+        {
+            InitializeRuntime();
+
+            if (HasActiveSearch)
+                return GetCurrentSearchResult(maxCount).Entries;
+
+            return Buffer.Latest(maxCount);
+        }
+
+        public IReadOnlyList<LogItem> GetLatestEntries(int maxCount, int offsetFromLatest = 0)
+        {
+            InitializeRuntime();
+            return Buffer.Latest(maxCount, offsetFromLatest);
+        }
+
+        public string GetVisibleText(bool includeTimestamp = false, bool includeType = false)
+        {
+            return FormatEntries(GetVisibleEntries(), includeTimestamp, includeType);
+        }
+
+        public string GetVisibleText(int maxCount, bool includeTimestamp = false, bool includeType = false)
+        {
+            return FormatEntries(GetVisibleEntries(maxCount), includeTimestamp, includeType);
+        }
+
+        public TerminalSearchResult SetSearch(string query)
+        {
+            return SetSearch(query, maxVisibleLines);
+        }
+
+        public TerminalSearchResult SetSearch(string query, int pageSize)
+        {
+            InitializeRuntime();
+            searchQuery = query ?? string.Empty;
+            searchPageIndex = -1;
+            searchFollowsLatest = true;
+            TerminalSearchResult result = GetCurrentSearchResult(pageSize);
+            SearchChanged?.Invoke(result);
+            Changed?.Invoke(this);
+            return result;
+        }
+
+        public TerminalSearchResult ClearSearch()
+        {
+            return SetSearch(string.Empty);
+        }
+
+        public TerminalSearchResult SetSearchPage(int pageIndex)
+        {
+            return SetSearchPage(pageIndex, maxVisibleLines);
+        }
+
+        public TerminalSearchResult SetSearchPage(int pageIndex, int pageSize)
+        {
+            InitializeRuntime();
+
+            if (!HasActiveSearch)
+                return new TerminalSearchResult();
+
+            TerminalSearchResult result = Buffer.Search(searchQuery, pageIndex, pageSize);
+            searchPageIndex = result.PageIndex;
+            searchFollowsLatest = result.IsLastPage;
+            SearchChanged?.Invoke(result);
+            Changed?.Invoke(this);
+            return result;
+        }
+
+        public TerminalSearchResult NextSearchPage()
+        {
+            return NextSearchPage(maxVisibleLines);
+        }
+
+        public TerminalSearchResult NextSearchPage(int pageSize)
+        {
+            TerminalSearchResult current = GetCurrentSearchResult(pageSize);
+
+            if (!current.HasQuery || current.IsLastPage)
+                return current;
+
+            return SetSearchPage(current.PageIndex + 1, pageSize);
+        }
+
+        public TerminalSearchResult PreviousSearchPage()
+        {
+            return PreviousSearchPage(maxVisibleLines);
+        }
+
+        public TerminalSearchResult PreviousSearchPage(int pageSize)
+        {
+            TerminalSearchResult current = GetCurrentSearchResult(pageSize);
+
+            if (!current.HasQuery || current.IsFirstPage)
+                return current;
+
+            return SetSearchPage(current.PageIndex - 1, pageSize);
+        }
+
+        public TerminalSearchResult GetCurrentSearchResult()
+        {
+            return GetCurrentSearchResult(maxVisibleLines);
+        }
+
+        public TerminalSearchResult GetCurrentSearchResult(int pageSize)
+        {
+            InitializeRuntime();
+
+            if (!HasActiveSearch)
+                return new TerminalSearchResult();
+
+            TerminalSearchResult result = Buffer.Search(searchQuery, searchPageIndex, pageSize);
+            searchPageIndex = result.PageIndex;
+            return result;
+        }
+
+        public string[] CompleteCommand(string commandLine, out string completedText)
+        {
+            InitializeRuntime();
+            completedText = commandLine ?? string.Empty;
+            return Autocomplete.Complete(ref completedText);
+        }
+
+        public void SetBufferCapacity(int capacity)
+        {
+            InitializeRuntime();
+            bufferCapacity = Mathf.Max(1, capacity);
+            maxVisibleLines = Mathf.Clamp(maxVisibleLines, 1, bufferCapacity);
+            Buffer.SetCapacity(bufferCapacity);
+            Changed?.Invoke(this);
+            SearchChanged?.Invoke(GetCurrentSearchResult());
+        }
+
+        public void SetMaxVisibleLines(int value)
+        {
+            InitializeRuntime();
+            maxVisibleLines = Mathf.Clamp(value, 1, bufferCapacity);
+            Changed?.Invoke(this);
+            SearchChanged?.Invoke(GetCurrentSearchResult());
         }
 
         public static void Log(string format, params object[] message)
@@ -157,301 +335,193 @@ namespace MasterServerToolkit.CommandTerminal
 
         public static void Log(TerminalLogType type, string format, params object[] message)
         {
-            Buffer.HandleLog(string.Format(format, message), type);
+            if (Buffer == null)
+                return;
+
+            Buffer.HandleLog(FormatMessage(format, message), type);
         }
 
-        public void SetState(TerminalState new_state)
+        public static string FormatEntries(IEnumerable<LogItem> entries, bool includeTimestamp = false, bool includeType = false)
         {
-            input_fix = true;
-            cached_command_text = command_text;
-            command_text = "";
+            if (entries == null)
+                return string.Empty;
 
-            switch (new_state)
+            var builder = new StringBuilder();
+
+            foreach (LogItem entry in entries)
             {
-                case TerminalState.Close:
-                    {
-                        open_target = 0;
-                        break;
-                    }
-                case TerminalState.OpenSmall:
-                    {
-                        open_target = Screen.height * maxHeight;
-                        if (current_open_t > open_target)
-                        {
-                            // Prevent resizing from OpenFull to OpenSmall if window y position
-                            // is greater than OpenSmall's target
-                            open_target = 0;
-                            state = TerminalState.Close;
-                            return;
-                        }
-                        real_window_size = open_target;
-                        scroll_position.y = int.MaxValue;
-                        break;
-                    }
-                case TerminalState.OpenFull:
-                default:
-                    {
-                        real_window_size = Screen.height * maxHeight;
-                        open_target = real_window_size;
-                        break;
-                    }
+                if (builder.Length > 0)
+                    builder.AppendLine();
+
+                if (includeTimestamp)
+                    builder.Append(entry.timestamp.ToString("HH:mm:ss")).Append(' ');
+
+                if (includeType)
+                    builder.Append('[').Append(entry.type).Append("] ");
+
+                builder.Append(entry.message);
             }
 
-            state = new_state;
+            return builder.ToString();
         }
 
-        public void ToggleState(TerminalState new_state)
+        private void InitializeRuntime()
         {
-            if (state == new_state)
+            if (isNowDestroying)
+                return;
+
+            if (_instance == null)
             {
-                SetState(TerminalState.Close);
+                _instance = this;
+                _wasCreated = true;
+
+                if (isGlobal && Application.isPlaying)
+                    DontDestroyOnLoad(this);
             }
-            else
+            else if (_instance != this)
             {
-                SetState(new_state);
+                isNowDestroying = true;
+                Destroy(gameObject);
+                return;
             }
+
+            if (initialized && initializedGeneration == runtimeGeneration)
+                return;
+
+            if (initialized)
+            {
+                UnsubscribeUnityLog();
+                UnsubscribeRuntimeEvents();
+                builtInsRegistered = false;
+                searchQuery = string.Empty;
+                searchPageIndex = -1;
+                searchFollowsLatest = true;
+            }
+
+            bufferCapacity = Mathf.Max(1, bufferCapacity);
+            maxVisibleLines = Mathf.Clamp(maxVisibleLines, 1, bufferCapacity);
+
+            Buffer = new CommandLog(bufferCapacity);
+            Buffer.EntryAdded += HandleLogEntryAdded;
+            Buffer.Cleared += HandleLogCleared;
+            subscribedBuffer = Buffer;
+
+            Shell ??= new CommandShell();
+            Shell.CommandsChanged += HandleCommandsChanged;
+            subscribedShell = Shell;
+            History ??= new CommandHistory();
+            Autocomplete ??= new CommandAutocomplete();
+
+            initialized = true;
+            initializedGeneration = runtimeGeneration;
+
+            if (registerBuiltInCommands && !builtInsRegistered)
+            {
+                BuiltinCommands.Register(Shell);
+                builtInsRegistered = true;
+            }
+
+            RefreshAutocomplete();
         }
 
-        void SetupWindow()
+        private void SubscribeUnityLog()
         {
-            real_window_size = Screen.height * maxHeight;
-            window = new Rect(0, current_open_t - real_window_size, Screen.width, real_window_size);
+            if (!captureUnityLogs || unityLogSubscribed)
+                return;
 
-            // Set background color
-            background_texture = new Texture2D(1, 1);
-            background_texture.SetPixel(0, 0, backgroundColor);
-            background_texture.Apply();
-
-            window_style = new GUIStyle();
-            window_style.normal.background = background_texture;
-            window_style.padding = new RectOffset(4, 4, 4, 4);
-            window_style.normal.textColor = foregroundColor;
-            window_style.font = consoleFont;
+            Application.logMessageReceived += HandleUnityLog;
+            unityLogSubscribed = true;
         }
 
-        void SetupLabels()
+        private void UnsubscribeUnityLog()
         {
-            label_style = new GUIStyle
-            {
-                font = consoleFont
-            };
-            label_style.normal.textColor = foregroundColor;
-            label_style.wordWrap = true;
+            if (!unityLogSubscribed)
+                return;
+
+            Application.logMessageReceived -= HandleUnityLog;
+            unityLogSubscribed = false;
         }
 
-        void SetupInput()
+        private void UnsubscribeRuntimeEvents()
         {
-            input_style = new GUIStyle
+            if (subscribedBuffer != null)
             {
-                padding = new RectOffset(4, 4, 4, 4),
-                font = consoleFont,
-                fixedHeight = consoleFont.fontSize * 1.6f
-            };
-            input_style.normal.textColor = inputColor;
-
-            var dark_background = new Color
-            {
-                r = backgroundColor.r - inputContrast,
-                g = backgroundColor.g - inputContrast,
-                b = backgroundColor.b - inputContrast,
-                a = 0.5f
-            };
-
-            Texture2D input_background_texture = new Texture2D(1, 1);
-            input_background_texture.SetPixel(0, 0, dark_background);
-            input_background_texture.Apply();
-            input_style.normal.background = input_background_texture;
-        }
-
-        void DrawConsole(int Window2D)
-        {
-            GUILayout.BeginVertical();
-
-            scroll_position = GUILayout.BeginScrollView(scroll_position, false, false, GUIStyle.none, GUIStyle.none);
-            GUILayout.FlexibleSpace();
-            DrawLogs();
-            GUILayout.EndScrollView();
-
-            if (move_cursor)
-            {
-                CursorToEnd();
-                move_cursor = false;
+                subscribedBuffer.EntryAdded -= HandleLogEntryAdded;
+                subscribedBuffer.Cleared -= HandleLogCleared;
+                subscribedBuffer = null;
             }
 
-            if (Event.current.Equals(Event.KeyboardEvent("escape")))
+            if (subscribedShell != null)
             {
-                SetState(TerminalState.Close);
-            }
-            else if (Event.current.Equals(Event.KeyboardEvent("return")))
-            {
-                EnterCommand();
-            }
-            else if (Event.current.Equals(Event.KeyboardEvent("up")))
-            {
-                command_text = History.Previous();
-                move_cursor = true;
-            }
-            else if (Event.current.Equals(Event.KeyboardEvent("down")))
-            {
-                command_text = History.Next();
-            }
-            else if (Event.current.Equals(Event.KeyboardEvent(toggleHotkey)))
-            {
-                ToggleState(TerminalState.OpenSmall);
-            }
-            else if (Event.current.Equals(Event.KeyboardEvent(toggleFullHotkey)))
-            {
-                ToggleState(TerminalState.OpenFull);
-            }
-            else if (Event.current.Equals(Event.KeyboardEvent("tab")))
-            {
-                CompleteCommand();
-                move_cursor = true; // Wait till next draw call
-            }
-
-            GUILayout.BeginHorizontal();
-
-            if (inputCaret != "")
-            {
-                GUILayout.Label(inputCaret, input_style, GUILayout.Width(consoleFont.fontSize));
-            }
-
-            GUI.SetNextControlName("command_text_field");
-            command_text = GUILayout.TextField(command_text, input_style);
-
-            if (input_fix && command_text.Length > 0)
-            {
-                command_text = cached_command_text; // Otherwise the TextField picks up the ToggleHotkey character event
-                input_fix = false;                  // Prevents checking string Length every draw call
-            }
-
-            if (initial_open)
-            {
-                GUI.FocusControl("command_text_field");
-                initial_open = false;
-            }
-
-            if (showGUIButtons && GUILayout.Button("| run", input_style, GUILayout.Width(Screen.width / 10)))
-            {
-                EnterCommand();
-            }
-
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
-        }
-
-        void DrawLogs()
-        {
-            foreach (var log in Buffer.Logs)
-            {
-                label_style.normal.textColor = GetLogColor(log.type);
-                GUILayout.Label(log.message, label_style);
+                subscribedShell.CommandsChanged -= HandleCommandsChanged;
+                subscribedShell = null;
             }
         }
 
-        void DrawGUIButtons()
+        private void HandleUnityLog(string message, string stackTrace, LogType type)
         {
-            int size = consoleFont.fontSize;
-            float x_position = rightAlignButtons ? Screen.width - 7 * size : 0;
+            if (Buffer == null)
+                return;
 
-            // 7 is the number of chars in the button plus some padding, 2 is the line height.
-            // The layout will resize according to the font size.
-            GUILayout.BeginArea(new Rect(x_position, current_open_t, 7 * size, size * 2));
-            GUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("Small", window_style))
-            {
-                ToggleState(TerminalState.OpenSmall);
-            }
-            else if (GUILayout.Button("Full", window_style))
-            {
-                ToggleState(TerminalState.OpenFull);
-            }
-
-            GUILayout.EndHorizontal();
-            GUILayout.EndArea();
+            Buffer.HandleLog(message, stackTrace, (TerminalLogType)type);
         }
 
-        void HandleOpenness()
+        private void HandleLogEntryAdded(LogItem entry)
         {
-            float dt = toggleSpeed * Time.deltaTime;
+            if (HasActiveSearch && searchFollowsLatest)
+                searchPageIndex = -1;
 
-            if (current_open_t < open_target)
-            {
-                current_open_t += dt;
-                if (current_open_t > open_target) current_open_t = open_target;
-            }
-            else if (current_open_t > open_target)
-            {
-                current_open_t -= dt;
-                if (current_open_t < open_target) current_open_t = open_target;
-            }
-            else
-            {
-                return; // Already at target
-            }
+            LogEntryAdded?.Invoke(entry);
+            Changed?.Invoke(this);
 
-            window = new Rect(0, current_open_t - real_window_size, Screen.width, real_window_size);
+            if (HasActiveSearch)
+                SearchChanged?.Invoke(GetCurrentSearchResult());
         }
 
-        void EnterCommand()
+        private void HandleLogCleared()
         {
-            Log(TerminalLogType.Input, "{0}", command_text);
-            Shell.RunCommand(command_text);
-            History.Push(command_text);
+            if (HasActiveSearch)
+                searchPageIndex = -1;
 
-            if (IssuedError)
-            {
-                Log(TerminalLogType.Error, "Error: {0}", Shell.IssuedErrorMessage);
-            }
-
-            command_text = "";
-            scroll_position.y = int.MaxValue;
+            SearchChanged?.Invoke(GetCurrentSearchResult());
+            Changed?.Invoke(this);
         }
 
-        void CompleteCommand()
+        private void HandleCommandsChanged()
         {
-            string head_text = command_text;
-            string[] completion_buffer = Autocomplete.Complete(ref head_text);
-            int completion_length = completion_buffer.Length;
-
-            if (completion_length == 1)
-            {
-                command_text = head_text + completion_buffer[0];
-            }
-            else if (completion_length > 1)
-            {
-                // Print possible completions
-                Log(string.Join("    ", completion_buffer));
-                scroll_position.y = int.MaxValue;
-            }
+            RefreshAutocomplete();
+            CommandsChanged?.Invoke();
+            Changed?.Invoke(this);
         }
 
-        void CursorToEnd()
+        private void RefreshAutocomplete()
         {
-            if (editor_state == null)
+            if (Autocomplete == null || Shell == null)
+                return;
+
+            Autocomplete.SetWords(Shell.Commands.Keys);
+        }
+
+        private static string FormatMessage(string format, object[] message)
+        {
+            if (format == null)
+                return string.Empty;
+
+            if (message == null || message.Length == 0)
+                return format;
+
+            try
             {
-                editor_state = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                return string.Format(format, message);
             }
-
-            editor_state.MoveCursorToPosition(new Vector2(999, 999));
-        }
-
-        void HandleUnityLog(string message, string stack_trace, LogType type)
-        {
-            Buffer.HandleLog(message, stack_trace, (TerminalLogType)type);
-            scroll_position.y = int.MaxValue;
-        }
-
-        Color GetLogColor(TerminalLogType type)
-        {
-            switch (type)
+            catch (FormatException)
             {
-                case TerminalLogType.Message: return foregroundColor;
-                case TerminalLogType.Warning: return warningColor;
-                case TerminalLogType.Input: return inputColor;
-                case TerminalLogType.ShellMessage: return shellColor;
-                default: return errorColor;
+                var builder = new StringBuilder(format);
+
+                for (int i = 0; i < message.Length; i++)
+                    builder.Append(' ').Append(message[i]);
+
+                return builder.ToString();
             }
         }
     }

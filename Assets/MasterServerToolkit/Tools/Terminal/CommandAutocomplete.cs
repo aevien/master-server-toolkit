@@ -1,43 +1,86 @@
+using System;
 using System.Collections.Generic;
 
 namespace MasterServerToolkit.CommandTerminal
 {
     public class CommandAutocomplete
     {
-        List<string> known_words = new List<string>();
-        List<string> buffer = new List<string>();
+        private readonly List<string> knownWords = new List<string>();
+        private readonly List<string> buffer = new List<string>();
+
+        public IReadOnlyList<string> KnownWords => knownWords;
+
+        public void SetWords(IEnumerable<string> words)
+        {
+            knownWords.Clear();
+
+            if (words == null)
+                return;
+
+            foreach (string word in words)
+                Register(word);
+
+            knownWords.Sort(StringComparer.OrdinalIgnoreCase);
+        }
 
         public void Register(string word)
         {
-            known_words.Add(word.ToLower());
+            if (string.IsNullOrWhiteSpace(word))
+                return;
+
+            string normalized = word.Trim();
+
+            if (knownWords.Exists(x => string.Equals(x, normalized, StringComparison.OrdinalIgnoreCase)))
+                return;
+
+            knownWords.Add(normalized);
+        }
+
+        public void Unregister(string word)
+        {
+            if (string.IsNullOrWhiteSpace(word))
+                return;
+
+            knownWords.RemoveAll(x => string.Equals(x, word.Trim(), StringComparison.OrdinalIgnoreCase));
         }
 
         public string[] Complete(ref string text)
         {
-            string partial_word = EatLastWord(ref text).ToLower();
-            string known;
+            text ??= string.Empty;
+            string partialWord = EatLastWord(ref text);
             buffer.Clear();
 
-            for (int i = 0; i < known_words.Count; i++)
+            for (int i = 0; i < knownWords.Count; i++)
             {
-                known = known_words[i];
+                string known = knownWords[i];
 
-                if (known.StartsWith(partial_word))
-                {
+                if (known.StartsWith(partialWord, StringComparison.OrdinalIgnoreCase))
                     buffer.Add(known);
-                }
             }
 
             return buffer.ToArray();
         }
 
-        string EatLastWord(ref string text)
+        public void Clear()
         {
-            int last_space = text.LastIndexOf(' ');
-            string result = text.Substring(last_space + 1);
+            knownWords.Clear();
+            buffer.Clear();
+        }
 
-            text = text.Substring(0, last_space + 1); // Remaining (keep space)
-            return result;
+        private string EatLastWord(ref string text)
+        {
+            int lastSpace = text.LastIndexOf(' ');
+
+            if (lastSpace < 0)
+            {
+                string result = text;
+                text = string.Empty;
+                return result;
+            }
+
+            string word = text.Substring(lastSpace + 1);
+            text = text.Substring(0, lastSpace + 1);
+            return word;
         }
     }
 }

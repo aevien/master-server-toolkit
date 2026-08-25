@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Json
     {
         public static MstJson FromVector3(this Vector3 vector)
         {
-            var jsonObject = MstJson.EmptyObject;
+            var jsonObject = MstJson.CreateObject();
             if (vector.x != 0) jsonObject.AddField("x", vector.x);
             if (vector.y != 0) jsonObject.AddField("y", vector.y);
             if (vector.z != 0) jsonObject.AddField("z", vector.z);

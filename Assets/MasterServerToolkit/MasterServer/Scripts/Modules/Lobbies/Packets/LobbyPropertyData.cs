@@ -35,7 +35,10 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(Label);
             writer.Write(PropertyKey);
 
-            writer.Write(Options != null ? Options.Count : 0);
+            writer.WriteCount32(
+                Options != null ? Options.Count : 0,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby property option list");
 
             if (Options != null)
             {
@@ -52,7 +55,9 @@ namespace MasterServerToolkit.MasterServer
             Label = reader.ReadString();
             PropertyKey = reader.ReadString();
 
-            var optionsCount = reader.ReadInt32();
+            var optionsCount = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby property option list");
             Options = new List<string>();
 
             for (var i = 0; i < optionsCount; i++)

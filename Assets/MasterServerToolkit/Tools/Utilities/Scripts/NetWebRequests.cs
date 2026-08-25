@@ -12,7 +12,7 @@ namespace MasterServerToolkit.Utils
     {
         public static async Task<MstJson> GetAsync(string url, Dictionary<string, string> headers = null)
         {
-            MstJson result = MstJson.EmptyObject;
+            MstJson result = MstJson.CreateObject();
 
             try
             {
@@ -67,7 +67,7 @@ namespace MasterServerToolkit.Utils
 
         public static async Task<MstJson> PostAsync(string url, Dictionary<string, string> headers = null, MstJson postData = null)
         {
-            MstJson result = MstJson.EmptyObject;
+            MstJson result = MstJson.CreateObject();
 
             try
             {

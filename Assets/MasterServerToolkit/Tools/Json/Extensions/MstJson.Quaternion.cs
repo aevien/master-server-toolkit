@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Json
     {
         public static MstJson FromQuaternion(this Quaternion quaternion)
         {
-            var jsonObject = MstJson.EmptyObject;
+            var jsonObject = MstJson.CreateObject();
             if (quaternion.w != 0) jsonObject.AddField("w", quaternion.w);
             if (quaternion.x != 0) jsonObject.AddField("x", quaternion.x);
             if (quaternion.y != 0) jsonObject.AddField("y", quaternion.y);

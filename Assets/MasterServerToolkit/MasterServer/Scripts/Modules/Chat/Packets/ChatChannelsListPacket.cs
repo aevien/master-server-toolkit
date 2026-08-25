@@ -5,7 +5,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class ChatChannelsListPacket : SerializablePacket
     {
-        public List<ChatChannelInfo> Channels { get; set; }
+        public List<ChatChannelInfo> Channels { get; set; } = new List<ChatChannelInfo>();
 
         public override void FromBinaryReader(EndianBinaryReader reader)
         {
@@ -27,6 +27,16 @@ namespace MasterServerToolkit.MasterServer
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
+            if (Channels == null)
+            {
+                Channels = new List<ChatChannelInfo>();
+            }
+
+            if (Channels.Count > ushort.MaxValue)
+            {
+                throw new System.InvalidOperationException($"Chat channels list cannot contain more than {ushort.MaxValue} channels");
+            }
+
             writer.Write((ushort)Channels.Count);
 
             foreach (var channel in Channels)

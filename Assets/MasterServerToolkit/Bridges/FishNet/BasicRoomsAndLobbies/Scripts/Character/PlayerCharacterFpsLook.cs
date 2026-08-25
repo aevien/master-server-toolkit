@@ -9,19 +9,19 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
     {
         #region INSPECTOR
 
-        [Header("Positioning"), SerializeField]
+        [Header("Positioning"), SerializeField, Tooltip("Local-space camera offset from the owning character pivot, in Unity world units. The scene gizmo previews this point.")]
         protected Vector3 cameraPoint = new Vector3(0, 1.75f, 0.15f);
 
-        [Header("Input Settings"), SerializeField]
+        [Header("Input Settings"), SerializeField, Tooltip("Horizontal and vertical look rotation applied per legacy input-axis unit. X controls yaw and Y controls pitch on the owning client.")]
         protected Vector2Int lookSensitivity = new Vector2Int(8, 8);
-        [SerializeField, Range(-90, 0)]
+        [SerializeField, Range(-90, 0), Tooltip("Lowest camera pitch in degrees. -90 allows looking straight down; 0 prevents downward rotation.")]
         protected float minLookAngle = -60f;
-        [SerializeField, Range(0, 90)]
+        [SerializeField, Range(0, 90), Tooltip("Highest camera pitch in degrees. 90 allows looking straight up; 0 prevents upward rotation.")]
         protected float maxLookAngle = 60f;
 
-        [Header("Smoothness Settings"), SerializeField]
+        [Header("Smoothness Settings"), SerializeField, Tooltip("Smooths local camera and character rotation when enabled. Disable for immediate response to look input.")]
         protected bool useSmoothness = true;
-        [SerializeField, Range(0.01f, 1f)]
+        [SerializeField, Range(0.01f, 1f), Tooltip("Approximate SmoothDamp response time in seconds. Lower values follow input faster; higher values feel softer.")]
         protected float smoothnessTime = 0.1f;
 
         #endregion

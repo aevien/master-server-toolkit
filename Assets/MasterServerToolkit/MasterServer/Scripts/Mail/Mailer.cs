@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     public abstract class Mailer : MonoBehaviour
     {
-        public abstract Task<bool> SendMailAsync(string to, string subject, string body);
+        public abstract Task<bool> SendMailAsync(string to, string subject, string body, CancellationToken cancellationToken = default);
     }
 }

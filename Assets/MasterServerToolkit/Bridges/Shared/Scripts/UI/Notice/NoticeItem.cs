@@ -10,44 +10,30 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required text label that displays the notice message while this item is active.")]
         private TextMeshProUGUI messageOutput;
 
+        [Tooltip("Invoked with the notice text when a non-empty message is shown.")]
         public UnityEvent<string> OnMessage;
 
         #endregion
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        public virtual void OutputMessage(string message)
+        public virtual void Show(string message, float time)
         {
+            gameObject.SetActive(true);
             messageOutput.text = message;
 
             if (!string.IsNullOrEmpty(message))
-            {
                 OnMessage?.Invoke(message);
-            }
-        }
 
-        public virtual void Show()
-        {
-            gameObject.SetActive(true);
+            StopCoroutine(HideCoroutine(time));
+            StartCoroutine(HideCoroutine(time));
         }
 
         public virtual void Hide()
         {
+            StopAllCoroutines();
             gameObject.SetActive(false);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="time"></param>
-        public virtual void WaitAndHide(float time)
-        {
-            StopCoroutine(HideCoroutine(time));
-            StartCoroutine(HideCoroutine(time));
         }
 
         protected virtual IEnumerator HideCoroutine(float time)

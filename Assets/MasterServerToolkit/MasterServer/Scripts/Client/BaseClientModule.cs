@@ -8,7 +8,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Log levelof this module
         /// </summary>
-        [Header("Base Module Settings"), SerializeField]
+        [Header("Base Module Settings"), SerializeField, Tooltip("Minimum severity written by this client module. The parent client behaviour has a separate Log Level setting.")]
         protected LogLevel logLevel = LogLevel.Info;
 
         /// <summary>

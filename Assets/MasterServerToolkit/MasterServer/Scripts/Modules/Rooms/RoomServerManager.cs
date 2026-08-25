@@ -1,9 +1,9 @@
-﻿using MasterServerToolkit.Extensions;
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Networking;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -13,81 +13,61 @@ namespace MasterServerToolkit.MasterServer
     [Serializable]
     public class RoomEvent : UnityEvent<RoomOptions> { }
     [Serializable]
-    public class RoomRegisteredEvent : UnityEvent<RoomController> { }
+    public class RoomRegisterEvent : UnityEvent<RoomController> { }
     [Serializable]
     public class RoomPlayerEvent : UnityEvent<RoomPlayer> { }
 
     public delegate ObservableServerProfile ProfileFactoryDelegate(string userId);
 
-    public class RoomServerManager : BaseClientBehaviour 
+    public class RoomServerManager : BaseClientBehaviour
     {
         #region INSPECTOR
 
         /// <summary>
         /// Loads player profile after he joined the room
         /// </summary>
-        [Header("Room Settings"), SerializeField, Tooltip("Loads player profile after he joined the room")]
+        [Header("Room Settings"), SerializeField, Tooltip("Requests and attaches the player's authoritative profile after room access is validated. Disable only when the room does not use MST profiles or loads them through custom code.")]
         protected bool autoLoadUserProfile = true;
-        [SerializeField]
-        protected bool forceClientMode = false;
-
-        /// <summary>
-        /// Allows guest users to be connected to room
-        /// </summary>
-        [SerializeField, Tooltip("Allows guest users to be connected to room")]
-        protected bool allowGuestUsers = true;
-
-        [Header("Termination Settings"), SerializeField]
-        protected bool terminateRoomWhenDisconnected = true;
-        [SerializeField]
-        protected bool terminateRoomWhenLastPlayerQuits = true;
-        [SerializeField]
-        protected float terminateRoomDelay = 5f;
-
-        /// <summary>
-        /// Fires before server room registeration process
-        /// </summary>
-        [Header("Events")]
-        public RoomEvent OnBeforeRoomRegisterEvent;
 
         /// <summary>
         /// Fires when server room is successfully registered
         /// </summary>
-        public RoomRegisteredEvent OnRoomRegisteredEvent;
+        [Header("Room Events")]
+        [Tooltip("Invoked after the master accepts this room registration. The argument is the active Room Controller used to update or destroy the registration.")]
+        public RoomRegisterEvent OnRoomRegisteredEvent;
 
         /// <summary>
         /// Fires when server room registration failed
         /// </summary>
+        [Tooltip("Invoked when this room cannot register with the master. Inspect the MST log for the rejection or connection reason.")]
         public UnityEvent OnRoomRegisterFailedEvent;
 
         /// <summary>
         /// Fires when new playerjoined room
         /// </summary>
+        [Tooltip("Invoked after a player's room access is validated and the Room Player is added. When profile auto-load is enabled, the profile has been attached before this event.")]
         public RoomPlayerEvent OnPlayerJoinedRoomEvent;
 
         /// <summary>
         /// Fires when existing player left room
         /// </summary>
+        [Tooltip("Invoked after a Room Player is removed because of leave or disconnect and its profile is disposed. Do not retain the argument or use its Profile after this callback.")]
         public RoomPlayerEvent OnPlayerLeftRoomEvent;
 
         #endregion
 
-        private readonly Dictionary<int, RoomPlayer> players = new Dictionary<int, RoomPlayer>();
-
-        /// <summary>
-        /// Options of this room we must share with clients
-        /// </summary>
-        public RoomOptions RoomOptions { get; protected set; }
+        private readonly Dictionary<int, RoomPlayer> players = new();
+        private RoomOptions roomOptions;
 
         /// <summary>
         /// Controller of the room
         /// </summary>
-        public RoomController RoomController { get; protected set; }
+        public RoomController Controller { get; protected set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public bool IsActive => RoomController != null && RoomController.IsActive;
+        public bool IsActive => Controller != null && Controller.IsActive;
 
         /// <summary>
         /// Spawner task controller
@@ -102,7 +82,7 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Check if room has players
         /// </summary>
-        public bool HasPlayers => Players != null && Players.Count() > 0;
+        public bool HasPlayers => players.Any();
 
         /// <summary>
         /// By default, profiles module will use this factory to create a profile for users.
@@ -111,103 +91,99 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public ProfileFactoryDelegate ProfileFactory { get; set; }
 
-        protected override void Start()
-        {
-            ProfileFactory = (userId) => new ObservableServerProfile(userId);
-
-            if (forceClientMode)
-                Mst.Client.Rooms.IsClientMode = true;
-
-            if (Mst.Client.Rooms.IsClientMode)
-            {
-                autoLoadUserProfile = false;
-                allowGuestUsers = false;
-                terminateRoomWhenDisconnected = false;
-                terminateRoomWhenLastPlayerQuits = false;
-            }
-
-            base.Start();
-        }
-
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            StopAllCoroutines();
-            CancelInvoke();
+            // Server logic
+            if (!Mst.Client.Rooms.IsClient)
+            {
+                StopAllCoroutines();
+                CancelInvoke();
 
-            Connection?.RemoveConnectionOpenListener(OnConnectedToMasterEventHandler);
-            Connection?.RemoveConnectionCloseListener(OnDisconnectedFromMasterEventHandler);
-            Connection?.Close();
+                Connection?.RemoveConnectionOpenListener(OnConnectedToMasterEventHandler);
+                Connection?.Close();
+            }
         }
 
         protected override void OnInitialize()
         {
             base.OnInitialize();
 
-            // Init anly if we are on server side.
-            if (!Mst.Client.Rooms.IsClientMode)
+            // Server logic
+            if (!Mst.Client.Rooms.IsClient)
             {
-                // Listen to master server connection status
-                Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
-                Connection.AddConnectionCloseListener(OnDisconnectedFromMasterEventHandler, false);
+                ProfileFactory = (userId) => new ObservableServerProfile(userId);
             }
-        }
-
-        private void OnConnectedToMasterEventHandler(IClientSocket client)
-        {
-            Logger.Info("Room server connected to master server as client");
-
-            if (terminateRoomWhenDisconnected)
-            {
-                StopCoroutine(TerminateRoomAfterDelay());
-            }
-
-            // If this room was spawned
-            if (Mst.Server.Spawners.IsSpawnedProccess)
-            {
-                // Try to register spawned process first
-                RegisterSpawnedProcess();
-            }
-            else
-            {
-                // 
-                BeforeRoomRegistering();
-
-                // Invoke notification
-                OnBeforeRoomRegisterEvent?.Invoke(RoomOptions);
-            }
-        }
-
-        private void OnDisconnectedFromMasterEventHandler(IClientSocket client)
-        {
-            if (terminateRoomWhenDisconnected)
-                StartCoroutine(TerminateRoomAfterDelay());
-        }
-
-        /// <summary>
-        /// Terminates room if delay time is over
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerator TerminateRoomAfterDelay()
-        {
-            yield return new WaitForSecondsRealtime(terminateRoomDelay);
-            Mst.Runtime.Quit();
         }
 
         /// <summary>
         /// Invoke this method when server is started
         /// </summary>
-        public virtual void OnServerStarted()
+        public virtual void StartServer()
         {
-            // Now register the room
-            RegisterRoom();
+            // Listen to master server connection status
+            Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
         }
 
         /// <summary>
         /// Invoke this method when server is stopped
         /// </summary>
-        public virtual void OnServerStopped() { }
+        public virtual void StopServer()
+        {
+            Controller?.Destroy();
+        }
+
+        /// <summary>
+        /// Gets all room options
+        /// </summary>
+        /// <returns></returns>
+        public RoomOptions Options()
+        {
+            if (roomOptions == null)
+            {
+                bool isUsingLobby = Mst.Args.IsProvided(Mst.Args.Names.LobbyId);
+                bool isPublic = !Mst.Args.RoomIsPrivate || isUsingLobby;
+
+                roomOptions = new RoomOptions
+                {
+                    Name = Mst.Args.AsString(Mst.Args.Names.RoomTitle, $"Room-{Mst.Helper.CreateRandomDigitsString(6)}").Unescape(),
+                    RoomIp = Mst.Args.RoomIp,
+                    RoomPort = Mst.Args.RoomPort,
+                    IsPublic = isPublic,
+                    MaxPlayers = Mst.Args.RoomMaxConnections,
+                    Password = Mst.Args.RoomPassword,
+                    Region = Mst.Args.RoomRegion,
+                };
+
+                string[] keys = Mst.Args.FindKeys(MstParamKeys.ROOM_EXTRA_PARAMS_PREFIX);
+                var properties = new MstProperties();
+
+                foreach (string key in keys)
+                {
+                    if (Mst.Args.IsProvided(key))
+                        properties.Set(key, Mst.Args.AsString(key));
+                }
+
+                roomOptions.ExtraParameters.Append(properties.UnescapeValues());
+            }
+
+            return roomOptions;
+        }
+
+        private void OnConnectedToMasterEventHandler(IClientSocket client)
+        {
+            Logger.Info("The room manager has successfully connected to the master server");
+
+            if (Mst.Server.Spawners.IsSpawnedProccess)
+            {
+                RegisterSpawnedProcess();
+            }
+            else
+            {
+                RegisterRoom();
+            }
+        }
 
         /// <summary>
         /// 
@@ -218,14 +194,13 @@ namespace MasterServerToolkit.MasterServer
             // Try to find player in filtered list
             if (players.TryGetValue(roomPeerId, out RoomPlayer player))
             {
-                Logger.Debug($"Room server player {player.Username} with room client Id {roomPeerId} left the room");
+                Logger.Info($"The player [{player.Username}] has just left the room server");
 
                 // Remove this player from list
                 players.Remove(player.RoomPeerId);
 
                 // Notify master server about disconnected player
-                if (RoomController.IsActive)
-                    RoomController.NotifyPlayerLeft(player.MasterPeerId);
+                Controller?.NotifyPlayerLeft(player.MasterPeerId);
 
                 // Dispose profile
                 player.Profile?.Dispose();
@@ -237,13 +212,7 @@ namespace MasterServerToolkit.MasterServer
             }
             else
             {
-                Logger.Debug($"Room server client {roomPeerId} left the room");
-            }
-
-            if (terminateRoomWhenLastPlayerQuits && players.Count == 0)
-            {
-                terminateRoomDelay = 0.1f;
-                StartCoroutine(TerminateRoomAfterDelay());
+                Logger.Debug($"The client {roomPeerId} has just left the room server");
             }
         }
 
@@ -253,80 +222,176 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="token"></param>
         public virtual void ValidateRoomAccess(int roomPeerId, string token, SuccessCallback callback)
         {
+            ValidateRoomAccess(roomPeerId, token, callback, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Validates an access token and stops the join workflow when the server run is cancelled.
+        /// </summary>
+        public virtual void ValidateRoomAccess(int roomPeerId, string token, SuccessCallback callback,
+            CancellationToken cancellationToken)
+        {
+            ValidateRoomAccess(roomPeerId, token, callback, cancellationToken, null);
+        }
+
+        /// <summary>
+        /// Validates room access and atomically claims the final join mutation when required.
+        /// </summary>
+        public virtual void ValidateRoomAccess(int roomPeerId, string token, SuccessCallback callback,
+            CancellationToken cancellationToken, Func<bool> tryBeginFinalization)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             // Triying to validate given token
-            Mst.Server.Rooms.ValidateAccess(RoomController.RoomId, token, (usernameAndPeerId, error) =>
+            Mst.Server.Rooms.ValidateAccess(Controller.RoomId, token, (usernameAndPeerId, error) =>
             {
                 try
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
                     // If token is not valid
                     if (usernameAndPeerId == null)
                     {
-                        Logger.Error(error);
-                        callback?.Invoke(false, "Room could not validate you");
+                        Logger.Error($"Room access validation failed. roomPeerId={roomPeerId}");
+                        callback?.Invoke(false, error);
                         return;
                     }
 
-                    Logger.Info($"Client {roomPeerId} is successfully validated");
-                    Logger.Info("Trying to load his account info...");
+                    Logger.Info($"The room server client [{roomPeerId}] is successfully validated. Trying to load his account info...");
 
                     Mst.Server.Auth.GetAccountInfoByPeer(usernameAndPeerId.PeerId, (accountInfo, accountError) =>
                     {
-                        if (accountInfo == null)
+                        RoomPlayer player = null;
+
+                        try
                         {
-                            Logger.Error($"Account of client {roomPeerId} could not be loaded");
-                            Logger.Error(accountError);
-                            callback?.Invoke(false, "Room could not load your account info");
-                            return;
-                        }
+                            if (cancellationToken.IsCancellationRequested)
+                                return;
 
-                        var accountProperties = new MstProperties(accountInfo.ExtraProperties);
-
-                        // If we do not want guest users to play in our room
-                        if (!allowGuestUsers && accountInfo.IsGuest)
-                        {
-                            // Remove guest player from room on master server
-                            if (RoomController.IsActive)
-                                RoomController.NotifyPlayerLeft(usernameAndPeerId.PeerId);
-
-                            Logger.Error("Guest users cannot play this room. Hands off...");
-                            callback?.Invoke(false, "Guest users cannot play this room. Don't come here anymore McFly...");
-                            return;
-                        }
-
-                        Logger.Info($"Account of player {accountInfo.Username}:{roomPeerId} has been loaded");
-
-                        // Create new room player
-                        var player = new RoomPlayer(usernameAndPeerId.PeerId, roomPeerId, accountInfo.UserId, accountInfo.Username, accountProperties)
-                        {
-                            Profile = ProfileFactory(accountInfo.UserId)
-                        };
-
-                        players.Add(roomPeerId, player);
-
-                        // If server is required user profile
-                        if (autoLoadUserProfile)
-                        {
-                            LoadPlayerProfile(accountInfo.Username, (isLoadProfileSuccess, loadProfileError) =>
+                            if (accountInfo == null)
                             {
-                                if (isLoadProfileSuccess)
+                                Logger.Error($"The account of the room server client [{roomPeerId}] could not be loaded");
+                                callback?.Invoke(false, accountError);
+                                return;
+                            }
+
+                            var accountProperties = new MstProperties(accountInfo.ExtraProperties);
+
+                            Logger.Info($"The account of the player [{accountInfo.Username}:{roomPeerId}] has just been loaded");
+
+                            // Keep the player provisional until all required data is loaded.
+                            player = new RoomPlayer(usernameAndPeerId.PeerId, roomPeerId, accountInfo.UserId, accountInfo.Username, accountProperties)
+                            {
+                                Profile = ProfileFactory(accountInfo.UserId)
+                            };
+
+                            // If server is required user profile
+                            if (autoLoadUserProfile)
+                            {
+                                LoadPlayerProfile(player, (isLoadProfileSuccess, loadProfileError) =>
                                 {
-                                    FinalizePlayerJoining(roomPeerId);
-                                    callback?.Invoke(true, string.Empty);
-                                }
-                            });
+                                    try
+                                    {
+                                        if (cancellationToken.IsCancellationRequested)
+                                        {
+                                            player.Profile?.Dispose();
+                                            return;
+                                        }
+
+                                        if (!isLoadProfileSuccess)
+                                        {
+                                            player.Profile?.Dispose();
+                                            callback?.Invoke(false, loadProfileError);
+                                            return;
+                                        }
+
+                                        CompletePlayerJoining(
+                                            player,
+                                            callback,
+                                            cancellationToken,
+                                            tryBeginFinalization);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        player.Profile?.Dispose();
+
+                                        if (!cancellationToken.IsCancellationRequested)
+                                        {
+                                            Logger.Error($"Room profile loading callback failed. roomPeerId={roomPeerId}, error={e}");
+                                            callback?.Invoke(false,
+                                                Mst.Errors.Parse(ResponseStatus.Error));
+                                        }
+                                    }
+                                });
+                            }
+                            else
+                            {
+                                CompletePlayerJoining(
+                                    player,
+                                    callback,
+                                    cancellationToken,
+                                    tryBeginFinalization);
+                            }
                         }
-                        else
+                        catch (Exception e)
                         {
-                            FinalizePlayerJoining(roomPeerId);
-                            callback?.Invoke(true, string.Empty);
+                            player?.Profile?.Dispose();
+
+                            if (!cancellationToken.IsCancellationRequested)
+                            {
+                                Logger.Error($"Room account loading callback failed. roomPeerId={roomPeerId}, error={e}");
+                                callback?.Invoke(false,
+                                    Mst.Errors.Parse(ResponseStatus.Error));
+                            }
                         }
                     }, Connection);
                 }
                 catch (Exception e)
                 {
-                    callback?.Invoke(false, e.Message);
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        Logger.Error($"Room access validation callback failed. roomPeerId={roomPeerId}, error={e}");
+                        callback?.Invoke(false,
+                            Mst.Errors.Parse(ResponseStatus.Error));
+                    }
                 }
             }, Connection);
+        }
+
+        private void CompletePlayerJoining(RoomPlayer player, SuccessCallback callback,
+            CancellationToken cancellationToken, Func<bool> tryBeginFinalization)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                player.Profile?.Dispose();
+                return;
+            }
+
+            if (tryBeginFinalization != null && !tryBeginFinalization.Invoke())
+            {
+                player.Profile?.Dispose();
+                return;
+            }
+
+            try
+            {
+                players.Add(player.RoomPeerId, player);
+                FinalizePlayerJoining(player.RoomPeerId);
+            }
+            catch (Exception e)
+            {
+                players.Remove(player.RoomPeerId);
+                player.Profile?.Dispose();
+                Logger.Error($"Room player finalization failed. roomPeerId={player.RoomPeerId}, error={e}");
+                callback?.Invoke(false,
+                    Mst.Errors.Parse(ResponseStatus.Error));
+
+                return;
+            }
+
+            callback?.Invoke(true, string.Empty);
         }
 
         /// <summary>
@@ -336,72 +401,18 @@ namespace MasterServerToolkit.MasterServer
         {
             Logger.Info("Registering spawned process...");
 
-            // Let's register this process
             Mst.Server.Spawners.RegisterSpawnedProcess(Mst.Args.SpawnTaskId, Mst.Args.SpawnTaskUniqueCode, (taskController, error) =>
             {
                 if (taskController == null)
                 {
-                    Logger.Error($"Room server process cannot be registered. The reason is: {error}");
+                    Logger.Error("Room server process cannot be registered");
                     return;
                 }
 
+                Logger.Info($"Room server process registered with task ID: {Mst.Args.SpawnTaskId}");
+
                 SpawnTaskController = taskController;
-
-                Logger.Info($"Spawned process registered with task ID: {Mst.Args.SpawnTaskId}");
-
-                BeforeRoomRegistering();
-
-                // Invoke notification
-                OnBeforeRoomRegisterEvent?.Invoke(RoomOptions);
             }, Connection);
-        }
-
-        /// <summary>
-        /// This method is called before creating a room. It can be used to
-        /// extract some parameters from cmd args or from span task properties
-        /// </summary>
-        protected virtual void BeforeRoomRegistering()
-        {
-            // If room using lobby
-            bool isUsingLobby = Mst.Args.IsProvided(Mst.Args.Names.LobbyId);
-
-            // If room is public or provate
-            bool isPublic = !Mst.Args.RoomIsPrivate || isUsingLobby;
-
-            RoomOptions = new RoomOptions
-            {
-                // Just the name of the room
-                Name = Mst.Args.AsString(Mst.Args.Names.RoomName, $"Room-{Mst.Helper.CreateFriendlyId()}").Unescape(),
-
-                // Room IP that will be used by players to connect to this room
-                RoomIp = Mst.Args.RoomIp,
-
-                // Room port that will be used by players to connect to this room
-                RoomPort = Mst.Args.RoomPort,
-
-                // 
-                IsPublic = isPublic,
-
-                // This is for controlling max number of players that may be connected
-                MaxConnections = Mst.Args.RoomMaxConnections,
-
-                // If room uses the password
-                Password = Mst.Args.RoomPassword,
-
-                // Region that this room may use to filter it in games list
-                Region = Mst.Args.RoomRegion
-            };
-
-            string[] keys = Mst.Args.FindKeys("-room.");
-            var properties = new MstProperties();
-
-            foreach (string key in keys)
-            {
-                if (Mst.Args.IsProvided(key))
-                    properties.Set(key, Mst.Args.AsString(key));
-            }
-
-            RoomOptions.CustomOptions.Append(properties.UnescapeValues());
         }
 
         /// <summary>
@@ -409,33 +420,33 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void RegisterRoom()
         {
-            Logger.Info($"Registering room {RoomOptions.Name} to list...");
+            Logger.Info($"Registering room {roomOptions.Name} to list...");
 
-            Mst.Server.Rooms.RegisterRoom(RoomOptions, (controller, error) =>
+            Mst.Server.Rooms.RegisterRoom(roomOptions, (controller, error) =>
             {
                 if (controller == null)
                 {
-                    Logger.Error(error);
+                    Logger.Error($"Room registration failed. roomName={roomOptions.Name}");
                     OnRoomRegisterFailedEvent?.Invoke();
                     return;
                 }
 
                 // Registered room controller
-                RoomController = controller;
+                Controller = controller;
 
                 // Set access provider
-                RoomController.AccessProvider = CreateAccessProvider;
+                Controller.AccessProvider = CreateAccessProvider;
 
                 // And save them
-                RoomController.SaveOptions();
+                Controller.SaveOptions();
 
-                Logger.Info($"Room registered successfully. Room ID: {controller.RoomId}, {RoomOptions}");
+                Logger.Info($"The room server registered successfully. ID: {controller.RoomId}, Options: {roomOptions}");
 
                 // If this room was spawned
                 SpawnTaskController?.FinalizeTask(CreateSpawnFinalizationData());
 
                 // Notify listeners
-                OnRoomRegisteredEvent?.Invoke(RoomController);
+                OnRoomRegisteredEvent?.Invoke(Controller);
             }, Connection);
         }
 
@@ -447,8 +458,8 @@ namespace MasterServerToolkit.MasterServer
         protected virtual MstProperties CreateSpawnFinalizationData()
         {
             var properties = new MstProperties();
-            properties.Set(MstDictKeys.ROOM_ID, RoomController.RoomId);
-            properties.Set(Mst.Args.Names.RoomPassword, RoomController.Options.Password);
+            properties.Set(MstParamKeys.ROOM_ID, Controller.RoomId);
+            properties.Set(Mst.Args.Names.RoomPassword, Controller.Options.Password);
             return properties;
         }
 
@@ -459,18 +470,16 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="giveAccess"></param>
         protected virtual void CreateAccessProvider(RoomAccessProviderCheck accessCheckOptions, RoomAccessProviderCallbackDelegate giveAccess)
         {
-            string sceneName = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name);
-
             // Use accessCheckOptions to check user that requested access to room
             giveAccess.Invoke(new RoomAccessPacket()
             {
-                RoomId = RoomController.RoomId,
-                RoomIp = RoomController.Options.RoomIp,
-                RoomPort = RoomController.Options.RoomPort,
-                RoomMaxConnections = RoomController.Options.MaxConnections,
-                CustomOptions = RoomController.Options.CustomOptions,
-                Token = Mst.Helper.CreateGuidString(),
-                SceneName = sceneName
+                Id = Controller.RoomId,
+                Ip = Controller.Options.RoomIp,
+                Port = Controller.Options.RoomPort,
+                MaxPlayers = Controller.Options.MaxPlayers,
+                ExtraParameters = Controller.Options.ExtraParameters,
+                Token = Mst.Helper.CreateRandomAlphanumericString(16),
+                SceneName = Mst.Args.AsString(Mst.Args.Names.RoomOnlineScene, SceneManager.GetActiveScene().name)
             }, null);
         }
 
@@ -483,11 +492,9 @@ namespace MasterServerToolkit.MasterServer
             if (players.ContainsKey(roomPeerId))
             {
                 RoomPlayer player = players[roomPeerId];
-                Logger.Debug($"Client {roomPeerId} has become a player of this room. Congratulations to {player.Username}");
+                Logger.Info($"A new player has just connected to the room. Username is [{player.Username}]");
 
                 OnPlayerJoinedRoom(player);
-
-                // Inform subscribers about this player
                 OnPlayerJoinedRoomEvent?.Invoke(player);
             }
         }
@@ -501,12 +508,12 @@ namespace MasterServerToolkit.MasterServer
             MstTimer.WaitForSeconds(2f, () =>
             {
                 Mst.Server.Notifications.NotifyRecipient(player.MasterPeerId,
-                            $"Hi, {player.Username}!\nWelcome to \"{RoomOptions.Name}\" server", null, Connection);
+                            $"Hi, {player.Username}!\nWelcome to \"{roomOptions.Name}\" server", null, Connection);
             });
 
-            Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
+            Mst.Server.Notifications.NotifyRoom(Controller.RoomId,
                     new int[] { player.MasterPeerId },
-                    $"Player {player.Username} has just joined the room",
+                    $"A new player has just connected to the room. Username is [{player.Username}]",
                     null, Connection);
         }
 
@@ -516,7 +523,7 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="player"></param>
         protected virtual void OnPlayerLeftRoom(RoomPlayer player)
         {
-            Mst.Server.Notifications.NotifyRoom(RoomController.RoomId,
+            Mst.Server.Notifications.NotifyRoom(Controller.RoomId,
                     new int[] { player.MasterPeerId },
                     $"Player {player.Username} has just left the room",
                     null, Connection);
@@ -530,22 +537,27 @@ namespace MasterServerToolkit.MasterServer
         {
             if (TryGetRoomPlayerByUsername(username, out RoomPlayer player))
             {
-                Logger.Info($"Trying to load prfile of player {username}:{player.RoomPeerId}");
-
-                Mst.Server.Profiles.FillProfileValues(player.Profile, (isSuccess, error) =>
-                {
-                    if (!isSuccess)
-                    {
-                        string message = $"Room server cannot load profile of player {username}:{player.RoomPeerId} from master server";
-                        Logger.Error(message);
-                        successCallback?.Invoke(false, message);
-                        return;
-                    }
-
-                    Logger.Debug($"Profile of player {username}:{player.RoomPeerId} is successfully loaded. Player info: {player}");
-                    successCallback?.Invoke(true, string.Empty);
-                }, Connection);
+                LoadPlayerProfile(player, successCallback);
             }
+        }
+
+        private void LoadPlayerProfile(RoomPlayer player, SuccessCallback successCallback)
+        {
+            Logger.Info($"Trying to load prfile of player {player.Username}:{player.RoomPeerId}");
+
+            Mst.Server.Profiles.FillProfileValues(player.Profile, (isSuccess, error) =>
+            {
+                if (!isSuccess)
+                {
+                    string message = $"Room server cannot load profile of player {player.Username}:{player.RoomPeerId} from master server";
+                    Logger.Error(message);
+                    successCallback?.Invoke(false, message);
+                    return;
+                }
+
+                Logger.Debug($"Profile of player {player.Username}:{player.RoomPeerId} is successfully loaded. Player info: {player}");
+                successCallback?.Invoke(true, string.Empty);
+            }, Connection);
         }
 
         /// <summary>

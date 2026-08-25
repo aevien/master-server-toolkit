@@ -1,17 +1,3 @@
-%YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4489d77032a81ef42b0067acf2737d4d, type: 3}
-  m_Name: Demo SinglePrefabObjects
-  m_EditorClassIdentifier: 
-  _prefabs:
-  - {fileID: 4422773728184011611, guid: 5e2ac64c93487324ab48d05537574c0a, type: 3}
-  - {fileID: -4936559094045431684, guid: a254f666eb0044949912607eec09bdde, type: 3}
+version https://git-lfs.github.com/spec/v1
+oid sha256:da75a1f70c6fcce3c36b70a29373a5389ccbadab6be1368fd4c44b3c15bb3206
+size 592

@@ -1,22 +1,27 @@
 using MasterServerToolkit.Bridges;
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.UI;
 using MasterServerToolkit.Utils;
+using System;
 using System.Linq;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public abstract class RoomClient<T> : SingletonBehaviour<T> where T : MonoBehaviour
+    public abstract class RoomClient : MonoBehaviour
     {
         #region INSPECTOR
 
         /// <summary>
         /// Time of waiting the connection to mirror server
         /// </summary>
-        [Header("Base Settings"), SerializeField, Tooltip("Time of waiting the connection to room server in seconds")]
+        [Header("Base Settings"), SerializeField, Tooltip("Maximum duration in realtime seconds allowed for the room connection attempt. Use a positive value long enough for the selected transport and platform.")]
         protected float roomConnectionTimeout = 10;
+        [SerializeField, Tooltip("Minimum severity written by this room client component.")]
+        protected LogLevel logLevel = LogLevel.Info;
 
+#if UNITY_EDITOR
         [Header("Editor Settings"), SerializeField]
         private HelpBox editorHelp = new HelpBox()
         {
@@ -27,52 +32,46 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// This will start client in editor automatically
         /// </summary>
-        [SerializeField, Tooltip("This will start client in editor automatically")]
+        [SerializeField, Tooltip("Runs the Editor-only sign-in and room-client startup flow automatically. Ignored in standalone builds.")]
         protected bool autoStartInEditor = true;
-
-        /// <summary>
-        /// This time will be taken to wait and start client in editor
-        /// </summary>
-        [SerializeField, Tooltip("This time will be taken to wait and start client in editor")]
-        protected float autoStartDelay = 1f;
 
         /// <summary>
         /// If true system will try to sign in as guest in test mode
         /// </summary>
-        [SerializeField, Tooltip("If true system will try to sign in as guest in test mode")]
+        [SerializeField, Tooltip("Uses guest authentication during Editor auto-start. When disabled, Username and Password are used instead. Ignored outside the Editor.")]
         protected bool signInAsGuest = true;
 
         /// <summary>
         /// If <see cref="signInAsGuest"/> is not true system will try sign in as registereg user in test mode using this username
         /// </summary>
-        [SerializeField, Tooltip("If signInAsGuest is not true system will try sign in as registereg user in test mode using this username")]
+        [SerializeField, Tooltip("Account username used by Editor auto-start when Sign In As Guest is disabled. Ignored outside the Editor.")]
         protected string username = "qwerty";
 
         /// <summary>
         /// If <see cref="signInAsGuest"/> is not true system will try sign in as registereg user in test mode using this password
         /// </summary>
-        [SerializeField, Tooltip("If signInAsGuest is not true system will try sign in as registereg user in test mode using this password")]
+        [SerializeField, Tooltip("Account password used by Editor auto-start when Sign In As Guest is disabled. Ignored outside the Editor.")]
         protected string password = "qwerty12345";
+#endif
 
         #endregion
 
+        protected Logging.Logger logger;
         protected bool isChangingZone = false;
 
-        protected override void Awake()
+        private IDisposable leaveRoomListener;
+        private IDisposable goToZoneListener;
+
+        protected virtual void Awake()
         {
-            base.Awake();
+            logger = Mst.Create.Logger(GetType().Name);
+            logger.LogLevel = logLevel;
 
-            if (isNowDestroying) return;
+            leaveRoomListener?.Dispose();
+            leaveRoomListener = Mst.Events.AddListener(MstEventKeys.leaveRoom, OnLeaveRoomEventHandler);
 
-            Mst.Events.AddListener(MstEventKeys.leaveRoom, (message) =>
-            {
-                Disconnect();
-            });
-
-            Mst.Events.AddListener(MstEventKeys.goToZone, (message) =>
-            {
-                isChangingZone = message.AsBool();
-            });
+            goToZoneListener?.Dispose();
+            goToZoneListener = Mst.Events.AddListener(MstEventKeys.goToZone, OnGoToZoneEventHandler);
 
             // Register access listener
             Mst.Client.Rooms.OnAccessReceivedEvent += OnAccessReceivedEvent;
@@ -80,33 +79,53 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void Start()
         {
-            if (Mst.Runtime.IsEditor && autoStartInEditor)
+            if (Mst.Client.Rooms.HasAccess)
             {
-                MstTimer.WaitForSeconds(autoStartDelay, () =>
-                {
-                    AutostartInEditor();
-                });
+                Connect(Mst.Client.Rooms.ReceivedAccess);
+                return;
             }
+
+#if UNITY_EDITOR
+            if (autoStartInEditor)
+            {
+                AutostartInEditor();
+            }
+#endif
         }
 
-        protected override void OnDestroy()
+        protected virtual void OnDestroy()
         {
-            base.OnDestroy();
+            leaveRoomListener?.Dispose();
+            leaveRoomListener = null;
 
-            // Register access listener
+            goToZoneListener?.Dispose();
+            goToZoneListener = null;
+
+            // Unregister access listener
             Mst.Client.Rooms.OnAccessReceivedEvent -= OnAccessReceivedEvent;
         }
 
+        private void OnLeaveRoomEventHandler(EventPayload message)
+        {
+            Disconnect();
+        }
+
+        private void OnGoToZoneEventHandler(EventPayload message)
+        {
+            isChangingZone = message.AsBool();
+        }
+
+#if UNITY_EDITOR
         /// <summary>
         /// 
         /// </summary>
         protected virtual void AutostartInEditor()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room in editor...");
+            ViewsManager.Show<LoadingInfoView>("Starting room in editor...");
 
             MstTimer.WaitForSeconds(1f, () =>
             {
-                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Signing in...");
+                ViewsManager.Show<LoadingInfoView>("Signing in...");
 
                 if (signInAsGuest)
                 {
@@ -122,15 +141,25 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        protected virtual void SignIn()
+        public virtual void SignIn()
         {
-            Mst.Client.Auth.SignInWithLoginAndPassword(username, password, (account, signInError) =>
+            SignIn(username, password);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        public virtual void SignIn(string username, string password)
+        {
+            Mst.Client.Auth.SignInWithLoginAndPassword(username, password, (status, account, signInError) =>
             {
-                if (account == null)
+                if (status != ResponseStatus.Success || account == null)
                 {
                     logger.Error(signInError);
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(signInError, null));
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(signInError, null));
+                    ViewsManager.Hide<LoadingInfoView>();
                     return;
                 }
 
@@ -141,15 +170,15 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        protected virtual void SignInAsGuest()
+        public virtual void SignInAsGuest()
         {
-            Mst.Client.Auth.SignInAsGuest((account, signInError) =>
+            Mst.Client.Auth.SignInAsGuest((status, account, signInError) =>
             {
-                if (account == null)
+                if (status != ResponseStatus.Success || account == null)
                 {
                     logger.Error(signInError);
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(signInError, null));
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(signInError, null));
+                    ViewsManager.Hide<LoadingInfoView>();
                     return;
                 }
 
@@ -162,34 +191,35 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         protected virtual void StartGame()
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Looking for available games...");
+            ViewsManager.Show<LoadingInfoView>("Looking for available games...");
 
             Mst.Client.Matchmaker.FindGames((games) =>
             {
-                if (games.Count == 0)
+                if (!games.Any())
                 {
                     logger.Error("No games found");
 
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("No games found", null));
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage("No games found", null));
+                    ViewsManager.Hide<LoadingInfoView>();
                     return;
                 }
 
-                Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Getting access...");
+                ViewsManager.Show<LoadingInfoView>("Getting access...");
 
-                Mst.Client.Rooms.GetAccess(games.First().Id, (access, getAccessError) =>
+                Mst.Client.Rooms.GetAccess(games[0].Id, (access, getAccessError) =>
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    ViewsManager.Hide<LoadingInfoView>();
 
                     if (!string.IsNullOrEmpty(getAccessError))
                     {
                         logger.Error(getAccessError);
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(getAccessError, null));
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(getAccessError, null));
                         Disconnect();
                     }
                 });
             });
         }
+#endif
 
         /// <summary>
         /// 
@@ -204,48 +234,11 @@ namespace MasterServerToolkit.MasterServer
         /// Starts connection process
         /// </summary>
         /// <param name="access"></param>
-        protected abstract void StartConnection(RoomAccessPacket access);
+        protected abstract void Connect(RoomAccessPacket access);
 
         /// <summary>
         /// Closes coneection to server
         /// </summary>
-        protected abstract void StartDisconnection();
-
-        /// <summary>
-        /// Starts connection process
-        /// </summary>
-        /// <param name="access"></param>
-        public static void Connect(RoomAccessPacket access)
-        {
-            if (Instance == null)
-            {
-                Logs.Error("Failed to connect to game server. No Game Connector was found in the scene");
-                return;
-            }
-
-            var client = Instance as RoomClient<T>;
-
-            // Start connection
-            if (client)
-                client.StartConnection(access);
-        }
-
-        /// <summary>
-        /// Start disconnection process
-        /// </summary>
-        public static void Disconnect()
-        {
-            if (Instance == null)
-            {
-                Logs.Error("Failed to disconnect from game server. No Game Connector was found in the scene");
-                return;
-            }
-
-            var client = Instance as RoomClient<T>;
-
-            // Start disconnection
-            if (client)
-                client.StartDisconnection();
-        }
+        protected abstract void Disconnect();
     }
 }

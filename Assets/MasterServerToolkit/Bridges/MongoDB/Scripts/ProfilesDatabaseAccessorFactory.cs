@@ -8,8 +8,10 @@ namespace MasterServerToolkit.Bridges.MongoDB
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required MongoDbClientFactory that provides the initialized client and database name used by the profiles accessor.")]
         private MongoDbClientFactory mongoDbClientFactory;
-        [SerializeField] 
+        [SerializeField]
+        [Tooltip("Selects the profile storage format. Enable to store each complete profile as a binary payload; disable to store profile values as a MongoDB document.")]
         private bool saveDataAsBytes;
 
         #endregion

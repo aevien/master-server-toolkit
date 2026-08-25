@@ -1,6 +1,8 @@
 ﻿using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -13,10 +15,9 @@ namespace MasterServerToolkit.MasterServer
         int MaxPlayers { get; }
         int PlayerCount { get; }
         string Name { get; set; }
-        List<LobbyMember> Members { get; }
-
         event Action<ILobby> OnDestroyedEvent;
 
+        List<LobbyMember> GetMembersSnapshot();
         MstProperties GetPublicProperties(IPeer peer);
 
         bool AddPlayer(LobbyUserPeerExtension playerExt, out string error);
@@ -39,6 +40,6 @@ namespace MasterServerToolkit.MasterServer
         bool StartGameManually(LobbyUserPeerExtension user);
 
         void ChatMessageHandler(LobbyMember member, IIncomingMessage message);
-        void GameAccessRequestHandler(IIncomingMessage message);
+        Task GameAccessRequestHandler(IIncomingMessage message, CancellationToken cancellationToken);
     }
 }

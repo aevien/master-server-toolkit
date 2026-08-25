@@ -12,16 +12,38 @@ namespace MasterServerToolkit.MasterServer
         public float WaitSecondsAfterMinPlayersReached = 10;
         public float WaitSecondsAfterFullTeams = 5;
 
+        private Coroutine automationCoroutine;
+
         public BaseLobbyAuto(int lobbyId, IEnumerable<LobbyTeam> teams, LobbiesModule module, LobbyConfig config) : base(lobbyId, teams, module, config)
         {
             config.EnableManualStart = true;
             config.PlayAgainEnabled = false;
             config.EnableGameMasters = false;
+
+            OnDestroyedEvent += OnLobbyDestroyed;
         }
 
         public void StartAutomation()
         {
-            MstTimer.Instance.StartCoroutine(StartTimer());
+            if (automationCoroutine != null)
+                return;
+
+            automationCoroutine = MstTimer.Instance.StartCoroutine(StartTimer());
+        }
+
+        private void StopAutomation()
+        {
+            if (automationCoroutine == null)
+                return;
+
+            MstTimer.TryStopCoroutine(automationCoroutine);
+            automationCoroutine = null;
+        }
+
+        private void OnLobbyDestroyed(ILobby lobby)
+        {
+            OnDestroyedEvent -= OnLobbyDestroyed;
+            StopAutomation();
         }
 
         protected IEnumerator StartTimer()
@@ -77,6 +99,8 @@ namespace MasterServerToolkit.MasterServer
                     break;
                 }
             }
+
+            automationCoroutine = null;
         }
     }
 }

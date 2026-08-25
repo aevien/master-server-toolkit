@@ -1,0 +1,20 @@
+{
+    "name": "MasterServerToolkit.Bridges.LiteDB",
+    "rootNamespace": "",
+    "references": [
+        "MasterServerToolkit"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "WebGL"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "LiteDB.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

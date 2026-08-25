@@ -5,7 +5,9 @@ namespace MasterServerToolkit.UI
 {
     public class ValidationFormComponent : MonoBehaviour
     {
+        [Tooltip("Invoked by Validate when every IValidatableComponent found in this object's children reports a valid state. An empty form is treated as valid.")]
         public UnityEvent OnFormValidEvent;
+        [Tooltip("Invoked by Validate when at least one IValidatableComponent found in this object's children reports an invalid state.")]
         public UnityEvent OnFormInvalidEvent;
 
         private IValidatableComponent[] validatableList;

@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Json
     {
         public static MstJson FromMatrix4x4(this Matrix4x4 matrix)
         {
-            var jsonObject = MstJson.EmptyObject;
+            var jsonObject = MstJson.CreateObject();
             if (matrix.m00 != 0) jsonObject.AddField("m00", matrix.m00);
             if (matrix.m01 != 0) jsonObject.AddField("m01", matrix.m01);
             if (matrix.m02 != 0) jsonObject.AddField("m02", matrix.m02);

@@ -13,7 +13,7 @@ namespace MasterServerToolkit.Bridges.FishNetworking.Character
         /// <summary>
         /// Log levelof this module
         /// </summary>
-        [Header("Base Settings"), SerializeField]
+        [Header("Base Settings"), SerializeField, Tooltip("Minimum severity written by this component's MST logger. This changes diagnostics only and does not affect network behavior.")]
         protected LogLevel logLevel = LogLevel.Info;
 
         #endregion

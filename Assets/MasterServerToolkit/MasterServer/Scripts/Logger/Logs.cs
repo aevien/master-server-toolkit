@@ -2,104 +2,98 @@
 {
     public class Logs
     {
-        private static Logger _genericLogger;
+        private const string LoggerName = "Logs";
 
-        public static Logger Logger { get; private set; }
+        private static Logger GetLogger() => LogManager.GetLogger(LoggerName);
 
-        static Logs()
+        public static void Trace(object message, string channel = LogChannels.System)
         {
-            _genericLogger = LogManager.GetLogger("Logs");
-            Logger = _genericLogger;
+            Log(LogLevel.Trace, message, channel);
         }
 
-        public static void Trace(object message)
-        {
-            Log(LogLevel.Trace, message);
-        }
-
-        public static void Trace(bool condition, object message)
+        public static void Trace(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Trace, message);
+                Log(LogLevel.Trace, message, channel);
             }
         }
 
-        public static void Debug(object message)
+        public static void Debug(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Debug, message);
+            Log(LogLevel.Debug, message, channel);
         }
 
-        public static void Debug(bool condition, object message)
+        public static void Debug(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Debug, message);
+                Log(LogLevel.Debug, message, channel);
             }
         }
 
-        public static void Info(object message)
+        public static void Info(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Info, message);
+            Log(LogLevel.Info, message, channel);
         }
 
-        public static void Info(bool condition, object message)
+        public static void Info(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Info, message);
+                Log(LogLevel.Info, message, channel);
             }
         }
 
-        public static void Warn(object message)
+        public static void Warn(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Warn, message);
+            Log(LogLevel.Warn, message, channel);
         }
 
-        public static void Warn(bool condition, object message)
+        public static void Warn(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Warn, message);
+                Log(LogLevel.Warn, message, channel);
             }
         }
 
-        public static void Error(object message)
+        public static void Error(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Error, message);
+            Log(LogLevel.Error, message, channel);
         }
 
-        public static void Error(bool condition, object message)
+        public static void Error(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Error, message);
+                Log(LogLevel.Error, message, channel);
             }
         }
 
-        public static void Fatal(object message)
+        public static void Fatal(object message, string channel = LogChannels.System)
         {
-            Log(LogLevel.Fatal, message);
+            Log(LogLevel.Fatal, message, channel);
         }
 
-        public static void Fatal(bool condition, object message)
+        public static void Fatal(bool condition, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(LogLevel.Fatal, message);
+                Log(LogLevel.Fatal, message, channel);
             }
         }
 
-        public static void Log(LogLevel logLvl, object message)
+        public static void Log(LogLevel logLvl, object message, string channel = LogChannels.System)
         {
-            _genericLogger.Log(logLvl, message);
+            GetLogger().Log(logLvl, message, channel);
         }
 
-        public static void Log(bool condition, LogLevel logLvl, object message)
+        public static void Log(bool condition, LogLevel logLvl, object message, string channel = LogChannels.System)
         {
             if (condition)
             {
-                Log(logLvl, message);
+                Log(logLvl, message, channel);
             }
         }
     }

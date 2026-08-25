@@ -30,9 +30,9 @@ namespace MasterServerToolkit.MasterServer
         public bool IsPublic { get; set; } = false;
 
         /// <summary>
-        /// If 0 - player number is not limited
+        /// The max number of players allowed. If 0 - player number is not limited
         /// </summary>
-        public ushort MaxConnections { get; set; } = 0;
+        public ushort MaxPlayers { get; set; } = 0;
 
         /// <summary>
         /// Room password
@@ -53,24 +53,35 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Extra properties that you might want to send to master server
         /// </summary>
-        public MstProperties CustomOptions { get; set; }
+        public MstProperties ExtraParameters { get; set; }
 
         public RoomOptions()
         {
-            CustomOptions = new MstProperties();
+            ExtraParameters = new MstProperties();
+        }
+
+        /// <summary>
+        /// Creates an independent copy of these room options.
+        /// </summary>
+        /// <returns>A room options copy with its own extra-parameters collection.</returns>
+        public virtual RoomOptions Clone()
+        {
+            var clone = (RoomOptions)MemberwiseClone();
+            clone.ExtraParameters = new MstProperties(ExtraParameters);
+            return clone;
         }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
         {
-            writer.Write(Name);
-            writer.Write(RoomIp);
+            writer.Write(Name ?? string.Empty);
+            writer.Write(RoomIp ?? string.Empty);
             writer.Write(RoomPort);
             writer.Write(IsPublic);
-            writer.Write(MaxConnections);
-            writer.Write(Password);
+            writer.Write(MaxPlayers);
+            writer.Write(Password ?? string.Empty);
             writer.Write(AccessTimeoutPeriod);
-            writer.Write(Region);
-            writer.Write(CustomOptions.ToDictionary());
+            writer.Write(Region ?? string.Empty);
+            writer.Write((ExtraParameters ?? new MstProperties()).ToDictionary());
         }
 
         public override void FromBinaryReader(EndianBinaryReader reader)
@@ -79,11 +90,11 @@ namespace MasterServerToolkit.MasterServer
             RoomIp = reader.ReadString();
             RoomPort = reader.ReadUInt16();
             IsPublic = reader.ReadBoolean();
-            MaxConnections = reader.ReadUInt16();
+            MaxPlayers = reader.ReadUInt16();
             Password = reader.ReadString();
             AccessTimeoutPeriod = reader.ReadSingle();
             Region = reader.ReadString();
-            CustomOptions = new MstProperties(reader.ReadDictionary());
+            ExtraParameters = new MstProperties(reader.ReadDictionary());
         }
 
         public override string ToString()
@@ -93,11 +104,12 @@ namespace MasterServerToolkit.MasterServer
             options.Add("RoomIp", RoomIp);
             options.Add("RoomPort", RoomPort);
             options.Add("IsPublic", IsPublic);
-            options.Add("MaxConnections", MaxConnections <= 0 ? "Unlimited" : MaxConnections.ToString());
+            options.Add("MaxPlayers", MaxPlayers <= 0 ? "Unlimited" : MaxPlayers.ToString());
             options.Add("Use Password", !string.IsNullOrEmpty(Password));
             options.Add("AccessTimeoutPeriod", $"{AccessTimeoutPeriod} sec.");
             options.Add("Region", string.IsNullOrEmpty(Region) ? "International" : Region);
-            options.Append(CustomOptions);
+            if (ExtraParameters != null)
+                options.Append(ExtraParameters);
 
             return options.ToReadableString();
         }

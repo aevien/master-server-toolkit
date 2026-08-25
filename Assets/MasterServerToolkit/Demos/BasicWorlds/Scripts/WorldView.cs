@@ -1,6 +1,7 @@
 using MasterServerToolkit.Bridges;
 using MasterServerToolkit.Extensions;
 using MasterServerToolkit.MasterServer;
+using MasterServerToolkit.Networking;
 using MasterServerToolkit.UI;
 
 namespace MasterServerToolkit.Demos.BasicWorlds
@@ -17,13 +18,13 @@ namespace MasterServerToolkit.Demos.BasicWorlds
 
         public void GoToZone(string zoneId)
         {
-            logger.Info($"Going to zone {zoneId}".ToGreen());
+            logger.Info($"Going to zone {zoneId}");
 
             Mst.Connection.SendMessage(MstOpCodes.GetZoneRoomInfo, zoneId, (status, response) =>
             {
                 if (status != Networking.ResponseStatus.Success)
                 {
-                    logger.Error(response.AsString(status.ToString()));
+                    logger.Error(Mst.Errors.Parse(status, response));
                     return;
                 }
 
@@ -37,7 +38,7 @@ namespace MasterServerToolkit.Demos.BasicWorlds
                     if (!string.IsNullOrEmpty(error))
                     {
                         Mst.Events.Invoke(MstEventKeys.goToZone, false);
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error));
+                        ViewsManager.Show<OkDialogBoxView>( new OkDialogBoxEventMessage(error));
                         logger.Error(error);
                         return;
                     }

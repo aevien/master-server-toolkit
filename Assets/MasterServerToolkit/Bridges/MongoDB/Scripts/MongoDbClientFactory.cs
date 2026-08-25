@@ -9,8 +9,10 @@ namespace MasterServerToolkit.Bridges.MongoDB
         #region INSPECTOR
 
         [Header("MongoDB Settings"), SerializeField]
+        [Tooltip("Fallback MongoDB connection URI used when -mstDatabaseConfiguration is not supplied. It must be a valid MongoDB driver URI; credentials may be provided through deployment configuration.")]
         private string defaultConnectionString = "mongodb://localhost";
         [SerializeField]
+        [Tooltip("MongoDB database selected by all accessor factories that reference this client factory. The name is required and defaults to masterServerToolkit when empty.")]
         private string databaseName = "masterServerToolkit";
 
         #endregion
@@ -47,9 +49,6 @@ namespace MasterServerToolkit.Bridges.MongoDB
         {
             ConnectionString = Mst.Args.AsString(Mst.Args.Names.DatabaseConfiguration, defaultConnectionString);
             Client = new MongoClient(ConnectionString);
-
-            // TODO
-            // Client must be disconnected manually after this object will be destroyed
         }
     }
 }

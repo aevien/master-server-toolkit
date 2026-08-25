@@ -3,6 +3,7 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -14,13 +15,11 @@ namespace MasterServerToolkit.MasterServer
         /// If true, notification module will subscribe to auth module, and automatically setup recipients when they log in
         /// </summary>
         [Header("General Settings")]
-        [SerializeField, Tooltip("If true, notification module will subscribe to auth module, and automatically setup recipients when they log in")]
+        [SerializeField, Tooltip("Subscribes to AuthModule login/logout events and automatically registers authenticated users as notification recipients. Requires AuthModule in the same server.")]
         protected bool useAuthModule = true;
-        [SerializeField, Tooltip("If true, notification module will subscribe to rooms module to be able to send notifications to room players")]
+        [SerializeField, Tooltip("Uses RoomsModule to route notifications to players currently owned by room servers. Requires RoomsModule in the same server.")]
         protected bool useRoomsModule = true;
-        [SerializeField, Tooltip("Permission level to be able to send notifications")]
-        protected int notifyPermissionLevel = 1;
-        [SerializeField]
+        [SerializeField, Tooltip("Maximum number of broadcast messages retained for users who log in later. 0 disables retained messages; when full, the oldest retained message is removed first.")]
         private int maxPromisedMessages = 10;
 
         /// <summary>
@@ -78,6 +77,15 @@ namespace MasterServerToolkit.MasterServer
             server.RegisterMessageHandler(MstOpCodes.Notification, OnNotificationMessageHandler);
         }
 
+        protected virtual void OnDestroy()
+        {
+            if (authModule)
+            {
+                authModule.OnUserLoggedInEvent -= OnUserLoggedInEventHandler;
+                authModule.OnUserLoggedOutEvent -= OnUserLoggedOutEventHandler;
+            }
+        }
+
         /// <summary>
         /// Checks if peer has permission to notify another users
         /// </summary>
@@ -86,19 +94,36 @@ namespace MasterServerToolkit.MasterServer
         protected virtual bool HasPermissionToNotify(IPeer peer)
         {
             var extension = peer.GetExtension<SecurityInfoPeerExtension>();
-            return extension != null && extension.PermissionLevel >= notifyPermissionLevel;
+            return extension != null &&
+                   (extension.HasPermission(MstPermissionKeys.RoomServer) ||
+                    extension.HasAccountPermission(MstPermissionLevels.Admin));
         }
 
         /// <summary>
         /// Invoked when user logs in
         /// </summary>
         /// <param name="userPeerExtension"></param>
-        protected virtual void OnUserLoggedInEventHandler(IUserPeerExtension userPeerExtension)
+        protected virtual Task OnUserLoggedInEventHandler(IUserPeerExtension userPeerExtension,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var r = AddRecipient(userPeerExtension);
 
-            foreach (var message in promisedMessages)
-                r.Notify(message);
+            try
+            {
+                foreach (var message in promisedMessages)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    r.Notify(message);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                RemoveRecipient(userPeerExtension.UserId);
+                throw;
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -110,28 +135,12 @@ namespace MasterServerToolkit.MasterServer
             RemoveRecipient(userPeerExtension.UserId);
         }
 
-        public override MstJson JsonInfo()
+        public override MstJson Details()
         {
-            var json = base.JsonInfo();
+            var info = base.Details();
+            info.SetField("description", $"This is the {nameof(NotificationModule)} theat helps rooms send notifications to their players or helps admins of Master server send notifications to list of recipients");
+            info["properties"].AddField("recipients", registeredRecipients.Count);
 
-            try
-            {
-                json.AddField("description", $"This is the {nameof(NotificationModule)} theat helps rooms send notifications to their players or helps admins of Master server send notifications to list of recipients");
-                json.AddField("recipients", registeredRecipients.Count);
-            }
-            catch (Exception e)
-            {
-                json.AddField("error", e.ToString());
-            }
-
-            return json;
-        }
-
-        public override MstProperties Info()
-        {
-            var info = base.Info();
-            info.Set("Description", $"This is the {nameof(NotificationModule)} theat helps rooms send notifications to their players or helps admins of Master server send notifications to list of recipients");
-            info.Add("Recipients", registeredRecipients.Count);
             return info;
         }
 
@@ -204,7 +213,7 @@ namespace MasterServerToolkit.MasterServer
         public virtual void NoticeToRoom(int roomId, List<int> ignoreRecipients, string textMessage)
         {
             // If rooms module not found
-            if (!roomsModule)
+            if (roomsModule == null)
             {
                 logger.Error($"This message is for room users, but rooms module is not found");
                 return;
@@ -306,8 +315,8 @@ namespace MasterServerToolkit.MasterServer
                 // If unauthorized user is trying to subscribe the notifications
                 if (userExtension == null)
                 {
-                    message.Respond(ResponseStatus.Unauthorized);
                     logger.Error("Unauthorized user is trying to subscribe to notifications");
+                    message.RespondError(ResponseStatus.Unauthorized, MstErrorCodes.USER_IS_NOT_LOGGED_IN);
                     return Task.CompletedTask;
                 }
 
@@ -328,7 +337,9 @@ namespace MasterServerToolkit.MasterServer
             // If we got another exception
             catch (Exception e)
             {
-                return Task.FromException(e);
+                logger.Error($"Notification subscription failed. Error={e}");
+                message.RespondError(ResponseStatus.Error, MstErrorCodes.INTERNAL_ERROR);
+                return Task.CompletedTask;
             }
         }
 
@@ -353,7 +364,9 @@ namespace MasterServerToolkit.MasterServer
             // If we got another exception
             catch (Exception e)
             {
-                return Task.FromException(e);
+                logger.Error($"Notification unsubscription failed. Error={e}");
+                message.RespondError(ResponseStatus.Error, MstErrorCodes.INTERNAL_ERROR);
+                return Task.CompletedTask;
             }
         }
 
@@ -363,8 +376,8 @@ namespace MasterServerToolkit.MasterServer
             {
                 if (!HasPermissionToNotify(message.Peer))
                 {
-                    message.Respond(ResponseStatus.Unauthorized);
                     logger.Error("The room tries to send a notification, but does not have the right to do so");
+                    message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.NOTIFICATION_SEND_FORBIDDEN);
                     return Task.CompletedTask;
                 }
 
@@ -373,8 +386,8 @@ namespace MasterServerToolkit.MasterServer
 
                 if (string.IsNullOrEmpty(notification.Message))
                 {
-                    message.Respond(ResponseStatus.Invalid);
                     logger.Error("Message cannot be empty");
+                    message.RespondError(ResponseStatus.Invalid, MstErrorCodes.NOTIFICATION_MESSAGE_REQUIRED);
                     return Task.CompletedTask;
                 }
 
@@ -394,7 +407,9 @@ namespace MasterServerToolkit.MasterServer
             // If we got another exception
             catch (Exception e)
             {
-                return Task.FromException(e);
+                logger.Error($"Notification delivery failed. Error={e}");
+                message.RespondError(ResponseStatus.Error, MstErrorCodes.INTERNAL_ERROR);
+                return Task.CompletedTask;
             }
         }
 

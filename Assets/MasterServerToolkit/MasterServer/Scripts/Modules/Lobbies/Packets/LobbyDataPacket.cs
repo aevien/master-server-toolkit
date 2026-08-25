@@ -56,7 +56,10 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Write player properties
-            writer.Write(Members.Count);
+            writer.WriteCount32(
+                Members.Count,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby member list");
             foreach (var playerProperty in Members)
             {
                 writer.Write(playerProperty.Key);
@@ -66,7 +69,10 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Write teams info
-            writer.Write(Teams.Count);
+            writer.WriteCount32(
+                Teams.Count,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby team list");
             foreach (var team in Teams)
             {
                 writer.Write(team.Key);
@@ -76,7 +82,10 @@ namespace MasterServerToolkit.MasterServer
             }
 
             // Write controls
-            writer.Write(Controls.Count);
+            writer.WriteCount32(
+                Controls.Count,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby control list");
             foreach (var control in Controls)
             {
                 control.ToBinaryWriter(writer);
@@ -103,17 +112,23 @@ namespace MasterServerToolkit.MasterServer
             MaxPlayers = reader.ReadInt32();
 
             // Read additional data
-            var size = reader.ReadInt32();
+            var size = reader.ReadLength32(
+                MstNetworkLimits.MaxMessagePayloadByteCount,
+                "Lobby additional data");
             if (size > 0)
             {
-                AdditionalData = reader.ReadBytes(size);
+                AdditionalData = reader.ReadBytesExact(
+                    size,
+                    MstNetworkLimits.MaxMessagePayloadByteCount);
             }
 
             // Clear, in case we're reusing the object
             Members.Clear();
 
             // Read player properties
-            var playerCount = reader.ReadInt32();
+            var playerCount = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby member list");
 
             for (var i = 0; i < playerCount; i++)
             {
@@ -126,7 +141,9 @@ namespace MasterServerToolkit.MasterServer
 
             // Read teams
             Teams.Clear();
-            var teamsCount = reader.ReadInt32();
+            var teamsCount = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby team list");
             for (int i = 0; i < teamsCount; i++)
             {
                 var teamKey = reader.ReadString();
@@ -137,7 +154,9 @@ namespace MasterServerToolkit.MasterServer
 
             // Read controls
             Controls = new List<LobbyPropertyData>();
-            var controlsCount = reader.ReadInt32();
+            var controlsCount = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Lobby control list");
             for (int i = 0; i < controlsCount; i++)
             {
                 var control = new LobbyPropertyData();

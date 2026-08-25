@@ -86,7 +86,7 @@ namespace MasterServerToolkit.MasterServer
         /// Retrieves data, which was given to master server by a spawned process,
         /// which was finalized
         /// </summary>
-        public void GetFinalizationData(MstSpawnersClient.FinalizationDataResultHandler handler)
+        public void GetFinalizationData(SpawnersClient.FinalizationDataResultHandler handler)
         {
             Mst.Client.Spawners.GetFinalizationData(SpawnTaskId, handler, connection);
         }

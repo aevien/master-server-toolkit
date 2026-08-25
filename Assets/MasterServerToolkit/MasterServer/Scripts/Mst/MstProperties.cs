@@ -6,11 +6,16 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace MasterServerToolkit.MasterServer
 {
-    public class MstProperties
+    /// <summary>
+    /// Mutable string-based property bag used for MST packets, options and lightweight metadata.
+    /// It is a convenience wrapper over string values, not an authority or validation layer.
+    /// </summary>
+    public class MstProperties : IEnumerable<KeyValuePair<string, string>>
     {
         private readonly ConcurrentDictionary<string, string> properties;
 
@@ -18,12 +23,12 @@ namespace MasterServerToolkit.MasterServer
 
         public MstProperties()
         {
-            properties = new ConcurrentDictionary<string, string>();
+            properties = CreatePropertiesDictionary();
         }
 
         public MstProperties(Dictionary<string, string> options)
         {
-            properties = new ConcurrentDictionary<string, string>();
+            properties = CreatePropertiesDictionary();
 
             if (options != null)
             {
@@ -33,7 +38,7 @@ namespace MasterServerToolkit.MasterServer
 
         public MstProperties(MstProperties options)
         {
-            properties = new ConcurrentDictionary<string, string>();
+            properties = CreatePropertiesDictionary();
 
             if (options != null)
             {
@@ -43,12 +48,42 @@ namespace MasterServerToolkit.MasterServer
 
         public MstProperties(IEnumerable<SerializedKeyValuePair> options)
         {
-            properties = new ConcurrentDictionary<string, string>();
+            properties = CreatePropertiesDictionary();
+
+            if (options == null)
+            {
+                return;
+            }
 
             foreach (SerializedKeyValuePair pair in options)
             {
-                properties.TryAdd(pair.key, pair.value);
+                SetToOptions(pair.key, pair.value);
             }
+        }
+
+        private static ConcurrentDictionary<string, string> CreatePropertiesDictionary()
+        {
+            return new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        private static string ValueToString(object value)
+        {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
+            if (value is string stringValue)
+            {
+                return stringValue;
+            }
+
+            if (value is IFormattable formattable)
+            {
+                return formattable.ToString(null, CultureInfo.InvariantCulture);
+            }
+
+            return value.ToString();
         }
 
         /// <summary>
@@ -78,7 +113,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Remove item by key
+        /// Remove item by key.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
@@ -88,7 +123,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Clear all aitems
+        /// Clear all items
         /// </summary>
         public void Clear()
         {
@@ -96,7 +131,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Add item to options
+        /// Add a new item. Throws when the key already exists.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
@@ -111,33 +146,43 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Set item in options
+        /// Set or replace an item value.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         private void SetToOptions(string key, object value)
         {
-            properties[key] = value != null ? value.ToString() : string.Empty;
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            properties[key] = ValueToString(value);
         }
 
         /// <summary>
-        /// Append options to this list
+        /// Append properties to this instance.
         /// </summary>
         /// <param name="options"></param>
         public MstProperties Append(MstProperties options)
         {
+            if (options == null)
+            {
+                return this;
+            }
+
             return Append(options.ToDictionary());
         }
 
         /// <summary>
-        /// Append dictionary to this list
+        /// Append dictionary values to this instance.
         /// </summary>
         /// <param name="options"></param>
         public MstProperties Append(IDictionary options)
         {
             if (options == null)
             {
-                return new MstProperties();
+                return this;
             }
 
             foreach (var key in options.Keys)
@@ -149,22 +194,32 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Adds new or updates existing options
+        /// Adds new or updates existing properties.
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
         public bool AddOrUpdate(MstProperties options)
         {
+            if (options == null)
+            {
+                return false;
+            }
+
             return AddOrUpdate(options.ToDictionary());
         }
 
         /// <summary>
-        /// Adds new or updates existing options
+        /// Adds new or updates existing properties.
         /// </summary>
-        /// <param name="dictionary"></param>
+        /// <param name="options"></param>
         /// <returns></returns>
         public bool AddOrUpdate(IDictionary<string, string> options)
         {
+            if (options == null)
+            {
+                return false;
+            }
+
             bool differs = false;
             string[] keys = options.Keys.ToArray();
 
@@ -182,7 +237,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Check if options have item with key
+        /// Check if a key exists.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
@@ -192,35 +247,35 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Check if option value differs from given one
+        /// Check if stored value differs from the given value.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
         public bool Differs(string key, string value)
         {
-            return !Has(key) || AsString(key) != value;
+            return !TryGetValue(key, out var currentValue) || currentValue != value;
         }
 
         /// <summary>
-        /// Check if item value is empty
+        /// Check if item value is missing, null, empty or whitespace.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
         public bool IsValueEmpty(string key)
         {
-            if (!Has(key))
+            if (!TryGetValue(key, out var value))
             {
                 return true;
             }
             else
             {
-                return string.IsNullOrEmpty(AsString(key).Trim());
+                return string.IsNullOrWhiteSpace(value);
             }
         }
 
         /// <summary>
-        /// Add empty item
+        /// Add an empty item.
         /// </summary>
         /// <param name="key"></param>
         public void Add(string key)
@@ -229,7 +284,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Add float item
+        /// Add an item.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
@@ -239,7 +294,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Set float item
+        /// Set an item.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
@@ -409,19 +464,55 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Get item as string
+        /// Try to get a raw stored value. Empty strings are valid values.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetValue(string key, out string value)
+        {
+            return properties.TryGetValue(key, out value);
+        }
+
+        /// <summary>
+        /// Try to get a non-empty string value.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetString(string key, out string value)
+        {
+            if (TryGetValue(key, out value) && !string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Get item as string. Missing, empty and whitespace values return the default value.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
         public string AsString(string key, string defaultValue = "")
         {
-            if (!Has(key))
-            {
-                return defaultValue;
-            }
+            return TryGetString(key, out var value) ? value : defaultValue;
+        }
 
-            return properties[key];
+        /// <summary>
+        /// Try to parse an integer value using invariant culture.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetInt(string key, out int value)
+        {
+            value = default;
+            return TryGetString(key, out var rawValue)
+                   && int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
         }
 
         /// <summary>
@@ -432,12 +523,26 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public int AsInt(string key, int defaultValue = 0)
         {
-            if (!Has(key))
+            return TryGetInt(key, out var value) ? value : defaultValue;
+        }
+
+        /// <summary>
+        /// Try to parse a float value using invariant culture, with current culture fallback for old data.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetFloat(string key, out float value)
+        {
+            value = default;
+
+            if (!TryGetString(key, out var rawValue))
             {
-                return defaultValue;
+                return false;
             }
 
-            return Convert.ToInt32(properties[key]);
+            return float.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+                   || float.TryParse(rawValue, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
 
         /// <summary>
@@ -448,12 +553,26 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public float AsFloat(string key, float defaultValue = 0f)
         {
-            if (!Has(key))
+            return TryGetFloat(key, out var value) ? value : defaultValue;
+        }
+
+        /// <summary>
+        /// Try to parse a double value using invariant culture, with current culture fallback for old data.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetDouble(string key, out double value)
+        {
+            value = default;
+
+            if (!TryGetString(key, out var rawValue))
             {
-                return defaultValue;
+                return false;
             }
 
-            return Convert.ToSingle(properties[key]);
+            return double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+                   || double.TryParse(rawValue, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
 
         /// <summary>
@@ -464,12 +583,26 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public double AsDouble(string key, double defaultValue = 0d)
         {
-            if (!Has(key))
+            return TryGetDouble(key, out var value) ? value : defaultValue;
+        }
+
+        /// <summary>
+        /// Try to parse a decimal value using invariant culture, with current culture fallback for old data.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetDecimal(string key, out decimal value)
+        {
+            value = default;
+
+            if (!TryGetString(key, out var rawValue))
             {
-                return defaultValue;
+                return false;
             }
 
-            return Convert.ToDouble(properties[key]);
+            return decimal.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+                   || decimal.TryParse(rawValue, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
 
         /// <summary>
@@ -480,12 +613,19 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public decimal AsDecimal(string key, decimal defaultValue = 0)
         {
-            if (!Has(key))
-            {
-                return defaultValue;
-            }
+            return TryGetDecimal(key, out var value) ? value : defaultValue;
+        }
 
-            return Convert.ToDecimal(properties[key]);
+        /// <summary>
+        /// Try to parse a bool value.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetBool(string key, out bool value)
+        {
+            value = default;
+            return TryGetString(key, out var rawValue) && bool.TryParse(rawValue, out value);
         }
 
         /// <summary>
@@ -496,12 +636,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public bool AsBool(string key, bool defaultValue = false)
         {
-            if (!Has(key))
-            {
-                return defaultValue;
-            }
-
-            return Convert.ToBoolean(properties[key]);
+            return TryGetBool(key, out var value) ? value : defaultValue;
         }
 
         /// <summary>
@@ -513,7 +648,7 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public T AsEnum<T>(string key, T defaultValue = default) where T : struct, Enum
         {
-            if (Has(key) && Enum.TryParse<T>(AsString(key), out var value))
+            if (TryGetString(key, out var rawValue) && Enum.TryParse<T>(rawValue, out var value))
             {
                 return value;
             }
@@ -524,19 +659,16 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Get item as short
+        /// Try to parse a short integer value using invariant culture.
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="defaultValue"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public short AsInt16(string key, short defaultValue = 0)
+        public bool TryGetInt16(string key, out short value)
         {
-            if (!Has(key))
-            {
-                return defaultValue;
-            }
-
-            return Convert.ToInt16(properties[key]);
+            value = default;
+            return TryGetString(key, out var rawValue)
+                   && short.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
         }
 
         /// <summary>
@@ -545,14 +677,46 @@ namespace MasterServerToolkit.MasterServer
         /// <param name="key"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
+        public short AsInt16(string key, short defaultValue = 0)
+        {
+            return TryGetInt16(key, out var value) ? value : defaultValue;
+        }
+
+        /// <summary>
+        /// Try to parse an unsigned short value using invariant culture.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetUInt16(string key, out ushort value)
+        {
+            value = default;
+            return TryGetString(key, out var rawValue)
+                   && ushort.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        }
+
+        /// <summary>
+        /// Get item as unsigned short
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public ushort AsUInt16(string key, ushort defaultValue = 0)
         {
-            if (!Has(key))
-            {
-                return defaultValue;
-            }
+            return TryGetUInt16(key, out var value) ? value : defaultValue;
+        }
 
-            return Convert.ToUInt16(properties[key]);
+        /// <summary>
+        /// Try to parse a byte value using invariant culture.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool TryGetByte(string key, out byte value)
+        {
+            value = default;
+            return TryGetString(key, out var rawValue)
+                   && byte.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
         }
 
         /// <summary>
@@ -563,45 +727,40 @@ namespace MasterServerToolkit.MasterServer
         /// <returns></returns>
         public byte AsByte(string key, byte defaultValue = 0)
         {
-            if (!Has(key))
-            {
-                return defaultValue;
-            }
-
-            return Convert.ToByte(properties[key]);
+            return TryGetByte(key, out var value) ? value : defaultValue;
         }
 
         /// <summary>
-        /// 
+        /// Find properties by key prefix using ordinal comparison.
         /// </summary>
         /// <param name="keyFilter"></param>
         /// <returns></returns>
         public MstProperties FindByKey(string keyFilter)
         {
-            return new MstProperties(properties.Where(kvp => kvp.Key.StartsWith(keyFilter)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+            return new MstProperties(properties.Where(kvp => kvp.Key.StartsWith(keyFilter, StringComparison.Ordinal)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
         }
 
         /// <summary>
-        /// 
+        /// Find properties by value substring using ordinal comparison.
         /// </summary>
         /// <param name="valFilter"></param>
         /// <returns></returns>
         public MstProperties FindByValue(string valFilter)
         {
-            return new MstProperties(properties.Where(kvp => kvp.Value.Contains(valFilter)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+            return new MstProperties(properties.Where(kvp => kvp.Value.IndexOf(valFilter, StringComparison.Ordinal) >= 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
         }
 
         /// <summary>
-        /// Output options as dictionary
+        /// Output properties as dictionary copy.
         /// </summary>
         /// <returns></returns>
         public Dictionary<string, string> ToDictionary()
         {
-            return properties.ToDictionary(p => p.Key, p => p.Value);
+            return new Dictionary<string, string>(properties, StringComparer.Ordinal);
         }
 
         /// <summary>
-        /// Create options from dictionary
+        /// Create properties from dictionary.
         /// </summary>
         /// <param name="dictionary"></param>
         /// <returns></returns>
@@ -609,16 +768,21 @@ namespace MasterServerToolkit.MasterServer
         {
             var properties = new MstProperties();
 
+            if (dictionary == null)
+            {
+                return properties;
+            }
+
             foreach (var key in dictionary.Keys)
             {
-                properties.Set(key.ToString(), dictionary[key].ToString());
+                properties.Set(key.ToString(), dictionary[key]);
             }
 
             return properties;
         }
 
         /// <summary>
-        /// Convert options to bytes
+        /// Convert properties to bytes.
         /// </summary>
         /// <returns></returns>
         public byte[] ToBytes()
@@ -627,7 +791,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Parse options froom bytes
+        /// Parse properties from bytes.
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
@@ -637,7 +801,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Convert options to readable string
+        /// Convert properties to readable string.
         /// </summary>
         /// <param name="itemsSeparator"></param>
         /// <param name="kvpSeparator"></param>
@@ -648,7 +812,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Append properties parsed from readable string.
         /// </summary>
         /// <param name="itemsSplitter"></param>
         /// <param name="kvpSplitter"></param>
@@ -662,7 +826,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// Output options as string
+        /// Output properties as string.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -671,14 +835,14 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Convert properties to JSON object.
         /// </summary>
         /// <returns></returns>
         public MstJson ToJson()
         {
-            var json = MstJson.EmptyObject;
+            var json = MstJson.CreateObject();
 
-            foreach(var property in properties)
+            foreach (var property in properties)
             {
                 json.AddField(property.Key, property.Value);
             }
@@ -687,7 +851,7 @@ namespace MasterServerToolkit.MasterServer
         }
 
         /// <summary>
-        /// 
+        /// Enumerate current key/value pairs.
         /// </summary>
         /// <returns></returns>
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
@@ -696,6 +860,11 @@ namespace MasterServerToolkit.MasterServer
             {
                 yield return kvp;
             }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

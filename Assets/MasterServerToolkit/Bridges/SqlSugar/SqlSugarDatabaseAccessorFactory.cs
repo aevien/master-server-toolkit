@@ -13,12 +13,16 @@ namespace MasterServerToolkit.Bridges.SqlSugar
 
 #if (!UNITY_WEBGL && !UNITY_IOS) || UNITY_EDITOR
         [Header("Settings"), SerializeField]
+        [Tooltip("Fallback provider connection string. -mstDatabaseConnectionString overrides this value at startup; its syntax must match Data Provider.")]
         protected string connectionString = "Server=localhost;Database=master_server_toolkit;Uid=root;Pwd=qazwsxedc123!@#;Port=3306;";
         [SerializeField]
+        [Tooltip("Closes database connections automatically after each operation when supported by the selected provider. -mstDatabaseAutoCloseConnection overrides this value.")]
         protected bool autoCloseConnection = true;
         [SerializeField]
+        [Tooltip("Language used by SqlSugar for provider messages and generated diagnostics. -mstDatabaseLanguageType overrides this value.")]
         protected LanguageType language = LanguageType.English;
         [SerializeField]
+        [Tooltip("SQL database provider used to interpret the connection string and generate queries. -mstDatabaseProvider overrides this value; the provider must match the deployed database.")]
         protected DbType dataProvider = DbType.MySql;
 #endif
 

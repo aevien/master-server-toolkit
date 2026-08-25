@@ -1,12 +1,15 @@
+using MasterServerToolkit.Utils;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
 {
     [CreateAssetMenu(menuName = MstConstants.CreateMenu + "Profile/Populators Database")]
-    public class ObservablePropertyPopulatorsDatabase : ScriptableObject
+    public class ObservablePropertyPopulatorsDatabase : ObjectsDatabase<ObservableBasePopulator>
     {
-        [SerializeField]
-        private ObservableBasePopulator[] populators;
-        public ObservableBasePopulator[] Populators => populators;
+        [ContextMenu("Populate")]
+        private void Populate()
+        {
+            FindObjects();
+        }
     } 
 }

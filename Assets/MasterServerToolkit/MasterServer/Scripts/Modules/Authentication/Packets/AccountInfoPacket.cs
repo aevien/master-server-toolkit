@@ -17,7 +17,12 @@ namespace MasterServerToolkit.MasterServer
         public bool IsAdmin { get; set; }
         public bool IsGuest { get; set; }
         public bool IsEmailConfirmed { get; set; }
-        public bool IsBanned { get; set; }
+        /// <summary>
+        /// Client-writable account metadata received from the auth module.
+        /// Not authoritative gameplay, economy, permission, or entitlement state.
+        /// Mutating this packet on the client does not persist changes; use AuthClient.SetProperty,
+        /// AuthClient.SetProperties, or a server-side account update flow.
+        /// </summary>
         public MstProperties ExtraProperties { get; private set; }
 
         public AccountInfoPacket() { }
@@ -27,14 +32,13 @@ namespace MasterServerToolkit.MasterServer
             Id = account.Id ?? string.Empty;
             Username = account.Username ?? string.Empty;
             Email = account.Email ?? string.Empty;
-            LastLogin = account.LastLogin;
-            Created = account.Created;
-            Updated = account.Updated;
+            LastLogin = account.LastLoginAt;
+            Created = account.CreatedAt;
+            Updated = account.UpdatedAt;
             Token = account.Token ?? string.Empty;
             IsAdmin = account.IsAdmin;
             IsGuest = account.IsGuest;
             IsEmailConfirmed = account.IsEmailConfirmed;
-            IsBanned = account.IsBanned;
             ExtraProperties = new MstProperties(account.ExtraProperties);
         }
 
@@ -50,7 +54,6 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(IsAdmin);
             writer.Write(IsGuest);
             writer.Write(IsEmailConfirmed);
-            writer.Write(IsBanned);
             writer.Write(ExtraProperties.ToDictionary());
         }
 
@@ -66,7 +69,6 @@ namespace MasterServerToolkit.MasterServer
             IsAdmin = reader.ReadBoolean();
             IsGuest = reader.ReadBoolean();
             IsEmailConfirmed = reader.ReadBoolean();
-            IsBanned = reader.ReadBoolean();
             ExtraProperties = new MstProperties(reader.ReadDictionary());
         }
 
@@ -83,9 +85,7 @@ namespace MasterServerToolkit.MasterServer
             json.AddField("isAdmin", IsAdmin);
             json.AddField("isGuest", IsGuest);
             json.AddField("isEmailConfirmed", IsEmailConfirmed);
-            json.AddField("isBanned", IsBanned);
             json.AddField("extraProperties", MstJson.Create(ExtraProperties.ToDictionary()));
-
             return json;
         }
 

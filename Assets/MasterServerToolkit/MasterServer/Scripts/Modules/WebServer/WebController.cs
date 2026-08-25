@@ -1,6 +1,9 @@
+using MasterServerToolkit.Extensions;
 using MasterServerToolkit.Json;
 using MasterServerToolkit.Logging;
 using System;
+using System.Net;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MasterServerToolkit.MasterServer
@@ -9,10 +12,10 @@ namespace MasterServerToolkit.MasterServer
     {
         #region INSPECTOR
 
-        [Header("Controller Settings"), SerializeField]
+        [Header("Controller Settings"), SerializeField, Tooltip("Minimum severity written by this controller while processing or rendering HTTP requests.")]
         protected LogLevel logLevel = LogLevel.Info;
-        [SerializeField]
-        private bool useCredentials = false;
+        [SerializeField, Tooltip("Requires HTTP Basic Auth for this controller's routes even when server-wide credentials are disabled. Server-wide credential enforcement still protects all routes when enabled.")]
+        protected bool useCredentials = false;
 
         #endregion
 
@@ -32,11 +35,13 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// 
         /// </summary>
-        public WebServerModule WebServer { get; set; }
+        public HttpServerModule WebServer { get; set; }
         /// <summary>
         /// 
         /// </summary>
-        public ServerBehaviour MasterServer { get; set; }
+        public ServerBehaviour Server { get; set; }
+
+        protected virtual void OnValidate() { }
 
         /// <summary>
         /// 
@@ -47,18 +52,22 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="webServer"></param>
-        public virtual void Initialize(WebServerModule webServer)
+        public virtual void Initialize(HttpServerModule webServer)
         {
             WebServer = webServer;
-            MasterServer = webServer.Server;
+            Server = webServer.Server;
 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public virtual MstJson JsonInfo()
         {
-            MstJson json = new MstJson();
+            MstJson json = MstJson.CreateObject();
 
             try
             {

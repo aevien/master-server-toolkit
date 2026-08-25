@@ -41,6 +41,7 @@ namespace MasterServerToolkit.Demos.BasicHTTPServer
                 properties.Add(Mst.Args.Names.MasterIp, Mst.Args.MasterIp);
                 properties.Add(Mst.Args.Names.MasterPort, Mst.Args.MasterPort);
                 properties.Add(Mst.Args.Names.WebAddress, Mst.Args.WebAddress);
+                MasterServerToolkit.Utils.Editor.MstDemoAccessConfig.ConfigureMaster(properties, buildFolder);
 
                 File.WriteAllText(appConfig, properties.ToReadableString("\n", "="));
 

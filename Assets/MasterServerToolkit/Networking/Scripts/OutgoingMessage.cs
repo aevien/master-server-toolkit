@@ -38,10 +38,7 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Returns true if data is not empty
         /// </summary>
-        public bool HasData
-        {
-            get { return Data != null && Data.Length > 0; }
-        }
+        public bool HasData => Data != null && Data.Length > 0;
 
         /// <summary>
         /// An id of ack request. It's set when we send a message,
@@ -81,6 +78,16 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public byte[] ToBytes()
         {
+            if (Data == null)
+                throw new InvalidOperationException("Outgoing message data cannot be null");
+
+            if (Data.Length > MstNetworkLimits.MaxMessagePayloadByteCount)
+            {
+                throw new InvalidOperationException(
+                    $"Outgoing message payload length {Data.Length} exceeds the allowed limit " +
+                    $"{MstNetworkLimits.MaxMessagePayloadByteCount}");
+            }
+
             var converter = EndianBitConverter.Big;
             var flags = GenerateFlags(this);
 

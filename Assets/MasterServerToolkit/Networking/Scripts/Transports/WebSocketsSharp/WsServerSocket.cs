@@ -1,7 +1,65 @@
 ﻿using MasterServerToolkit.Logging;
+#if UNITY_WEBGL && !UNITY_EDITOR
+
+using MasterServerToolkit.MasterServer;
+using System;
+using System.Security.Authentication;
+
+namespace MasterServerToolkit.Networking
+{
+    public class WsServerSocket : IServerSocket
+    {
+        private readonly Logger logger;
+        private LogLevel logLevel = LogLevel.Info;
+
+        public bool UseSecure { get; set; }
+        public string CertificatePath { get; set; } = string.Empty;
+        public string CertificatePassword { get; set; } = string.Empty;
+        public string Service { get; set; } = "mst";
+        public SslProtocols SslProtocols { get; set; }
+
+        public LogLevel LogLevel
+        {
+            get => logLevel;
+            set
+            {
+                logLevel = value;
+                logger.LogLevel = value;
+            }
+        }
+
+        public event PeerActionHandler OnPeerConnectedEvent { add { } remove { } }
+        public event PeerActionHandler OnPeerDisconnectedEvent { add { } remove { } }
+        public event Action<IServerSocket> OnBeforeServerStart { add { } remove { } }
+
+        public WsServerSocket()
+        {
+            logger = Mst.Create.Logger(GetType().Name);
+            logger.LogLevel = logLevel;
+        }
+
+        public void Listen(int port)
+        {
+            Listen("127.0.0.1", port);
+        }
+
+        public void Listen(string address, int port)
+        {
+            logger.Error("WsServerSocket is not supported in WebGL builds.");
+        }
+
+        public void Stop()
+        {
+        }
+    }
+}
+
+#else
+
 using MasterServerToolkit.MasterServer;
 using System;
 using System.Net;
+using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -80,31 +138,45 @@ namespace MasterServerToolkit.Networking
 
                 server.KeepClean = true;
 
+                server.Log.Level = logger.LogLevel switch
+                {
+                    Logging.LogLevel.Trace or Logging.LogLevel.All or Logging.LogLevel.Global => WebSocketSharp.LogLevel.Trace,
+                    Logging.LogLevel.Debug => WebSocketSharp.LogLevel.Debug,
+                    Logging.LogLevel.Info => WebSocketSharp.LogLevel.Info,
+                    Logging.LogLevel.Warn => WebSocketSharp.LogLevel.Warn,
+                    Logging.LogLevel.Error => WebSocketSharp.LogLevel.Error,
+                    Logging.LogLevel.Fatal => WebSocketSharp.LogLevel.Fatal,
+                    _ => WebSocketSharp.LogLevel.None,
+                };
+
                 // Set log output
                 server.Log.Output = (logData, value) =>
                 {
+                    if (IsWebSocketKeepAliveTrace(logData))
+                        return;
+
                     switch (logData.Level)
                     {
                         case WebSocketSharp.LogLevel.Error:
-                            logger.Error(logData.Message);
+                            logger.Error(logData);
                             break;
                         case WebSocketSharp.LogLevel.Fatal:
-                            logger.Fatal(logData.Message);
+                            logger.Fatal(logData);
                             break;
                         case WebSocketSharp.LogLevel.Info:
-                            logger.Info(logData.Message);
+                            logger.Info(logData);
                             break;
                         case WebSocketSharp.LogLevel.Debug:
-                            logger.Debug(logData.Message);
+                            logger.Debug(logData);
                             break;
                         case WebSocketSharp.LogLevel.Warn:
-                            logger.Warn(logData.Message);
+                            logger.Warn(logData);
                             break;
                         case WebSocketSharp.LogLevel.Trace:
-                            logger.Trace(logData.Message);
+                            logger.Trace(logData);
                             break;
                         default:
-                            logger.Info(logData.Message);
+                            logger.Info(logData);
                             break;
                     }
                 };
@@ -161,6 +233,9 @@ namespace MasterServerToolkit.Networking
             // Master server service
             server.AddWebSocketService<WsService>($"/{Service}", (serviceForPeer) =>
             {
+                serviceForPeer.MaxFramePayloadLength = MstNetworkLimits.MaxFramePayloadByteCount;
+                serviceForPeer.MaxMessagePayloadLength = MstNetworkLimits.MaxWireMessageByteCount;
+
                 var peer = new WsServerPeer(serviceForPeer)
                 {
                     LogLevel = logLevel
@@ -181,7 +256,22 @@ namespace MasterServerToolkit.Networking
             server.AddWebSocketService<EchoService>("/echo", (echoService) =>
             {
                 echoService.IgnoreExtensions = true;
+                echoService.MaxFramePayloadLength = MstNetworkLimits.MaxFramePayloadByteCount;
+                echoService.MaxMessagePayloadLength = MstNetworkLimits.MaxWireMessageByteCount;
             });
+        }
+
+        private static bool IsWebSocketKeepAliveTrace(WebSocketSharp.LogData logData)
+        {
+            if (logData.Level != WebSocketSharp.LogLevel.Trace || string.IsNullOrEmpty(logData.Message))
+                return false;
+
+            return logData.Message.IndexOf("processPingFrame", StringComparison.OrdinalIgnoreCase) >= 0
+                || logData.Message.IndexOf("processPongFrame", StringComparison.OrdinalIgnoreCase) >= 0
+                || logData.Message.IndexOf("A ping was received", StringComparison.OrdinalIgnoreCase) >= 0
+                || logData.Message.IndexOf("A pong to this ping has been sent", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }
+
+#endif

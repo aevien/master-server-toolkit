@@ -1,4 +1,5 @@
-﻿using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Json;
+using MasterServerToolkit.Networking;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -52,8 +53,7 @@ namespace MasterServerToolkit.MasterServer
             options.Add("MaxProcesses", MaxProcesses);
             options.Add("Region", string.IsNullOrEmpty(Region) ? "International" : Region);
             options.Append(CustomOptions);
-
-            return options.ToReadableString();
+            return options.ToReadableString("; ", ": ");
         }
     }
 }

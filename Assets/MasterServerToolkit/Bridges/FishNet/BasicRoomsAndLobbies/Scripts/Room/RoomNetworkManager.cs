@@ -17,15 +17,15 @@ namespace MasterServerToolkit.Bridges.FishNetworking
     {
         #region INSPECTOR
 
-        [Header("Components"), SerializeField]
+        [Header("Components"), SerializeField, Tooltip("Required MST room manager that owns room registration, connection limits, access validation, and peer-disconnect notifications. If empty, Awake resolves it from the same GameObject.")]
         protected RoomServerManager roomServerManager;
-        [SerializeField]
+        [SerializeField, Tooltip("Required FishNet NetworkManager used to start and stop the room server and access transport, scene, server, and client managers. If empty, Awake resolves it from the same GameObject.")]
         protected NetworkManager networkManager;
 
         /// <summary>
         /// Log levelof this module
         /// </summary>
-        [Header("Settings"), SerializeField]
+        [Header("Settings"), SerializeField, Tooltip("Minimum severity written by the FishNet room manager's MST logger. This changes diagnostics only and does not affect network behavior.")]
         protected LogLevel logLevel = LogLevel.Info;
 
         #endregion
@@ -141,46 +141,60 @@ namespace MasterServerToolkit.Bridges.FishNetworking
         /// <param name="channel"></param>
         private void ValidateRoomAccessRequestHandler(NetworkConnection connection, ValidateRoomAccessRequestMessage message, Channel channel)
         {
-            if (roomServerManager)
+            if (!roomServerManager)
             {
-                roomServerManager.ValidateRoomAccess(connection.ClientId, message.Token, (isSuccess, error) =>
+                logger.Error("Room access validation is unavailable because the room manager is missing");
+                connection.Broadcast(CreateErrorResult(
+                    ResponseStatus.NotConnected,
+                    MstErrorCodes.ROOM_ACCESS_UNAVAILABLE));
+                MstTimer.WaitForSeconds(1f, () => connection.Disconnect(true));
+                return;
+            }
+
+            roomServerManager.ValidateRoomAccess(connection.ClientId, message.Token, (isSuccess, error) =>
+            {
+                try
                 {
-                    try
+                    if (!isSuccess)
                     {
-                        if (!isSuccess)
-                        {
-                            Debug.LogError(error);
-                            connection.Broadcast(new ValidateRoomAccessResultMessage()
-                            {
-                                Error = error,
-                                Status = ResponseStatus.Error
-                            });
-
-                            MstTimer.WaitForSeconds(1f, () => connection.Disconnect(true));
-
-                            return;
-                        }
-
-                        connection.Broadcast(new ValidateRoomAccessResultMessage()
-                        {
-                            Error = string.Empty,
-                            Status = ResponseStatus.Success
-                        });
-                    }
-                    // If we got another exception
-                    catch (Exception e)
-                    {
-                        Debug.LogError(e.Message);
-                        connection.Broadcast(new ValidateRoomAccessResultMessage()
-                        {
-                            Error = e.Message,
-                            Status = ResponseStatus.Error
-                        });
+                        logger.Warn("Room access validation rejected the client");
+                        connection.Broadcast(CreateErrorResult(
+                            ResponseStatus.Unauthorized,
+                            MstErrorCodes.ROOM_ACCESS_DENIED));
 
                         MstTimer.WaitForSeconds(1f, () => connection.Disconnect(true));
+                        return;
                     }
-                });
-            }
+
+                    connection.Broadcast(new ValidateRoomAccessResultMessage
+                    {
+                        Status = ResponseStatus.Success
+                    });
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e);
+                    connection.Broadcast(CreateErrorResult(
+                        ResponseStatus.Error,
+                        MstErrorCodes.INTERNAL_ERROR));
+
+                    MstTimer.WaitForSeconds(1f, () => connection.Disconnect(true));
+                }
+            });
+        }
+
+        private static ValidateRoomAccessResultMessage CreateErrorResult(
+            ResponseStatus status,
+            string code)
+        {
+            var properties = new MstProperties();
+            properties.Set(MstErrorPropertyKeys.CODE, code);
+
+            return new ValidateRoomAccessResultMessage
+            {
+                Error = properties.ToBytes(),
+                Status = status
+            };
         }
     }
 }

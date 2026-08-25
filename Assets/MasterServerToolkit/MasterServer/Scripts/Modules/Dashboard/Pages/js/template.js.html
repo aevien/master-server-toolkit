@@ -1,0 +1,391 @@
+<script type="module">
+    function mst(options) {
+        options = options || {};
+        var apiBase = "/api/v1";
+
+        /**
+         * Capitalizes a single word: "heLLo" -> "Hello"
+         */
+        function capitalizeWord(word) {
+            if (!word) return word;
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }
+
+        /**
+         * Splits string into words by:
+         * 1) separators '_' and '-'
+         * 2) uppercase letters inside the word (camelCase / PascalCase)
+         *
+         * Examples:
+         * - "is_guest" -> ["is", "guest"]
+         * - "is-guest" -> ["is", "guest"]
+         * - "IsGuest"  -> ["Is", "Guest"]
+         * - "isGuest"  -> ["is", "Guest"]
+         * - "HTTPServerError" -> ["HTTP", "Server", "Error"]
+         */
+        function splitToWords(str) {
+            if (!str) return [];
+
+            return str
+                .trim()
+                .replace(/[_-]+/g, ' ')
+                .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+                .split(/\s+/g)
+                .filter(Boolean);
+        }
+
+        /**
+         * Builds Title Case from any supported input format.
+         */
+        function toTitleCase(str) {
+            return splitToWords(str)
+                .map(capitalizeWord)
+                .join(' ');
+        }
+
+        /**
+         * Builds camelCase from any supported input format.
+         */
+        function toCamelCase(str) {
+            var parts = splitToWords(str);
+            if (parts.length === 0) return '';
+
+            return parts[0].toLowerCase() +
+                parts.slice(1).map(capitalizeWord).join('');
+        }
+
+        function escapeHtml(text) {
+            return String(text ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function renderText(cellData) {
+            if (cellData === null || cellData === undefined) return "";
+
+            return escapeHtml(cellData);
+        }
+
+        /**
+         * Renders a JSON string into nested <span> HTML string.
+         * Supports: object, array, string, number, boolean, null.
+         * Returns: string (HTML)
+         */
+        function renderJson(input) {
+            function getType(v) {
+                if (v === null) return "null";
+                if (Array.isArray(v)) return "array";
+                return typeof v; // object|string|number|boolean|undefined
+            }
+
+            function formatPrimitive(v) {
+                const t = getType(v);
+
+                if (t === "string") return escapeHtml(v);
+                if (t === "number") return escapeHtml(v);
+                if (t === "boolean") return v ? "true" : "false";
+                if (t === "null") return "null";
+                if (t === "undefined") return "undefined";
+
+                return escapeHtml(v);
+            }
+
+            function renderValueCell(v, depth) {
+                const t = getType(v);
+
+                if (t !== "object" && t !== "array") {
+                    return formatPrimitive(v);
+                }
+
+                return renderNode(v, depth + 1);
+            }
+
+            function renderNode(v, depth) {
+                const maxDepth = 20;
+                const t = getType(v);
+
+                if (depth >= maxDepth && (t === "object" || t === "array")) {
+                    return `<span>…</span>`;
+                }
+
+                // Primitive
+                if (t !== "object" && t !== "array") {
+                    return `<span>${formatPrimitive(v)}</span>`;
+                }
+
+                // Array -> 1-column table (no indexes)
+                if (t === "array") {
+                    const rows = v.map(item => {
+                        return `<tr>
+                            <td class="mst-val">${renderValueCell(item, depth)}</td>
+                        </tr>`;
+                    }).join("");
+
+                    // If empty array
+                    const body = rows || `<tr><td class="mst-val mst-empty">[]</td></tr>`;
+
+                    return `<table class="mst-table mst-array table table-bordered table-sm mb-0">
+                        <tbody>${body}</tbody>
+                    </table>`;
+                }
+
+                // Object -> 2-column table (key | value)
+                const keys = Object.keys(v);
+
+                const rows = keys.map(k => {
+                    return `<tr>
+                        <td class="mst-key">${escapeHtml(k)}</td>
+                        <td class="mst-val">${renderValueCell(v[k], depth)}</td>
+                    </tr>`;
+                }).join("");
+
+                // If empty object
+                const body = rows || `<tr><td class="mst-key mst-empty">{}</td><td class="mst-val mst-empty"></td></tr>`;
+
+                return `<table class="mst-table mst-object table table-bordered table-primary table-sm mb-0">
+                    <tbody>${body}</tbody>
+                </table>`;
+            }
+
+            // Entry: accept JSON string OR plain string OR already-parsed value
+            let value = input;
+
+            if (typeof input === "string") {
+                const s = input.trim();
+
+                if (s.length === 0) {
+                    value = "";
+                } else {
+                    try {
+                        value = JSON.parse(s);
+                    } catch {
+                        value = input; // plain string like: Николай Ш.
+                    }
+                }
+            }
+
+            return `<div class="mst-root">${renderNode(value, 0)}</div>`;
+        }
+
+        function normalizeDateInputValue(value) {
+            if (value === null || value === undefined) return "";
+
+            const parseAsDate = (dateValue) => {
+                const parsedDate = new Date(dateValue);
+                if (Number.isNaN(parsedDate.getTime())) return "";
+                return parsedDate.toISOString().slice(0, 10);
+            };
+
+            if (typeof value === "number") {
+                if (!Number.isFinite(value)) return "";
+                // 10 digits -> unix seconds, 13 digits -> unix milliseconds
+                const timestamp = value < 1e12 ? value * 1000 : value;
+                return parseAsDate(timestamp);
+            }
+
+            if (value instanceof Date) {
+                return parseAsDate(value);
+            }
+
+            const stringValue = String(value).trim();
+            if (!stringValue) return "";
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(stringValue)) return stringValue;
+
+            const matchedDate = stringValue.match(/^(\d{4}-\d{2}-\d{2})/);
+            if (matchedDate) return matchedDate[1];
+
+            if (/^\d+$/.test(stringValue)) {
+                const numericValue = Number(stringValue);
+                if (Number.isFinite(numericValue)) {
+                    const timestamp = numericValue < 1e12 ? numericValue * 1000 : numericValue;
+                    return parseAsDate(timestamp);
+                }
+            }
+
+            return parseAsDate(stringValue);
+        }
+
+
+
+        return {
+            splitToWords, toTitleCase, toCamelCase, escapeHtml, renderText, renderJson, normalizeDateInputValue,
+
+            createApiUrl: function (path) {
+                return `${apiBase}/${path}`.replace('//', '/');
+            },
+
+            showToast: function (message, type) {
+                const container = document.getElementById("mstToastStack");
+                if (!container || !window.bootstrap?.Toast) return;
+
+                const toastEl = document.createElement("div");
+                toastEl.className = "toast align-items-center border-0";
+                toastEl.setAttribute("role", "alert");
+                toastEl.setAttribute("aria-live", "assertive");
+                toastEl.setAttribute("aria-atomic", "true");
+
+                toastEl.classList.add(
+                    type === "success" ? "text-bg-success" :
+                        type === "error" ? "text-bg-danger" :
+                            type === "info" ? "text-bg-info" : "text-bg-secondary"
+                );
+
+                const body = document.createElement("div");
+                body.className = "toast-body";
+                body.textContent = message || "";
+
+                const close = document.createElement("button");
+                close.type = "button";
+                close.className = "btn-close btn-close-white me-2 m-auto";
+                close.setAttribute("data-bs-dismiss", "toast");
+                close.setAttribute("aria-label", "Close");
+
+                const flex = document.createElement("div");
+                flex.className = "d-flex";
+                flex.appendChild(body);
+                flex.appendChild(close);
+
+                toastEl.appendChild(flex);
+                container.appendChild(toastEl);
+
+                const instance = new window.bootstrap.Toast(toastEl, { delay: 3500, autohide: true });
+                toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+                instance.show();
+            },
+
+            showSuccess: function (message) {
+                this.showToast(message || "Success", "success");
+            },
+
+            showInfo: function (message) {
+                this.showToast(message || "Info", "info");
+            },
+
+            showError: function (message) {
+                this.showToast(message || "Error", "error");
+            },
+
+            getErrorMessage: async function (response, fallbackMessage) {
+                const fallback = fallbackMessage || (response ? `Request failed: ${response.status}` : "Request failed");
+
+                if (!response) {
+                    return fallback;
+                }
+
+                const json = await response.clone().json().catch(() => null);
+                const jsonMessage = json?.error?.message || json?.message;
+
+                if (jsonMessage) {
+                    return jsonMessage;
+                }
+
+                const text = await response.clone().text().catch(() => "");
+                return text || fallback;
+            },
+
+            confirm: function (message, options) {
+                const opts = options || {};
+                const modalEl = document.getElementById("mstConfirmModal");
+                const titleEl = document.getElementById("mstConfirmTitle");
+                const bodyEl = document.getElementById("mstConfirmBody");
+                const okEl = document.getElementById("mstConfirmOk");
+                const cancelEl = document.getElementById("mstConfirmCancel");
+
+                if (!modalEl || !titleEl || !bodyEl || !okEl || !cancelEl || !window.bootstrap?.Modal) {
+                    return Promise.resolve(window.confirm(message || "Are you sure?"));
+                }
+
+                titleEl.textContent = opts.title || "Confirm action";
+                bodyEl.textContent = message || "Are you sure?";
+                okEl.textContent = opts.confirmText || "Confirm";
+                cancelEl.textContent = opts.cancelText || "Cancel";
+
+                if (opts.variant === "warning") {
+                    okEl.className = "btn btn-warning";
+                } else if (opts.variant === "success") {
+                    okEl.className = "btn btn-success";
+                } else {
+                    okEl.className = "btn btn-danger";
+                }
+
+                const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: true });
+
+                return new Promise((resolve) => {
+                    const previousModalEl = document.querySelector('.modal.show:not(#mstConfirmModal)');
+                    const previousModal = previousModalEl
+                        ? window.bootstrap.Modal.getOrCreateInstance(previousModalEl)
+                        : null;
+
+                    if (previousModal) {
+                        previousModal.hide();
+                    }
+
+                    let done = false;
+                    const finish = (value) => {
+                        if (done) return;
+                        done = true;
+                        resolve(value);
+                    };
+
+                    const onOk = () => { cleanup(); finish(true); modal.hide(); };
+                    const onCancel = () => { cleanup(); finish(false); modal.hide(); };
+                    const onHidden = () => {
+                        cleanup();
+                        if (!done) finish(false);
+                        if (previousModal) {
+                            setTimeout(() => previousModal.show(), 0);
+                        }
+                    };
+
+                    const cleanup = () => {
+                        okEl.removeEventListener("click", onOk);
+                        cancelEl.removeEventListener("click", onCancel);
+                        modalEl.removeEventListener("hidden.bs.modal", onHidden);
+                    };
+
+                    okEl.addEventListener("click", onOk);
+                    cancelEl.addEventListener("click", onCancel);
+                    modalEl.addEventListener("hidden.bs.modal", onHidden, { once: true });
+
+                    modal.show();
+                });
+            },
+
+            apiFetch: async function (path, options, behavior) {
+                const opts = options || {};
+                const bhv = behavior || {};
+                const url = /^https?:\/\//i.test(path)
+                    ? path
+                    : (path && path.startsWith("/") ? path : this.createApiUrl(path));
+
+                try {
+                    const response = await fetch(url, opts);
+
+                    if (!response.ok && (bhv.toastErrors ?? true)) {
+                        const msg = bhv.errorMessage || await this.getErrorMessage(response);
+                        this.showError(msg);
+                    }
+
+                    if (response.ok && bhv.toastSuccess) {
+                        this.showSuccess(bhv.successMessage || "Success");
+                    }
+
+                    return response;
+                } catch (error) {
+                    if (bhv.toastErrors ?? true) {
+                        this.showError(bhv.errorMessage || error?.message || "Network error");
+                    }
+                    throw error;
+                }
+            }
+        };
+    }
+
+    window.mst = mst();
+</script>
+

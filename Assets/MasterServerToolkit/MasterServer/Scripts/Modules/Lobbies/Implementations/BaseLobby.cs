@@ -3,6 +3,8 @@ using MasterServerToolkit.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MasterServerToolkit.MasterServer
 {
@@ -57,21 +59,19 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         protected SpawnTask gameSpawnTask;
+        private IDisposable gameSpawnStatusSubscription;
 
         /// <summary>
         /// 
         /// </summary>
         protected RegisteredRoom lobbyRoom;
+        private readonly object roomLifecycleGate = new object();
+        private bool isDestroyed;
 
         /// <summary>
         /// 
         /// </summary>
         protected LobbiesModule Module { get; private set; }
-
-        /// <summary>
-        /// List of all members
-        /// </summary>
-        public List<LobbyMember> Members => membersByPeerIdList.Values.ToList();
 
         /// <summary>
         /// When new player added to lobby
@@ -111,7 +111,14 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Check if lobby is destroyed
         /// </summary>
-        public bool IsDestroyed { get; private set; }
+        public bool IsDestroyed
+        {
+            get
+            {
+                lock (roomLifecycleGate)
+                    return isDestroyed;
+            }
+        }
 
         /// <summary>
         /// Current lobby config data
@@ -201,8 +208,17 @@ namespace MasterServerToolkit.MasterServer
                     return;
                 }
 
+                _statusText = value;
                 OnStatusTextChange(value);
             }
+        }
+
+        /// <summary>
+        /// Creates a snapshot of all current lobby members.
+        /// </summary>
+        public List<LobbyMember> GetMembersSnapshot()
+        {
+            return membersByPeerIdList.Values.ToList();
         }
 
         /// <summary>
@@ -235,7 +251,7 @@ namespace MasterServerToolkit.MasterServer
 
             if (lobbyUser.CurrentLobby != null)
             {
-                error = "You're already in a lobby";
+                error = MstErrorCodes.LOBBY_ALREADY_JOINED;
                 return false;
             }
 
@@ -243,37 +259,37 @@ namespace MasterServerToolkit.MasterServer
 
             if (string.IsNullOrEmpty(username))
             {
-                error = "Invalid username";
+                error = MstErrorCodes.LOBBY_USERNAME_INVALID;
                 return false;
             }
 
             if (membersByUsernameList.ContainsKey(username))
             {
-                error = "Already in the lobby";
+                error = MstErrorCodes.LOBBY_MEMBER_ALREADY_EXISTS;
                 return false;
             }
 
             if (IsDestroyed)
             {
-                error = "Lobby is destroyed";
+                error = MstErrorCodes.LOBBY_DESTROYED;
                 return false;
             }
 
             if (!IsPlayerAllowed(username, lobbyUser))
             {
-                error = "You're not allowed";
+                error = MstErrorCodes.LOBBY_JOIN_FORBIDDEN;
                 return false;
             }
 
             if (membersByUsernameList.Values.Count >= MaxPlayers)
             {
-                error = "Lobby is full";
+                error = MstErrorCodes.LOBBY_FULL;
                 return false;
             }
 
             if (!Config.AllowJoiningWhenGameIsLive && State != LobbyState.Preparations)
             {
-                error = "Game is already in progress";
+                error = MstErrorCodes.LOBBY_GAME_IN_PROGRESS;
                 return false;
             }
 
@@ -285,13 +301,13 @@ namespace MasterServerToolkit.MasterServer
 
             if (team == null)
             {
-                error = "Invalid lobby team";
+                error = MstErrorCodes.LOBBY_TEAM_NOT_FOUND;
                 return false;
             }
 
             if (!team.AddMember(member))
             {
-                error = "Not allowed to join a team";
+                error = MstErrorCodes.LOBBY_TEAM_JOIN_FORBIDDEN;
                 return false;
             }
 
@@ -659,41 +675,84 @@ namespace MasterServerToolkit.MasterServer
                 return false;
             }
 
-            // Set starting status
-            State = LobbyState.StartingGameServer;
+            lock (roomLifecycleGate)
+            {
+                if (isDestroyed)
+                {
+                    task.KillSpawnedProcess();
+                    return false;
+                }
+
+                // Set starting status
+                State = LobbyState.StartingGameServer;
+            }
 
             // Set task
             SetGameSpawnTask(task);
 
-            return true;
+            return !IsDestroyed;
         }
 
         public void SetGameSpawnTask(SpawnTask task)
         {
-            if (task == null || gameSpawnTask == task)
+            if (task == null)
+                return;
+
+            SpawnTask previousTask;
+            bool rejectTask;
+
+            lock (roomLifecycleGate)
             {
+                rejectTask = isDestroyed;
+
+                if (rejectTask || ReferenceEquals(gameSpawnTask, task))
+                {
+                    previousTask = null;
+                }
+                else
+                {
+                    previousTask = gameSpawnTask;
+                    gameSpawnStatusSubscription?.Dispose();
+
+                    gameSpawnTask = task;
+                    IDisposable newSubscription = task.SubscribeStatusChanged(
+                        status => HandleGameSpawnStatus(task, status));
+
+                    if (isDestroyed || !ReferenceEquals(gameSpawnTask, task))
+                        newSubscription.Dispose();
+                    else
+                        gameSpawnStatusSubscription = newSubscription;
+                }
+            }
+
+            if (rejectTask)
+            {
+                task.KillSpawnedProcess();
                 return;
             }
 
-            if (gameSpawnTask != null)
-            {
-                // Unsubscribe from previous game
-                gameSpawnTask.OnStatusChangedEvent -= OnSpawnServerStatusChanged;
-                gameSpawnTask.Abort();
-            }
-
-            gameSpawnTask = task;
-            gameSpawnTask.OnStatusChangedEvent += OnSpawnServerStatusChanged;
+            previousTask?.Abort();
         }
 
         public void Destroy()
         {
-            if (IsDestroyed)
-            {
-                return;
-            }
+            RegisteredRoom roomToDetach;
+            SpawnTask taskToStop;
+            IDisposable statusSubscriptionToDispose;
 
-            IsDestroyed = true;
+            lock (roomLifecycleGate)
+            {
+                if (isDestroyed)
+                    return;
+
+                isDestroyed = true;
+                roomToDetach = lobbyRoom;
+                lobbyRoom = null;
+                taskToStop = gameSpawnTask;
+                statusSubscriptionToDispose = gameSpawnStatusSubscription;
+                gameSpawnTask = null;
+                gameSpawnStatusSubscription = null;
+            }
 
             // Remove players
             foreach (var member in membersByUsernameList.Values.ToList())
@@ -701,11 +760,13 @@ namespace MasterServerToolkit.MasterServer
                 RemovePlayer(member.Extension);
             }
 
-            if (gameSpawnTask != null)
+            if (taskToStop != null)
             {
-                gameSpawnTask.OnStatusChangedEvent -= OnSpawnServerStatusChanged;
-                gameSpawnTask.KillSpawnedProcess();
+                statusSubscriptionToDispose?.Dispose();
+                taskToStop.KillSpawnedProcess();
             }
+
+            roomToDetach?.DetachDestroyedListener(OnRoomDestroyed);
 
             OnDestroyedEvent?.Invoke(this);
         }
@@ -719,81 +780,146 @@ namespace MasterServerToolkit.MasterServer
 
         protected virtual void OnSpawnServerStatusChanged(SpawnStatus status)
         {
-            var isStarting = status > SpawnStatus.None && status < SpawnStatus.Finalized;
-
-            // If the game is currently starting
-            if (isStarting && State != LobbyState.StartingGameServer)
+            lock (roomLifecycleGate)
             {
-                State = LobbyState.StartingGameServer;
-                return;
-            }
+                if (isDestroyed)
+                    return;
 
-            // If game is running
-            if (status == SpawnStatus.Finalized)
-            {
-                State = LobbyState.GameInProgress;
-                OnGameServerFinalized();
-            }
+                var isStarting = status > SpawnStatus.None && status < SpawnStatus.Finalized;
 
-            // If game is aborted / closed
-            if (status < SpawnStatus.None)
-            {
-                // If game was open before
-                if (State == LobbyState.StartingGameServer)
+                // If the game is currently starting
+                if (isStarting && State != LobbyState.StartingGameServer)
                 {
-                    State = Config.PlayAgainEnabled ? LobbyState.Preparations : LobbyState.FailedToStart;
-                    BroadcastChatMessage("Failed to start a game server", true);
+                    State = LobbyState.StartingGameServer;
+                    return;
                 }
-                else
+
+                // If game is running
+                if (status == SpawnStatus.Finalized)
                 {
-                    State = Config.PlayAgainEnabled ? LobbyState.Preparations : LobbyState.GameOver;
+                    State = LobbyState.GameInProgress;
+                    OnGameServerFinalized();
                 }
+
+                // If game is aborted / closed
+                if (status < SpawnStatus.None)
+                {
+                    // If game was open before
+                    if (State == LobbyState.StartingGameServer)
+                    {
+                        State = Config.PlayAgainEnabled ? LobbyState.Preparations : LobbyState.FailedToStart;
+                        BroadcastChatMessage("Failed to start a game server", true);
+                    }
+                    else
+                    {
+                        State = Config.PlayAgainEnabled ? LobbyState.Preparations : LobbyState.GameOver;
+                    }
+                }
+            }
+        }
+
+        private void HandleGameSpawnStatus(SpawnTask sourceTask, SpawnStatus status)
+        {
+            lock (roomLifecycleGate)
+            {
+                if (isDestroyed || !ReferenceEquals(gameSpawnTask, sourceTask))
+                    return;
+
+                OnSpawnServerStatusChanged(status);
             }
         }
 
         protected virtual void OnGameServerFinalized()
         {
-            if (gameSpawnTask.FinalizationPacket == null)
+            SpawnTask finalizedTask;
+
+            lock (roomLifecycleGate)
+            {
+                if (isDestroyed)
+                    return;
+
+                finalizedTask = gameSpawnTask;
+            }
+
+            if (finalizedTask?.FinalizationPacket == null)
             {
                 return;
             }
 
-            var data = gameSpawnTask.FinalizationPacket.FinalizationData;
+            var data = finalizedTask.FinalizationPacket.FinalizationData;
 
-            if (!data.Has(MstDictKeys.ROOM_ID))
+            if (!data.Has(MstParamKeys.ROOM_ID))
             {
                 BroadcastChatMessage("Game server finalized, but room ID cannot be found", true);
                 return;
             }
 
             // Get room id from finalization data
-            var roomId = data.AsInt(MstDictKeys.ROOM_ID);
-            var room = Module.RoomsModule.GetRoomById(roomId);
+            var roomId = data.AsInt(MstParamKeys.ROOM_ID);
+            RoomsModule roomsModule = Module?.RoomsModule;
+
+            if (roomsModule == null)
+                return;
+
+            var room = roomsModule.GetRoomById(roomId);
 
             if (room == null)
             {
                 return;
             }
 
-            lobbyRoom = room;
+            RegisteredRoom previousRoom;
 
-            GameIp = room.Options.RoomIp;
-            GamePort = room.Options.RoomPort;
+            lock (roomLifecycleGate)
+            {
+                if (isDestroyed || !ReferenceEquals(gameSpawnTask, finalizedTask))
+                    return;
 
-            room.OnDestroyedEvent += OnRoomDestroyed;
+                if (ReferenceEquals(lobbyRoom, room))
+                    return;
+
+                if (!room.TryAttachDestroyedListener(OnRoomDestroyed))
+                    return;
+
+                if (!room.TryGetSnapshot(out RoomOptions roomOptions, out _, out _))
+                {
+                    room.DetachDestroyedListener(OnRoomDestroyed);
+                    return;
+                }
+
+                previousRoom = lobbyRoom;
+                lobbyRoom = room;
+                GameIp = roomOptions.RoomIp;
+                GamePort = roomOptions.RoomPort;
+            }
+
+            previousRoom?.DetachDestroyedListener(OnRoomDestroyed);
         }
 
         public void OnRoomDestroyed(RegisteredRoom room)
         {
-            room.OnDestroyedEvent -= OnRoomDestroyed;
+            IDisposable detachedStatusSubscription;
 
-            GameIp = "";
-            GamePort = -1;
-            lobbyRoom = null;
+            lock (roomLifecycleGate)
+            {
+                if (isDestroyed)
+                    return;
 
-            gameSpawnTask = null;
+                if (!ReferenceEquals(room, lobbyRoom))
+                    return;
 
-            State = Config.PlayAgainEnabled ? LobbyState.Preparations : LobbyState.GameOver;
+                lobbyRoom = null;
+                GameIp = "";
+                GamePort = -1;
+                detachedStatusSubscription = gameSpawnStatusSubscription;
+                gameSpawnTask = null;
+                gameSpawnStatusSubscription = null;
+                State = Config.PlayAgainEnabled ? LobbyState.Preparations : LobbyState.GameOver;
+            }
+
+            detachedStatusSubscription?.Dispose();
+
+            room.DetachDestroyedListener(OnRoomDestroyed);
         }
 
         public MstProperties GetPublicProperties(IPeer peer)
@@ -873,27 +999,44 @@ namespace MasterServerToolkit.MasterServer
         /// 
         /// </summary>
         /// <param name="message"></param>
-        public void GameAccessRequestHandler(IIncomingMessage message)
+        public Task GameAccessRequestHandler(IIncomingMessage message, CancellationToken cancellationToken)
         {
-            if (lobbyRoom == null)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            RegisteredRoom room;
+
+            lock (roomLifecycleGate)
+                room = lobbyRoom;
+
+            if (room == null || !room.IsActive)
             {
-                message.Respond("Game is not running", ResponseStatus.Failed);
-                return;
+                message.RespondError(ResponseStatus.Conflict, MstErrorCodes.LOBBY_GAME_NOT_RUNNING);
+                return Task.CompletedTask;
             }
 
             var requestData = MstProperties.FromBytes(message.AsBytes());
 
-            lobbyRoom.GetAccess(message.Peer, requestData, (access, error) =>
+            return room.GetAccessResponseAsync(message.Peer, requestData, (access, status, errorPayload) =>
             {
                 if (access == null)
                 {
-                    message.Respond(error ?? "Failed to get access to game", ResponseStatus.Failed);
+                    ResponseStatus errorStatus = status == ResponseStatus.Success
+                        ? ResponseStatus.Invalid
+                        : status;
+
+                    if (errorPayload == null || errorPayload.Length == 0)
+                    {
+                        message.RespondError(errorStatus, MstErrorCodes.RESPONSE_INVALID);
+                        return;
+                    }
+
+                    message.Respond(errorPayload, errorStatus);
                     return;
                 }
 
                 // Send back the access
                 message.Respond(access, ResponseStatus.Success);
-            });
+            }, cancellationToken);
         }
 
         /// <summary>
@@ -1086,7 +1229,7 @@ namespace MasterServerToolkit.MasterServer
                     StatusText = "Failed to start server";
                     break;
                 case LobbyState.Preparations:
-                    StatusText = "Failed to start server";
+                    StatusText = "Preparing for game";
                     break;
                 case LobbyState.StartingGameServer:
                     StatusText = "Starting game server";

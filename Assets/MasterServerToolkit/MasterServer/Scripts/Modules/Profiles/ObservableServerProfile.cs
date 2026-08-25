@@ -4,6 +4,8 @@ using System;
 
 namespace MasterServerToolkit.MasterServer
 {
+    public delegate void OnServerProfileHandler(ObservableServerProfile profile);
+
     /// <summary>
     /// Represents clients profile, which emits events about changes.
     /// Client, game server and master servers will create a similar

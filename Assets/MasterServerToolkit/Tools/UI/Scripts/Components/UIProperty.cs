@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Utils;
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,54 +12,65 @@ namespace MasterServerToolkit.UI
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Image used to display the property's icon. Leave empty when the widget does not show an icon.")]
         protected Image iconImage;
         [SerializeField]
+        [Tooltip("Text component used to display the property label.")]
         protected TextMeshProUGUI lableText;
         [SerializeField]
+        [Tooltip("Text component used to display the formatted current value.")]
         protected TextMeshProUGUI valueText;
         [SerializeField]
+        [Tooltip("Filled Image used as the property's progress indicator. Its fill amount is calculated from the configured minimum, current, and maximum values.")]
         protected Image progressBar;
         [SerializeField]
+        [Tooltip("Color used for the icon and progress bar when the normalized value is at its minimum.")]
         protected Color minColor = Color.red;
         [SerializeField]
+        [Tooltip("Color used for the icon and progress bar when the normalized value is at its maximum.")]
         protected Color maxColor = Color.green;
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Stable identifier used by callers to find or distinguish this property widget.")]
         protected string id = "propertyId";
         [SerializeField]
+        [Tooltip("Lowest accepted value. Values passed to SetValue are clamped to this boundary.")]
         protected float minValue = 0f;
         [SerializeField]
+        [Tooltip("Value shown by the widget. It is clamped between Min Value and Max Value.")]
         protected float currentValue = 50f;
         [SerializeField]
+        [Tooltip("Highest accepted value. It must be greater than Min Value for the progress and value text to update.")]
         protected float maxValue = float.MaxValue;
-        [SerializeField, Range(1f, 10f)]
-        protected float progressSpeed = 1f;
         [SerializeField]
-        protected bool smoothValue = true;
-        [SerializeField]
+        [Tooltip("Label displayed by the assigned label text component.")]
         protected string lable = "";
         [SerializeField]
+        [Tooltip("Number of fractional digits used when formatting the displayed value, from F0 through F5.")]
         protected UIPropertyValueFormat formatValue = UIPropertyValueFormat.F1;
         [SerializeField]
+        [Tooltip("When enabled, the progress runs from full at Min Value to empty at Max Value.")]
         protected bool invertValue = false;
 
         [Header("Editor Settings"), SerializeField]
+        [Tooltip("Shows the value text component when one is assigned.")]
         protected bool useValue = true;
         [SerializeField]
+        [Tooltip("Shows the label text component when one is assigned.")]
         protected bool useLable = true;
         [SerializeField]
+        [Tooltip("Shows the icon image when one is assigned.")]
         protected bool useIcon = true;
         [SerializeField]
+        [Tooltip("Shows the progress image when one is assigned.")]
         protected bool useProgress = true;
         [SerializeField]
+        [Tooltip("Applies the Min Color to Max Color gradient to the icon. The progress bar always uses this gradient.")]
         protected bool useColors = true;
 
         #endregion
 
         private float currentProgressValue = 0f;
-        private float lastTargetProgressValue = 0f;
-        private float targetProgressValue = 0f;
-        private TweenerActionInfo tweenerAction;
 
         public string Id
         {
@@ -162,7 +172,7 @@ namespace MasterServerToolkit.UI
                 }
 
                 if (valueText)
-                    valueText.text = (currentProgressValue * maxValue).ToString(formatValue.ToString());
+                    valueText.text = currentValue.ToString(formatValue.ToString());
             }
         }
 
@@ -174,7 +184,6 @@ namespace MasterServerToolkit.UI
                 maxValue = minValue;
 
             currentProgressValue = 0f;
-            targetProgressValue = 0f;
         }
 
         public void SetMax(float value)
@@ -185,7 +194,6 @@ namespace MasterServerToolkit.UI
                 maxValue = minValue;
 
             currentProgressValue = 0f;
-            targetProgressValue = 0f;
         }
 
         /// <summary>
@@ -212,23 +220,7 @@ namespace MasterServerToolkit.UI
                 currentDifference = Mathf.Abs(minValue - currentValue);
             }
 
-            targetProgressValue = currentDifference / totalDifference;
-
-            if (smoothValue && Application.isPlaying && lastTargetProgressValue != targetProgressValue)
-            {
-                lastTargetProgressValue = targetProgressValue;
-
-                tweenerAction?.Cancel();
-
-                tweenerAction = Tweener.Float(currentProgressValue, targetProgressValue, progressSpeed, (newValue) =>
-                {
-                    currentProgressValue = newValue;
-                });
-            }
-            else
-            {
-                currentProgressValue = targetProgressValue;
-            }
+            currentProgressValue = currentDifference / totalDifference;
         }
     }
 }

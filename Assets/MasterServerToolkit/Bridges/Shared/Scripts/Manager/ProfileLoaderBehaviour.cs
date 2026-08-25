@@ -8,17 +8,19 @@ namespace MasterServerToolkit.Bridges
     {
         #region INSPECTOR
 
-        [SerializeField]
+        [SerializeField, Tooltip("Database of observable property populators used to construct the local profile shape before values are requested from the master server.")]
         private ObservablePropertyPopulatorsDatabase populatorsDatabase;
 
         /// <summary>
         /// Invokes when profile is loaded
         /// </summary>
+        [Tooltip("Invoked after all requested profile values have been loaded successfully from the master server.")]
         public UnityEvent OnProfileLoadedEvent;
 
         /// <summary>
         /// Invokes when profile is not loaded successfully
         /// </summary>
+        [Tooltip("Invoked when the master server cannot fill the local profile with requested values.")]
         public UnityEvent OnProfileLoadFailedEvent;
 
         #endregion
@@ -37,7 +39,7 @@ namespace MasterServerToolkit.Bridges
         {
             base.Awake();
 
-            if (Mst.Client.Profiles.HasProfile == false)
+            if (!Mst.Client.Profiles.IsLoaded)
             {
                 Profile = CreateProfile();
             }
@@ -51,6 +53,7 @@ namespace MasterServerToolkit.Bridges
         /// Invokes when user profile is loaded
         /// </summary>
         protected virtual void OnProfileLoaded() { }
+
         /// <summary>
         /// 
         /// </summary>
@@ -60,7 +63,7 @@ namespace MasterServerToolkit.Bridges
         {
             var profile = new ObservableProfile();
 
-            foreach (var populator in populatorsDatabase.Populators)
+            foreach (var populator in populatorsDatabase)
             {
                 profile.Add(populator.Populate());
             }
@@ -73,7 +76,7 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public virtual void LoadProfile()
         {
-            if (Mst.Client.Profiles.HasProfile == false)
+            if (!Mst.Client.Profiles.IsLoaded)
             {
                 Mst.Client.Profiles.FillInProfileValues(Profile, (isSuccessful, error) =>
                 {

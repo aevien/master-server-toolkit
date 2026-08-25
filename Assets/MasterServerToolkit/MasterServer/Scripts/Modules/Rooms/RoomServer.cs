@@ -1,5 +1,7 @@
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,7 +12,7 @@ namespace MasterServerToolkit.MasterServer
     {
         #region INSPECTOR
 
-        [Header("Components"), SerializeField]
+        [Header("Components"), SerializeField, Tooltip("Room process manager that registers this room with the master and owns joined-player state. When None, the component searches the same GameObject at startup.")]
         private RoomServerManager roomServerManager;
 
         #endregion
@@ -19,6 +21,14 @@ namespace MasterServerToolkit.MasterServer
         /// Singleton instance of the room server behaviour
         /// </summary>
         public static RoomServer Instance { get; private set; }
+
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEditorPlayModeState()
+        {
+            Instance = null;
+        }
+#endif
 
         protected override void Awake()
         {
@@ -44,6 +54,14 @@ namespace MasterServerToolkit.MasterServer
             DontDestroyOnLoad(gameObject);
         }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            if (ReferenceEquals(Instance, this))
+                Instance = null;
+        }
+
         protected override void Start()
         {
             base.Start();
@@ -56,11 +74,11 @@ namespace MasterServerToolkit.MasterServer
             // Find room server if it is not assigned in inspector
             if (!roomServerManager) roomServerManager = GetComponent<RoomServerManager>();
 
-            // Set the max number of connections
-            maxConnections = roomServerManager.RoomOptions.MaxConnections;
+            //// Set the max number of connections
+            //maxConnections = roomServerManager.RoomOptions.MaxConnections;
 
-            // Start server with room options
-            StartServer(roomServerManager.RoomOptions.RoomIp, roomServerManager.RoomOptions.RoomPort);
+            //// Start server with room options
+            //StartServer(roomServerManager.RoomOptions.RoomIp, roomServerManager.RoomOptions.RoomPort);
         }
 
         protected override void OnStartedServer()
@@ -76,7 +94,7 @@ namespace MasterServerToolkit.MasterServer
                 logger.Info($"Room Server started and listening to: {serverIp}:{serverPort}");
 
                 if (roomServerManager)
-                    roomServerManager.OnServerStarted();
+                    roomServerManager.StartServer();
             });
         }
 
@@ -84,7 +102,7 @@ namespace MasterServerToolkit.MasterServer
         {
             logger.Info("Room Server stopped");
             base.OnStoppedServer();
-            if (roomServerManager) roomServerManager.OnServerStopped();
+            if (roomServerManager) roomServerManager.StopServer();
         }
 
         protected override void OnPeerDisconnected(IPeer peer)
@@ -97,34 +115,74 @@ namespace MasterServerToolkit.MasterServer
 
         #region MESSAGE_HANDLERS
 
-        protected virtual Task ValidateRoomAccessRequestHandler(IIncomingMessage message)
+        protected virtual async Task ValidateRoomAccessRequestHandler(IIncomingMessage message,
+            CancellationToken cancellationToken)
         {
-            try
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!roomServerManager)
             {
-                if (roomServerManager)
+                message.RespondError(ResponseStatus.ServiceUnavailable, MstErrorCodes.ROOM_ACCESS_UNAVAILABLE);
+                message.Peer.Disconnect("Room is invalid");
+                return;
+            }
+
+            var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            int completionState = 0;
+
+            using (cancellationToken.Register(() =>
+            {
+                if (Interlocked.CompareExchange(ref completionState, 1, 0) == 0)
+                    completion.TrySetCanceled();
+            }))
+            {
+                roomServerManager.ValidateRoomAccess(message.Peer.Id, message.AsString(), (isSuccess, error) =>
                 {
-                    roomServerManager.ValidateRoomAccess(message.Peer.Id, message.AsString(), (isSuccess, error) =>
+                    try
                     {
+                        int state = Volatile.Read(ref completionState);
+
+                        if (state == 0)
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                if (Interlocked.CompareExchange(ref completionState, 1, 0) == 0)
+                                    completion.TrySetCanceled();
+
+                                return;
+                            }
+
+                            if (Interlocked.CompareExchange(ref completionState, 2, 0) != 0)
+                                return;
+                        }
+                        else if (state != 2)
+                        {
+                            return;
+                        }
+
                         if (!isSuccess)
                         {
-                            logger.Error("Unauthorized access to room was rejected");
+                            logger.Error($"Unauthorized access to room was rejected. peerId={message.Peer.Id}");
+                            message.RespondError(ResponseStatus.Forbidden, MstErrorCodes.ROOM_ACCESS_DENIED);
                             message.Peer.Disconnect("Unauthorized access to room was rejected");
+                            completion.TrySetResult(true);
+                            return;
                         }
 
                         message.Respond(ResponseStatus.Success);
-                    });
-                }
-                else
-                {
-                    message.Peer.Disconnect("Room is invalid");
-                }
+                        completion.TrySetResult(true);
+                    }
+                    catch (Exception exception)
+                    {
+                        completion.TrySetException(exception);
+                    }
+                }, cancellationToken,
+                () => Interlocked.CompareExchange(ref completionState, 2, 0) == 0);
 
-                return Task.CompletedTask;
+                await completion.Task;
             }
-            catch (System.Exception ex)
-            {
-                return Task.FromException(ex);
-            }
+
+            cancellationToken.ThrowIfCancellationRequested();
         }
 
         #endregion

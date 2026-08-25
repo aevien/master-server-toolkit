@@ -87,6 +87,18 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public static IOutgoingMessage Create(ushort opCode, string message)
         {
+            if (message == null)
+                throw new System.ArgumentNullException(nameof(message));
+
+            int byteCount = Encoding.UTF8.GetByteCount(message);
+
+            if (byteCount > MstNetworkLimits.MaxTextPayloadByteCount)
+            {
+                throw new InvalidDataException(
+                    $"Text payload length {byteCount} exceeds the allowed limit " +
+                    $"{MstNetworkLimits.MaxTextPayloadByteCount}");
+            }
+
             return _factory.Create(opCode, Encoding.UTF8.GetBytes(message));
         }
 

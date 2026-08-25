@@ -19,6 +19,7 @@ namespace MasterServerToolkit.WebGL
         #region INSPECTOR
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Localization key used as the native WebGL prompt title when the TMP input field is clicked.")]
         private string title = "Input Field";
 
         #endregion

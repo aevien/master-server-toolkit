@@ -10,8 +10,10 @@ namespace MasterServerToolkit.Bridges
         #region INSPECTOR
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Optional TextMeshPro label updated on Start and whenever the MST localization language changes.")]
         private TextMeshProUGUI lableText;
         [SerializeField]
+        [Tooltip("Key resolved through Mst.Localization and written to the target label. The key must exist in the loaded localization data.")]
         private string localizationKey = "localizationKey";
 
         #endregion

@@ -87,7 +87,7 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public virtual MstJson ToJson()
         {
-            return MstJson.EmptyObject;
+            return MstJson.CreateObject();
         }
 
         public void FromJson(string json)

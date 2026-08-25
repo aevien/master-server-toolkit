@@ -60,21 +60,21 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="message"></param>
         /// <param name="statusCode"></param>
-        void Respond(IOutgoingMessage message, ResponseStatus statusCode = ResponseStatus.Default);
+        void Respond(IOutgoingMessage message, ResponseStatus statusCode = ResponseStatus.Success);
 
         /// <summary>
         /// Respond with data (message is created internally)
         /// </summary>
         /// <param name="data"></param>
         /// <param name="statusCode"></param>
-        void Respond(byte[] data, ResponseStatus statusCode = ResponseStatus.Default);
+        void Respond(byte[] data, ResponseStatus statusCode = ResponseStatus.Success);
 
         /// <summary>
         /// Respond with data (message is created internally)
         /// </summary>
         /// <param name="data"></param>
         /// <param name="statusCode"></param>
-        void Respond(ISerializablePacket packet, ResponseStatus statusCode = ResponseStatus.Default);
+        void Respond(ISerializablePacket packet, ResponseStatus statusCode = ResponseStatus.Success);
 
         /// <summary>
         /// Respond with empty message and status code
@@ -85,21 +85,21 @@ namespace MasterServerToolkit.Networking
         /// <summary>
         /// Respond with string message
         /// </summary>
-        void Respond(string message, ResponseStatus statusCode = ResponseStatus.Default);
+        void Respond(string message, ResponseStatus statusCode = ResponseStatus.Success);
 
         /// <summary>
         /// Respond with integer
         /// </summary>
         /// <param name="response"></param>
         /// <param name="statusCode"></param>
-        void Respond(int response, ResponseStatus statusCode = ResponseStatus.Default);
+        void Respond(int response, ResponseStatus statusCode = ResponseStatus.Success);
 
         /// <summary>
         /// Respond with integer
         /// </summary>
         /// <param name="response"></param>
         /// <param name="statusCode"></param>
-        void Respond(bool response, ResponseStatus statusCode = ResponseStatus.Default);
+        void Respond(bool response, ResponseStatus statusCode = ResponseStatus.Success);
 
         /// <summary>
         /// Returns contents of this message. Mutable

@@ -4,7 +4,7 @@ namespace MasterServerToolkit.MasterServer
 {
     public class NotFound : StringResult
     {
-        public NotFound(string value = "") : base(value)
+        public NotFound(string value = "Route not found") : base(value)
         {
             StatusCode = (int)HttpStatusCode.NotFound;
         }

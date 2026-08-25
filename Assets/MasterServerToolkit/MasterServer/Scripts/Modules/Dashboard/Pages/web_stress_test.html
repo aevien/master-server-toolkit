@@ -1,0 +1,518 @@
+<div id="app">
+    <!-- Configuration Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-gear-fill text-secondary"></i>
+                        Test Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="serverUrl" class="form-label">Server URL</label>
+                            <input type="text" class="form-control" id="serverUrl" v-model="config.serverUrl"
+                                   :disabled="testRunning" placeholder="http://127.0.0.1:5056">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endpoint" class="form-label">Endpoint</label>
+                            <input type="text" class="form-control" id="endpoint" v-model="config.endpoint" :disabled="testRunning" placeholder="/api/v1/info/server">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">HTTP Method</label>
+                            <select class="form-select" v-model="config.method" :disabled="testRunning">
+                                <option>GET</option>
+                                <option>POST</option>
+                                <option>PUT</option>
+                                <option>PATCH</option>
+                                <option>DELETE</option>
+                                <option>HEAD</option>
+                                <option>OPTIONS</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="requestsPerSecond" class="form-label">Requests per Second</label>
+                            <input type="number" class="form-control" id="requestsPerSecond"
+                                   v-model.number="config.requestsPerSecond" :disabled="testRunning" min="1" max="1000">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="testDuration" class="form-label">Test Duration (seconds)</label>
+                            <input type="number" class="form-control" id="testDuration"
+                                   v-model.number="config.testDuration" :disabled="testRunning" min="1" max="300">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Test Status</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <span :class="statusBadgeClass">{{ statusBadgeText }}</span>
+                                </span>
+                                <input type="text" class="form-control" :value="statusText" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-12"><hr class="my-2"></div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Query params (JSON object)</label>
+                            <textarea class="form-control" rows="3" v-model="config.queryParams" :disabled="testRunning"
+                                      placeholder='{"page":1,"search":"test"}'></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Headers (JSON object)</label>
+                            <textarea class="form-control" rows="3" v-model="config.headers" :disabled="testRunning"
+                                      placeholder='{"Authorization":"Bearer ..."}'></textarea>
+                        </div>
+
+                        <div class="col-12" v-if="methodHasBody">
+                            <label class="form-label">Body (JSON)</label>
+                            <textarea class="form-control" rows="6" v-model="config.body" :disabled="testRunning"
+                                      placeholder='{"foo":"bar"}'></textarea>
+                            <div class="form-text">Будет отправлено только для {{config.method}}.</div>
+                        </div>
+
+                        <div class="col-12" v-if="jsonError">
+                            <div class="alert alert-danger py-2 my-2">{{ jsonError }}</div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-success btn-lg" @click="startTest"
+                                :disabled="testRunning || !isConfigValid || !!jsonError">
+                            <i class="bi bi-play-fill"></i> Start Test
+                        </button>
+                        <button type="button" class="btn btn-danger btn-lg" @click="stopTest" :disabled="!testRunning">
+                            <i class="bi bi-stop-fill"></i> Stop Test
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-lg" @click="resetTest">
+                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Test Progress</h6>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar" :class="progressBarClass" role="progressbar"
+                             :style="{ width: progressPercentage + '%' }">
+                            <span>{{ Math.round(progressPercentage) }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3" v-for="card in statCards" :key="card.label">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title" :class="card.class">{{ card.value }}</h5>
+                    <p class="card-text small text-muted">{{ card.label }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Time Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-graph-up text-info"></i>
+                        Response Time Trend
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas ref="chartCanvas" style="height: 200px; width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-journal-text text-secondary"></i>
+                        Event Log
+                    </h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @click="clearLog">
+                        <i class="bi bi-trash"></i> Clear Log
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div ref="logContainer" class="bg-dark text-light p-3 rounded"
+                         style="height: 300px; overflow-y: auto; font-family: 'Courier New', monospace;">
+                        <div v-for="(entry, index) in logEntries" :key="index" class="mb-1">
+                            <span :class="entry.class">{{ entry.icon }} [{{ entry.timestamp }}] {{ entry.message }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { createApp, ref, computed, reactive, onMounted, nextTick } from 'vue'
+
+createApp({
+  setup () {
+    // --- Config ---
+    const config = reactive({
+      serverUrl: 'http://127.0.0.1:5056',
+      endpoint: '/api/v1/info/server',
+      method: 'GET',
+      queryParams: '',     // JSON object as string
+      headers: '',         // JSON object as string
+      body: '',            // JSON object as string
+      requestsPerSecond: 10,
+      testDuration: 30
+    })
+
+    // --- State ---
+    const testRunning = ref(false)
+    const testStartTime = ref(null)
+    const progressPercentage = ref(0)
+
+    const stats = reactive({
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      responseTimes: [],
+      currentSecondRequests: 0,
+      lastSecondTimestamp: Date.now()
+    })
+
+    const statusText = ref('Ready')
+    const logEntries = ref([])
+    const chartData = ref([])
+    const chartCanvas = ref(null)
+    const logContainer = ref(null)
+
+    let testInterval = null
+    let progressInterval = null
+    let chartContext = null
+
+    // --- Helpers / Validation ---
+    const methodHasBody = computed(() => ['POST','PUT','PATCH','DELETE'].includes(config.method.toUpperCase()))
+
+    const parsedQuery = computed(() => parseJsonObject(config.queryParams))
+    const parsedHeaders = computed(() => parseJsonObject(config.headers))
+    const parsedBody = computed(() => methodHasBody.value ? parseJsonObject(config.body) : null)
+
+    const jsonError = ref('')
+    function validateJsonFields () {
+      jsonError.value = ''
+      // validate query
+      if (config.queryParams && parsedQuery.value === null) jsonError.value = 'Query params: invalid JSON (ожидается объект)'
+      // validate headers
+      if (!jsonError.value && config.headers && parsedHeaders.value === null) jsonError.value = 'Headers: invalid JSON (ожидается объект)'
+      // validate body when needed
+      if (!jsonError.value && methodHasBody.value && config.body && parsedBody.value === null) jsonError.value = 'Body: invalid JSON (ожидается объект)'
+    }
+
+    function parseJsonObject (str) {
+      if (!str || !str.trim()) return {}
+      try {
+        const v = JSON.parse(str)
+        return (v && typeof v === 'object' && !Array.isArray(v)) ? v : null
+      } catch (e) {
+        return null
+      }
+    }
+
+    const isConfigValid = computed(() =>
+      config.serverUrl.trim() !== '' &&
+      config.requestsPerSecond > 0 &&
+      config.testDuration > 0
+    )
+
+    const averageResponseTime = computed(() => {
+      if (stats.responseTimes.length === 0) return 0
+      const sum = stats.responseTimes.reduce((a,b)=>a+b,0)
+      return Math.round(sum / stats.responseTimes.length)
+    })
+
+    const successRate = computed(() => {
+      if (stats.totalRequests === 0) return 0
+      return ((stats.successfulRequests / stats.totalRequests) * 100).toFixed(1)
+    })
+
+    const currentRPS = ref(0)
+
+    const statusBadgeClass = computed(() => {
+      if (testRunning.value) return 'badge bg-success'
+      if (stats.totalRequests > 0) return 'badge bg-info'
+      return 'badge bg-secondary'
+    })
+
+    const statusBadgeText = computed(() => {
+      if (testRunning.value) return 'Running'
+      if (stats.totalRequests > 0) return 'Completed'
+      return 'Ready'
+    })
+
+    const progressBarClass = computed(() => {
+      if (testRunning.value) return 'progress-bar-striped progress-bar-animated bg-success'
+      if (progressPercentage.value === 100) return 'bg-info'
+      return 'bg-secondary'
+    })
+
+    const statCards = computed(() => ([
+      { label: 'Total Requests', class: 'text-primary', value: stats.totalRequests },
+      { label: 'Successful', class: 'text-success', value: stats.successfulRequests },
+      { label: 'Failed', class: 'text-danger', value: stats.failedRequests },
+      { label: 'Avg Time (ms)', class: 'text-info', value: averageResponseTime.value },
+      { label: 'Current RPS', class: 'text-warning', value: currentRPS.value },
+      { label: 'Success Rate', class: 'text-dark', value: successRate.value + '%' }
+    ]))
+
+    // --- Log ---
+    function addLog (message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString()
+      const styles = {
+        info: { class: 'text-white', icon: '📘' },
+        success: { class: 'text-success', icon: '✅' },
+        error: { class: 'text-danger', icon: '❌' },
+        warning: { class: 'text-warning', icon: '⚠️' }
+      }
+      const s = styles[type] || styles.info
+      logEntries.value.push({ timestamp, message, class: s.class, icon: s.icon })
+      nextTick(() => {
+        if (logContainer.value) logContainer.value.scrollTop = logContainer.value.scrollHeight
+      })
+    }
+
+    // --- Networking ---
+    function buildUrl () {
+      const base = config.serverUrl.trim().replace(/\/+$/,'')
+      const endpoint = ('/' + (config.endpoint || '').trim()).replace(/\/{2,}/g,'/')
+      const url = new URL(base + endpoint)
+      const q = parsedQuery.value || {}
+      Object.keys(q).forEach(k => {
+        const v = q[k]
+        if (Array.isArray(v)) v.forEach(item => url.searchParams.append(k, String(item)))
+        else if (v !== undefined && v !== null) url.searchParams.append(k, String(v))
+      })
+      return url.toString()
+    }
+
+    async function makeRequest () {
+      const startTime = Date.now()
+      const url = buildUrl()
+
+      // Compose headers: user headers have priority; add Content-Type only if body present and not set
+      const hdrs = Object.assign({}, parsedHeaders.value || {})
+      let payload = undefined
+      if (methodHasBody.value && parsedBody.value && Object.keys(parsedBody.value).length > 0) {
+        if (!('Content-Type' in Object.keys(hdrs).reduce((a,k)=> (a[k.toLowerCase()]=hdrs[k],a),{}))) {
+          hdrs['Content-Type'] = 'application/json'
+        }
+        payload = JSON.stringify(parsedBody.value)
+      }
+
+      try {
+        const response = await mst.apiFetch(url, {
+          method: config.method,
+          cache: 'no-cache',
+          headers: hdrs,
+          body: payload
+        }, { toastErrors: false })
+
+        const endTime = Date.now()
+        const responseTime = endTime - startTime
+
+        stats.totalRequests++
+        stats.currentSecondRequests++
+        stats.responseTimes.push(responseTime)
+
+        chartData.value.push(responseTime)
+        if (chartData.value.length > 50) chartData.value.shift()
+
+        if (response.ok) {
+          stats.successfulRequests++
+          if (stats.totalRequests % 10 === 0) {
+            addLog(`Request #${stats.totalRequests}: ${config.method} ${response.status} (${responseTime}ms)`, 'success')
+          }
+        } else {
+          stats.failedRequests++
+          addLog(`Error #${stats.totalRequests}: ${config.method} ${response.status} ${response.statusText} (${responseTime}ms)`, 'error')
+        }
+      } catch (error) {
+        const endTime = Date.now()
+        const responseTime = endTime - startTime
+        stats.totalRequests++
+        stats.failedRequests++
+        stats.currentSecondRequests++
+        addLog(`Network error #${stats.totalRequests}: ${error.message} (${responseTime}ms)`, 'error')
+      }
+
+      updateChart()
+    }
+
+    // --- Chart ---
+    function updateChart () {
+      if (!chartContext || chartData.value.length < 2) return
+      const canvas = chartCanvas.value
+      const width = canvas.width = canvas.offsetWidth
+      const height = canvas.height = canvas.offsetHeight
+
+      chartContext.clearRect(0, 0, width, height)
+
+      const maxTime = Math.max(...chartData.value)
+      const minTime = Math.min(...chartData.value)
+      const range = maxTime - minTime || 1
+
+      chartContext.strokeStyle = '#e9ecef'
+      chartContext.lineWidth = 1
+      for (let i = 0; i <= 5; i++) {
+        const y = (height / 5) * i
+        chartContext.beginPath()
+        chartContext.moveTo(0, y)
+        chartContext.lineTo(width, y)
+        chartContext.stroke()
+      }
+
+      chartContext.strokeStyle = '#0d6efd'
+      chartContext.lineWidth = 2
+      chartContext.beginPath()
+      chartData.value.forEach((time, index) => {
+        const x = (width / (chartData.value.length - 1)) * index
+        const y = height - ((time - minTime) / range) * height
+        if (index === 0) chartContext.moveTo(x, y)
+        else chartContext.lineTo(x, y)
+      })
+      chartContext.stroke()
+
+      chartContext.fillStyle = '#6c757d'
+      chartContext.font = '12px Arial'
+      chartContext.fillText(`${Math.round(maxTime)}ms`, 5, 15)
+      chartContext.fillText(`${Math.round(minTime)}ms`, 5, height - 5)
+    }
+
+    // --- Control ---
+    function startTest () {
+      validateJsonFields()
+      if (!isConfigValid.value) return addLog('Please check your configuration settings', 'error')
+      if (jsonError.value) return addLog(jsonError.value, 'error')
+      if (config.requestsPerSecond > 100) addLog('Warning: High request rate may overload the server!', 'warning')
+
+      testRunning.value = true
+      testStartTime.value = Date.now()
+      statusText.value = 'Running stress test...'
+
+      addLog(`🚀 Starting: ${config.method} @ ${config.requestsPerSecond} rps for ${config.testDuration}s`, 'info')
+      addLog(`🎯 URL: ${buildUrl()}`, 'info')
+
+      const intervalMs = 1000 / config.requestsPerSecond
+      testInterval = setInterval(() => { if (testRunning.value) makeRequest() }, intervalMs)
+
+      progressInterval = setInterval(updateProgress, 100)
+
+      stats.lastSecondTimestamp = Date.now()
+      const rpsInterval = setInterval(() => {
+        if (!testRunning.value) return clearInterval(rpsInterval)
+        currentRPS.value = stats.currentSecondRequests
+        stats.currentSecondRequests = 0
+      }, 1000)
+    }
+
+    function updateProgress () {
+      if (!testRunning.value || !testStartTime.value) return
+      const elapsed = Date.now() - testStartTime.value
+      const total = config.testDuration * 1000
+      progressPercentage.value = Math.min((elapsed / total) * 100, 100)
+      if (elapsed >= total) stopTest()
+    }
+
+    function stopTest () {
+      if (!testRunning.value) return
+      testRunning.value = false
+      statusText.value = 'Test completed'
+      if (testInterval) { clearInterval(testInterval); testInterval = null }
+      if (progressInterval) { clearInterval(progressInterval); progressInterval = null }
+      progressPercentage.value = 100
+
+      const duration = testStartTime.value ? (Date.now() - testStartTime.value) / 1000 : 0
+      addLog(`🏁 Completed in ${duration.toFixed(1)}s`, 'success')
+      addLog(`📊 Results: ${stats.successfulRequests}/${stats.totalRequests} successful`, 'info')
+
+      if (stats.responseTimes.length > 0) {
+        const avg = averageResponseTime.value
+        const max = Math.max(...stats.responseTimes)
+        const min = Math.min(...stats.responseTimes)
+        addLog(`⏱️ Response time: min=${min}ms, max=${max}ms, avg=${avg}ms`, 'info')
+      }
+    }
+
+    function resetTest () {
+      if (testRunning.value) stopTest()
+
+      Object.assign(stats, {
+        totalRequests: 0,
+        successfulRequests: 0,
+        failedRequests: 0,
+        responseTimes: [],
+        currentSecondRequests: 0,
+        lastSecondTimestamp: Date.now()
+      })
+
+      progressPercentage.value = 0
+      statusText.value = 'Ready'
+      currentRPS.value = 0
+      chartData.value = []
+
+      clearLog()
+      addLog('🔄 System reset completed, ready for new test', 'info')
+      addLog('💡 Configure test parameters and click "Start Test"', 'info')
+
+      updateChart()
+    }
+
+    function clearLog () { logEntries.value = [] }
+
+    onMounted(() => {
+      if (chartCanvas.value) chartContext = chartCanvas.value.getContext('2d')
+      addLog('🎯 Web Server Stress Test Tool initialized and ready', 'success')
+      addLog('⚙️ Choose method, configure target, and click "Start Test"', 'info')
+      addLog('💡 You can pass query, headers, body as JSON objects', 'info')
+    })
+
+    return {
+      // state
+      config, testRunning, progressPercentage, stats, statusText, logEntries,
+      // computed
+      isConfigValid, averageResponseTime, successRate, currentRPS, statusBadgeClass, statusBadgeText, progressBarClass, statCards, methodHasBody, jsonError,
+      // refs
+      chartCanvas, logContainer,
+      // methods
+      startTest, stopTest, resetTest, clearLog
+    }
+  }
+}).mount('#app')
+</script>

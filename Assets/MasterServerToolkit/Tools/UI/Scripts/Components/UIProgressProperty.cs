@@ -11,9 +11,11 @@ namespace MasterServerToolkit.UI
         protected float targetValue = 0f;
 
         [Header("Progress Components"), SerializeField]
+        [Tooltip("Filled Image used for the animated progress display. If the assigned image is not Filled, the component configures it as a horizontal Filled image at runtime.")]
         private Image progressImage;
 
         [Header("Progress Settings"), SerializeField]
+        [Tooltip("Maximum accepted progress value. Values passed to SetProgressValue are clamped from 0 to this value. Values of 0 or less are corrected to 1 in the Inspector.")]
         protected float progressMaxValue;
 
         protected override void Awake()

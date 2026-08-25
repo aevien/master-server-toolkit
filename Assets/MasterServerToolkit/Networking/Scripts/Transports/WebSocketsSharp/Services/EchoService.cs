@@ -1,4 +1,5 @@
 ﻿using MasterServerToolkit.Extensions;
+#if !UNITY_WEBGL || UNITY_EDITOR
 using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using System;
@@ -17,13 +18,13 @@ namespace MasterServerToolkit.Networking
 
         protected override void OnMessage(MessageEventArgs e)
         {
-            Mst.TrafficStatistics.RegisterGenericTrafic(e.RawData.LongLength, TrafficType.Incoming);
+            Mst.Traffic.RegisterGenericTrafic(e.RawData.LongLength, TrafficType.Incoming);
 
             Logs.Info($"Message size: {e.RawData.LongLength / 1024f}kb.");
 
             if (ReadyState == WebSocketState.Open)
             {
-                Mst.TrafficStatistics.RegisterGenericTrafic(e.RawData.LongLength, TrafficType.Outgoing);
+                Mst.Traffic.RegisterGenericTrafic(e.RawData.LongLength, TrafficType.Outgoing);
 
                 string response = $"MST Received echo message from you:\n" +
                     $"Size: {e.RawData.LongLength / 1024f}kb.\n" +
@@ -42,7 +43,7 @@ namespace MasterServerToolkit.Networking
         protected override void OnClose(CloseEventArgs e)
         {
             base.OnClose(e);
-            Logs.Info($"Connection closed. Reason: [{e.Reason}], WasClean: [{e.WasClean}]".ToRed());
+            Logs.Info($"Connection closed. Reason: [{e.Reason}], WasClean: [{e.WasClean}]");
         }
 
         protected override void OnError(ErrorEventArgs e)
@@ -53,3 +54,5 @@ namespace MasterServerToolkit.Networking
         }
     }
 }
+
+#endif

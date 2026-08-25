@@ -7,7 +7,7 @@ namespace MasterServerToolkit.MasterServer
     {
         public static MstJson FromList(this List<int> list)
         {
-            var json = MstJson.EmptyArray;
+            var json = MstJson.CreateArray();
 
             foreach (var item in list)
             {

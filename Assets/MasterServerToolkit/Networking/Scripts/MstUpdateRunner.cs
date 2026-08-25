@@ -2,6 +2,7 @@
 using MasterServerToolkit.Utils;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace MasterServerToolkit.Networking
@@ -15,6 +16,11 @@ namespace MasterServerToolkit.Networking
         /// Method called when the object needs to be updated
         /// </summary>
         void DoUpdate();
+
+        /// <summary>
+        /// Execution priority (lower number = higher priority)
+        /// </summary>
+        int Priority { get; }
     }
 
     /// <summary>
@@ -26,11 +32,6 @@ namespace MasterServerToolkit.Networking
         /// Update interval in seconds (0 = every frame)
         /// </summary>
         float UpdateInterval { get; }
-
-        /// <summary>
-        /// Execution priority (lower number = higher priority)
-        /// </summary>
-        int Priority { get; }
     }
 
     /// <summary>
@@ -49,18 +50,39 @@ namespace MasterServerToolkit.Networking
             public float interval;
             public float nextUpdateTime;
             public int priority;
+            public long registrationOrder;
 
-            public UpdateItem(IUpdatable updatable, float interval, int priority)
+            public UpdateItem(IUpdatable updatable, float interval, int priority, long registrationOrder)
             {
                 this.updatable = updatable;
                 this.interval = interval;
                 this.priority = priority;
+                this.registrationOrder = registrationOrder;
                 this.nextUpdateTime = interval > 0 ? Time.time + interval : 0;
             }
         }
 
+        private sealed class UpdatableReferenceComparer : IEqualityComparer<IUpdatable>
+        {
+            public bool Equals(IUpdatable first, IUpdatable second)
+            {
+                return ReferenceEquals(first, second);
+            }
+
+            public int GetHashCode(IUpdatable updatable)
+            {
+                return ReferenceEquals(updatable, null)
+                    ? 0
+                    : RuntimeHelpers.GetHashCode(updatable);
+            }
+        }
+
+        private static readonly IEqualityComparer<IUpdatable> updatableReferenceComparer =
+            new UpdatableReferenceComparer();
+
         // HashSet for tracking all registered objects to ensure uniqueness
-        private readonly HashSet<IUpdatable> registeredObjects = new HashSet<IUpdatable>();
+        private readonly HashSet<IUpdatable> registeredObjects =
+            new HashSet<IUpdatable>(updatableReferenceComparer);
 
         // List for objects that update every frame
         private readonly List<UpdateItem> everyFrameItems = new List<UpdateItem>();
@@ -71,12 +93,15 @@ namespace MasterServerToolkit.Networking
         // Temporary lists for safe addition/removal during iteration
         private readonly List<UpdateItem> itemsToAdd = new List<UpdateItem>();
         private readonly List<IUpdatable> itemsToRemove = new List<IUpdatable>();
+        private readonly List<IUpdatable> itemsToUpdate = new List<IUpdatable>();
 
         // Flag indicating we are in the process of updating
         private bool isUpdating = false;
 
         // Flag to track when sorting is needed
         private bool needsSorting = false;
+
+        private long nextRegistrationOrder;
 
         /// <summary>
         /// Total count of updatable objects managed by this runner
@@ -103,6 +128,8 @@ namespace MasterServerToolkit.Networking
 
             try
             {
+                SortItemsIfNeeded();
+
                 // Update objects that run every frame
                 UpdateEveryFrameItems();
 
@@ -124,27 +151,22 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         private void UpdateEveryFrameItems()
         {
-            // Sort by priority if needed
-            if (needsSorting && everyFrameItems.Count > 1)
-            {
-                everyFrameItems.Sort((a, b) => a.priority.CompareTo(b.priority));
-            }
-
-            // Iterate backwards for safe removal during iteration
-            for (int i = everyFrameItems.Count - 1; i >= 0; i--)
+            for (int i = 0; i < everyFrameItems.Count;)
             {
                 var item = everyFrameItems[i];
 
                 // Check if object was marked for removal
-                if (item.updatable == null || itemsToRemove.Contains(item.updatable))
+                if (item.updatable == null || ContainsReference(itemsToRemove, item.updatable))
                 {
                     everyFrameItems.RemoveAt(i);
+                    registeredObjects.Remove(item.updatable);
                     continue;
                 }
 
                 try
                 {
                     item.updatable.DoUpdate();
+                    i++;
                 }
                 catch (Exception e)
                 {
@@ -163,22 +185,15 @@ namespace MasterServerToolkit.Networking
         {
             float currentTime = Time.time;
 
-            // Sort by priority if needed
-            if (needsSorting && intervalItems.Count > 1)
-            {
-                intervalItems.Sort((a, b) => a.priority.CompareTo(b.priority));
-                needsSorting = false;
-            }
-
-            // Iterate backwards for safe removal
-            for (int i = intervalItems.Count - 1; i >= 0; i--)
+            for (int i = 0; i < intervalItems.Count;)
             {
                 var item = intervalItems[i];
 
                 // Check if object was marked for removal
-                if (item.updatable == null || itemsToRemove.Contains(item.updatable))
+                if (item.updatable == null || ContainsReference(itemsToRemove, item.updatable))
                 {
                     intervalItems.RemoveAt(i);
+                    registeredObjects.Remove(item.updatable);
                     continue;
                 }
 
@@ -197,9 +212,30 @@ namespace MasterServerToolkit.Networking
                         intervalItems.RemoveAt(i);
                         // Also remove from registered objects when an error occurs
                         registeredObjects.Remove(item.updatable);
+                        continue;
                     }
                 }
+
+                i++;
             }
+        }
+
+        private void SortItemsIfNeeded()
+        {
+            if (!needsSorting)
+                return;
+
+            everyFrameItems.Sort(CompareUpdateItems);
+            intervalItems.Sort(CompareUpdateItems);
+            needsSorting = false;
+        }
+
+        private static int CompareUpdateItems(UpdateItem first, UpdateItem second)
+        {
+            int priorityComparison = first.priority.CompareTo(second.priority);
+            return priorityComparison != 0
+                ? priorityComparison
+                : first.registrationOrder.CompareTo(second.registrationOrder);
         }
 
         /// <summary>
@@ -216,6 +252,17 @@ namespace MasterServerToolkit.Networking
                     registeredObjects.Remove(updatable);
                 }
                 itemsToRemove.Clear();
+            }
+
+            if (itemsToUpdate.Count > 0)
+            {
+                foreach (var updatable in itemsToUpdate)
+                {
+                    if (registeredObjects.Contains(updatable))
+                        ApplyUpdatedParameters(updatable);
+                }
+
+                itemsToUpdate.Clear();
             }
 
             // Then add new objects
@@ -250,10 +297,10 @@ namespace MasterServerToolkit.Networking
         private void RemoveFromLists(IUpdatable updatable)
         {
             // Remove from every frame objects list
-            everyFrameItems.RemoveAll(item => item.updatable == updatable);
+            everyFrameItems.RemoveAll(item => ReferenceEquals(item.updatable, updatable));
 
             // Remove from interval objects list
-            intervalItems.RemoveAll(item => item.updatable == updatable);
+            intervalItems.RemoveAll(item => ReferenceEquals(item.updatable, updatable));
         }
 
         /// <summary>
@@ -280,9 +327,13 @@ namespace MasterServerToolkit.Networking
         /// <param name="updatable">The object to add</param>
         private void AddInternal(IUpdatable updatable)
         {
-            // Check if the object is already registered
             if (registeredObjects.Contains(updatable))
             {
+                // Re-registering during the same update cancels a deferred removal. The existing
+                // update item is still present until pending operations are processed.
+                if (isUpdating && RemoveReference(itemsToRemove, updatable))
+                    return;
+
                 Logs.Warn($"Object {updatable.GetType().Name} is already registered in MstUpdateRunner");
                 return;
             }
@@ -293,32 +344,26 @@ namespace MasterServerToolkit.Networking
                 // Check if already in pending additions
                 foreach (var item in itemsToAdd)
                 {
-                    if (item.updatable == updatable)
+                    if (ReferenceEquals(item.updatable, updatable))
                     {
                         Logs.Warn($"Object {updatable.GetType().Name} is already in pending additions");
                         return;
                     }
                 }
 
-                // Check if in pending removals - if so, remove it from there
-                if (itemsToRemove.Contains(updatable))
-                {
-                    itemsToRemove.Remove(updatable);
-                }
             }
 
             // Determine object parameters
             float interval = 0f;
-            int priority = 100;
+            int priority = updatable.Priority;
 
             // If object supports intervals, get them
             if (updatable is IIntervalUpdatable intervalUpdatable)
             {
                 interval = intervalUpdatable.UpdateInterval;
-                priority = intervalUpdatable.Priority;
             }
 
-            var newItem = new UpdateItem(updatable, interval, priority);
+            var newItem = new UpdateItem(updatable, interval, priority, nextRegistrationOrder++);
 
             // If we're in the process of updating, delay the addition
             if (isUpdating)
@@ -355,7 +400,7 @@ namespace MasterServerToolkit.Networking
                 return;
             }
 
-            if (TryGetOrCreate(out var instance))
+            if (TryGetExisting(out var instance))
             {
                 instance.RemoveInternal(updatable);
             }
@@ -370,20 +415,24 @@ namespace MasterServerToolkit.Networking
             // Check if the object is actually registered
             if (!registeredObjects.Contains(updatable))
             {
-                return;  // Object is not registered, nothing to remove
+                if (isUpdating)
+                    itemsToAdd.RemoveAll(item => ReferenceEquals(item.updatable, updatable));
+
+                return;
             }
 
             // If we're in the process of updating, delay the removal
             if (isUpdating)
             {
                 // Make sure it's not already in the removal list
-                if (!itemsToRemove.Contains(updatable))
+                if (!ContainsReference(itemsToRemove, updatable))
                 {
                     itemsToRemove.Add(updatable);
                 }
 
                 // Remove from pending additions if present
-                itemsToAdd.RemoveAll(item => item.updatable == updatable);
+                itemsToAdd.RemoveAll(item => ReferenceEquals(item.updatable, updatable));
+                RemoveReference(itemsToUpdate, updatable);
             }
             else
             {
@@ -399,7 +448,7 @@ namespace MasterServerToolkit.Networking
         /// <returns>True if the object is managed by this runner</returns>
         public static bool Contains(IUpdatable updatable)
         {
-            if (updatable == null || !TryGetOrCreate(out var instance))
+            if (updatable == null || !TryGetExisting(out var instance))
             {
                 return false;
             }
@@ -433,52 +482,50 @@ namespace MasterServerToolkit.Networking
         /// </remarks>
         private void UpdateParametersInternal(IUpdatable updatable)
         {
-            // First check if the object is actually registered in our system
-            // Using HashSet provides O(1) lookup performance
             if (!registeredObjects.Contains(updatable))
+                return;
+
+            if (isUpdating)
             {
-                // Object is not registered, nothing to update
-                // This is not an error condition - just silently return
+                if (!ContainsReference(itemsToUpdate, updatable))
+                    itemsToUpdate.Add(updatable);
+
                 return;
             }
 
-            // Remove the object from current lists but keep it in registeredObjects
-            // This preserves the registration while allowing us to re-add with new parameters
+            ApplyUpdatedParameters(updatable);
+        }
+
+        private void ApplyUpdatedParameters(IUpdatable updatable)
+        {
+            UpdateItem item = FindUpdateItem(updatable);
+
+            if (item == null)
+                return;
+
             RemoveFromLists(updatable);
+            item.interval = updatable is IIntervalUpdatable intervalUpdatable
+                ? intervalUpdatable.UpdateInterval
+                : 0f;
+            item.priority = updatable.Priority;
+            item.nextUpdateTime = item.interval > 0 ? Time.time + item.interval : 0;
 
-            // Get the updated parameters from the object
-            // Default values match those used in AddInternal
-            float interval = 0f;      // Default: update every frame
-            int priority = 100;       // Default: medium priority
-
-            // Check if the object implements the extended interface with interval support
-            if (updatable is IIntervalUpdatable intervalUpdatable)
+            if (item.interval <= 0)
             {
-                // Retrieve the current interval and priority from the object
-                // These values may have changed since the object was first added
-                interval = intervalUpdatable.UpdateInterval;
-                priority = intervalUpdatable.Priority;
-            }
-
-            // Create a new UpdateItem with the fresh parameters
-            // This ensures we're using the most current values
-            var newItem = new UpdateItem(updatable, interval, priority);
-
-            // Determine which list the object should be added to based on its interval
-            if (interval <= 0)
-            {
-                // Interval of 0 or less means update every frame
-                everyFrameItems.Add(newItem);
+                everyFrameItems.Add(item);
             }
             else
             {
-                // Positive interval means periodic updates
-                intervalItems.Add(newItem);
+                intervalItems.Add(item);
             }
 
-            // Mark that lists need re-sorting since we added a new item
-            // The actual sorting will happen during the next Update cycle
             needsSorting = true;
+        }
+
+        private UpdateItem FindUpdateItem(IUpdatable updatable)
+        {
+            UpdateItem item = everyFrameItems.Find(candidate => ReferenceEquals(candidate.updatable, updatable));
+            return item ?? intervalItems.Find(candidate => ReferenceEquals(candidate.updatable, updatable));
         }
 
         /// <summary>
@@ -506,8 +553,8 @@ namespace MasterServerToolkit.Networking
                 return;
             }
 
-            // Get or create the singleton instance and delegate to internal method
-            if (TryGetOrCreate(out var instance))
+            // Parameter updates only apply to an existing runner and registered object.
+            if (TryGetExisting(out var instance))
             {
                 instance.UpdateParametersInternal(updatable);
             }
@@ -519,7 +566,7 @@ namespace MasterServerToolkit.Networking
         /// <returns>A formatted string containing current statistics</returns>
         public static string GetPerformanceStats()
         {
-            if (!TryGetOrCreate(out var instance))
+            if (!TryGetExisting(out var instance))
             {
                 return "MstUpdateRunner not initialized";
             }
@@ -528,7 +575,24 @@ namespace MasterServerToolkit.Networking
                    $"Every frame: {instance.EveryFrameCount}\n" +
                    $"With intervals: {instance.IntervalCount}\n" +
                    $"Pending additions: {instance.itemsToAdd.Count}\n" +
-                   $"Pending removals: {instance.itemsToRemove.Count}";
+                   $"Pending removals: {instance.itemsToRemove.Count}\n" +
+                   $"Pending parameter updates: {instance.itemsToUpdate.Count}";
+        }
+
+        private static bool ContainsReference(List<IUpdatable> items, IUpdatable updatable)
+        {
+            return items.Exists(item => ReferenceEquals(item, updatable));
+        }
+
+        private static bool RemoveReference(List<IUpdatable> items, IUpdatable updatable)
+        {
+            int index = items.FindIndex(item => ReferenceEquals(item, updatable));
+
+            if (index < 0)
+                return false;
+
+            items.RemoveAt(index);
+            return true;
         }
     }
 }

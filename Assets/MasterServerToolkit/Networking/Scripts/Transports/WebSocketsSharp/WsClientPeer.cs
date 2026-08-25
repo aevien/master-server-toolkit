@@ -1,85 +1,90 @@
 ﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Utils;
+using System;
 using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using WebSocketSharp;
+using System.Collections.Concurrent;
 
 namespace MasterServerToolkit.Networking
 {
     public class WsClientPeer : BasePeer
     {
+        private const ushort NormalClosureCode = 1000;
+
         private readonly WebSocket socket;
-        private Queue<byte[]> delayedMessages;
-        private readonly float delay = 0.2f;
+        private readonly ConcurrentQueue<Action> sendCompletionQueue = new ConcurrentQueue<Action>();
 
         public WsClientPeer(WebSocket socket)
         {
             this.socket = socket;
-            delayedMessages = new Queue<byte[]>();
         }
 
         public override bool IsConnected => socket != null && socket.IsConnected;
 
-        public void SendDelayedMessages()
+        [Obsolete("No longer required. websocket-sharp preserves FIFO SendAsync ordering.")]
+        public void BeginAuthentication()
         {
-            MstTimer.Instance.StartCoroutine(SendDelayedMessagesCoroutine());
         }
 
+        [Obsolete("No longer required. websocket-sharp preserves FIFO SendAsync ordering.")]
+        public void CompleteAuthentication()
+        {
+        }
+
+        [Obsolete("No longer required. Messages are sent immediately in FIFO order.")]
+        public void SendDelayedMessages()
+        {
+        }
+
+        [Obsolete("No longer required. Messages are sent immediately in FIFO order.")]
         public IEnumerator SendDelayedMessagesCoroutine()
         {
-            yield return new WaitForSecondsRealtime(delay);
-
-            if (delayedMessages == null)
-            {
-                yield break;
-            }
-
-            lock (delayedMessages)
-            {
-                if (delayedMessages == null)
-                {
-                    yield break;
-                }
-
-                var copy = delayedMessages;
-                delayedMessages = null;
-
-                foreach (var data in copy)
-                {
-                    socket.Send(data);
-                }
-            }
+            yield break;
         }
 
         public override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod)
         {
             if (!IsConnected) return;
 
-            if (delayedMessages != null)
+            SendNow(message);
+        }
+
+        private void SendNow(IOutgoingMessage message)
+        {
+            Mst.Traffic.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+            socket.Send(message.ToBytes());
+        }
+
+        protected override void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod,
+            Action<bool> completionCallback)
+        {
+            if (!IsConnected)
             {
-                lock (delayedMessages)
-                {
-                    if (delayedMessages != null)
-                    {
-                        delayedMessages.Enqueue(message.ToBytes());
-                        return;
-                    }
-                }
+                sendCompletionQueue.Enqueue(() => completionCallback?.Invoke(false));
+                return;
             }
 
-            Mst.TrafficStatistics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
-            socket.Send(message.ToBytes());
+            Mst.Traffic.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Outgoing);
+            socket.Send(message.ToBytes(), isSuccessful =>
+                sendCompletionQueue.Enqueue(() => completionCallback?.Invoke(isSuccessful)));
+        }
+
+        public void ProcessSendCompletions()
+        {
+            while (sendCompletionQueue.TryDequeue(out Action completion))
+            {
+                completion.Invoke();
+            }
         }
 
         public override void Disconnect(string reason)
         {
-            Disconnect((ushort)CloseStatusCode.Normal, reason);
+            Disconnect(NormalClosureCode, reason);
         }
 
         public override void Disconnect(ushort code, string reason)
         {
             socket.Close(code, reason);
+            BeginDisconnect();
         }
 
         public void Connect()

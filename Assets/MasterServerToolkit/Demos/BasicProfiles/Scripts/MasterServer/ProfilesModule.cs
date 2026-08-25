@@ -12,6 +12,7 @@ namespace MasterServerToolkit.Demos.BasicProfile
     public class ProfilesModule : MasterServer.ProfilesModule
     {
         [SerializeField]
+        [Tooltip("Informational help box shown in the Inspector. It documents that this demo module extends the standard profiles module with sample profile values and store requests.")]
         public HelpBox _header = new HelpBox()
         {
             Text = "This script is a custom module, which sets up profiles values for new users"
@@ -49,7 +50,8 @@ namespace MasterServerToolkit.Demos.BasicProfile
 
             if (userExtension == null || userExtension.Account == null)
             {
-                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                message.RespondError(ResponseStatus.Unauthorized,
+                    MstErrorCodes.AUTHENTICATION_REQUIRED);
                 return;
             }
 
@@ -66,12 +68,14 @@ namespace MasterServerToolkit.Demos.BasicProfile
                 }
                 else
                 {
-                    message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                    message.RespondError(ResponseStatus.Unauthorized,
+                        MstErrorCodes.AUTHENTICATION_REQUIRED);
                 }
             }
             catch (Exception e)
             {
-                message.Respond($"Internal Server Error: {e}", ResponseStatus.Error);
+                logger.Error($"Demo profile update failed: {e}");
+                message.RespondError(ResponseStatus.Error, MstErrorCodes.INTERNAL_ERROR);
             }
 
             await Task.CompletedTask;
@@ -83,7 +87,8 @@ namespace MasterServerToolkit.Demos.BasicProfile
 
             if (userExtension == null || userExtension.Account == null)
             {
-                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                message.RespondError(ResponseStatus.Unauthorized,
+                    MstErrorCodes.AUTHENTICATION_REQUIRED);
                 return;
             }
 
@@ -108,12 +113,15 @@ namespace MasterServerToolkit.Demos.BasicProfile
                 }
                 else
                 {
-                    message.Respond($"You don't have enough {data.Currency}", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Conflict,
+                        MstErrorCodes.RESOURCE_INSUFFICIENT,
+                        CreateResourceErrorProperties(data.Currency));
                 }
             }
             else
             {
-                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                message.RespondError(ResponseStatus.Unauthorized,
+                    MstErrorCodes.AUTHENTICATION_REQUIRED);
             }
 
             await Task.CompletedTask;
@@ -125,7 +133,8 @@ namespace MasterServerToolkit.Demos.BasicProfile
 
             if (userExtension == null || userExtension.Account == null)
             {
-                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                message.RespondError(ResponseStatus.Unauthorized,
+                    MstErrorCodes.AUTHENTICATION_REQUIRED);
                 return;
             }
 
@@ -150,15 +159,25 @@ namespace MasterServerToolkit.Demos.BasicProfile
                 }
                 else
                 {
-                    message.Respond($"Our store does not accept {data.Currency} as currency", ResponseStatus.Failed);
+                    message.RespondError(ResponseStatus.Invalid,
+                        MstErrorCodes.RESOURCE_UNSUPPORTED,
+                        CreateResourceErrorProperties(data.Currency));
                 }
             }
             else
             {
-                message.Respond("Invalid session", ResponseStatus.Unauthorized);
+                message.RespondError(ResponseStatus.Unauthorized,
+                    MstErrorCodes.AUTHENTICATION_REQUIRED);
             }
 
             await Task.CompletedTask;
+        }
+
+        private static MstProperties CreateResourceErrorProperties(string resource)
+        {
+            var properties = new MstProperties();
+            properties.Set(MstErrorPropertyKeys.RESOURCE, resource ?? string.Empty);
+            return properties;
         }
     }
 }

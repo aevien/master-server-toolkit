@@ -1,5 +1,4 @@
-﻿using MasterServerToolkit.Extensions;
-using MasterServerToolkit.Networking;
+﻿using MasterServerToolkit.Networking;
 using System;
 using UnityEngine;
 
@@ -52,14 +51,14 @@ namespace MasterServerToolkit.MasterServer
 
             // Move to root, so that it won't be destroyed
             // In case this instance is a child of another gameobject
-            if (transform.parent != null)
-                transform.SetParent(null);
+            transform.SetParent(null);
 
             // Set server behaviour to be able to use in all levels
             DontDestroyOnLoad(gameObject);
 
             // If master IP is provided via cmd arguments
             serverIp = Mst.Args.AsString(Mst.Args.Names.MasterIp, serverIp);
+
             // If master port is provided via cmd arguments
             serverPort = Mst.Args.AsInt(Mst.Args.Names.MasterPort, serverPort);
         }
@@ -77,14 +76,13 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnStartedServer()
         {
-            logger.Info($"{GetType().Name.FromCamelcase()} started and listening to: {serverIp}:{serverPort}");
             base.OnStartedServer();
             OnMasterStartedEvent?.Invoke(this);
         }
 
         protected override void OnStoppedServer()
         {
-            logger.Info($"{GetType().Name.FromCamelcase()} stopped");
+            logger.Info($"Stopped");
             OnMasterStoppedEvent?.Invoke(this);
         }
     }

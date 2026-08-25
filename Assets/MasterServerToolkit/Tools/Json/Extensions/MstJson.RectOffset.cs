@@ -6,7 +6,7 @@ namespace MasterServerToolkit.Json
     {
         public static MstJson FromRectOffset(this RectOffset rectOffset)
         {
-            var jsonObject = MstJson.EmptyObject;
+            var jsonObject = MstJson.CreateObject();
             if (rectOffset.bottom != 0) jsonObject.AddField("bottom", rectOffset.bottom);
             if (rectOffset.left != 0) jsonObject.AddField("left", rectOffset.left);
             if (rectOffset.right != 0) jsonObject.AddField("right", rectOffset.right);

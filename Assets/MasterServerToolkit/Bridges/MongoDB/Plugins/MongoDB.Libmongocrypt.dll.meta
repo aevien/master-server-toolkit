@@ -8,14 +8,15 @@ PluginImporter:
   defineConstraints: []
   isPreloaded: 0
   isOverridable: 0
-  isExplicitlyReferenced: 0
+  isExplicitlyReferenced: 1
   validateReferences: 1
   platformData:
   - first:
-      Any: 
+      Any:
     second:
       enabled: 1
-      settings: {}
+      settings:
+        Exclude WebGL: 1
   - first:
       Editor: Editor
     second:
@@ -23,11 +24,16 @@ PluginImporter:
       settings:
         DefaultValueInitialized: true
   - first:
+      WebGL: WebGL
+    second:
+      enabled: 0
+      settings: {}
+  - first:
       Windows Store Apps: WindowsStoreApps
     second:
       enabled: 0
       settings:
         CPU: AnyCPU
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:
+  assetBundleName:
+  assetBundleVariant:

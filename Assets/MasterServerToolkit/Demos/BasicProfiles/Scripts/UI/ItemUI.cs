@@ -11,6 +11,7 @@ namespace MasterServerToolkit.Demos.BasicProfile
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Required purchase or sell button. Its child TMP_Text receives the price label, and its click listeners are replaced when an offer is bound.")]
         private Button button;
 
         #endregion

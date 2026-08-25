@@ -1,5 +1,6 @@
 ﻿using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.UI;
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -8,7 +9,11 @@ namespace MasterServerToolkit.Bridges
     public class PasswordResetCodeView : UIView
     {
         [Header("Components"), SerializeField]
+        [Tooltip("Input field containing the account email for which a password reset code will be requested.")]
         private TMP_InputField emailInputField;
+
+        private IDisposable showPasswordResetCodeListener;
+        private IDisposable hidePasswordResetCodeListener;
 
         public string Email
         {
@@ -23,16 +28,30 @@ namespace MasterServerToolkit.Bridges
             base.Awake();
 
             // Listen to show/hide events
-            Mst.Events.AddListener(MstEventKeys.showPasswordResetCodeView, OnShowPasswordResetCodeEventHandler);
-            Mst.Events.AddListener(MstEventKeys.hidePasswordResetCodeView, OnHidePasswordResetCodeEventHandler);
+            showPasswordResetCodeListener?.Dispose();
+            showPasswordResetCodeListener = Mst.Events.AddListener(MstEventKeys.showPasswordResetCodeView, OnShowPasswordResetCodeEventHandler);
+
+            hidePasswordResetCodeListener?.Dispose();
+            hidePasswordResetCodeListener = Mst.Events.AddListener(MstEventKeys.hidePasswordResetCodeView, OnHidePasswordResetCodeEventHandler);
         }
 
-        private void OnShowPasswordResetCodeEventHandler(EventMessage message)
+        protected override void OnDestroy()
+        {
+            showPasswordResetCodeListener?.Dispose();
+            showPasswordResetCodeListener = null;
+
+            hidePasswordResetCodeListener?.Dispose();
+            hidePasswordResetCodeListener = null;
+
+            base.OnDestroy();
+        }
+
+        private void OnShowPasswordResetCodeEventHandler(EventPayload message)
         {
             Show();
         }
 
-        private void OnHidePasswordResetCodeEventHandler(EventMessage message)
+        private void OnHidePasswordResetCodeEventHandler(EventPayload message)
         {
             Hide();
         }
@@ -42,10 +61,10 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public void RequestResetPasswordCode()
         {
-            if (AuthBehaviour.Instance)
-                AuthBehaviour.Instance.RequestResetPasswordCode(Email);
-            else
-                logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
+            //if (AuthBehaviour.Instance)
+            //    AuthBehaviour.Instance.RequestResetPasswordCode(Email);
+            //else
+            //    logger.Error($"No instance of {nameof(AuthBehaviour)} found. Please add {nameof(AuthBehaviour)} to scene to be able to use auth logic");
         }
 
         /// <summary>
@@ -53,7 +72,7 @@ namespace MasterServerToolkit.Bridges
         /// </summary>
         public void ShowSignInView()
         {
-            Mst.Events.Invoke(MstEventKeys.showSignInView);
+            //Mst.Events.Invoke(MstEventKeys.showSignInView);
         }
     }
 }

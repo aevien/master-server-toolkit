@@ -23,7 +23,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override MstJson ToJson()
         {
-            var json = MstJson.EmptyArray;
+            var json = MstJson.CreateArray();
 
             foreach (var v in _value)
             {

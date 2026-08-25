@@ -193,7 +193,10 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(_value.Count);
+                    writer.WriteCount32(
+                        _value.Count,
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable list");
 
                     foreach (var item in _value)
                     {
@@ -212,7 +215,9 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable list");
 
                     for (var i = 0; i < count; i++)
                     {
@@ -242,7 +247,10 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var writer = new EndianBinaryWriter(EndianBitConverter.Big, ms))
                 {
-                    writer.Write(_updates.Count);
+                    writer.WriteCount32(
+                        _updates.Count,
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable list update");
 
                     foreach (var update in _updates)
                     {
@@ -266,7 +274,9 @@ namespace MasterServerToolkit.MasterServer
             {
                 using (var reader = new EndianBinaryReader(EndianBitConverter.Big, ms))
                 {
-                    var count = reader.ReadInt32();
+                    var count = reader.ReadCount32(
+                        MstNetworkLimits.MaxCollectionEntryCount,
+                        "Observable list update");
 
                     for (var i = 0; i < count; i++)
                     {

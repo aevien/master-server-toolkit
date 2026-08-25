@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.MasterServer;
 using MasterServerToolkit.Networking;
+using MasterServerToolkit.UI;
 using MasterServerToolkit.Utils;
 using UnityEngine;
 using UnityEngine.Events;
@@ -14,12 +15,14 @@ namespace MasterServerToolkit.Bridges
         /// <summary>
         /// Time to wait before match creation process will be aborted
         /// </summary>
-        [SerializeField, Tooltip("Time to wait before match creation process will be aborted")]
+        [SerializeField, Tooltip("Maximum time in seconds to wait for room creation before the client reports a failure. 0 disables the client-side timeout.")]
         protected uint matchCreationTimeout = 20;
-        [SerializeField]
+        [SerializeField, Tooltip("Additional key/value room properties sent with every room spawn request alongside the request-specific spawn options.")]
         protected SerializedKeyValuePair[] customSpawnOptions;
 
+        [Tooltip("Invoked on the client after a room starts and access data is received successfully.")]
         public UnityEvent OnRoomStartedEvent;
+        [Tooltip("Invoked on the client when room creation, startup, or access acquisition fails.")]
         public UnityEvent OnRoomStartFailedEvent;
 
         #endregion
@@ -41,6 +44,14 @@ namespace MasterServerToolkit.Bridges
             }
         }
 
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEditorPlayModeState()
+        {
+            _instance = null;
+        }
+#endif
+
         protected override void Awake()
         {
             if (_instance)
@@ -56,10 +67,18 @@ namespace MasterServerToolkit.Bridges
             CustomRoomProperties = new MstProperties(customSpawnOptions);
         }
 
+        protected override void OnDestroy()
+        {
+            if (ReferenceEquals(_instance, this))
+                _instance = null;
+
+            base.OnDestroy();
+        }
+
         protected override void OnInitialize()
         {
             // Set cliet mode
-            Mst.Client.Rooms.IsClientMode = true;
+            Mst.Client.Rooms.IsClient = true;
         }
 
         /// <summary>
@@ -74,7 +93,7 @@ namespace MasterServerToolkit.Bridges
                 if (!string.IsNullOrEmpty(error))
                 {
                     Logger.Error(error);
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, null));
+                    ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage(error, null));
                 }
             });
         }
@@ -85,7 +104,7 @@ namespace MasterServerToolkit.Bridges
         /// <param name="spawnOptions"></param>
         public virtual void CreateNewRoom(string regionName, MstProperties spawnOptions, UnityAction failCallback = null)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, "Starting room... Please wait!");
+            ViewsManager.Show<LoadingInfoView>("Starting room... Please wait!");
 
             Logger.Debug("Starting room... Please wait!");
             roomStartingProcessCompleted = false;
@@ -94,8 +113,8 @@ namespace MasterServerToolkit.Bridges
             {
                 if (controller == null)
                 {
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
-                    Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage(error, () =>
+                    ViewsManager.Hide<LoadingInfoView>();
+                    ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage(error, () =>
                     {
                         failCallback?.Invoke();
                     }));
@@ -114,7 +133,7 @@ namespace MasterServerToolkit.Bridges
                 {
                     controller.OnStatusChangedEvent -= Controller_OnStatusChangedEvent;
 
-                    Mst.Events.Invoke(MstEventKeys.hideLoadingInfo);
+                    ViewsManager.Hide<LoadingInfoView>();
 
                     if (isSuccess)
                     {
@@ -132,7 +151,7 @@ namespace MasterServerToolkit.Bridges
 
                             Logger.Error($"Failed spawn new room. Status: {controller.Status}");
 
-                            Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Please, try later", () =>
+                            ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage("Failed spawn new room. Please, try later", () =>
                             {
                                 failCallback?.Invoke();
                             }));
@@ -147,7 +166,7 @@ namespace MasterServerToolkit.Bridges
 
                         Logger.Error("Failed spawn new room. Time out");
 
-                        Mst.Events.Invoke(MstEventKeys.showOkDialogBox, new OkDialogBoxEventMessage("Failed spawn new room. Time out", () =>
+                        ViewsManager.Show<OkDialogBoxView>(new OkDialogBoxEventMessage("Failed spawn new room. Time out", () =>
                         {
                             failCallback?.Invoke();
                         }));
@@ -159,7 +178,7 @@ namespace MasterServerToolkit.Bridges
 
         private void Controller_OnStatusChangedEvent(SpawnStatus status)
         {
-            Mst.Events.Invoke(MstEventKeys.showLoadingInfo, $"Starting room... Status: {status}");
+            ViewsManager.Show<LoadingInfoView>($"Starting room... Status: {status}");
 
             switch (status)
             {
@@ -191,21 +210,20 @@ namespace MasterServerToolkit.Bridges
         public virtual void StartMatch(GameInfoPacket gameInfo)
         {
             // Save room Id in buffer, may be very helpful
-            Mst.Options.Set(MstDictKeys.ROOM_ID, gameInfo.Id);
+            Mst.Options.Set(MstParamKeys.ROOM_ID, gameInfo.Id);
             // Save max players to buffer, may be very helpful
             Mst.Options.Set(Mst.Args.Names.RoomMaxConnections, gameInfo.MaxPlayers);
 
             if (gameInfo.IsPasswordProtected)
             {
-                Mst.Events.Invoke(MstEventKeys.showPasswordDialogBox,
-                    new PasswordInputDialoxBoxEventMessage("Room requires the password. Please enter room password below", () =>
-                    {
-                        // Get password if was set
-                        string password = Mst.Options.AsString(Mst.Args.Names.RoomPassword);
+                ViewsManager.Show<PasswordInputDialogBoxView>(new PasswordInputDialoxBoxEventMessage("Room requires the password. Please enter room password below", () =>
+                {
+                    // Get password if was set
+                    string password = Mst.Options.AsString(Mst.Args.Names.RoomPassword);
 
-                        // Get access with password
-                        GetAccess(gameInfo, password);
-                    }));
+                    // Get access with password
+                    GetAccess(gameInfo, password);
+                }));
             }
             else
             {

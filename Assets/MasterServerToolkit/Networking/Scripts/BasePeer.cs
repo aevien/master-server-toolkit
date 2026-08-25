@@ -12,17 +12,46 @@ namespace MasterServerToolkit.Networking
     /// which handles acknowledgements and SendMessage overloads.
     /// Extend this, if you want to implement custom protocols
     /// </summary>
-    public abstract class BasePeer : IPeer
+    public abstract class BasePeer : IPeer, IMsgDispatcher
     {
-        private readonly ConcurrentDictionary<int, ResponseCallback> acknowledgements = new ConcurrentDictionary<int, ResponseCallback>();
-        protected readonly List<long[]> ackTimeoutQueue;
+        private enum PendingAckSendState
+        {
+            Registered,
+            Sending,
+            Sent
+        }
+
+        private sealed class PendingAck
+        {
+            public PendingAck(int id, IOutgoingMessage message, ResponseCallback callback, int timeoutSeconds,
+                long deadlineTick, int? previousAckRequestId)
+            {
+                Id = id;
+                Message = message;
+                Callback = callback;
+                TimeoutSeconds = timeoutSeconds;
+                DeadlineTick = deadlineTick;
+                PreviousAckRequestId = previousAckRequestId;
+            }
+
+            public int Id { get; }
+            public IOutgoingMessage Message { get; set; }
+            public ResponseCallback Callback { get; }
+            public int TimeoutSeconds { get; }
+            public long DeadlineTick { get; }
+            public int? PreviousAckRequestId { get; }
+            public PendingAckSendState SendState { get; set; }
+        }
+
+        private readonly object pendingAcksSync = new object();
+        private readonly Dictionary<int, PendingAck> pendingAcks = new Dictionary<int, PendingAck>();
         private readonly ConcurrentDictionary<uint, object> peerPropertyData = new ConcurrentDictionary<uint, object>();
         private int _id = -1;
-        private int nextAckId = 1;
-        private readonly IIncomingMessage timeoutMessage;
+        private int nextAckId;
         private readonly ConcurrentDictionary<Type, IPeerExtension> extensionsList = new ConcurrentDictionary<Type, IPeerExtension>();
         private static readonly object idGenerationLock = new object();
         private static int peerIdGenerator;
+        private bool acceptsAcks = true;
         private bool disposedValue = false;
         protected readonly Logger logger;
         protected LogLevel logLevel = LogLevel.Info;
@@ -108,20 +137,15 @@ namespace MasterServerToolkit.Networking
 
         protected BasePeer()
         {
+            Peer = this;
+
             StartActivity = DateTime.Now;
             LastActivity = DateTime.Now;
 
             logger = Mst.Create.Logger(GetType().Name);
             logger.LogLevel = logLevel;
 
-            ackTimeoutQueue = new List<long[]>();
-
             MstTimer.OnTickEvent += HandleAckDisposalTick;
-
-            timeoutMessage = new IncomingMessage("-1".ToUint16Hash(), 0, "Time out".ToBytes(), DeliveryMethod.ReliableFragmentedSequenced, this)
-            {
-                Status = ResponseStatus.Timeout
-            };
         }
 
         /// <summary>
@@ -160,10 +184,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="packet"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback)
+        public int SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback)
         {
             var message = MessageHelper.Create(opCode, packet.ToBytes());
-            SendMessage(message, responseCallback);
+            return SendMessage(message, responseCallback);
         }
 
         /// <summary>
@@ -173,10 +197,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="packet"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback, int timeoutSecs)
+        public int SendMessage(ushort opCode, ISerializablePacket packet, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, packet.ToBytes());
-            SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.ReliableFragmentedSequenced);
+            return SendMessage(message, responseCallback, timeoutSecs, DeliveryMethod.ReliableFragmentedSequenced);
         }
 
         /// <summary>
@@ -184,9 +208,9 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         /// <param name="opCode"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(ushort opCode, ResponseCallback responseCallback)
+        public int SendMessage(ushort opCode, ResponseCallback responseCallback)
         {
-            SendMessage(MessageHelper.Create(opCode), responseCallback);
+            return SendMessage(MessageHelper.Create(opCode), responseCallback);
         }
 
         /// <summary>
@@ -205,10 +229,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <param name="ackCallback"></param>
-        public void SendMessage(ushort opCode, byte[] data, ResponseCallback ackCallback)
+        public int SendMessage(ushort opCode, byte[] data, ResponseCallback ackCallback)
         {
             var message = MessageHelper.Create(opCode, data);
-            SendMessage(message, ackCallback);
+            return SendMessage(message, ackCallback);
         }
 
         /// <summary>
@@ -218,10 +242,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(ushort opCode, byte[] data, ResponseCallback responseCallback, int timeoutSecs)
+        public int SendMessage(ushort opCode, byte[] data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, data);
-            SendMessage(message, responseCallback, timeoutSecs);
+            return SendMessage(message, responseCallback, timeoutSecs);
         }
 
         /// <summary>
@@ -240,10 +264,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(ushort opCode, string data, ResponseCallback responseCallback)
+        public int SendMessage(ushort opCode, string data, ResponseCallback responseCallback)
         {
             var message = MessageHelper.Create(opCode, data);
-            SendMessage(message, responseCallback);
+            return SendMessage(message, responseCallback);
         }
 
         /// <summary>
@@ -253,10 +277,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(ushort opCode, string data, ResponseCallback responseCallback, int timeoutSecs)
+        public int SendMessage(ushort opCode, string data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, data);
-            SendMessage(message, responseCallback, timeoutSecs);
+            return SendMessage(message, responseCallback, timeoutSecs);
         }
 
         /// <summary>
@@ -275,10 +299,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="opCode"></param>
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
-        public void SendMessage(ushort opCode, int data, ResponseCallback responseCallback)
+        public int SendMessage(ushort opCode, int data, ResponseCallback responseCallback)
         {
             var message = MessageHelper.Create(opCode, data);
-            SendMessage(message, responseCallback);
+            return SendMessage(message, responseCallback);
         }
 
         /// <summary>
@@ -288,10 +312,10 @@ namespace MasterServerToolkit.Networking
         /// <param name="data"></param>
         /// <param name="responseCallback"></param>
         /// <param name="timeoutSecs"></param>
-        public void SendMessage(ushort opCode, int data, ResponseCallback responseCallback, int timeoutSecs)
+        public int SendMessage(ushort opCode, int data, ResponseCallback responseCallback, int timeoutSecs)
         {
             var message = MessageHelper.Create(opCode, data);
-            SendMessage(message, responseCallback, timeoutSecs);
+            return SendMessage(message, responseCallback, timeoutSecs);
         }
 
         /// <summary>
@@ -336,15 +360,35 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         public int SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs, DeliveryMethod deliveryMethod)
         {
-            if (!IsConnected)
+            if (message == null)
+                throw new ArgumentNullException(nameof(message));
+
+            if (responseCallback == null)
+                throw new ArgumentNullException(nameof(responseCallback));
+
+            PendingAck pendingAck = RegisterPendingAck(message, responseCallback, timeoutSecs);
+
+            if (pendingAck == null)
+                return -1;
+
+            if (!TryBeginSending(pendingAck))
             {
-                responseCallback.Invoke(ResponseStatus.NotConnected, null);
+                RestoreAckRequestId(message, pendingAck);
                 return -1;
             }
 
-            var id = RegisterAck(message, responseCallback, timeoutSecs);
-            SendMessage(message, deliveryMethod);
-            return id;
+            try
+            {
+                SendMessage(message, deliveryMethod, isSuccessful => HandleSendResult(pendingAck, isSuccessful));
+            }
+            catch
+            {
+                ResponseStatus failureStatus = IsConnected ? ResponseStatus.Error : ResponseStatus.NotConnected;
+                CompletePendingAck(pendingAck, failureStatus, CreateTerminalResponse(failureStatus), true);
+                throw;
+            }
+
+            return pendingAck.Id;
         }
 
         /// <summary>
@@ -356,24 +400,14 @@ namespace MasterServerToolkit.Networking
         public abstract void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod);
 
         /// <summary>
-        /// Sends a message to peer
+        /// Sends a message and reports whether the transport accepted it.
+        /// Derived transports with asynchronous completion should override this method.
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="responseCallback"></param>
-        void IMsgDispatcher.SendMessage(IOutgoingMessage message, ResponseCallback responseCallback)
+        protected virtual void SendMessage(IOutgoingMessage message, DeliveryMethod deliveryMethod,
+            Action<bool> completionCallback)
         {
-            SendMessage(message, responseCallback);
-        }
-
-        /// <summary>
-        /// Sends a message to peer
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="responseCallback"></param>
-        /// <param name="timeoutSecs"></param>
-        void IMsgDispatcher.SendMessage(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
-        {
-            SendMessage(message, responseCallback, timeoutSecs);
+            SendMessage(message, deliveryMethod);
+            completionCallback?.Invoke(IsConnected);
         }
 
         /// <summary>
@@ -508,8 +542,18 @@ namespace MasterServerToolkit.Networking
         protected void NotifyConnectionCloseEvent(ushort code, string reason = "")
         {
             CloseCode = code;
+            BeginDisconnect();
             OnConnectionCloseEvent?.Invoke(this);
             logger.Debug($"Peer [{Id}] closed connection with code {code}. Reason is: {reason}");
+        }
+
+        /// <summary>
+        /// Stops accepting acknowledgement requests and completes all pending requests.
+        /// Call this before starting an asynchronous transport disconnect.
+        /// </summary>
+        protected void BeginDisconnect()
+        {
+            CompletePendingAcks(StopAcceptingAndDrainPendingAcks(), ResponseStatus.NotConnected);
         }
 
         /// <summary>
@@ -530,11 +574,64 @@ namespace MasterServerToolkit.Networking
         /// <returns></returns>
         protected int RegisterAck(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
         {
-            int id = nextAckId++;
-            acknowledgements[id] = responseCallback;
-            message.AckRequestId = id;
-            StartAckTimeout(id, timeoutSecs);
-            return id;
+            return RegisterPendingAck(message, responseCallback, timeoutSecs)?.Id ?? -1;
+        }
+
+        private PendingAck RegisterPendingAck(IOutgoingMessage message, ResponseCallback responseCallback, int timeoutSecs)
+        {
+            if (message == null)
+                throw new ArgumentNullException(nameof(message));
+
+            if (responseCallback == null)
+                throw new ArgumentNullException(nameof(responseCallback));
+
+            PendingAck pendingAck = null;
+            bool isConnected = IsConnected;
+            int? previousAckRequestId = message.AckRequestId;
+
+            lock (pendingAcksSync)
+            {
+                if (acceptsAcks && !disposedValue && isConnected)
+                {
+                    int id = AllocateAckIdLocked();
+                    long deadlineTick = MstTimer.CurrentTick + timeoutSecs + 1L;
+                    pendingAck = new PendingAck(id, message, responseCallback, timeoutSecs, deadlineTick,
+                        previousAckRequestId);
+                    pendingAcks.Add(id, pendingAck);
+                }
+            }
+
+            if (pendingAck == null)
+            {
+                responseCallback.Invoke(ResponseStatus.NotConnected, CreateTerminalResponse(ResponseStatus.NotConnected));
+                return null;
+            }
+
+            try
+            {
+                message.AckRequestId = pendingAck.Id;
+            }
+            catch
+            {
+                CompletePendingAck(pendingAck, ResponseStatus.Error,
+                    CreateTerminalResponse(ResponseStatus.Error), true);
+                throw;
+            }
+
+            return pendingAck;
+        }
+
+        private void RestoreAckRequestId(IOutgoingMessage message, PendingAck pendingAck)
+        {
+            try
+            {
+                if (message.AckRequestId == pendingAck.Id)
+                    message.AckRequestId = pendingAck.PreviousAckRequestId;
+            }
+            catch (Exception exception)
+            {
+                TryLogError($"Failed to restore outgoing message ACK id: {exception}");
+            }
         }
 
         /// <summary>
@@ -545,19 +642,180 @@ namespace MasterServerToolkit.Networking
         /// <param name="message"></param>
         protected void TriggerAck(int ackId, ResponseStatus statusCode, IIncomingMessage message)
         {
-            if (acknowledgements.TryRemove(ackId, out ResponseCallback ackCallback))
-                ackCallback?.Invoke(statusCode, message);
+            CompletePendingAck(ackId, statusCode, message, true);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="ackId"></param>
-        /// <param name="timeoutSecs"></param>
-        private void StartAckTimeout(int ackId, int timeoutSecs)
+        private int AllocateAckIdLocked()
         {
-            // +1, because it might be about to tick in a few miliseconds
-            ackTimeoutQueue.Add(new[] { ackId, MstTimer.CurrentTick + timeoutSecs + 1 });
+            do
+            {
+                nextAckId = nextAckId == int.MaxValue ? 1 : nextAckId + 1;
+            }
+            while (pendingAcks.ContainsKey(nextAckId));
+
+            return nextAckId;
+        }
+
+        private bool TryBeginSending(PendingAck pendingAck)
+        {
+            lock (pendingAcksSync)
+            {
+                if (!pendingAcks.TryGetValue(pendingAck.Id, out PendingAck registeredAck) ||
+                    !ReferenceEquals(registeredAck, pendingAck))
+                    return false;
+
+                pendingAck.SendState = PendingAckSendState.Sending;
+                return true;
+            }
+        }
+
+        private void HandleSendResult(PendingAck pendingAck, bool isSuccessful)
+        {
+            if (!isSuccessful)
+            {
+                ResponseStatus failureStatus = IsConnected ? ResponseStatus.Error : ResponseStatus.NotConnected;
+                CompletePendingAck(pendingAck, failureStatus, CreateTerminalResponse(failureStatus), true);
+                return;
+            }
+
+            IOutgoingMessage messageToRestore = null;
+
+            lock (pendingAcksSync)
+            {
+                if (pendingAcks.TryGetValue(pendingAck.Id, out PendingAck registeredAck) &&
+                    ReferenceEquals(registeredAck, pendingAck))
+                {
+                    pendingAck.SendState = PendingAckSendState.Sent;
+                    messageToRestore = pendingAck.Message;
+                    pendingAck.Message = null;
+                }
+            }
+
+            if (messageToRestore != null)
+                RestoreAckRequestId(messageToRestore, pendingAck);
+        }
+
+        private void CompletePendingAck(int ackId, ResponseStatus statusCode, IIncomingMessage message,
+            bool isolateCallbackException)
+        {
+            PendingAck pendingAck = null;
+
+            lock (pendingAcksSync)
+            {
+                if (pendingAcks.TryGetValue(ackId, out pendingAck))
+                    pendingAcks.Remove(ackId);
+            }
+
+            if (pendingAck != null)
+            {
+                RestorePendingAckMessage(pendingAck);
+                InvokeResponseCallback(pendingAck.Callback, statusCode, message, isolateCallbackException);
+            }
+        }
+
+        private void CompletePendingAck(PendingAck pendingAck, ResponseStatus statusCode, IIncomingMessage message,
+            bool isolateCallbackException)
+        {
+            bool wasRemoved = false;
+
+            lock (pendingAcksSync)
+            {
+                if (pendingAcks.TryGetValue(pendingAck.Id, out PendingAck registeredAck) &&
+                    ReferenceEquals(registeredAck, pendingAck))
+                {
+                    pendingAcks.Remove(pendingAck.Id);
+                    wasRemoved = true;
+                }
+            }
+
+            if (wasRemoved)
+            {
+                RestorePendingAckMessage(pendingAck);
+                InvokeResponseCallback(pendingAck.Callback, statusCode, message, isolateCallbackException);
+            }
+        }
+
+        private List<PendingAck> StopAcceptingAndDrainPendingAcks()
+        {
+            lock (pendingAcksSync)
+            {
+                acceptsAcks = false;
+
+                if (pendingAcks.Count == 0)
+                    return null;
+
+                var drainedAcks = new List<PendingAck>(pendingAcks.Values);
+                pendingAcks.Clear();
+                return drainedAcks;
+            }
+        }
+
+        private void CompletePendingAcks(List<PendingAck> completedAcks, ResponseStatus statusCode)
+        {
+            if (completedAcks == null)
+                return;
+
+            foreach (PendingAck pendingAck in completedAcks)
+            {
+                RestorePendingAckMessage(pendingAck);
+                InvokeResponseCallback(pendingAck.Callback, statusCode, CreateTerminalResponse(statusCode), true);
+            }
+        }
+
+        private void RestorePendingAckMessage(PendingAck pendingAck)
+        {
+            IOutgoingMessage message = pendingAck.Message;
+            pendingAck.Message = null;
+
+            if (message != null)
+                RestoreAckRequestId(message, pendingAck);
+        }
+
+        private IIncomingMessage CreateTerminalResponse(ResponseStatus statusCode)
+        {
+            string message = statusCode switch
+            {
+                ResponseStatus.Timeout => "Time out",
+                ResponseStatus.NotConnected => "Not connected",
+                _ => "Failed to send request"
+            };
+
+            return new IncomingMessage("-1".ToUint16Hash(), 0, message.ToBytes(),
+                DeliveryMethod.ReliableFragmentedSequenced, this)
+            {
+                Status = statusCode
+            };
+        }
+
+        private void InvokeResponseCallback(ResponseCallback responseCallback, ResponseStatus statusCode,
+            IIncomingMessage message, bool isolateException)
+        {
+            if (!isolateException)
+            {
+                responseCallback.Invoke(statusCode, message);
+                return;
+            }
+
+            try
+            {
+                responseCallback.Invoke(statusCode, message);
+            }
+            catch (Exception exception)
+            {
+                TryLogError($"Response callback failed: {exception}");
+            }
+        }
+
+        private void TryLogError(object message)
+        {
+            try
+            {
+                logger.Error(message);
+            }
+            catch
+            {
+                // Logging must not break acknowledgement cleanup or callback isolation.
+            }
         }
 
         /// <summary>
@@ -576,22 +834,29 @@ namespace MasterServerToolkit.Networking
         /// <param name="start"></param>
         public void HandleDataReceived(byte[] buffer, int start)
         {
-            // Deserialize message from bytes
-            IIncomingMessage message = MessageHelper.FromBytes(buffer, start, this);
-
-            if (message == null)
-                return;
-
-            if (message != null && message.AckRequestId.HasValue)
+            try
             {
-                // We received a message which is a response to our ack request
-                TriggerAck(message.AckRequestId.Value, message.Status, message);
-                return;
+                // Deserialize message from bytes
+                IIncomingMessage message = MessageHelper.FromBytes(buffer, start, this);
+
+                if (message == null)
+                    return;
+
+                if (message != null && message.AckRequestId.HasValue)
+                {
+                    // We received a message which is a response to our ack request
+                    TriggerAck(message.AckRequestId.Value, message.Status, message);
+                    return;
+                }
+
+                Mst.Traffic.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Incoming);
+                HandleMessage(message);
             }
-
-            Mst.TrafficStatistics.RegisterOpCodeTrafic(message.OpCode, message.Data.LongLength, TrafficType.Incoming);
-
-            HandleMessage(message);
+            catch (Exception ex)
+            {
+                Logs.Error(ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -610,36 +875,29 @@ namespace MasterServerToolkit.Networking
         /// </summary>
         private void HandleAckDisposalTick(long currentTick)
         {
-            // TODO test with ordered queue, might be more performant
-            ackTimeoutQueue.RemoveAll(a =>
+            List<PendingAck> expiredAcks = null;
+
+            lock (pendingAcksSync)
             {
-                if (a[1] > currentTick)
+                foreach (PendingAck pendingAck in pendingAcks.Values)
                 {
-                    return false;
+                    if (pendingAck.DeadlineTick > currentTick)
+                        continue;
+
+                    expiredAcks ??= new List<PendingAck>();
+                    expiredAcks.Add(pendingAck);
                 }
 
-                try
+                if (expiredAcks != null)
                 {
-                    CancelAck((int)a[0], ResponseStatus.Timeout);
+                    foreach (PendingAck pendingAck in expiredAcks)
+                    {
+                        pendingAcks.Remove(pendingAck.Id);
+                    }
                 }
-                catch (Exception e)
-                {
-                    Logs.Error(e);
-                }
+            }
 
-                return true;
-            });
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="ackId"></param>
-        /// <param name="responseCode"></param>
-        private void CancelAck(int ackId, ResponseStatus responseCode)
-        {
-            if (acknowledgements.TryRemove(ackId, out ResponseCallback ackCallback))
-                ackCallback?.Invoke(responseCode, timeoutMessage);
+            CompletePendingAcks(expiredAcks, ResponseStatus.Timeout);
         }
 
         #endregion
@@ -648,15 +906,26 @@ namespace MasterServerToolkit.Networking
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            List<PendingAck> pendingAcksToComplete;
+
+            lock (pendingAcksSync)
             {
-                if (disposing)
-                {
-                    MstTimer.OnTickEvent -= HandleAckDisposalTick;
-                }
+                if (disposedValue)
+                    return;
 
                 disposedValue = true;
+                acceptsAcks = false;
+
+                pendingAcksToComplete = pendingAcks.Count > 0
+                    ? new List<PendingAck>(pendingAcks.Values)
+                    : null;
+                pendingAcks.Clear();
             }
+
+            if (disposing)
+                MstTimer.OnTickEvent -= HandleAckDisposalTick;
+
+            CompletePendingAcks(pendingAcksToComplete, ResponseStatus.NotConnected);
         }
 
         public void Dispose()

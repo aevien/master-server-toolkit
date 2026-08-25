@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>#MST_TITLE#</title>
+  <link rel="icon" type="image/png" href="#MST_FAVICON#">
+  <!-- Bootstrap 5 (latest) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.4.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Scripts: load BEFORE modules -->
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"
+    integrity="sha256-Lye89HGy1p3XhJT24hcvsoRw64Q4IOL5a7hdOflhjTA=" crossorigin="anonymous"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.4.0/dist/js/tabulator.min.js"></script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+      }
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/moment.min.js"></script>
+
+  #JAVA_SCRIPT#
+
+  <script>
+
+  </script>
+
+  <style>
+    :root {
+      --topbar-h: 60px;
+      --footer-h: 52px;
+      --brand: #00986A;
+      --brand-2: #004E80;
+      --ink: #363636;
+      --muted: #A1A1A1;
+      --panel: #ffffff;
+      --panel-2: #EDEAE9;
+      --edge: rgba(54, 54, 54, 0.12);
+      --accent: #D74518;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 420px at 8% -8%, rgba(0, 152, 106, 0.12), transparent 55%),
+        radial-gradient(900px 520px at 110% 12%, rgba(0, 78, 128, 0.12), transparent 55%),
+        linear-gradient(180deg, #f7f6f5 0%, #efeeed 100%);
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-sticky {
+      position: sticky;
+      top: var(--topbar-h);
+      height: calc(100vh - var(--topbar-h) - var(--footer-h));
+      overflow-y: auto;
+    }
+
+    .footer-fixed {
+      height: var(--footer-h);
+    }
+
+    .topbar-fixed {
+      min-height: var(--topbar-h);
+    }
+
+    .wrapper {
+      margin-bottom: var(--topbar-h);
+    }
+
+    .mst-ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .mst-li {
+      margin: 2px 0;
+    }
+
+    .mst-key {
+      font-weight: 600;
+    }
+
+    .mst-sep {
+      opacity: 0.7;
+    }
+
+    .mst-error {
+      color: #b00020;
+    }
+
+    .tabulator {
+      max-width: 100%;
+    }
+
+    .tabulator .tabulator-row.selectable,
+    .tabulator .tabulator-row.selectable .tabulator-cell {
+      cursor: pointer;
+    }
+
+    .tabulator .tabulator-cell,
+    .tabulator .tabulator-col-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tabulator .tabulator-responsive-collapse {
+      white-space: normal;
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, #004E80 0%, #00986A 55%, #6EA164 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 10px 30px rgba(54, 54, 54, 0.25);
+    }
+
+    .brand-text {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+    }
+
+    .shell-card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--edge);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+      backdrop-filter: blur(6px);
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
+      border-right: 1px solid var(--edge);
+    }
+
+    .sidebar .list-group-item {
+      border: 0;
+      padding: 12px 16px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    .sidebar .list-group-item:hover {
+      color: var(--ink);
+      background: rgba(0, 152, 106, 0.08);
+    }
+
+    .sidebar .list-group-item.active {
+      color: var(--accent);
+      background: linear-gradient(90deg, rgba(215, 69, 24, 0.16), rgba(0, 78, 128, 0.05));
+      border-left-color: var(--accent);
+      box-shadow: inset 2px 0 0 rgba(215, 69, 24, 0.35);
+    }
+
+    .panel-title {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      letter-spacing: 0.4px;
+      color: var(--ink);
+    }
+
+    .breadcrumb .breadcrumb-item a {
+      color: var(--muted);
+    }
+
+    .breadcrumb .breadcrumb-item.active {
+      color: var(--ink);
+    }
+
+    .about-btn {
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #f0f2f1;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .about-btn:hover {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .about-modal .modal-header {
+      background: linear-gradient(90deg, rgba(0, 78, 128, 0.15), rgba(0, 152, 106, 0.15));
+      border-bottom: 1px solid var(--edge);
+    }
+
+    .about-modal .modal-title {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      color: var(--ink);
+      letter-spacing: 0.3px;
+    }
+
+    .about-modal .modal-footer {
+      border-top: 1px solid var(--edge);
+      background: rgba(247, 246, 245, 0.7);
+    }
+
+    .about-modal .btn-secondary {
+      background: var(--brand-2);
+      border-color: var(--brand-2);
+    }
+
+    .about-modal .btn-secondary:hover {
+      background: #003a60;
+      border-color: #003a60;
+    }
+
+    .footer-fixed {
+      border-top: 1px solid var(--edge);
+      backdrop-filter: blur(6px);
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    .panel-body {
+      background: var(--panel);
+      border-radius: 14px;
+      border: 1px solid var(--edge);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+    }
+
+    .nav-toggle {
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #f0f2f1;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-toggle:hover {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .offcanvas-header {
+      border-bottom: 1px solid var(--edge);
+    }
+
+    .offcanvas-title {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      letter-spacing: 0.4px;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .wrapper {
+      animation: fadeUp 420ms ease both;
+    }
+
+    .sidebar .list-group-item {
+      animation: fadeUp 360ms ease both;
+    }
+
+    .sidebar .list-group-item:nth-child(1) { animation-delay: 40ms; }
+    .sidebar .list-group-item:nth-child(2) { animation-delay: 80ms; }
+    .sidebar .list-group-item:nth-child(3) { animation-delay: 120ms; }
+    .sidebar .list-group-item:nth-child(4) { animation-delay: 160ms; }
+    .sidebar .list-group-item:nth-child(5) { animation-delay: 200ms; }
+    .sidebar .list-group-item:nth-child(6) { animation-delay: 240ms; }
+    .sidebar .list-group-item:nth-child(7) { animation-delay: 280ms; }
+    .sidebar .list-group-item:nth-child(8) { animation-delay: 320ms; }
+    .sidebar .list-group-item:nth-child(9) { animation-delay: 360ms; }
+    .sidebar .list-group-item:nth-child(10) { animation-delay: 400ms; }
+
+    .modal-backdrop {
+      z-index: 1070;
+    }
+
+    .modal {
+      z-index: 1080;
+    }
+
+
+    #mstConfirmModal {
+      z-index: 1200;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- Top navbar -->
+    <nav class="navbar topbar topbar-fixed sticky-top">
+      <div class="container-fluid">
+        <button class="btn btn-sm nav-toggle d-md-none me-2" type="button" data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Open menu">
+          <i class="bi bi-list"></i>
+        </button>
+        <a class="navbar-brand d-flex align-items-center gap-2 text-white text-uppercase brand-text" href="/">
+          <img src="#MST_BRAND_ICON#" alt="#MST_TITLE#" width="32" height="32"
+            class="d-inline-block align-text-top me-2">
+          <span>#MST_TITLE#</span>
+        </a>
+
+        <div class="ms-auto">
+          <button class="btn btn-sm about-btn" type="button" data-bs-toggle="modal"
+            data-bs-target="#aboutModal">
+            #ABOUT_TITLE#
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main area: fills all height between navbar and footer -->
+    <div class="flex-grow-1 d-flex">
+      <div class="row flex-grow-1 w-100 g-0">
+        <!-- Sidebar: full height of main area -->
+        <aside class="col-12 col-md-3 col-lg-2 sidebar d-none d-md-flex flex-column sidebar-sticky">
+          <div class="list-group list-group-flush flex-grow-1">
+            #NAV_HTML#
+          </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="col-12 col-md-9 col-lg-10 p-3 p-md-4 wrapper">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h1 class="h4 mb-0 panel-title">#PANEL_TITLE#</h1>
+          </div>
+
+          <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0">
+              #BREADCRUMB_HTML#
+            </ol>
+          </nav>
+
+          <div class="panel-body p-3 p-md-4">
+            #INNER_HTML#
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Footer bar: full width, bottom -->
+    <footer class="fixed-bottom footer-fixed">
+      <div class="container py-3 text-center text-body-secondary small">
+        © <span id="year"></span> #MST_TITLE#
+      </div>
+    </footer>
+  </div>
+
+  <!-- Global Toasts -->
+  <div class="toast-container position-fixed top-0 end-0 p-3" id="mstToastStack"></div>
+
+  <!-- Global Confirm Modal -->
+  <div class="modal fade" id="mstConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shell-card">
+        <div class="modal-header">
+          <h5 class="modal-title" id="mstConfirmTitle">Confirm action</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="mstConfirmBody">Are you sure?</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="mstConfirmCancel">Cancel</button>
+          <button type="button" class="btn btn-danger" id="mstConfirmOk">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Modal (standard Bootstrap) -->
+  <div class="modal fade" id="aboutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content shell-card about-modal">
+        <div class="modal-header">
+          <h5 class="modal-title">#ABOUT_TITLE#</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          #ABOUT_HTML#
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile Sidebar (Offcanvas) -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">#MST_TITLE#</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+      <div class="list-group list-group-flush">
+        #NAV_HTML#
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const currentRoute = window.location.pathname.replace(/^\/+|\/+$/g, '') || 'index';
+      document.querySelectorAll('[data-dashboard-route]').forEach((link) => {
+        if (link.getAttribute('data-dashboard-route') === currentRoute) {
+          link.classList.add('active');
+        }
+      });
+
+      const year = document.getElementById('year');
+      if (year) {
+        year.textContent = new Date().getFullYear();
+      }
+    })();
+  </script>
+</body>
+
+</html>

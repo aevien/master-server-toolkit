@@ -60,14 +60,14 @@ namespace MasterServerToolkit.MasterServer
 
         public override byte[] ToBytes()
         {
-            var data = new byte[4];
+            var data = new byte[8];
             EndianBitConverter.Big.CopyBytes(_value, data, 0);
             return data;
         }
 
         public override void FromBytes(byte[] data)
         {
-            _value = EndianBitConverter.Big.ToInt32(data, 0);
+            _value = EndianBitConverter.Big.ToDouble(data, 0);
             MarkAsDirty();
         }
 
@@ -100,7 +100,7 @@ namespace MasterServerToolkit.MasterServer
 
         public override void FromJson(MstJson json)
         {
-            _value = json.IntValue;
+            _value = json.DoubleValue;
             MarkAsDirty();
         }
 

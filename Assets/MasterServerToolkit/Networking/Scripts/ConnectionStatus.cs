@@ -4,6 +4,7 @@
     {
         None,
         Connecting,
+        Authenticating,
         Connected,
         Disconnected
     }

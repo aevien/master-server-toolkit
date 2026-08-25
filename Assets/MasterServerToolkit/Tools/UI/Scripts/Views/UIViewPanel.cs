@@ -2,20 +2,20 @@ using UnityEngine;
 
 namespace MasterServerToolkit.UI
 {
-    public class UIViewPanel : MonoBehaviour, IUIViewComponent
+    public abstract class UIViewPanel : MonoBehaviour, IUIViewComponent
     {
         #region INSPECTOR
 
         [Header("Components"), SerializeField]
+        [Tooltip("Panel GameObject whose active state represents this component's visibility. Assign the visual root controlled by SetVisible.")]
         protected GameObject panel;
 
         [Header("Settings"), SerializeField]
+        [Tooltip("Hides the assigned panel during Awake. Disable this when the panel must keep its scene-authored initial visibility.")]
         protected bool hideOnStart = true;
 
         #endregion
 
-        public IUIView Owner { get; set; }
-        public Logging.Logger Logger { get; set; }
         public bool IsVisible => panel.activeSelf;
 
         public void SetVisible(bool visible)

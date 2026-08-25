@@ -9,6 +9,11 @@ namespace MasterServerToolkit.MasterServer
         public string Username { get; set; }
         public string UserId { get; set; }
         public bool IsGuest { get; set; }
+        public bool IsAdmin { get; set; }
+        /// <summary>
+        /// Client-writable account metadata forwarded to room servers.
+        /// Room logic must not treat these values as authoritative gameplay, economy, permission, or entitlement state.
+        /// </summary>
         public Dictionary<string, string> ExtraProperties { get; set; }
 
         public override void ToBinaryWriter(EndianBinaryWriter writer)
@@ -17,6 +22,7 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(Username);
             writer.Write(UserId);
             writer.Write(IsGuest);
+            writer.Write(IsAdmin);
             writer.Write(ExtraProperties);
         }
 
@@ -26,6 +32,7 @@ namespace MasterServerToolkit.MasterServer
             Username = reader.ReadString();
             UserId = reader.ReadString();
             IsGuest = reader.ReadBoolean();
+            IsAdmin = reader.ReadBoolean();
             ExtraProperties = reader.ReadDictionary();
         }
 

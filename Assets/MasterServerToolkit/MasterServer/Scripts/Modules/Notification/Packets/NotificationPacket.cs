@@ -15,14 +15,18 @@ namespace MasterServerToolkit.MasterServer
             RoomId = reader.ReadInt32();
             Message = reader.ReadString();
 
-            int recipientsCount = reader.ReadInt32();
+            int recipientsCount = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Notification recipient list");
 
             for (int i = 0; i < recipientsCount; i++)
             {
                 Recipients.Add(reader.ReadInt32());
             }
 
-            int ignoreRecipientsCount = reader.ReadInt32();
+            int ignoreRecipientsCount = reader.ReadCount32(
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Notification ignored recipient list");
 
             for (int i = 0; i < ignoreRecipientsCount; i++)
             {
@@ -35,14 +39,20 @@ namespace MasterServerToolkit.MasterServer
             writer.Write(RoomId);
             writer.Write(Message);
 
-            writer.Write(Recipients.Count);
+            writer.WriteCount32(
+                Recipients.Count,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Notification recipient list");
 
             foreach (var recipient in Recipients)
             {
                 writer.Write(recipient);
             }
 
-            writer.Write(IgnoreRecipients.Count);
+            writer.WriteCount32(
+                IgnoreRecipients.Count,
+                MstNetworkLimits.MaxCollectionEntryCount,
+                "Notification ignored recipient list");
 
             foreach (var recipient in IgnoreRecipients)
             {

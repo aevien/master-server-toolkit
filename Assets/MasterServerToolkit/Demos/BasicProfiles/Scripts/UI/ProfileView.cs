@@ -10,15 +10,20 @@ namespace MasterServerToolkit.Demos.BasicProfile
         #region INSPECTOR
 
         [Header("Player"), SerializeField]
+        [Tooltip("Required image loader that downloads and displays the avatarUrl value from the loaded profile.")]
         private ImageLoaderUI avatar;
         [SerializeField]
+        [Tooltip("Required UIProperty whose label displays the loaded profile's displayName value.")]
         private UIProperty displayNameUIProperty;
 
         [Header("Currencies"), SerializeField]
+        [Tooltip("Required UIProperty that displays the loaded profile's bronze currency value.")]
         private UIProperty bronzeUIProperty;
         [SerializeField]
+        [Tooltip("Required UIProperty that displays the loaded profile's silver currency value.")]
         private UIProperty silverUIProperty;
         [SerializeField]
+        [Tooltip("Required UIProperty that displays the loaded profile's gold currency value.")]
         private UIProperty goldUIProperty;
 
         #endregion

@@ -1,6 +1,7 @@
 ﻿using MasterServerToolkit.Logging;
 using MasterServerToolkit.Networking;
 using MasterServerToolkit.Utils;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -21,46 +22,43 @@ namespace MasterServerToolkit.MasterServer
         [SerializeField]
         private HelpBox headerWarn = new HelpBox()
         {
-            Text = $"It will start ONLY if '-msfStartSpawner' argument is found, or if StartSpawner() is called manually from your scripts",
+            Text = "It starts only when '-mstSpawnerStart=true' is configured, Editor auto-start is enabled, or StartSpawner() is called from code.",
             Type = HelpBoxType.Warning
         };
 
-        [SerializeField, Tooltip("Log level of internal SpawnerController logger")]
+        [SerializeField, Tooltip("Minimum severity written by the process controller that starts, supervises and stops child executables.")]
         protected LogLevel spawnerLogLevel = LogLevel.Warn;
 
         [Header("Spawner Default Options")]
-        [SerializeField, Tooltip("Default IP address")]
+        [SerializeField, Tooltip("IP address advertised to rooms started by this spawner. It must be reachable by clients; the room-IP command-line argument overrides it.")]
         protected string machineIp = "127.0.0.1";
 
-        [SerializeField, Tooltip("Default path to executable file")]
+        [SerializeField, Tooltip("Default room/server executable launched by this spawner. The room-executable command-line argument overrides it outside the Editor.")]
         protected string executableFilePath = "";
 
-        [SerializeField, Tooltip("Max number of rooms/server SpawnerController can run")]
+        [SerializeField, Tooltip("Maximum number of child processes this spawner may own at once. 0 prevents new process starts. The spawner-max-processes command-line argument overrides it.")]
         protected int maxProcesses = 5;
 
-        [SerializeField, Tooltip("Use this to set whether or not to spawn room/server for browser games. This feature works only if game server uses websocket transport for connections")]
-        protected bool spawnWebSocketServers = false;
-
-        [SerializeField, Tooltip("Spawner region used when you are trying to start rooms by given region. Empty means International")]
+        [SerializeField, Tooltip("Region advertised to the master for region-based spawn selection. An empty value is normalized to International; the room-region command-line argument overrides it.")]
         protected string region = "";
 
-        [Header("Runtime Settings"), SerializeField, Tooltip("If true, kills all spawned processes when spawners stopped")]
+        [Header("Runtime Settings"), SerializeField, Tooltip("Terminates supervised child processes when this spawner stops. When disabled, already started processes are left running and remain outside MST supervision after shutdown.")]
         protected bool killProcessesWhenStop = true;
 
         [Header("Editor Settings"), SerializeField]
         private HelpBox hpEditor = new HelpBox()
         {
-            Text = "Editor settings are used only while running in editor and for test purpose only",
+            Text = "These settings are used only while running in the Unity Editor for local testing.",
             Type = HelpBoxType.Warning
         };
 
-        [Header("Running in Editor"), SerializeField, Tooltip("If true, when running in editor, spawner server will start automatically (after connecting to master)")]
+        [Header("Running in Editor"), SerializeField, Tooltip("Automatically starts and registers the spawner after the Editor client connects to the master. Ignored in standalone builds.")]
         protected bool autoStartInEditor = true;
 
-        [SerializeField, Tooltip("If true, and if running in editor, path to executable will be overriden, and a value from 'exePathFromEditor' will be used.")]
+        [SerializeField, Tooltip("Uses Exe Path From Editor instead of the normal executable path while running in the Editor. Ignored in standalone builds.")]
         protected bool overrideExePathInEditor = true;
 
-        [SerializeField, Tooltip("Path to the executable to be spawned as server")]
+        [SerializeField, Tooltip("Room/server executable launched during Editor testing when Override Exe Path In Editor is enabled. Use an absolute path to the built executable.")]
         protected string exePathFromEditor = "C:/Please set your own path";
 
         #endregion
@@ -69,6 +67,8 @@ namespace MasterServerToolkit.MasterServer
         /// Current spawner controller assigned to this behaviour
         /// </summary>
         protected ISpawnerController spawnerController;
+        private int registrationGeneration;
+        private volatile bool isDestroyed;
 
         /// <summary>
         /// Check if spawner is ready to create rooms/servers
@@ -83,18 +83,21 @@ namespace MasterServerToolkit.MasterServer
         /// <summary>
         /// Invokes when this spawner is registered in Master server
         /// </summary>
+        [Tooltip("Invoked after this spawner has successfully registered with the master and can accept spawn work.")]
         public UnityEvent OnSpawnerStartedEvent;
 
         /// <summary>
         /// Invokes when this spawner stopped
         /// </summary>
+        [Tooltip("Invoked when this spawner stops or loses its registered controller. Child-process behavior depends on Kill Processes When Stop.")]
         public UnityEvent OnSpawnerStoppedEvent;
 
         protected override void Awake()
         {
             base.Awake();
 
-            Mst.Server.Spawners.DefaultPort = Mst.Args.RoomDefaultPort;
+            Mst.Server.Spawners.DefaultPort = Mst.Args.SpawnerRoomDefaultPort;
+            Mst.Server.Spawners.DefaultRedirectPort = Mst.Args.SpawnerRoomDefaultRedirectPort;
 
             // Subscribe to connection event
             Mst.Connection.AddConnectionOpenListener(OnConnectedToMasterEventHandler);
@@ -109,16 +112,20 @@ namespace MasterServerToolkit.MasterServer
 
         protected override void OnDestroy()
         {
-            base.OnDestroy();
+            isDestroyed = true;
+            Interlocked.Increment(ref registrationGeneration);
+            ISpawnerController controllerToStop = spawnerController;
+            spawnerController = null;
+            IsSpawnerStarted = false;
 
-            // Kill all the processes of spawner controller
-            if (killProcessesWhenStop)
-                spawnerController?.KillProcesses();
+            StopController(controllerToStop);
 
             // Remove connection listener
             Mst.Connection.RemoveConnectionOpenListener(OnConnectedToMasterEventHandler);
             // Remove disconnection listener
             Mst.Connection.RemoveConnectionCloseListener(OnDisconnectedFromMasterEventHandler);
+
+            base.OnDestroy();
         }
 
         /// <summary>
@@ -147,6 +154,9 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void StartSpawner()
         {
+            if (isDestroyed)
+                return;
+
             // Stop if no connection
             if (!Mst.Connection.IsConnected)
             {
@@ -167,12 +177,13 @@ namespace MasterServerToolkit.MasterServer
             region = Mst.Args.AsString(Mst.Args.Names.RoomRegion, region);
 
             IsSpawnerStarted = true;
+            int generation = Interlocked.Increment(ref registrationGeneration);
 
             // Create spawner options
             var spawnerOptions = new SpawnerOptions
             {
                 // If MaxProcesses count defined in cmd args
-                MaxProcesses = Mst.Args.AsInt(Mst.Args.Names.MaxProcesses, maxProcesses),
+                MaxProcesses = Mst.Args.AsInt(Mst.Args.Names.SpawnerMaxProcesses, maxProcesses),
                 MachineIp = machineIp,
                 Region = region
             };
@@ -187,14 +198,23 @@ namespace MasterServerToolkit.MasterServer
                 executableFilePath = Mst.Args.AsString(Mst.Args.Names.RoomExecutablePath, executableFilePath);
             }
 
-            logger.Info($"Registering as a spawner with options: \n{spawnerOptions}");
+            logger.Info($"Registering as a spawner with options: {spawnerOptions}");
 
             // 1. Register the spawner
             Mst.Server.Spawners.RegisterSpawner(spawnerOptions, (controller, error) =>
             {
+                if (isDestroyed ||
+                    generation != Volatile.Read(ref registrationGeneration) ||
+                    !IsSpawnerStarted)
+                {
+                    StopController(controller);
+                    return;
+                }
+
                 if (!string.IsNullOrEmpty(error))
                 {
-                    logger.Error($"Failed to create spawner: {error}");
+                    IsSpawnerStarted = false;
+                    logger.Error("Failed to create spawner");
                     return;
                 }
 
@@ -204,21 +224,18 @@ namespace MasterServerToolkit.MasterServer
                 // 3. Set its log level
                 spawnerController.Logger.LogLevel = spawnerLogLevel;
 
-                // 4. Set use web sockets if required
-                spawnerController.SpawnSettings.UseWebSockets = Mst.Args.AsBool(Mst.Args.Names.UseWebSockets, spawnWebSocketServers);
-
-                // 5. Set the executable path
+                // 4. Set the executable path
                 spawnerController.SpawnSettings.ExecutablePath = executableFilePath;
 
-                // 6. Set the machine IP
+                // 5. Set the machine IP
                 spawnerController.SpawnSettings.MachineIp = machineIp;
 
-                // 7. Set region
-                spawnerController.SpawnSettings.Region = spawnerOptions.Region;
+                // 6. Set region
+                spawnerController.SpawnSettings.MachineRegion = spawnerOptions.Region;
 
                 logger.Info($"Spawner successfully created. Id: {controller.SpawnerId}");
 
-                // 8. Inform listeners
+                // 7. Inform listeners
                 OnSpawnerStartedEvent?.Invoke();
                 OnSpawnerStarted();
             });
@@ -229,21 +246,50 @@ namespace MasterServerToolkit.MasterServer
         /// </summary>
         public virtual void StopSpawner()
         {
-            // Kill all the processes of spawner controller
-            if (killProcessesWhenStop)
-                spawnerController?.KillProcesses();
-
-            // Set spawn behaviour as not started
+            Interlocked.Increment(ref registrationGeneration);
+            ISpawnerController controllerToStop = spawnerController;
+            spawnerController = null;
             IsSpawnerStarted = false;
 
-            if (spawnerController != null)
-                logger.Info($"Spawner stopped. Id: {spawnerController.SpawnerId}");
-
-            // Destroy spawner
-            spawnerController.Dispose();
-            spawnerController = null;
+            if (controllerToStop != null)
+            {
+                logger.Info($"Spawner stopped. Id: {controllerToStop.SpawnerId}");
+                StopController(controllerToStop);
+            }
 
             OnSpawnerStoppedEvent?.Invoke();
+        }
+
+        private void StopController(ISpawnerController controller)
+        {
+            if (controller == null)
+                return;
+
+            if (killProcessesWhenStop)
+                controller.KillProcesses();
+
+            if (controller.Connection == null || !controller.Connection.IsConnected)
+            {
+                controller.Dispose();
+                return;
+            }
+
+            try
+            {
+                controller.RequestUnregister((isSuccessful, error) =>
+                {
+                    if (!isSuccessful)
+                        logger.Warn($"Failed to unregister spawner [{controller.SpawnerId}]");
+
+                    controller.Dispose();
+                });
+            }
+            catch (System.Exception exception)
+            {
+                logger.Error($"Failed to request unregister for spawner [{controller.SpawnerId}]");
+                logger.Error(exception);
+                controller.Dispose();
+            }
         }
 
         /// <summary>

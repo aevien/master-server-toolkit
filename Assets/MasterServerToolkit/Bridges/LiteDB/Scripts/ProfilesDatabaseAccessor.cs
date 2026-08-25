@@ -6,6 +6,7 @@ using MasterServerToolkit.MasterServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MasterServerToolkit.Bridges.LiteDB
@@ -21,6 +22,7 @@ namespace MasterServerToolkit.Bridges.LiteDB
         public ProfilesDatabaseAccessor(string databaseName)
         {
             database = new LiteDatabase($"{databaseName}.db");
+            database.UtcDate = true;
 
             profiles = database.GetCollection<ProfileInfoData>("profiles");
             profiles.EnsureIndex(a => a.UserId, true);
@@ -36,57 +38,117 @@ namespace MasterServerToolkit.Bridges.LiteDB
         /// Get profile info from database
         /// </summary>
         /// <param name="profile"></param>
-        public async Task RestoreProfileAsync(ObservableServerProfile profile)
+        public async Task RestoreProfileAsync(ObservableServerProfile profile,
+            CancellationToken cancellationToken = default)
         {
-            string userId = profile.UserId;
+            cancellationToken.ThrowIfCancellationRequested();
+            await RestoreProfilesAsync(new[] { profile }, cancellationToken);
+        }
 
-            var data = await Task.Run(() =>
+        public async Task RestoreProfilesAsync(IEnumerable<ObservableServerProfile> profiles,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (profiles == null)
+                throw new ArgumentNullException(nameof(profiles));
+
+            var profilesList = profiles as IList<ObservableServerProfile> ?? profiles.ToList();
+
+            foreach (var profile in profilesList)
             {
-                return profiles?.FindOne(a => a.UserId == userId);
-            });
+                cancellationToken.ThrowIfCancellationRequested();
 
-            if (data == null)
-            {
-                data = new ProfileInfoData()
-                {
-                    UserId = profile.UserId,
-                    Data = profile.ToBytes()
-                };
+                if (profile == null)
+                    continue;
 
-                await Task.Run(() =>
+                string userId = profile.UserId;
+
+                var data = await Task.Run(() =>
                 {
-                    profiles?.Insert(data);
+                    return this.profiles?.FindOne(a => a.UserId == userId);
                 });
-            }
+                cancellationToken.ThrowIfCancellationRequested();
 
-            profile.FromBytes(data.Data);
+                if (data == null)
+                {
+                    data = new ProfileInfoData()
+                    {
+                        UserId = profile.UserId,
+                        Data = profile.ToBytes()
+                    };
+
+                    await Task.Run(() =>
+                    {
+                        this.profiles?.Insert(data);
+                    });
+                }
+
+                profile.FromBytes(data.Data);
+            }
+        }
+
+        public Task<DatabaseEntriesInfo<IProfilePropertyData>> Search(Dictionary<string, object> filter,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new DatabaseEntriesInfo<IProfilePropertyData>());
         }
 
         /// <summary>
         /// Update profile info in database
         /// </summary>
         /// <param name="profile"></param>
-        public async Task UpdateProfileAsync(ObservableServerProfile profile)
+        public async Task UpdateProfileAsync(ObservableServerProfile profile,
+            CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await UpdateProfilesAsync(new List<ObservableServerProfile>()
             {
                 profile
-            });
+            }, cancellationToken);
         }
 
         /// <summary>
         /// Update profiles info in database
         /// </summary>
         /// <param name="profiles"></param>
-        public async Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profiles)
+        public async Task UpdateProfilesAsync(IEnumerable<ObservableServerProfile> profiles,
+            CancellationToken cancellationToken = default)
         {
-            if (profiles == null || !profiles.Any())
-                throw new ArgumentException("Profiles collection is null or empty.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (profiles == null)
+                throw new ArgumentNullException(nameof(profiles));
+
+            List<ObservableServerProfile> profilesList = profiles.ToList();
+
+            if (profilesList.Count == 0)
+                throw new ArgumentException("Profiles collection is empty.", nameof(profiles));
+
+            var snapshots = new List<ProfileInfoData>(profilesList.Count);
+
+            foreach (ObservableServerProfile profile in profilesList)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (profile == null)
+                    throw new ArgumentException("Profiles collection cannot contain null entries.", nameof(profiles));
+
+                lock (profile)
+                {
+                    snapshots.Add(new ProfileInfoData
+                    {
+                        UserId = profile.UserId,
+                        Data = profile.ToBytes()
+                    });
+                }
+            }
 
             await Task.Run(() =>
             {
-                // Extract all UserIds from the input profiles
-                var userIds = profiles.Select(p => p.UserId).ToList();
+                cancellationToken.ThrowIfCancellationRequested();
+                var userIds = snapshots.Select(p => p.UserId).ToList();
 
                 // Perform a batch search for all existing profiles with matching UserIds
                 var existingData = this.profiles?.Find(a => userIds.Contains(a.UserId)).ToList();
@@ -95,27 +157,20 @@ namespace MasterServerToolkit.Bridges.LiteDB
                 var newProfiles = new List<ProfileInfoData>();
                 var updatedProfiles = new List<ProfileInfoData>();
 
-                foreach (var profile in profiles)
+                foreach (ProfileInfoData snapshot in snapshots)
                 {
                     // Check if the profile already exists in the database
-                    var existingProfile = existingData?.FirstOrDefault(p => p.UserId == profile.UserId);
+                    var existingProfile = existingData?.FirstOrDefault(p => p.UserId == snapshot.UserId);
 
                     if (existingProfile != null)
                     {
                         // Update the existing profile data
-                        existingProfile.Data = profile.ToBytes();
+                        existingProfile.Data = snapshot.Data;
                         updatedProfiles.Add(existingProfile);
                     }
                     else
                     {
-                        // Create a new profile for insertion
-                        var newProfile = new ProfileInfoData
-                        {
-                            UserId = profile.UserId,
-                            Data = profile.ToBytes()
-                        };
-
-                        newProfiles.Add(newProfile);
+                        newProfiles.Add(snapshot);
                     }
                 }
 

@@ -19,12 +19,14 @@ namespace MasterServerToolkit.MasterServer
         /// Adds a module to the server
         /// </summary>
         /// <param name="module"></param>
+        /// <exception cref="System.InvalidOperationException">A server run is active.</exception>
         void AddModule(IBaseServerModule module);
 
         /// <summary>
         /// Adds a module and tries to initialize all of the uninitialized modules
         /// </summary>
         /// <param name="module"></param>
+        /// <exception cref="System.InvalidOperationException">A server run is active.</exception>
         void AddModuleAndInitialize(IBaseServerModule module);
 
         /// <summary>
@@ -39,6 +41,7 @@ namespace MasterServerToolkit.MasterServer
         /// and returns true if all of the modules are initialized successfully
         /// </summary>
         /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">A server run is active.</exception>
         bool InitializeModules();
 
         /// <summary>
@@ -75,6 +78,14 @@ namespace MasterServerToolkit.MasterServer
         void RegisterMessageHandler(ushort opCode, AsyncIncommingMessageHandler handler);
 
         /// <summary>
+        /// Adds a cancellation-aware message handler to the collection of handlers.
+        /// The token is canceled when the current server run begins stopping.
+        /// </summary>
+        /// <param name="opCode">Operation code handled by the callback.</param>
+        /// <param name="handler">Cancellation-aware handler.</param>
+        void RegisterMessageHandler(ushort opCode, CancellableAsyncIncomingMessageHandler handler);
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="opCode"></param>
@@ -82,10 +93,25 @@ namespace MasterServerToolkit.MasterServer
         void RegisterMessageHandler(string opCode, AsyncIncommingMessageHandler handler);
 
         /// <summary>
+        /// Adds a cancellation-aware message handler using a string operation code.
+        /// </summary>
+        /// <param name="opCode">String operation code.</param>
+        /// <param name="handler">Cancellation-aware handler.</param>
+        void RegisterMessageHandler(string opCode, CancellableAsyncIncomingMessageHandler handler);
+
+        /// <summary>
         /// Returns a connected peer with a given ID
         /// </summary>
         /// <param name="peerId"></param>
         /// <returns></returns>
         IPeer GetPeer(int peerId);
+
+        /// <summary>
+        /// Resolves a configured permission key to its numeric permission level.
+        /// </summary>
+        /// <param name="key">Permission key configured on the server.</param>
+        /// <param name="permissionLevel">Resolved permission level when the key exists.</param>
+        /// <returns><c>true</c> when the key exists; otherwise, <c>false</c>.</returns>
+        bool TryGetPermissionLevel(string key, out int permissionLevel);
     }
 }

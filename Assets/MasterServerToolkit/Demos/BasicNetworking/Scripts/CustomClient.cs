@@ -10,16 +10,16 @@ namespace MasterServerToolkit.Demos.BasicNetworking
         // Start is called before the first frame update
         void Start()
         {
-            Mst.Client.Connection.AddConnectionOpenListener(Connection_OnConnectedEvent);
-            Mst.Client.Connection.AddConnectionCloseListener(Connection_OnDisconnectedEvent);
+            Mst.Connection.AddConnectionOpenListener(Connection_OnConnectedEvent);
+            Mst.Connection.AddConnectionCloseListener(Connection_OnDisconnectedEvent);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            Mst.Client.Connection.RemoveConnectionOpenListener(Connection_OnConnectedEvent);
-            Mst.Client.Connection.RemoveConnectionCloseListener(Connection_OnDisconnectedEvent);
+            Mst.Connection.RemoveConnectionOpenListener(Connection_OnConnectedEvent);
+            Mst.Connection.RemoveConnectionCloseListener(Connection_OnDisconnectedEvent);
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace MasterServerToolkit.Demos.BasicNetworking
         public void SendNetMessage()
         {
             string message = "Hello from client";
-            Mst.Client.Connection.SendMessage(MessageCodes.Message, message);
+            Mst.Connection.SendMessage(MessageCodes.Message, message);
         }
 
         /// <summary>
@@ -37,9 +37,9 @@ namespace MasterServerToolkit.Demos.BasicNetworking
         public void SendNetMessageWithResponse()
         {
             string text = "Hello from client and waiting for response from server";
-            Mst.Client.Connection.SendMessage(MessageCodes.MessageWithResponse, text, (status, message) =>
+            Mst.Connection.SendMessage(MessageCodes.MessageWithResponse, text, (status, message) =>
             {
-                if (status == ResponseStatus.Error)
+                if (status != ResponseStatus.Success)
                 {
                     Logs.Error(message.AsString());
                     return;

@@ -2,7 +2,7 @@
 
 namespace MasterServerToolkit.MasterServer
 {
-    public struct MstPeerPropertyCodes
+    public class MstPeerPropertyCodes
     {
         public static uint Start = nameof(Start).ToUint32Hash();
 
