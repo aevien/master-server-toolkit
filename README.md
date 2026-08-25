@@ -1,57 +1,199 @@
-## What is Master Server Toolkit?
+# Master Server Toolkit 5
 
-Master Server Toolkit (MST) represents a comprehensive solution for developing multiplayer online games and applications. This framework provides ready-made tools for solving the core technical challenges that developers encounter when creating networked games.
+Master Server Toolkit (MST) is a modular Unity framework for building and operating multiplayer
+game backends. It provides the shared infrastructure for master servers, authenticated clients,
+dedicated rooms, process spawners, persistent profiles, lobbies, chat, matchmaking, analytics,
+leaderboards, platform services, and administration tools.
 
-Understanding the complexity of multiplayer game development is essential to appreciating what MST offers. When you build a single-player game, you control everything that happens within that contained environment. However, multiplayer games introduce layers of complexity involving network communication, data synchronization, user management, and server infrastructure. Each of these areas requires specialized knowledge and significant development time to implement correctly.
+MST is infrastructure, not a complete game server. Game rules, combat, movement, economy policy,
+and networked gameplay remain in the integrating project and its chosen networking framework.
 
-## Core Problems Addressed by MST
+> **Project status:** MST5 is under active development. The repository currently targets
+> **Unity 2022.3.62f3**. Client, master, room, and spawner builds should use the same MST revision
+> because network and persistence contracts may differ from MST4.
 
-### User Registration and Authorization System
+## Architecture
 
-Every multiplayer game requires a system for managing player accounts. This foundational requirement goes beyond simply storing usernames and passwords. A robust authorization system must handle secure authentication, session management, password recovery, and often integration with external authentication providers. MST includes a built-in authorization module that enables rapid deployment of user account functionality. The framework also supports integration with remote user registration and authorization services through their provided APIs, allowing developers to leverage existing authentication infrastructure while maintaining consistency in their game's user experience.
+```mermaid
+flowchart LR
+    Platform["Game platform"] --> Bridge["Game Service Bridge"]
+    Bridge --> Client["Game client"]
+    Client -->|"MST WebSocket API"| Master["Master server"]
+    Client <-->|"Game networking"| Room["Room server"]
+    Room -->|"Trusted MST connection"| Master
+    Spawner["Room spawner"] -->|"Trusted MST connection"| Master
+    Spawner -->|"Starts and supervises"| Room
+    Master --> Database["Database bridge"]
+    Dashboard["Dashboard / HTTP clients"] --> Master
+```
 
-### Game Server Lists and Discovery
+- **Master server** owns accounts, sessions, profiles, service discovery, rooms, lobbies,
+  matchmaking, permissions, and shared backend modules.
+- **Room server** owns the live game session and synchronizes authoritative profile changes with
+  the master.
+- **Spawner** starts and supervises room processes on demand.
+- **Client** uses the MST socket API for backend operations and a game networking framework for
+  moment-to-moment gameplay.
+- **Game Service Bridge** provides one contract for platform identity, storage, ads, purchases,
+  analytics, sharing, and platform leaderboards.
 
-Displaying active servers for player connection represents a standard functionality in multiplayer games. This seemingly simple feature actually involves complex networking protocols, server health monitoring, geographic optimization, and real-time updates. MST solves this challenge with minimal code implementation. The framework includes a built-in system that facilitates launching game servers and rooms anywhere in the world, automatically handling the intricate details of server discovery and connection management.
+## Included Systems
 
-### User Data Management
+| Area | Current capabilities |
+| --- | --- |
+| Authentication | Account registration, login, guest and token sessions, password reset, email confirmation, platform bindings, duplicate-session control, and account blocking |
+| Profiles | Observable profile properties, master/client/room synchronization, queued persistence, and explicit save confirmation for critical operations |
+| Rooms and spawners | Room registration, access tokens, public listings, process allocation, startup, shutdown, watchdogs, and capacity control |
+| Lobbies and matchmaking | Lobby factories, teams, ready state, lobby chat, room spawning, public game and region queries |
+| Social | Chat channels, direct messages, membership, permissions, invitations, bans, notifications, and groups |
+| Game services | Achievements, quests, analytics, censoring, remote configuration, and server-authoritative leaderboards |
+| Administration | Built-in HTTP server, dashboard controllers, structured module details, logging, SMTP, and command terminal tools |
+| Security | WSS support, permission challenge/proof flow, authenticated request envelopes, persistent key rings, password hashing, and replay protection |
 
-Interaction with user data encompasses profiles, friend lists, clans, in-game currency, achievements, and numerous other elements that define the player experience. This data must remain consistent across different devices and sessions while supporting real-time updates as players interact with the game world. MST provides flexible built-in tools for addressing these requirements, ensuring instantaneous synchronization of user data in real-time whenever changes occur. This synchronization capability is crucial for maintaining data integrity and providing seamless experiences across multiple devices and platforms.
+## Integrations
 
-### Database Integration
+### Game networking
 
-MST possesses functionality for working with databases without requiring connections to external data storage sources. This self-contained approach simplifies deployment and reduces dependencies. However, if you already utilize services such as Amazon DynamoDB, GameSparks, or Azure Playlab, the framework enables easy interaction with their APIs through built-in tools. This flexibility allows developers to maintain existing database infrastructure while benefiting from MST's streamlined development approach.
+- Mirror
+- FishNet
+- The MST networking API can also be used independently for backend messages.
 
-### Game Chat and Communication Channels
+### Databases
 
-MST includes a ready-made module for creating game chats and communication channels with unlimited user capacity. This solution addresses the communication needs between players, which forms an integral part of multiplayer gaming experiences. The chat system handles message routing, user presence, channel management, and moderation capabilities that modern games require.
+- LiteDB
+- MongoDB
+- SQL providers through SqlSugar
 
-## Technical Architecture
+Database bridge assemblies are opt-in and excluded from WebGL. Register only the accessor factories
+required by the active master-server scene.
 
-### Cross-Platform Support
+### Game platforms
 
-The client-side component of MST operates on Windows, Linux, MacOS, Android, iOS operating systems and supports WebGL deployment. Server-side components maintain compatibility with Windows, Linux, and Android platforms. This broad platform support ensures that games built with MST can reach players regardless of their preferred devices or operating systems.
+- Editor test service
+- Desktop and generic Web fallback services
+- Yandex Games
+- VK Games
+- VK Play
+- Itch.io
 
-### Networking API
+Feature availability is reported per service. Unsupported platform features become ready with
+`IsSupported = false`, allowing the game UI to hide them without platform-specific checks.
 
-MST Networking API constitutes an abstraction layer over networking technologies and protocols, simplifying communication between servers and clients. This API design prioritizes high performance, ease of use, and extensibility. Developers can customize message structures and modify communication protocols without requiring modifications to existing networking code. This abstraction approach allows teams to focus on game logic rather than low-level networking implementation details.
+## Requirements
 
-The networking layer handles connection management, message serialization, error recovery, and protocol optimization automatically. This comprehensive approach reduces the likelihood of networking-related bugs while providing the flexibility needed for different game architectures.
+- Unity **2022.3.62f3**
+- Git LFS
+- A supported desktop build target for master, room, and spawner processes
+- WebGL is supported for clients; server-only database assemblies are excluded from WebGL
 
-### Modularity and Extensibility
+The standalone repository already contains the framework, demos, bridge code, and Unity project
+settings used for MST5 development. It is not currently distributed as a Unity Package Manager
+package.
 
-When MST's built-in functionality proves insufficient for addressing specific requirements, the framework's modular system enables easy creation of extensions. Through modules, developers can build services that operate collaboratively while being distributed across different geographical locations. This distributed architecture supports scalability and allows games to maintain low latency for players worldwide.
+## Quick Start
 
-The modular design philosophy means that each component can be developed, tested, and deployed independently, facilitating iterative development and easier maintenance.
+1. Install Git LFS before cloning:
 
-## Target Audience and Implementation
+   ```bash
+   git lfs install
+   ```
 
-MST is designed for creating servers, services, and microservices that function across various geographical locations while performing identical tasks. The built-in networking API allows developers to create custom game servers without relying on third-party solutions for multiplayer functionality.
+2. Clone the repository:
 
-Servers and services created using the framework can operate locally during development, however production deployment requires VPS or dedicated server infrastructure. You can configure predefined game servers for continuous operation or implement a spawner server that creates game servers on-demand in response to client requests. This spawner approach seamlessly emulates client hosting while maintaining centralized control over server resources.
+   ```bash
+   git clone https://github.com/aevien/master-server-toolkit.git
+   ```
 
-The framework's conceptual design assumes users' readiness to program using the provided API. Interface components in examples serve exclusively to demonstrate specific tools and capabilities. Utilizing graphical interfaces is not mandatory for solving development challenges. The API-first approach provides maximum flexibility for integrating MST into existing development workflows and custom user interfaces.
+3. Open the cloned folder in Unity `2022.3.62f3` and allow the initial import to finish.
 
-An important characteristic of MST involves the ability to utilize only necessary tools without mandatory implementation of the entire framework's functionality. This selective implementation approach allows project optimization for specific requirements while avoiding unnecessary complexity. Rather than forcing developers into a rigid structure, MST provides building blocks that can be combined according to project needs.
+4. Build the smallest connection example from:
 
-This modular philosophy recognizes that different games have different requirements, and forcing unnecessary components into a project creates technical debt and performance overhead. By allowing selective implementation, MST enables developers to create lean, efficient solutions tailored to their specific use cases.
+   `Tools > Master Server Toolkit > Build > Demos > Basic Connection > All`
+
+5. Start `Builds/BasicConnection/MasterServer/MasterServer.exe`, then start
+   `Builds/BasicConnection/Client/Client.exe`.
+
+The builder writes matching `application.cfg` files for the master and client. Use the
+authentication, profiles, chat, rooms, and worlds demos after the basic socket connection has been
+verified.
+
+## Configuration
+
+MST reads `application.cfg` from the project or build root by default. A different main file can be
+selected with `-mstConfigFile`. Configuration files can import reusable defaults:
+
+```ini
+@import "Configs/common.cfg"
+@import "Configs/security.cfg"
+
+-mstStartMaster=true
+-mstMasterIp=127.0.0.1
+-mstMasterPort=25200
+```
+
+Resolution priority is:
+
+1. Environment variable
+2. Command-line argument
+3. Main configuration file
+4. Imported configuration defaults
+
+The main file wins over imported values. Repeated imports are ignored to prevent cycles, missing
+imports produce a warning, and the first imported duplicate wins. Canonical argument names and
+examples are defined in
+[`MstArgNames.cs`](Assets/MasterServerToolkit/MasterServer/Scripts/Mst/MstArgNames.cs).
+
+Do not commit a generated production key ring and then deploy the same private keys to unrelated
+projects. Configure a stable `-mstSecurityKeyRingFile` path for each production environment and use
+WSS or external TLS termination for public connections.
+
+## Documentation
+
+Start with the area that owns the behavior you want to change:
+
+- [Framework map](Assets/MasterServerToolkit/README.md)
+- [Master server and runtime](Assets/MasterServerToolkit/MasterServer/README.md)
+- [Built-in server modules](Assets/MasterServerToolkit/MasterServer/Scripts/Modules/README.md)
+- [Networking](Assets/MasterServerToolkit/Networking/README.md)
+- [Game Service Bridge](Assets/MasterServerToolkit/GameServiceBridge/README.md)
+- [Database and networking bridges](Assets/MasterServerToolkit/Bridges/README.md)
+- [Demos](Assets/MasterServerToolkit/Demos/README.md)
+- [Authentication client/server guide](Assets/MasterServerToolkit/docs/authentication-client-server.md)
+- [Test suite](Assets/MasterServerToolkit.Tests/README.md)
+
+Most modules have a README beside their implementation. Those local documents define ownership,
+runtime flow, configuration, extension points, and failure behavior for the current code.
+
+## Testing
+
+Open `Window > General > Test Runner`, select **EditMode**, and run the
+`MasterServerToolkit.Tests.EditMode` assembly.
+
+The test reporter writes the latest results to:
+
+- `Logs/MstTests/latest.txt`
+- `Logs/MstTests/latest.xml`
+
+The EditMode suite covers core module contracts, lifecycle behavior, concurrency, authentication,
+permissions, profiles, rooms, spawners, WebSocket failure handling, persistence adapters, and
+platform validation. Real transport, room-process, database, and WebGL platform flows still require
+focused integration tests.
+
+## Development Rules
+
+- Keep MST independent from any specific game's gameplay types and policies.
+- Keep platform-specific behavior inside `GameServiceBridge`.
+- Keep database-provider behavior inside `Bridges/<Provider>`.
+- Use `MstArgNames`, `Mst.Args`, `MstOpCodes`, `MstProperties`, and MST logging instead of parallel
+  project-specific infrastructure.
+- Preserve packet serialization order and server authority checks.
+- Account for every Unity Enter Play Mode configuration, including disabled Domain Reload and
+  disabled Scene Reload.
+- Add or update the nearest README whenever behavior or designer-facing configuration changes.
+
+Detailed maintenance constraints are documented in
+[`Assets/MasterServerToolkit/AGENTS.md`](Assets/MasterServerToolkit/AGENTS.md).
+
+## License
+
+Master Server Toolkit is available under the [MIT License](LICENSE).
